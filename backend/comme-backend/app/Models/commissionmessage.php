@@ -4,16 +4,23 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CommissionMessage extends Model
 {
     protected $fillable = [
         'commission_service_id',
-        'artist_profile_id',
+        'sender_id',
         'user_id',
         'message',
-        'attachment',
     ];
+
+    protected function casts(): array
+    {
+        return [
+
+        ];
+    }
 
     // Relationships
     public function commissionService(): BelongsTo
@@ -21,13 +28,18 @@ class CommissionMessage extends Model
         return $this->belongsTo(CommissionService::class);
     }
 
-    public function user(): BelongsTo
+    public function sender(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'sender_id');
     }
 
-    public function artistProfile(): BelongsTo
+    public function recipient(): BelongsTo
     {
-        return $this->belongsTo(ArtistProfile::class);
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function media(): HasMany
+    {
+        return $this->hasMany(CommissionMessageMedia::class);
     }
 }
