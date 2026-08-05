@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class CommissionMessage extends Model
 {
     protected $fillable = [
-        'commission_service_id',
+        'commission_id',
         'sender_id',
         'user_id',
         'message',
@@ -23,9 +23,9 @@ class CommissionMessage extends Model
     }
 
     // Relationships
-    public function commissionService(): BelongsTo
+    public function commission(): BelongsTo
     {
-        return $this->belongsTo(CommissionService::class);
+        return $this->belongsTo(Commission::class);
     }
 
     public function sender(): BelongsTo
@@ -42,4 +42,4 @@ class CommissionMessage extends Model
     {
         return $this->hasMany(CommissionMessageMedia::class);
     }
-}
+} 

@@ -28,14 +28,19 @@ class ArtistProfile extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function portfolio(): HasMany
+    public function portfolios(): HasMany
     {
-        return $this->hasMany(Portfolio::class);
+        return $this->hasMany(Portfolios::class);
     }
 
-    public function CommissionServices(): HasMany
+    public function commissionServices(): HasMany
     {
         return $this->hasMany(CommissionService::class);
+    }
+
+    public function commissions(): HasMany
+    {
+        return $this->hasMany(Commission::class);
     }
 
     // Helpers

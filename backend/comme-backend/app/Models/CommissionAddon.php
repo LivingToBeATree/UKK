@@ -4,8 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class CommissionAddon extends Model
+class CommissionAddons extends Model
 {
     protected $fillable = [
         'commission_option_id',
@@ -25,5 +26,10 @@ class CommissionAddon extends Model
     public function commissionOption(): BelongsTo
     {
         return $this->belongsTo(CommissionOption::class);
+    }
+
+    public function commissions(): HasMany
+    {
+        return $this->hasMany(Commission::class, 'commission_addon_id');
     }
 }

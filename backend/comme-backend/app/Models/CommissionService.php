@@ -14,17 +14,8 @@ class CommissionService extends Model
         'thumbnail_media_id',
         'name',
         'description',
-        'status',
         'alt_text',
-        'deadline'
     ];
-
-    protected function casts(): array
-    {
-        return [
-            'status' => ServiceStatus::class,
-        ];
-    }
 
     // Relationships
     public function artistProfile(): BelongsTo
@@ -45,6 +36,11 @@ class CommissionService extends Model
     public function options(): HasMany
     {
         return $this->hasMany(CommissionOption::class);
+    }
+
+    public function commissions(): HasMany
+    {
+        return $this->hasMany(Commission::class);
     }
 
     // Helpers
