@@ -3,17 +3,27 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Enums\MediaType;
 
-class CommissionMessage extends Model
+class CommissionMessageMedia extends Model
 {
     protected $fillable = [
-        'commission_service_id',
-        'user_id',
-        'message',
+        'commission_message_id',
+        'file_name',
+        'file_path',
+        'media_type'
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'media_type' => MediaType::class,
+        ];
+    }
+
     // Relationships
-    public function commissionMessage()
+    public function commissionMessage(): BelongsTo
     {
         return $this->belongsTo(CommissionMessage::class);
     }
