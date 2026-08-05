@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use App\Enums\UserRole;
 
@@ -57,6 +58,16 @@ class User extends Authenticatable
     public function artistProfile(): HasOne
     {
         return $this->hasOne(ArtistProfile::class);
+    }
+
+    public function sentCommissionMessages(): HasMany
+    {
+        return $this->hasMany(CommissionMessage::class, 'sender_id');
+    }
+
+    public function receivedCommissionMessages(): HasMany
+    {
+        return $this->hasMany(CommissionMessage::class, 'user_id');
     }
 
     // helpers
