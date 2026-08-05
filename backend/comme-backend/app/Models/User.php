@@ -7,6 +7,8 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Enums\UserRole;
 
 class User extends Authenticatable
 {
@@ -19,9 +21,12 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
+        'username',
+        'display_name',
         'email',
         'password',
+        'role',
+        'avatar',
     ];
 
     /**
@@ -31,7 +36,7 @@ class User extends Authenticatable
      */
     protected $hidden = [
         'password',
-        'remember_token',
+        'remember_token'
     ];
 
     /**
@@ -44,6 +49,49 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'role' => UserRole::class,
         ];
+    }
+
+    // Relationships
+    public function artistProfile(): HasOne
+    {
+        return $this->hasOne(ArtistProfile::class);
+    }
+
+    // helpers
+    public function hasArtistProfile(): bool
+    {
+        return $this->artistProfile()->exists();
+    }
+
+    public function isArtist(): bool
+    {
+        return $this->hasArtistProfile();
+    }
+
+    public function canAcceptCommissions(): bool
+    {
+        return $this->artistProfile?->isOpen() ?? false;
+    }
+
+    public function isUser(): bool
+    {
+        return $this->role === UserRole::USER;
+    }
+
+    public function isModerator(): bool
+    {
+        return $this->role === UserRole::MODERATOR;
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === UserRole::ADMIN;
+    }
+
+    public function isStaff(): bool
+    {
+        return $this->isModerator() || $this->isAdmin();
     }
 }
