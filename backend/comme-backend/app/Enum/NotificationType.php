@@ -1,0 +1,18 @@
+<?php
+
+namespace App\Enums;
+
+enum NotificationType: string
+{
+    case FOLLOW = 'follow';
+    case POST_LIKE = 'post_like';
+    case POST_COMMENT = 'post_comment';
+    case POST_BOOKMARK = 'post_bookmark';
+    case COMMISSION_REQUEST = 'commission_request';
+    case COMMISSION_ACCEPTED = 'commission_accepted';
+    case COMMISSION_COMPLETED = 'commission_completed';
+    case COMMISSION_MESSAGE = 'commission_message';
+    case REVISION_REQUEST = 'revision_request';
+    case REVISION_ACCEPTED = 'revision_accepted';
+    case REVIEW_RECEIVED = 'review_received';
+}
