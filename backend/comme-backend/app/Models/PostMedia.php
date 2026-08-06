@@ -2,10 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use App\Enums\MediaType;
-
-class PostMedia extends Model
+class PostMedia extends Media
 {
     protected $fillable = [
         'post_id',
@@ -18,12 +15,4 @@ class PostMedia extends Model
         'alt_text',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'file_size' => 'integer',
-            'sort_order' => 'integer',
-            'media_type' => MediaType::class,
-        ];
-    }
 }

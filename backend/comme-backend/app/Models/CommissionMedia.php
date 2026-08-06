@@ -2,11 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Enums\MediaType;
 
-class CommissionMedia extends Model
+class CommissionMedia extends Media
 {
     protected $fillable = [
         'commission_id',
@@ -17,15 +15,6 @@ class CommissionMedia extends Model
         'mime_type',
         'sort_order',
     ];
-
-    protected function casts(): array
-    {
-        return [
-            'media_type' => MediaType::class,
-            'file_size' => 'integer',
-            'sort_order' => 'integer',
-        ];
-    }
 
     public function commission(): BelongsTo
     {
