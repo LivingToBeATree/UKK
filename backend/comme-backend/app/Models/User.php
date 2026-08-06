@@ -125,6 +125,16 @@ class User extends Authenticatable
         return $this->hasMany(Notification::class, 'actor_id');
     }
 
+    public function reports(): HasMany
+    {
+        return $this->hasMany(Report::class, 'user_id');
+    }
+
+    public function handledReports(): HasMany
+    {
+        return $this->hasMany(Report::class, 'handled_by');
+    }
+
     // helpers
     public function hasArtistProfile(): bool
     {
