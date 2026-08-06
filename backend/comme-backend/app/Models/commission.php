@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use App\Enums\CommissionStatus;
 
 class Commission extends Model
@@ -15,13 +16,15 @@ class Commission extends Model
         'artist_profile_id',
         'user_id',
         'status',
-        'notes',
+        'description',
+        'deadline',
         'total_price',
     ];
 
     protected function casts(): array
     {
         return [
+            'total_price' => 'decimal:2',
             'status' => CommissionStatus::class
         ];
     }
@@ -53,6 +56,21 @@ class Commission extends Model
 
     public function addonsSelections(): HasMany
     {
-        return $this->hasMany(CommissionAddonsSelection::class);
+        return $this->hasMany(CommissionAddonSelection::class);
+    }
+
+    public function media(): HasMany
+    {
+        return $this->hasMany(CommissionMedia::class);
+    }
+
+    public function review(): HasOne
+    {
+        return $this->hasOne(CommissionReview::class);
+    }
+
+    public function revisions(): HasMany
+    {
+        return $this->hasMany(CommissionRevision::class);
     }
 }

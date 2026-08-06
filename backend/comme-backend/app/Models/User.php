@@ -67,12 +67,62 @@ class User extends Authenticatable
 
     public function receivedCommissionMessages(): HasMany
     {
-        return $this->hasMany(CommissionMessage::class, 'user_id');
+        return $this->hasMany(CommissionMessage::class, 'recipient_id');
     }
 
     public function commissions(): HasMany
     {
         return $this->hasMany(Commission::class);
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(CommissionReview::class);
+    }
+
+    public function requestedRevisions(): HasMany
+    {
+        return $this->hasMany(CommissionRevision::class, 'requester_id');
+    }
+
+    public function posts(): HasMany
+    {
+        return $this->hasMany(Post::class);
+    }
+
+    public function postLikes(): HasMany
+    {
+        return $this->hasMany(PostLike::class);
+    }
+
+    public function postBookmarks(): HasMany
+    {
+        return $this->hasMany(PostBookmark::class);
+    }
+
+    public function postComments(): HasMany
+    {
+        return $this->hasMany(PostComment::class);
+    }
+
+    public function following(): HasMany
+    {
+        return $this->hasMany(Follow::class, 'following_id');
+    }
+
+    public function followers(): HasMany
+    {
+        return $this->hasMany(Follow::class, 'followed_id');
+    }
+
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function sentNotifications(): HasMany
+    {
+        return $this->hasMany(Notification::class, 'actor_id');
     }
 
     // helpers

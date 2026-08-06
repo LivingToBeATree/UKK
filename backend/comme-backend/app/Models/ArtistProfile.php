@@ -17,10 +17,13 @@ class ArtistProfile extends Model
         'social_links',
     ];
 
-    protected $casts = [
-        'commission_open' => 'boolean',
-        'social_links' => 'array',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'commission_open' => 'boolean',
+            'social_links' => 'array',
+        ];
+    }
 
     // Relationships
     public function user(): BelongsTo
@@ -30,7 +33,7 @@ class ArtistProfile extends Model
 
     public function portfolios(): HasMany
     {
-        return $this->hasMany(Portfolios::class);
+        return $this->hasMany(Portfolio::class);
     }
 
     public function commissionServices(): HasMany
@@ -41,6 +44,16 @@ class ArtistProfile extends Model
     public function commissions(): HasMany
     {
         return $this->hasMany(Commission::class);
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(CommissionReview::class);
+    }
+
+    public function followers(): HasMany
+    {
+        return $this->hasMany(Follow::class);
     }
 
     // Helpers

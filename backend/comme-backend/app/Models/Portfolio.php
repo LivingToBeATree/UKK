@@ -5,9 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Enums\VisibilityType;
+use App\Enums\CommissionVisibilityType;
 
-class Portfolios extends Model
+class Portfolio extends Model
 {
     protected $fillable = [
         'artist_profile_id',
@@ -21,7 +21,7 @@ class Portfolios extends Model
     protected function casts(): array
     {
         return [
-            'visibility' => VisibilityType::class,
+            'visibility' => CommissionVisibilityType::class,
             'starred' => 'boolean',
             'views' => 'integer',
             'likes' => 'integer',
@@ -43,5 +43,10 @@ class Portfolios extends Model
     public function media(): HasMany
     {
         return $this->hasMany(PortfolioMedia::class);
+    }
+
+    public function posts(): HasMany
+    {
+        return $this->hasMany(Post::class);
     }
 }
