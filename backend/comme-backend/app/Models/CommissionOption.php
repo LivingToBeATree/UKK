@@ -30,7 +30,7 @@ class CommissionOption extends Model
 
     public function addons(): HasMany
     {
-        return $this->hasMany(CommissionAddons::class);
+        return $this->hasMany(CommissionAddon::class);
     }
 
     public function commissions(): HasMany

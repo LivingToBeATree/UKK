@@ -5,20 +5,22 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Enums\MessageType;
 
 class CommissionMessage extends Model
 {
     protected $fillable = [
         'commission_id',
         'sender_id',
-        'user_id',
+        'recipient_id',
         'message',
+        'message_type',
     ];
 
     protected function casts(): array
     {
         return [
-
+        'message_type'=> MessageType::class,
         ];
     }
 
@@ -35,7 +37,7 @@ class CommissionMessage extends Model
 
     public function recipient(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'recipient_id');
     }
 
     public function media(): HasMany

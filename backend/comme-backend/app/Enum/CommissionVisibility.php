@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum VisibilityType: string
+enum CommissionVisibilityType: string
 {
     case PUBLIC = 'public';
     case PRIVATE = 'private';

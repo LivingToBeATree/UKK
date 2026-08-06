@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
 class PostMedia extends Media
 {
     protected $fillable = [
@@ -15,4 +17,8 @@ class PostMedia extends Media
         'alt_text',
     ];
 
+    public function post(): BelongsTo
+    {
+        return $this->belongsTo(Post::class);
+    }
 }
