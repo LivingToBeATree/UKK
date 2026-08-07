@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('portfolios', function (Blueprint $table) {
             $table->id();
             $table->foreignId('artist_profile_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('thumbnail_media_id')->nullable();
+            $table->foreignId('thumbnail_media_id')->nullable()->constrained('medias')->nullOnDelete();
             $table->string('title');
             $table->text('description');
             $table->string('visibility')->default('public');
