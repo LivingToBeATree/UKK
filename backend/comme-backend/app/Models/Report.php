@@ -18,6 +18,8 @@ class Report extends Model
         'reason',
         'description',
         'status',
+        'handled_by',
+        'handled_at',
     ];
 
     protected function casts(): array
