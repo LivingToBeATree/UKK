@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CommissionMedia extends Media
 {
+    protected $table = 'commission_medias';
+
     protected $fillable = [
         'commission_id',
         'file_name',

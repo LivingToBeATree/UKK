@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PostMedia extends Media
 {
+    protected $table = 'post_medias';
+
     protected $fillable = [
         'post_id',
         'file_name',

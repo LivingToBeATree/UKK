@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PortfolioMedia extends Media
 {
+    protected $table = 'portfolio_medias';
+
     protected $fillable = [
         'portfolio_id',
         'file_name',

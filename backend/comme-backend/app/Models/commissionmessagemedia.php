@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CommissionMessageMedia extends Media
 {
+    protected $table = 'commission_message_medias';
+
     protected $fillable = [
         'commission_message_id',
         'file_name',
