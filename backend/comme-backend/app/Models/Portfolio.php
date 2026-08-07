@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use App\Enums\CommissionVisibilityType;
+use App\Enum\CommissionVisibility;
 
 class Portfolio extends Model
 {
@@ -22,7 +22,7 @@ class Portfolio extends Model
     protected function casts(): array
     {
         return [
-            'visibility' => CommissionVisibilityType::class,
+            'visibility' => CommissionVisibility::class,
             'starred' => 'boolean',
             'views' => 'integer',
             'likes' => 'integer',

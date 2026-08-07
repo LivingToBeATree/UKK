@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Enums\RevisionStatus;
+use App\Enum\CommissionRevisionStatus;
 
 class CommissionRevision extends Model
 {
@@ -20,7 +20,7 @@ class CommissionRevision extends Model
     protected function casts(): array
     {
         return [
-            'status' => RevisionStatus::class,
+            'status' => CommissionRevisionStatus::class,
             'responded_at' => 'datetime',
         ];
     }

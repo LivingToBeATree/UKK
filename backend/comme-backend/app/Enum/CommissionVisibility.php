@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Enums;
+namespace App\Enum;
 
-enum CommissionVisibilityType: string
+enum CommissionVisibility: string
 {
     case PUBLIC = 'public';
     case PRIVATE = 'private';

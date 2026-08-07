@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Enums\RevisionItemType;
+use App\Enum\CommissionRevisionItemType;
 
 class CommissionRevisionItem extends Model
 {
@@ -18,7 +18,7 @@ class CommissionRevisionItem extends Model
     protected function casts(): array
     {
         return [
-            'type' => RevisionItemType::class,
+            'type' => CommissionRevisionItemType::class,
         ];
     }
 

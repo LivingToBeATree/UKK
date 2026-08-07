@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\MediaType;
+use App\Enum\MediaType;
 use Illuminate\Database\Eloquent\Model;
 
 abstract class Media extends Model
@@ -18,7 +18,7 @@ abstract class Media extends Model
     }
 
     // Helpers
-    public function isImage(): bool
+                    public function isImage(): bool
     {
         return $this->media_type === MediaType::IMAGE;
     }

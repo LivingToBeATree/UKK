@@ -6,10 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use App\Enums\ReportStatus;
-use App\Enums\ReportReason;
+use App\Enum\ReportStatus;
+use App\Enum\ReportReason;
 
-class Report Extends Model
+class Report extends Model
 {
     protected $fillable = [
         'user_id',

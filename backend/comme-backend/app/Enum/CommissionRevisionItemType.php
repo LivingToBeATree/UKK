@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Enums;
+namespace App\Enum;
 
-enum RevisionItemType: string
+enum CommissionRevisionItemType: string
 {
     case DEADLINE = 'deadline';
 

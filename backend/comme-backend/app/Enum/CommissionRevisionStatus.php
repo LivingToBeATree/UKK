@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Enums;
+namespace App\Enum;
 
-enum RevisionStatus: string
+enum CommissionRevisionStatus: string
 {
     case PENDING = 'pending';
     case ACCEPTED = 'accepted';
