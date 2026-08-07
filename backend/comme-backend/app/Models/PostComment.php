@@ -9,14 +9,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PostComment extends Model
 {
-    use softDeletes;
+    use SoftDeletes;
 
     protected $fillable = [
         'post_id',
         'user_id',
         'content',
         'parent_comment_id',
-        'deleted_at',
     ];
 
     protected function casts(): array
