@@ -19,7 +19,9 @@ class Ticket extends Model
     protected function casts(): array
     {
         return [
-        'priority' => TicketPriority::class,
+            'priority' => TicketPriority::class,
+            'assigned_at' => 'datetime',
+            'closed_at' => 'datetime',
         ];
     }
 
