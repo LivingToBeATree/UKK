@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CommissionReview extends Model
 {
@@ -28,17 +29,17 @@ class CommissionReview extends Model
     }
 
     // Relationships
-    public function commission()
+    public function commission(): BelongsTo
     {
         return $this->belongsTo(Commission::class);
     }
 
-    public function artistProfile()
+    public function artistProfile(): BelongsTo
     {
         return $this->belongsTo(ArtistProfile::class);
     }
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
