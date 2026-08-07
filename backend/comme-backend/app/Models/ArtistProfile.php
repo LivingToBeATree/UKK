@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -53,7 +52,7 @@ class ArtistProfile extends Model
 
     public function followers(): HasMany
     {
-        return $this->hasMany(Follow::class);
+        return $this->user->followers();
     }
 
     // Helpers
