@@ -17,7 +17,7 @@ return new class extends Migration
             $table->nullableMorphs('reportable');
             $table->string('reason');
             $table->text('description');
-            $table->string('status');
+            $table->string('status')->default('pending');
             $table->foreignId('handled_by')->nullable()->constrained('users')->nullOnDelete();
             $table->dateTime('handled_at')->nullable();
             $table->timestamps();
