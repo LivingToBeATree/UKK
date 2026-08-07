@@ -9,7 +9,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use App\Enums\UserRole;
+use App\Enum\UserRole;
 
 class User extends Authenticatable
 {
@@ -28,6 +28,7 @@ class User extends Authenticatable
         'password',
         'role',
         'avatar',
+        'bio'
     ];
 
     /**
@@ -107,7 +108,7 @@ class User extends Authenticatable
 
     public function following(): HasMany
     {
-        return $this->hasMany(Follow::class, 'following_id');
+        return $this->hasMany(Follow::class, 'follower_id');
     }
 
     public function followers(): HasMany
