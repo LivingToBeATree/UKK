@@ -11,7 +11,7 @@ use App\Enum\PostVisibilityType;
 class Post extends Model
 {
     protected $fillable = [
-        // this will be nullable
+        'user_id',
         'portfolio_id',
         'content',
         'visibility',
