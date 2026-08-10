@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\ArtistProfile;
 use App\Http\Requests\StoreArtistProfileRequest;
 use App\Http\Requests\UpdateArtistProfileRequest;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\facades\Gate;
 
