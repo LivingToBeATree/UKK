@@ -38,7 +38,7 @@ class Portfolio extends Model
 
     public function thumbnailMedia(): BelongsTo
     {
-        return $this->belongsTo(PortfolioMedia::class, 'thumbnail_media_id');
+        return $this->belongsTo(Media::class, 'thumbnail_media_id');
     }
 
     public function media(): HasMany

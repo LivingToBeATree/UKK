@@ -39,7 +39,7 @@ class CommissionService extends Model
 
     public function thumbnailMedia(): BelongsTo
     {
-        return $this->belongsTo(CommissionServiceMedia::class, 'thumbnail_media_id');
+        return $this->belongsTo(Media::class, 'thumbnail_media_id');
     }
 
     public function options(): HasMany

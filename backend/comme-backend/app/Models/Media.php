@@ -5,8 +5,10 @@ namespace App\Models;
 use App\Enum\MediaType;
 use Illuminate\Database\Eloquent\Model;
 
-abstract class Media extends Model
+class Media extends Model
 {
+    protected $table = 'medias';
+    
     protected function casts(): array
     {
         return [
@@ -18,7 +20,7 @@ abstract class Media extends Model
     }
 
     // Helpers
-                    public function isImage(): bool
+    public function isImage(): bool
     {
         return $this->media_type === MediaType::IMAGE;
     }
