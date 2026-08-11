@@ -6,7 +6,7 @@ use App\Models\ArtistProfile;
 use App\Http\Requests\API\V1\ArtistProfile\StoreArtistProfileRequest;
 use App\Http\Requests\API\V1\ArtistProfile\UpdateArtistProfileRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\facades\Gate;
+use Illuminate\Support\Facades\Gate;
 
 class ArtistProfileController extends Controller
 {

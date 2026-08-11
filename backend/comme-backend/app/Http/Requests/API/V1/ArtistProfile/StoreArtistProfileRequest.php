@@ -19,7 +19,7 @@ class StoreArtistProfileRequest extends FormRequest
             'banner' => ['nullable', 'string'],
             'website' => ['nullable', 'url', 'max:255'],
             'social_links' => ['nullable', 'array'],
-            'commmssion_open' => ['sometimes', 'boolean']
+            'commission_open' => ['sometimes', 'boolean'],
         ];
     }
 }

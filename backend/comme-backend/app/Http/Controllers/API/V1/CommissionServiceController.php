@@ -6,7 +6,7 @@ use App\Models\CommissionService;
 use App\Http\Requests\API\V1\CommissionService\StoreCommissionServiceRequest;
 use App\Http\Requests\API\V1\CommissionService\UpdateCommissionServiceRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\facades\Gate;
+use Illuminate\Support\Facades\Gate;
 
 class CommissionServiceController extends Controller
 {
