@@ -1,0 +1,109 @@
+<?php
+
+namespace App\Http\Controllers\API\V1;
+
+use App\Enum\CommissionStatus;
+use App\Http\Requests\API\V1\Commission\StoreCommissionRequest;
+use App\Http\Requests\API\V1\Commission\UpdateCommissionDeadlineRequest;
+use App\Http\Requests\API\V1\Commission\UpdateCommissionRequest;
+use App\Models\Commission;
+use App\Models\CommissionOption;
+use App\Models\CommissionService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Gate;
+
+class CommissionController extends Controller
+{
+    /**
+     * viewAny only gates access to the listing endpoint — the actual
+     * "only show commissions involving me" restriction happens in this
+     * query, using orWhereHas to check both sides (buyer or artist).
+     */
+    public function index(): JsonResponse
+    {
+        Gate::authorize('viewAny', Commission::class);
+
+        $userId = auth()->id();
+
+        $commissions = Commission::where('user_id', $userId)
+            ->orWhereHas('artistProfile', fn ($query) => $query->where('user_id', $userId))
+            ->with(['commissionService', 'artistProfile', 'user'])
+            ->paginate(20);
+
+        return response()->json($commissions);
+    }
+
+    /**
+     * total_price, status, user_id, and artist_profile_id are never taken
+     * from the request body — all four are derived server-side. Letting a
+     * client submit any of these would mean a buyer could set their own
+     * price, fake another user's ID, or start a commission pre-marked
+     * "completed."
+     */
+    public function store(StoreCommissionRequest $request): JsonResponse
+    {
+        $service = CommissionService::findOrFail($request->commission_service_id);
+        $option = $request->commission_option_id
+        ? CommissionOption::findOrFail($request->commission_option_id)
+        : null;
+
+        $commission = Commission::create([
+            ...$request->only(['description', 'deadline']),
+            'commission_service_id' => $service->id,
+            'commission_option_id' => $option?->id,
+            'artist_profile_id' => $service->artist_profile_id,
+            'user_id' => $request->user()->id,
+            'status' => CommissionStatus::PENDING,
+            'total_price' => $option->base_price ?? 0,
+        ]);
+
+        return response()->json($commission, 201);
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(Commission $commission)
+    {
+        Gate::authorize('view', $commission);
+
+        return response()->json(
+            $commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages'])
+        );
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(UpdateCommissionRequest $request, Commission $commission): JsonResponse
+    {
+        $commission->update($request->validated());
+
+        return response()->json($commission);
+    }
+
+    /**
+     * No destroy() method, and no route registered for it either —
+     * CommissionPolicy::delete() always returns false, so wiring up a
+     * route that can never succeed just adds dead code and a confusing
+     * 403 instead of a clean 404.
+     */
+
+    //public function destroy(Commission $commission)
+
+    public function cancel(Commission $commission): JsonResponse
+    {
+        Gate::authorize('cancel', $commission);
+
+        $commission->update(['status' => CommissionStatus::CANCELLED]);
+
+        return response()->json($commission);
+    }
+
+    public function updateDeadline(UpdateCommissionDeadlineRequest $request, Commission $commission): JsonResponse
+    {
+        $commission->update($request->validated());
+
+        return response()->json($commission);
+    }
+}
