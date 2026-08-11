@@ -36,6 +36,11 @@ class Report extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function handledBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'handled_by');
+    }
+
     public function reportable(): MorphTo
     {
         return $this->morphTo();
