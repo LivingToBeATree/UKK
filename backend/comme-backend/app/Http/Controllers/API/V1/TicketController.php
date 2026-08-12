@@ -38,7 +38,7 @@ class TicketController extends Controller
      */
     public function show(Ticket $ticket): JsonResponse
     {
-        Gate::authorize('view', Ticket::class);
+        Gate::authorize('view', $ticket);
 
         return response()->json($ticket->load(['report', 'assignee', 'messages.user', 'moderationActions']));
     }
@@ -63,7 +63,7 @@ class TicketController extends Controller
 
     public function close(Ticket $ticket): JsonResponse
     {
-        Gate::authorize('update', Ticket::class);
+        Gate::authorize('update', $ticket);
 
         $ticket->update(['closed_at' => now()]);
 

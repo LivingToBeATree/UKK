@@ -19,13 +19,13 @@ class PostCommentController extends Controller
      */
     public function index(Post $post): JsonResponse
     {
-        Gate::authorize('viewAny', $post);
+        Gate::authorize('view', $post);
 
-        $comments = $post->comment()
-        ->WhereNull('parent_comment_id')
-        ->with(['user', 'replies.user'])
-        ->latest()
-        ->paginate(10);
+        $comments = $post->comments()
+            ->whereNull('parent_comment_id')
+            ->with(['user', 'replies.user'])
+            ->latest()
+            ->paginate(10);
 
         return response()->json($comments);
     }

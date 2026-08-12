@@ -10,7 +10,7 @@ class StoreCommissionReviewRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('store', CommissionReview::class);
+        return $this->user()->can('create', [CommissionReview::class, $this->route('commission')]);
     }
 
     public function rules(): array
@@ -26,7 +26,7 @@ class StoreCommissionReviewRequest extends FormRequest
         ];
     }
 
-    public function withvalidator($validator): void
+    public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
             $commission = $this->route('commission');
@@ -35,7 +35,7 @@ class StoreCommissionReviewRequest extends FormRequest
                 $validator->errors()->add('rating', 'Only completed commissions can be reviewed.');
             }
 
-            if ($commission->review()->exist()) {
+            if ($commission->review()->exists()) {
                 $validator->errors()->add('rating', 'This commission already has a review.');
             }
         });
