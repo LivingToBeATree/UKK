@@ -68,10 +68,10 @@ class ReportController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified resource from storage. (now are comment)
      */
-    public function destroy(Report $report)
-    {
-        //
-    }
+    // public function destroy(Report $report)
+    // {
+    //     //
+    // }
 }
