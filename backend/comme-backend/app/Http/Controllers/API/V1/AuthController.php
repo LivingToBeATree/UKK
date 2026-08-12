@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Enum\UserRole;
-use App\Http\Requests\API\V1\LoginRequest;
-use App\Http\Requests\API\V1\RegisterRequest;
+use App\Http\Requests\API\V1\User\Auth\LoginRequest;
+use App\Http\Requests\API\V1\User\Auth\RegisterRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
