@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('artist_profile_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
             $table->unsignedTinyInteger('rating');
-            $table->string('title');
+            $table->string('title')->nullable();
             $table->text('comment')->nullable();
             $table->boolean('recommended')->default(false);
             $table->text('artist_reply')->nullable();
