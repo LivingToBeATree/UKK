@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->nullableMorphs('reportable');
             $table->string('reason');
-            $table->text('description');
+            $table->text('description')->nullable();
             $table->string('status')->default('pending');
             $table->foreignId('handled_by')->nullable()->constrained('users')->nullOnDelete();
             $table->dateTime('handled_at')->nullable();
