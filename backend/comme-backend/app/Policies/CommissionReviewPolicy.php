@@ -22,6 +22,11 @@ class CommissionReviewPolicy
     {
         return true;
     }
+
+    public function viewAny(User $user): bool
+    {
+        return true;
+    }
  
     /**
      * There's no CommissionReview instance yet — pass the target Commission
