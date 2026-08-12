@@ -8,7 +8,7 @@ class UpdateCommissionReviewRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('store', $this->route('review'));
+        return $this->user()->can('update', $this->route('review'));
     }
 
     public function rules(): array

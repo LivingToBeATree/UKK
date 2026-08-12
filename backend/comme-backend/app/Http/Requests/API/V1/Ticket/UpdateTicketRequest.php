@@ -17,7 +17,7 @@ class UpdateTicketRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'assined_to' => ['sometimes', 'nullable', 'exists:users,id'],
+            'assigned_to' => ['sometimes', 'nullable', 'exists:users,id'],
             'priority' => ['sometimes', new Enum(TicketPriority::class)],
 
             // closed_at is not editable here — see TicketController::close(),

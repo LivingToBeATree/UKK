@@ -26,7 +26,7 @@ class CommissionReviewController extends Controller
 
         $reviews = $artistProfile->reviews()
             ->with('user')
-            ->latets()
+            ->latest()
             ->paginate(20);
 
         return response()->json($reviews);

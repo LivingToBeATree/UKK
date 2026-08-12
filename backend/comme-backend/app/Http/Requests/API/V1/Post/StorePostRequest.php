@@ -19,7 +19,7 @@ class StorePostRequest extends FormRequest
     {
         return [
             'content' => ['required', 'string'],
-            'portfolio_id' => ['nullable','exists:portfolio,id'],
+            'portfolio_id' => ['nullable', 'exists:portfolios,id'],
             'visibility' => ['sometimes', new Enum(PostVisibilityType::class)],
             'commentable' => ['sometimes', 'boolean'],
 

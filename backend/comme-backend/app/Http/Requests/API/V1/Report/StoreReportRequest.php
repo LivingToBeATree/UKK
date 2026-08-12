@@ -58,19 +58,19 @@ class StoreReportRequest extends FormRequest
             $target = $modelClass::find($this->reportable_id);
 
             if (! $target) {
-                $validator->errors()->add(['reportable_id', 'That item could not be found.']);
+                $validator->errors()->add('reportable_id', 'That item could not be found.');
 
                 return;
             }
 
             if ($this->reportable_type === "user" && $target->id === $this->user()->id) {
-                $validator->errors()->add(['reportable_id', 'You cannot report yourself.']);
+                $validator->errors()->add('reportable_id', 'You cannot report yourself.');
 
                 return;
             }
 
             if (! $this->user()->can('view', $target)) {
-                $validator->errors()->add(['reportable_id', 'You cannot report something you do not have access to.']);
+                $validator->errors()->add('reportable_id', 'You cannot report something you do not have access to.');
             }
         });
     }
@@ -81,6 +81,6 @@ class StoreReportRequest extends FormRequest
      */
     public function resolveReportableType(): string
     {
-        return self::REPORTABLE_TYPE($this->reportable_type);
+        return self::REPORTABLE_TYPE[$this->reportable_type];
     }
 }

@@ -16,7 +16,7 @@ class UpdatePostRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'content' => ['sometiems', 'string'],
+            'content' => ['sometimes', 'string'],
             'visibility' => ['sometimes', new Enum(PostVisibilityType::class)],
             'commentable' => ['sometimes', 'boolean'],
 

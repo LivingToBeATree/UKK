@@ -43,7 +43,7 @@ class PostController extends Controller
     {
         Gate::authorize('view', $post);
 
-        return response()->json($post->load(['user', 'portofolio', 'media', 'tags']));
+        return response()->json($post->load(['user', 'portfolio', 'media', 'tags']));
     }
 
     /**
