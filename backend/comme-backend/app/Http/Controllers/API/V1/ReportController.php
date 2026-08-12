@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\API\V1;
 
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Http\JsonResponse;
-use App\Models\Report;
+use App\Enum\ReportStatus;
+use App\Enum\TicketPriority;
 use App\Http\Requests\API\V1\Report\StoreReportRequest;
 use App\Http\Requests\API\V1\Report\UpdateReportRequest;
+use App\Models\Report;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Gate;
 
 class ReportController extends Controller
 {
@@ -18,13 +20,17 @@ class ReportController extends Controller
     {
         Gate::authorize('viewAny', Report::class);
 
-        $reports = Report::with(['reporter', 'reportable'])->latest()->paginate(20);
+        $reports = Report::with(['reporter', 'reportable', 'ticket'])->latest()->paginate(20);
 
         return response()->json($reports);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * A Ticket is created automatically alongside every Report — per your
+     * spec, tickets are never created directly by users (TicketPolicy::
+     * create() is always false), so this is the one and only place a
+     * Ticket ever gets made. It starts unassigned (assigned_to null) and
+     * at normal priority; staff picks it up later via TicketController.
      */
     public function store(StoreReportRequest $request): JsonResponse
     {
@@ -34,11 +40,14 @@ class ReportController extends Controller
             'reason' => $request->reason,
             'description' => $request->description,
             'user_id' => $request->user()->id,
-            // status intentionally hardcoded, never taken from input.
-            'status' => \App\Enum\ReportStatus::PENDING,
+            'status' => ReportStatus::PENDING,
         ]);
 
-        return response()->json($report, 201);
+        $report->ticket()->create([
+            'priority' => TicketPriority::NORMAL,
+        ]);
+
+        return response()->json($report->load('ticket'), 201);
     }
 
     /**
@@ -48,7 +57,7 @@ class ReportController extends Controller
     {
         Gate::authorize('view', $report);
 
-        return response()->json($report->load(['reporter', 'reportable', 'handledBy']));
+        return response()->json($report->load(['reporter', 'reportable', 'handledBy', 'ticket']));
     }
 
     /**
