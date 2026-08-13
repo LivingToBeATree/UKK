@@ -31,7 +31,7 @@ class CommissionController extends Controller
             ->with(['commissionService', 'artistProfile', 'user'])
             ->paginate(20);
 
-        return response()->json(new CommissionResource($commissions));
+        return response()->json(CommissionResource::collection($commissions));
     }
 
     /**

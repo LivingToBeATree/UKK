@@ -23,7 +23,7 @@ class TicketController extends Controller
 
         $tickets = Ticket::with(['report', 'assignee'])->latest()->paginate(20);
 
-        return response()->json(new TicketResource($tickets));
+        return response()->json(TicketResource::collection($tickets));
     }
 
     /**

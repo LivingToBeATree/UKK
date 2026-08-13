@@ -20,7 +20,7 @@ class ArtistProfileController extends Controller
 
         $artistProfiles = ArtistProfile::with('user')->paginate(20);
 
-        return response()->json(new ArtistProfileResource($artistProfiles));
+        return response()->json(ArtistProfileResource::collection($artistProfiles));
     }
 
     /**

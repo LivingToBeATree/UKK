@@ -20,7 +20,7 @@ class PortfolioController extends Controller
 
         $portfolios = Portfolio::with(['artistProfile', 'thumbnailMedia'])->paginate(20);
 
-        return response()->json(new PortfolioResource($portfolios));
+        return response()->json(PortfolioResource::collection($portfolios));
     }
 
     /**

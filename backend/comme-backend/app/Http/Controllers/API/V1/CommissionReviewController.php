@@ -30,7 +30,7 @@ class CommissionReviewController extends Controller
             ->latest()
             ->paginate(20);
 
-        return response()->json(new CommissionReviewResource($reviews));
+        return response()->json(CommissionReviewResource::collection($reviews));
     }
 
     /**

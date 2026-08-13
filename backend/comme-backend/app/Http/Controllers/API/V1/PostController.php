@@ -20,7 +20,7 @@ class PostController extends Controller
 
         $posts = Post::with(['user', 'portfolio'])->paginate(20);
 
-        return response()->json(new PostResource($posts));
+        return response()->json(PostResource::collection($posts));
     }
 
     /**
