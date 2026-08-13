@@ -16,10 +16,10 @@ class CommissionServiceResource extends JsonResource
             'status' => $this->status?->value,
             'alt_text' => $this->alt_text,
 
-            'artist_profile_id' => new ArtistProfileResource($this->whenLoaded('aristProfile')),
-            'thumbnail_media_id' => new MediaResource($this->whenLoaded('thumbnailMedia')),
+            'artist_profile' => new ArtistProfileResource($this->whenLoaded('artistProfile')),
+            'thumbnail_media' => new MediaResource($this->whenLoaded('thumbnailMedia')),
             'media' => MediaResource::collection($this->whenLoaded('media')),
-            'option' => $this->whenLoaded('options'),
+            'options' => CommissionOptionResource::collection($this->whenLoaded('options')),
             'tags' => TagResource::collection($this->whenLoaded('tags')),
         ];
     }

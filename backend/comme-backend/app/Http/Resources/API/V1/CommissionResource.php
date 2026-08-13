@@ -19,11 +19,12 @@ class CommissionResource extends JsonResource
             // it can do math on directly, not something it has to parseFloat() itself.
             'total_price' => (float) $this->total_price,
 
-            'commission_service_id' => new CommissionResource($this->whenLoaded('commissionService')),
-            'commission_option_id' => $this->whenLoaded('commissionOption'),
-            'artist_profile_id' => new ArtistProfileResource($this->whenLoaded('artistProfile')),
+            'commission_service' => new CommissionResource($this->whenLoaded('commissionService')),
+            'commission_option' => new CommissionOptionResource($this->whenLoaded('commissionOption')),
+            'artist_profile' => new ArtistProfileResource($this->whenLoaded('artistProfile')),
             'user' => new UserResource($this->whenLoaded('user')),
             'review' => new CommissionReviewResource($this->whenLoaded('review')),
+            'messages' => new CommissionMessageResource($this->whenLoaded('messages')),
         ];
     }
 }
