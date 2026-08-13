@@ -46,7 +46,7 @@ class CommissionServiceController extends Controller
     {
         Gate::authorize('view', $commissionService);
 
-        return response()->json(new CommissionServiceResource($commissionService->load(['artistProfile', 'options', 'tags'])));
+        return response()->json(new CommissionServiceResource($commissionService->load(['artistProfile', 'thumbnailMedia', 'Media', 'options.addons', 'tags'])));
     }
 
     /**

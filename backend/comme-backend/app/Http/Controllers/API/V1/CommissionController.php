@@ -69,7 +69,7 @@ class CommissionController extends Controller
         Gate::authorize('view', $commission);
 
         return response()->json(
-            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages']))
+            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review']))
         );
     }
 
