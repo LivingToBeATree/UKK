@@ -19,7 +19,7 @@ class CommissionReviewResource extends JsonResource
             'artist_replied_at' => $this->artist_replied_at,
 
             'user' => new UserResource($this->whenLoaded('user')),
-            'artist_profile_id' => new ArtistProfileResource($this->whenLoaded('artistProfile')),
+            'artist_profile' => new ArtistProfileResource($this->whenLoaded('artistProfile')),
         ];
     }
 }

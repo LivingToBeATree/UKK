@@ -16,8 +16,8 @@ class PortfolioResource extends JsonResource
             'visibility' => $this->visibility?->value,
             'starred' => $this->starred,
 
-            'artist_profile_id' => new ArtistProfileResource($this->whenLoaded('artistProfile')),
-            'thumbnail_media_id' => new MediaResource($this->whenLoaded('thumbnailMedia')),
+            'artist_profile' => new ArtistProfileResource($this->whenLoaded('artistProfile')),
+            'thumbnail_media' => new MediaResource($this->whenLoaded('thumbnailMedia')),
             'media' => MediaResource::collection($this->whenLoaded('media')),
             'tags' => TagResource::collection($this->whenLoaded('tags')),
         ];
