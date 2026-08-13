@@ -9,6 +9,7 @@ use App\Http\Requests\API\V1\Report\UpdateReportRequest;
 use App\Http\Resources\API\V1\ReportResource;
 use App\Models\Report;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 class ReportController extends Controller
@@ -23,7 +24,7 @@ class ReportController extends Controller
 
         $reports = Report::with(['reporter', 'reportable', 'ticket'])->latest()->paginate(20);
 
-        return response()->json(new ReportResource($reports));
+        return response()->json(ReportResource::collection($reports));
     }
 
     /**
@@ -35,18 +36,22 @@ class ReportController extends Controller
      */
     public function store(StoreReportRequest $request): JsonResponse
     {
-        $report = Report::create([
-            'reportable_type' => $request->resolveReportableType(),
-            'reportable_id' => $request->reportable_id,
-            'reason' => $request->reason,
-            'description' => $request->description,
-            'user_id' => $request->user()->id,
-            'status' => ReportStatus::PENDING,
-        ]);
+        $report = DB::transaction(function () use ($request): Report {
+            $report = Report::create([
+                'reportable_type' => $request->resolveReportableClass(),
+                'reportable_id' => $request->reportable_id,
+                'reason' => $request->reason,
+                'description' => $request->description,
+                'user_id' => $request->user()->id,
+                'status' => ReportStatus::PENDING,
+            ]);
 
-        $report->ticket()->create([
-            'priority' => TicketPriority::NORMAL,
-        ]);
+            $report->ticket()->create([
+                'priority' => TicketPriority::NORMAL,
+            ]);
+
+            return $report;
+        });
 
         return response()->json(new ReportResource($report->load('ticket')), 201);
     }
