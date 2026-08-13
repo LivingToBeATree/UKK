@@ -41,7 +41,7 @@ class ArtistProfileController extends Controller
         ]);
 
         return ApiResponseHelper::successResponse(
-            new ArtistProfileResource($artistProfile),
+            new ArtistProfileResource($artistProfile->load('user')),
             'Artist profile created successfully.',
             Response::HTTP_CREATED,
         );
@@ -68,7 +68,7 @@ class ArtistProfileController extends Controller
         $artistProfile->update($request->validated());
 
         return ApiResponseHelper::successResponse(
-            new ArtistProfileResource($artistProfile),
+            new ArtistProfileResource($artistProfile->load('user')),
             'Artist profile updated successfully.',
         );
     }

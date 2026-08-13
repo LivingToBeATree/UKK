@@ -68,7 +68,7 @@ class TicketController extends Controller
         $ticket->update($data);
 
         return ApiResponseHelper::successResponse(
-            new TicketResource($ticket),
+            new TicketResource($ticket->load(['report', 'assignee', 'messages.user', 'moderationActions'])),
             'Ticket updated successfully.',
         );
     }
@@ -80,7 +80,7 @@ class TicketController extends Controller
         $ticket->update(['closed_at' => now()]);
 
         return ApiResponseHelper::successResponse(
-            new TicketResource($ticket),
+            new TicketResource($ticket->load(['report', 'assignee', 'messages.user', 'moderationActions'])),
             'Ticket closed successfully.',
         );
     }

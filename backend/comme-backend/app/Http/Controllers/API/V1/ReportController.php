@@ -59,7 +59,7 @@ class ReportController extends Controller
         });
 
         return ApiResponseHelper::successResponse(
-            new ReportResource($report->load('ticket')),
+            new ReportResource($report->load(['reporter', 'reportable', 'handledBy', 'ticket'])),
             'Report submitted successfully.',
             Response::HTTP_CREATED
         );
@@ -92,7 +92,7 @@ class ReportController extends Controller
         ]);
 
         return ApiResponseHelper::successResponse(
-            new ReportResource($report),
+            new ReportResource($report->load(['reporter', 'reportable', 'handledBy', 'ticket'])),
             'Report updated successfully.',
         );
     }

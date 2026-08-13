@@ -47,7 +47,7 @@ class PostCommentController extends Controller
         ]);
 
         return ApiResponseHelper::successResponse(
-            new PostCommentResource($comment),
+            new PostCommentResource($comment->load(['user', 'replies.user'])),
             'Comment created successfully.',
             Response::HTTP_CREATED,
         );
@@ -74,7 +74,7 @@ class PostCommentController extends Controller
         $comment->update($request->validated());
 
         return ApiResponseHelper::successResponse(
-            new PostCommentResource($comment),
+            new PostCommentResource($comment->load(['user', 'replies.user'])),
             'Comment updated successfully.',
         );
     }

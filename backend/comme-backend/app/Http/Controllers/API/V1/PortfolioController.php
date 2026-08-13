@@ -39,7 +39,7 @@ class PortfolioController extends Controller
         ]);
 
         return ApiResponseHelper::successResponse(
-            new PortfolioResource($portfolio),
+            new PortfolioResource($portfolio->load(['artistProfile', 'thumbnailMedia', 'media', 'tags'])),
             'Portfolio created successfully.',
             Response::HTTP_CREATED,
         );
@@ -68,7 +68,7 @@ class PortfolioController extends Controller
         $portfolio->update($request->validated());
 
         return ApiResponseHelper::successResponse(
-            new PortfolioResource($portfolio),
+            new PortfolioResource($portfolio->load(['artistProfile', 'thumbnailMedia', 'media', 'tags'])),
             'Portfolio updated successfully.',
         );
     }

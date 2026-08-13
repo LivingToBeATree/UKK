@@ -49,7 +49,7 @@ class CommissionReviewController extends Controller
         ]);
 
         return ApiResponseHelper::successResponse(
-            new CommissionReviewResource($review),
+            new CommissionReviewResource($review->load(['user', 'artistProfile'])),
             'Review created successfully.',
             Response::HTTP_CREATED,
         );
@@ -76,7 +76,7 @@ class CommissionReviewController extends Controller
         $review->update($request->validated());
 
         return ApiResponseHelper::successResponse(
-            new CommissionReviewResource($review),
+            new CommissionReviewResource($review->load(['user', 'artistProfile'])),
             'Review updated successfully.',
         );
     }
@@ -106,7 +106,7 @@ class CommissionReviewController extends Controller
         ]);
 
         return ApiResponseHelper::successResponse(
-            new CommissionReviewResource($review),
+            new CommissionReviewResource($review->load(['user', 'artistProfile'])),
             'Reply posted successfully.'
         );
     }

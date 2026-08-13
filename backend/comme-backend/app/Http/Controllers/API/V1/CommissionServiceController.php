@@ -42,7 +42,7 @@ class CommissionServiceController extends Controller
         ]);
 
         return ApiResponseHelper::successResponse(
-            new CommissionServiceResource($commissionService),
+            new CommissionServiceResource($commissionService->load(['artistProfile', 'thumbnailMedia', 'media', 'options.addons', 'tags'])),
             'Commission service created successfully.',
             Response::HTTP_CREATED,
         );
@@ -71,7 +71,7 @@ class CommissionServiceController extends Controller
         $commissionService->update($request->validated());
 
         return ApiResponseHelper::successResponse(
-            new CommissionServiceResource($commissionService),
+            new CommissionServiceResource($commissionService->load(['artistProfile', 'thumbnailMedia', 'media', 'options.addons', 'tags'])),
             'Commission service updated successfully.',
         );
     }

@@ -39,7 +39,7 @@ class PostController extends Controller
         ]);
 
         return ApiResponseHelper::successResponse(
-            new PostResource($post),
+            new PostResource($post->load(['user', 'portfolio', 'media', 'tags'])),
             'Post created successfully.',
             Response::HTTP_CREATED,
         );
@@ -67,8 +67,8 @@ class PostController extends Controller
         $post->update($request->validated());
 
         return ApiResponseHelper::successResponse(
-            new PostResource($post),
-            'Post retrieved successfully.',
+            new PostResource($post->load(['user', 'portfolio', 'media', 'tags'])),
+            'Post updated successfully.',
         );
     }
 

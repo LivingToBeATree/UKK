@@ -64,7 +64,7 @@ class CommissionController extends Controller
         ]);
 
         return ApiResponseHelper::successResponse(
-            new CommissionResource($commission),
+            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review'])),
             'Commission created successfully.',
             Response::HTTP_CREATED,
         );
@@ -92,7 +92,7 @@ class CommissionController extends Controller
         $commission->update($request->validated());
 
         return ApiResponseHelper::successResponse(
-            new CommissionResource($commission),
+            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review'])),
             'Commission updated successfully.'
         );
     }
@@ -116,7 +116,7 @@ class CommissionController extends Controller
         $commission->update(['status' => CommissionStatus::CANCELLED]);
 
         return ApiResponseHelper::successResponse(
-            new CommissionResource($commission),
+            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review'])),
             'Commission cancelled successfully.'
         );
     }
@@ -126,7 +126,7 @@ class CommissionController extends Controller
         $commission->update($request->validated());
 
         return ApiResponseHelper::successResponse(
-            new CommissionResource($commission),
+            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review'])),
             'Commission deadline updated successfully.'
         );
     }
