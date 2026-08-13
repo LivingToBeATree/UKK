@@ -19,7 +19,7 @@ class PostResource extends JsonResource
             'bookmarks_count' => $this->bookmarks_count,
 
             'user' => new UserResource($this->whenLoaded('user')),
-            'portfolio' => new PortfolioResource($this->whenLoaded('porfolio')),
+            'portfolio' => new PortfolioResource($this->whenLoaded('portfolio')),
             'media' => MediaResource::collection($this->whenLoaded('media')),
             'tags' => TagResource::collection($this->whenLoaded('tags')),
         ];
