@@ -79,7 +79,7 @@ class StoreReportRequest extends FormRequest
      * Resolves the friendly type name into the real class — the
      * controller calls this instead of re-doing the lookup itself.
      */
-    public function resolveReportableType(): string
+    public function resolveReportableClass(): string
     {
         return self::REPORTABLE_TYPES[$this->reportable_type];
     }
