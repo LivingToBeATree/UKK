@@ -15,7 +15,7 @@ use App\Enum\ReportReason;
 
 class StoreReportRequest extends FormRequest
 {
-    public const REPORTABLE_TYPE = [
+    public const REPORTABLE_TYPES = [
         'post' => Post::class,
         'post_comment' => PostComment::class,
         'commission_review' => CommissionReview::class,
@@ -31,7 +31,7 @@ class StoreReportRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'reportable_type' => ['required', Rule::in(array_keys(self::REPORTABLE_TYPE))],
+            'reportable_type' => ['required', Rule::in(array_keys(self::REPORTABLE_TYPES))],
             'reportable_id' => ['required', 'integer'],
             'reason' => ['required', new Enum(ReportReason::class)],
             'description' => ['nullable', 'string', 'max:1000'],
@@ -49,7 +49,7 @@ class StoreReportRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            $modelClass = self::REPORTABLE_TYPE[$this->reportable_type] ?? null;
+            $modelClass = self::REPORTABLE_TYPES[$this->reportable_type] ?? null;
 
             if (! $modelClass) {
                 return; // already caught by the Rule::in check above
@@ -81,6 +81,6 @@ class StoreReportRequest extends FormRequest
      */
     public function resolveReportableType(): string
     {
-        return self::REPORTABLE_TYPE[$this->reportable_type];
+        return self::REPORTABLE_TYPES[$this->reportable_type];
     }
 }
