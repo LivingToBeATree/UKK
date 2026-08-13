@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Http\Requests\API\V1\PostComment\StorePostCommentRequest;
 use App\Http\Requests\API\V1\PostComment\UpdatePostCommentRequest;
+use App\Http\Resources\API\V1\PostCommentResource;
 use App\Models\Post;
 use App\Models\PostComment;
 use Illuminate\Http\JsonResponse;
@@ -27,7 +28,7 @@ class PostCommentController extends Controller
             ->latest()
             ->paginate(10);
 
-        return response()->json($comments);
+        return response()->json(new PostCommentResource($comments));
     }
 
     /**
@@ -40,7 +41,7 @@ class PostCommentController extends Controller
             'user_id' => $request->user()->id,
         ]);
 
-        return response()->json($comment);
+        return response()->json(new PostCommentResource($comment), 201);
     }
 
     /**
@@ -50,7 +51,7 @@ class PostCommentController extends Controller
     {
         Gate::authorize('view', $comment);
 
-        return response()->json($comment->load(['user', 'replies.user']));
+        return response()->json(new PostCommentResource($comment->load(['user', 'replies.user'])));
     }
 
     /**
@@ -60,7 +61,7 @@ class PostCommentController extends Controller
     {
         $comment->update($request->validated());
 
-        return response()->json($comment);
+        return response()->json(new PostCommentResource($comment));
     }
 
     /**

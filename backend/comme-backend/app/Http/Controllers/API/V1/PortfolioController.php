@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V1;
 use App\Models\Portfolio;
 use App\Http\Requests\API\V1\Portfolio\StorePortfolioRequest;
 use App\Http\Requests\API\V1\Portfolio\UpdatePortfolioRequest;
+use App\Http\Resources\API\V1\PortfolioResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
 
@@ -19,7 +20,7 @@ class PortfolioController extends Controller
 
         $portfolios = Portfolio::with(['artistProfile', 'thumbnailMedia'])->paginate(20);
 
-        return response()->json($portfolios);
+        return response()->json(new PortfolioResource($portfolios));
     }
 
     /**
@@ -32,7 +33,7 @@ class PortfolioController extends Controller
             'artist_profile_id' => $request->user()->artistProfile->id,
         ]);
 
-        return response()->json($portfolio);
+        return response()->json(new PortfolioResource($portfolio), 201);
     }
 
     /**
@@ -44,7 +45,7 @@ class PortfolioController extends Controller
     {
         Gate::authorize('view', $portfolio);
 
-        return response()->json($portfolio->load(['artistProfile', 'thumbnailMedia', 'media', 'tags']));
+        return response()->json(new PortfolioResource($portfolio->load(['artistProfile', 'thumbnailMedia', 'media', 'tags'])));
     }
 
     /**
@@ -54,7 +55,7 @@ class PortfolioController extends Controller
     {
         $portfolio->update($request->validated());
 
-        return response()->json($portfolio);
+        return response()->json(new PortfolioResource($portfolio));
     }
 
     /**

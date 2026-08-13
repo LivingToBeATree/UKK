@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V1;
 use App\Models\ArtistProfile;
 use App\Http\Requests\API\V1\ArtistProfile\StoreArtistProfileRequest;
 use App\Http\Requests\API\V1\ArtistProfile\UpdateArtistProfileRequest;
+use App\Http\Resources\API\V1\ArtistProfileResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
 
@@ -19,7 +20,7 @@ class ArtistProfileController extends Controller
 
         $artistProfiles = ArtistProfile::with('user')->paginate(20);
 
-        return response()->json($artistProfiles);
+        return response()->json(new ArtistProfileResource($artistProfiles));
     }
 
     /**
@@ -34,7 +35,7 @@ class ArtistProfileController extends Controller
             'user_id' => $request->user()->id,
         ]);
 
-        return response()->json($artistProfile, 201);
+        return response()->json(new ArtistProfileResource($artistProfile), 201);
     }
 
     /**
@@ -44,7 +45,7 @@ class ArtistProfileController extends Controller
     {
         Gate::authorize('view', $artistProfile);
 
-        return response()->json($artistProfile->load('user'));
+        return response()->json(new ArtistProfileResource($artistProfile->load('user')));
     }
 
     /**
@@ -54,7 +55,7 @@ class ArtistProfileController extends Controller
     {
         $artistProfile->update($request->validated());
 
-        return response()->json($artistProfile);
+        return response()->json(new ArtistProfileResource($artistProfile));
     }
 
     /**

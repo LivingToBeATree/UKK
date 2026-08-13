@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V1;
 use App\Enum\UserRole;
 use App\Http\Requests\API\V1\User\Auth\LoginRequest;
 use App\Http\Requests\API\V1\User\Auth\RegisterRequest;
+use App\Http\Resources\API\V1\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -25,18 +26,18 @@ class AuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return response()->json(['user' => $user], 201);
+        return response()->json(['user' => new UserResource($user)], 201);
     }
 
     public function login(LoginRequest $request): JsonResponse
     {
         if (! Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
-            return response()->json(['message'=> 'Invalid Credential'], 401);
+            return response()->json(['message' => 'Invalid Credential'], 401);
         }
 
         $request->session()->regenerate();
 
-        return response()->json(['user'=> Auth::user()]);
+        return response()->json(['user' => new UserResource(Auth::user())]);
     }
 
     public function logout(Request $request): JsonResponse
@@ -46,11 +47,11 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerate();
 
-        return response()->json(['message'=> 'Logged out']);
+        return response()->json(['message' => 'Logged out']);
     }
 
     public function me(Request $request): JsonResponse
     {
-        return response()->json(['user'=> $request->user()]);
+        return response()->json(['user' => new UserResource($request->user())]);
     }
 }

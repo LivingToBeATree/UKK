@@ -6,6 +6,7 @@ use App\Enum\CommissionStatus;
 use App\Http\Requests\API\V1\Commission\StoreCommissionRequest;
 use App\Http\Requests\API\V1\Commission\UpdateCommissionDeadlineRequest;
 use App\Http\Requests\API\V1\Commission\UpdateCommissionRequest;
+use App\Http\Resources\API\V1\CommissionResource;
 use App\Models\Commission;
 use App\Models\CommissionOption;
 use App\Models\CommissionService;
@@ -30,7 +31,7 @@ class CommissionController extends Controller
             ->with(['commissionService', 'artistProfile', 'user'])
             ->paginate(20);
 
-        return response()->json($commissions);
+        return response()->json(new CommissionResource($commissions));
     }
 
     /**
@@ -57,7 +58,7 @@ class CommissionController extends Controller
             'total_price' => $option->base_price ?? 0,
         ]);
 
-        return response()->json($commission, 201);
+        return response()->json(new CommissionResource($commission), 201);
     }
 
     /**
@@ -68,7 +69,7 @@ class CommissionController extends Controller
         Gate::authorize('view', $commission);
 
         return response()->json(
-            $commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages'])
+            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages']))
         );
     }
 
@@ -79,7 +80,7 @@ class CommissionController extends Controller
     {
         $commission->update($request->validated());
 
-        return response()->json($commission);
+        return response()->json(new CommissionResource($commission));
     }
 
     /**
@@ -90,6 +91,9 @@ class CommissionController extends Controller
      */
 
     //public function destroy(Commission $commission)
+    //  {
+    //      return false
+    //  }
 
     public function cancel(Commission $commission): JsonResponse
     {
@@ -97,13 +101,13 @@ class CommissionController extends Controller
 
         $commission->update(['status' => CommissionStatus::CANCELLED]);
 
-        return response()->json($commission);
+        return response()->json(new CommissionResource($commission));
     }
 
     public function updateDeadline(UpdateCommissionDeadlineRequest $request, Commission $commission): JsonResponse
     {
         $commission->update($request->validated());
 
-        return response()->json($commission);
+        return response()->json(new CommissionResource($commission));
     }
 }

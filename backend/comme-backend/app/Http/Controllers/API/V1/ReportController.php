@@ -6,6 +6,7 @@ use App\Enum\ReportStatus;
 use App\Enum\TicketPriority;
 use App\Http\Requests\API\V1\Report\StoreReportRequest;
 use App\Http\Requests\API\V1\Report\UpdateReportRequest;
+use App\Http\Resources\API\V1\ReportResource;
 use App\Models\Report;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
@@ -22,7 +23,7 @@ class ReportController extends Controller
 
         $reports = Report::with(['reporter', 'reportable', 'ticket'])->latest()->paginate(20);
 
-        return response()->json($reports);
+        return response()->json(new ReportResource($reports));
     }
 
     /**
@@ -47,7 +48,7 @@ class ReportController extends Controller
             'priority' => TicketPriority::NORMAL,
         ]);
 
-        return response()->json($report->load('ticket'), 201);
+        return response()->json(new ReportResource($report->load('ticket')), 201);
     }
 
     /**
@@ -57,7 +58,7 @@ class ReportController extends Controller
     {
         Gate::authorize('view', $report);
 
-        return response()->json($report->load(['reporter', 'reportable', 'handledBy', 'ticket']));
+        return response()->json(new ReportResource($report->load(['reporter', 'reportable', 'handledBy', 'ticket'])));
     }
 
     /**
@@ -73,7 +74,7 @@ class ReportController extends Controller
             'handled_at' => now(),
         ]);
 
-        return response()->json($report);
+        return response()->json(new ReportResource($report));
     }
 
     /**

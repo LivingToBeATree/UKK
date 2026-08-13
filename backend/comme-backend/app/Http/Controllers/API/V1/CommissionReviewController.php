@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API\V1;
 
+use App\Http\Resources\API\V1\CommissionReviewResource;
 use App\Models\CommissionReview;
 use App\Models\ArtistProfile;
 use App\Models\Commission;
@@ -29,7 +30,7 @@ class CommissionReviewController extends Controller
             ->latest()
             ->paginate(20);
 
-        return response()->json($reviews);
+        return response()->json(new CommissionReviewResource($reviews));
     }
 
     /**
@@ -44,7 +45,7 @@ class CommissionReviewController extends Controller
             'user_id' => $request->user()->id,
         ]);
 
-        return response()->json($review, 201);
+        return response()->json(new CommissionReviewResource($review), 201);
     }
 
     /**
@@ -54,7 +55,7 @@ class CommissionReviewController extends Controller
     {
         Gate::authorize('view', $review);
 
-        return response()->json($review->load(['user', 'artistProfile']));
+        return response()->json(new CommissionReviewResource($review->load(['user', 'artistProfile'])));
     }
 
     /**
@@ -64,7 +65,7 @@ class CommissionReviewController extends Controller
     {
         $review->update($request->validated());
 
-        return response()->json($review);
+        return response()->json(new CommissionReviewResource($review));
     }
 
     /**
@@ -91,6 +92,6 @@ class CommissionReviewController extends Controller
             'artist_replied_at' => now(),
         ]);
 
-        return response()->json($review);
+        return response()->json(new CommissionReviewResource($review));
     }
 }

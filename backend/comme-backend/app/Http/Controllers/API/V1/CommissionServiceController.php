@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API\V1;
 
+use App\Http\Resources\API\V1\CommissionServiceResource;
 use App\Models\CommissionService;
 use App\Http\Requests\API\V1\CommissionService\StoreCommissionServiceRequest;
 use App\Http\Requests\API\V1\CommissionService\UpdateCommissionServiceRequest;
@@ -19,7 +20,7 @@ class CommissionServiceController extends Controller
 
         $commissionServices = CommissionService::with('artistProfile')->paginate(20);
 
-        return response()->json($commissionServices);
+        return response()->json(new CommissionServiceResource($commissionServices));
     }
 
     /**
@@ -35,7 +36,7 @@ class CommissionServiceController extends Controller
             'artist_profile_id' => $request->user()->artistProfile->id,
         ]);
 
-        return response()->json($commissionService, 201);
+        return response()->json(new CommissionServiceResource($commissionService), 201);
     }
 
     /**
@@ -45,7 +46,7 @@ class CommissionServiceController extends Controller
     {
         Gate::authorize('view', $commissionService);
 
-        return response()->json($commissionService->load(['artistProfile', 'options', 'tags']));
+        return response()->json(new CommissionServiceResource($commissionService->load(['artistProfile', 'options', 'tags'])));
     }
 
     /**
@@ -55,7 +56,7 @@ class CommissionServiceController extends Controller
     {
         $commissionService->update($request->validated());
 
-        return response()->json($commissionService);
+        return response()->json(new CommissionServiceResource($commissionService));
     }
 
     /**
