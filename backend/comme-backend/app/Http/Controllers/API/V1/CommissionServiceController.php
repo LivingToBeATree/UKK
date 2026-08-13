@@ -6,7 +6,9 @@ use App\Http\Resources\API\V1\CommissionServiceResource;
 use App\Models\CommissionService;
 use App\Http\Requests\API\V1\CommissionService\StoreCommissionServiceRequest;
 use App\Http\Requests\API\V1\CommissionService\UpdateCommissionServiceRequest;
+use App\Http\Helpers\ApiResponseHelper;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 
 class CommissionServiceController extends Controller
@@ -20,7 +22,10 @@ class CommissionServiceController extends Controller
 
         $commissionServices = CommissionService::with('artistProfile')->paginate(20);
 
-        return response()->json(CommissionServiceResource::collection($commissionServices));
+        return ApiResponseHelper::successResponse(
+            CommissionServiceResource::collection($commissionServices),
+            'Commission services retrieved successfully.',
+        );
     }
 
     /**
@@ -36,7 +41,11 @@ class CommissionServiceController extends Controller
             'artist_profile_id' => $request->user()->artistProfile->id,
         ]);
 
-        return response()->json(new CommissionServiceResource($commissionService), 201);
+        return ApiResponseHelper::successResponse(
+            new CommissionServiceResource($commissionService),
+            'Commission service created successfully.',
+            Response::HTTP_CREATED,
+        );
     }
 
     /**
@@ -46,7 +55,12 @@ class CommissionServiceController extends Controller
     {
         Gate::authorize('view', $commissionService);
 
-        return response()->json(new CommissionServiceResource($commissionService->load(['artistProfile', 'thumbnailMedia', 'media', 'options.addons', 'tags'])));
+        return ApiResponseHelper::successResponse(
+            new CommissionServiceResource(
+                $commissionService->load(['artistProfile', 'thumbnailMedia', 'media', 'options.addons', 'tags'])
+            ),
+            'Commission service retrieved successfully.'
+        );
     }
 
     /**
@@ -56,7 +70,10 @@ class CommissionServiceController extends Controller
     {
         $commissionService->update($request->validated());
 
-        return response()->json(new CommissionServiceResource($commissionService));
+        return ApiResponseHelper::successResponse(
+            new CommissionServiceResource($commissionService),
+            'Commission service updated successfully.',
+        );
     }
 
     /**
@@ -68,6 +85,6 @@ class CommissionServiceController extends Controller
 
         $commissionService->delete();
 
-        return response()->json(null, 204);
+        return ApiResponseHelper::successResponse(message: 'Commission service deleted successfully.');
     }
 }

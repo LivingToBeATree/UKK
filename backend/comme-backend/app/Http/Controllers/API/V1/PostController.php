@@ -6,7 +6,9 @@ use App\Http\Resources\API\V1\PostResource;
 use App\Models\Post;
 use App\Http\Requests\API\V1\Post\StorePostRequest;
 use App\Http\Requests\API\V1\Post\UpdatePostRequest;
+use App\Http\Helpers\ApiResponseHelper;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 
 class PostController extends Controller
@@ -20,7 +22,10 @@ class PostController extends Controller
 
         $posts = Post::with(['user', 'portfolio'])->paginate(20);
 
-        return response()->json(PostResource::collection($posts));
+        return ApiResponseHelper::successResponse(
+            PostResource::collection($posts),
+            'Posts retrieved successfully.',
+        );
     }
 
     /**
@@ -33,7 +38,11 @@ class PostController extends Controller
             'user_id' => $request->user()->id,
         ]);
 
-        return response()->json(new PostResource($post), 201);
+        return ApiResponseHelper::successResponse(
+            new PostResource($post),
+            'Post created successfully.',
+            Response::HTTP_CREATED,
+        );
     }
 
     /**
@@ -44,7 +53,10 @@ class PostController extends Controller
     {
         Gate::authorize('view', $post);
 
-        return response()->json(new PostResource($post->load(['user', 'portfolio', 'media', 'tags'])));
+        return ApiResponseHelper::successResponse(
+            new PostResource($post->load(['user', 'portfolio', 'media', 'tags'])),
+            'Post retrieved successfully.',
+        );
     }
 
     /**
@@ -54,7 +66,10 @@ class PostController extends Controller
     {
         $post->update($request->validated());
 
-        return response()->json(new PostResource($post));
+        return ApiResponseHelper::successResponse(
+            new PostResource($post),
+            'Post retrieved successfully.',
+        );
     }
 
     /**
@@ -66,6 +81,6 @@ class PostController extends Controller
 
         $post->delete();
 
-        return response()->json(null, 204);
+        return ApiResponseHelper::successResponse(message: 'Post deleted successfully.');
     }
 }

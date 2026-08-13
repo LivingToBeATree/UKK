@@ -6,7 +6,9 @@ use App\Models\Portfolio;
 use App\Http\Requests\API\V1\Portfolio\StorePortfolioRequest;
 use App\Http\Requests\API\V1\Portfolio\UpdatePortfolioRequest;
 use App\Http\Resources\API\V1\PortfolioResource;
+use App\Http\Helpers\ApiResponseHelper;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 
 class PortfolioController extends Controller
@@ -20,7 +22,10 @@ class PortfolioController extends Controller
 
         $portfolios = Portfolio::with(['artistProfile', 'thumbnailMedia'])->paginate(20);
 
-        return response()->json(PortfolioResource::collection($portfolios));
+        return ApiResponseHelper::successResponse(
+            PortfolioResource::collection($portfolios),
+            'Portfolios retrieved successfully.',
+        );
     }
 
     /**
@@ -33,7 +38,11 @@ class PortfolioController extends Controller
             'artist_profile_id' => $request->user()->artistProfile->id,
         ]);
 
-        return response()->json(new PortfolioResource($portfolio), 201);
+        return ApiResponseHelper::successResponse(
+            new PortfolioResource($portfolio),
+            'Portfolio created successfully.',
+            Response::HTTP_CREATED,
+        );
     }
 
     /**
@@ -45,7 +54,10 @@ class PortfolioController extends Controller
     {
         Gate::authorize('view', $portfolio);
 
-        return response()->json(new PortfolioResource($portfolio->load(['artistProfile', 'thumbnailMedia', 'media', 'tags'])));
+        return ApiResponseHelper::successResponse(
+            new PortfolioResource($portfolio->load(['artistProfile', 'thumbnailMedia', 'media', 'tags'])),
+            'Portfolio retrieved successfully.'
+        );
     }
 
     /**
@@ -55,7 +67,10 @@ class PortfolioController extends Controller
     {
         $portfolio->update($request->validated());
 
-        return response()->json(new PortfolioResource($portfolio));
+        return ApiResponseHelper::successResponse(
+            new PortfolioResource($portfolio),
+            'Portfolio updated successfully.',
+        );
     }
 
     /**
@@ -67,6 +82,6 @@ class PortfolioController extends Controller
 
         $portfolio->delete();
 
-        return response()->json(null, 204);
+        return ApiResponseHelper::successResponse(message: 'Portfolio deleted successfully.');
     }
 }

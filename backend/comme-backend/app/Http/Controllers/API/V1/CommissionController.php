@@ -7,9 +7,11 @@ use App\Http\Requests\API\V1\Commission\StoreCommissionRequest;
 use App\Http\Requests\API\V1\Commission\UpdateCommissionDeadlineRequest;
 use App\Http\Requests\API\V1\Commission\UpdateCommissionRequest;
 use App\Http\Resources\API\V1\CommissionResource;
+use App\Http\Helpers\ApiResponseHelper;
 use App\Models\Commission;
 use App\Models\CommissionOption;
 use App\Models\CommissionService;
+use Illuminate\Http\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
 
@@ -31,7 +33,10 @@ class CommissionController extends Controller
             ->with(['commissionService', 'artistProfile', 'user'])
             ->paginate(20);
 
-        return response()->json(CommissionResource::collection($commissions));
+        return ApiResponseHelper::successResponse(
+            CommissionResource::collection($commissions),
+            'Commissions retrieved successfully.',
+        );
     }
 
     /**
@@ -58,7 +63,11 @@ class CommissionController extends Controller
             'total_price' => $option->base_price ?? 0,
         ]);
 
-        return response()->json(new CommissionResource($commission), 201);
+        return ApiResponseHelper::successResponse(
+            new CommissionResource($commission),
+            'Commission created successfully.',
+            Response::HTTP_CREATED,
+        );
     }
 
     /**
@@ -68,8 +77,10 @@ class CommissionController extends Controller
     {
         Gate::authorize('view', $commission);
 
-        return response()->json(
-            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review']))
+        return ApiResponseHelper::successResponse(
+            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review'])
+            ),
+            'Commission retrieved successfully.',
         );
     }
 
@@ -80,7 +91,10 @@ class CommissionController extends Controller
     {
         $commission->update($request->validated());
 
-        return response()->json(new CommissionResource($commission));
+        return ApiResponseHelper::successResponse(
+            new CommissionResource($commission),
+            'Commission updated successfully.'
+        );
     }
 
     /**
@@ -101,13 +115,19 @@ class CommissionController extends Controller
 
         $commission->update(['status' => CommissionStatus::CANCELLED]);
 
-        return response()->json(new CommissionResource($commission));
+        return ApiResponseHelper::successResponse(
+            new CommissionResource($commission),
+            'Commission cancelled successfully.'
+        );
     }
 
     public function updateDeadline(UpdateCommissionDeadlineRequest $request, Commission $commission): JsonResponse
     {
         $commission->update($request->validated());
 
-        return response()->json(new CommissionResource($commission));
+        return ApiResponseHelper::successResponse(
+            new CommissionResource($commission),
+            'Commission deadline updated successfully.'
+        );
     }
 }

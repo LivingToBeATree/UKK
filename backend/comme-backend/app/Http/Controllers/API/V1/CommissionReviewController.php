@@ -9,7 +9,9 @@ use App\Models\Commission;
 use App\Http\Requests\API\V1\CommissionReview\StoreCommissionReviewRequest;
 use App\Http\Requests\API\V1\CommissionReview\UpdateCommissionReviewRequest;
 use App\Http\Requests\API\V1\CommissionReview\ReplyCommissionReviewRequest;
+use App\Http\Helpers\ApiResponseHelper;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 
 class CommissionReviewController extends Controller
@@ -23,14 +25,15 @@ class CommissionReviewController extends Controller
      */
     public function index(ArtistProfile $artistProfile): JsonResponse
     {
-        Gate::authorize('viewAny', CommissionReview::class);
-
         $reviews = $artistProfile->reviews()
             ->with('user')
             ->latest()
             ->paginate(20);
 
-        return response()->json(CommissionReviewResource::collection($reviews));
+        return ApiResponseHelper::successResponse(
+            CommissionReviewResource::collection($reviews),
+            'Reviews retrieved successfully.'
+        );
     }
 
     /**
@@ -45,7 +48,11 @@ class CommissionReviewController extends Controller
             'user_id' => $request->user()->id,
         ]);
 
-        return response()->json(new CommissionReviewResource($review), 201);
+        return ApiResponseHelper::successResponse(
+            new CommissionReviewResource($review),
+            'Review created successfully.',
+            Response::HTTP_CREATED,
+        );
     }
 
     /**
@@ -55,7 +62,10 @@ class CommissionReviewController extends Controller
     {
         Gate::authorize('view', $review);
 
-        return response()->json(new CommissionReviewResource($review->load(['user', 'artistProfile'])));
+        return ApiResponseHelper::successResponse(
+            new CommissionReviewResource($review->load(['user', 'artistProfile'])),
+            'Review retrieved successfully.'
+        );
     }
 
     /**
@@ -65,7 +75,10 @@ class CommissionReviewController extends Controller
     {
         $review->update($request->validated());
 
-        return response()->json(new CommissionReviewResource($review));
+        return ApiResponseHelper::successResponse(
+            new CommissionReviewResource($review),
+            'Review updated successfully.',
+        );
     }
 
     /**
@@ -77,7 +90,7 @@ class CommissionReviewController extends Controller
 
         $review->delete();
 
-        return response()->json(null, 204);
+        return ApiResponseHelper::successResponse(message: 'Review deleted successfully.');
     }
 
     /**
@@ -92,6 +105,9 @@ class CommissionReviewController extends Controller
             'artist_replied_at' => now(),
         ]);
 
-        return response()->json(new CommissionReviewResource($review));
+        return ApiResponseHelper::successResponse(
+            new CommissionReviewResource($review),
+            'Reply posted successfully.'
+        );
     }
 }

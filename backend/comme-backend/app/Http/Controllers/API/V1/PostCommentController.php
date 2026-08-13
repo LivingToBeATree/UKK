@@ -7,7 +7,9 @@ use App\Http\Requests\API\V1\PostComment\UpdatePostCommentRequest;
 use App\Http\Resources\API\V1\PostCommentResource;
 use App\Models\Post;
 use App\Models\PostComment;
+use App\Http\Helpers\ApiResponseHelper;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 
 class PostCommentController extends Controller
@@ -28,7 +30,10 @@ class PostCommentController extends Controller
             ->latest()
             ->paginate(20);
 
-        return response()->json(PostCommentResource::collection($comments));
+        return ApiResponseHelper::successResponse(
+            PostCommentResource::collection($comments),
+            'Comments retrieved successfully.',
+        );
     }
 
     /**
@@ -41,7 +46,11 @@ class PostCommentController extends Controller
             'user_id' => $request->user()->id,
         ]);
 
-        return response()->json(new PostCommentResource($comment), 201);
+        return ApiResponseHelper::successResponse(
+            new PostCommentResource($comment),
+            'Comment created successfully.',
+            Response::HTTP_CREATED,
+        );
     }
 
     /**
@@ -51,7 +60,10 @@ class PostCommentController extends Controller
     {
         Gate::authorize('view', $comment);
 
-        return response()->json(new PostCommentResource($comment->load(['user', 'replies.user'])));
+        return ApiResponseHelper::successResponse(
+            new PostCommentResource($comment->load(['user', 'replies.user'])),
+            'Comment retrieved successfully.',
+        );
     }
 
     /**
@@ -61,7 +73,10 @@ class PostCommentController extends Controller
     {
         $comment->update($request->validated());
 
-        return response()->json(new PostCommentResource($comment));
+        return ApiResponseHelper::successResponse(
+            new PostCommentResource($comment),
+            'Comment updated successfully.',
+        );
     }
 
     /**
@@ -75,6 +90,6 @@ class PostCommentController extends Controller
 
         $comment->delete();
 
-        return response()->json(null, 204);
+        return ApiResponseHelper::successResponse(message: 'Comment deleted successfully.');
     }
 }

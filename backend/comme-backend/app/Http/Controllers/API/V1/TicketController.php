@@ -5,7 +5,9 @@ namespace App\Http\Controllers\API\V1;
 use App\Http\Requests\API\V1\Ticket\UpdateTicketRequest;
 use App\Http\Resources\API\V1\TicketResource;
 use App\Models\Ticket;
+use App\Http\Helpers\ApiResponseHelper;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 
 class TicketController extends Controller
@@ -23,7 +25,10 @@ class TicketController extends Controller
 
         $tickets = Ticket::with(['report', 'assignee'])->latest()->paginate(20);
 
-        return response()->json(TicketResource::collection($tickets));
+        return ApiResponseHelper::successResponse(
+            TicketResource::collection($tickets),
+            'Tickets retrieved successfully.',
+        );
     }
 
     /**
@@ -41,7 +46,10 @@ class TicketController extends Controller
     {
         Gate::authorize('view', $ticket);
 
-        return response()->json(new TicketResource($ticket->load(['report', 'assignee', 'messages.user', 'moderationActions'])));
+        return ApiResponseHelper::successResponse(
+            new TicketResource($ticket->load(['report', 'assignee', 'messages.user', 'moderationActions'])),
+            'Ticket retrieved successfully.',
+        );
     }
 
     /**
@@ -59,7 +67,10 @@ class TicketController extends Controller
 
         $ticket->update($data);
 
-        return response()->json(new TicketResource($ticket));
+        return ApiResponseHelper::successResponse(
+            new TicketResource($ticket),
+            'Ticket updated successfully.',
+        );
     }
 
     public function close(Ticket $ticket): JsonResponse
@@ -68,7 +79,10 @@ class TicketController extends Controller
 
         $ticket->update(['closed_at' => now()]);
 
-        return response()->json(new TicketResource($ticket));
+        return ApiResponseHelper::successResponse(
+            new TicketResource($ticket),
+            'Ticket closed successfully.',
+        );
     }
 
     // No destroy() — TicketPolicy::delete() is always false; moderation

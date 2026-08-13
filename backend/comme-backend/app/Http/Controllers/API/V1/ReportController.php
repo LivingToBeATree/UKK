@@ -8,7 +8,9 @@ use App\Http\Requests\API\V1\Report\StoreReportRequest;
 use App\Http\Requests\API\V1\Report\UpdateReportRequest;
 use App\Http\Resources\API\V1\ReportResource;
 use App\Models\Report;
+use App\Http\Helpers\ApiResponseHelper;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
@@ -24,7 +26,10 @@ class ReportController extends Controller
 
         $reports = Report::with(['reporter', 'reportable', 'ticket'])->latest()->paginate(20);
 
-        return response()->json(ReportResource::collection($reports));
+        return ApiResponseHelper::successResponse(
+            ReportResource::collection($reports),
+            'Reports retrieved successfully.',
+        );
     }
 
     /**
@@ -53,7 +58,11 @@ class ReportController extends Controller
             return $report;
         });
 
-        return response()->json(new ReportResource($report->load('ticket')), 201);
+        return ApiResponseHelper::successResponse(
+            new ReportResource($report->load('ticket')),
+            'Report submitted successfully.',
+            Response::HTTP_CREATED
+        );
     }
 
     /**
@@ -63,7 +72,10 @@ class ReportController extends Controller
     {
         Gate::authorize('view', $report);
 
-        return response()->json(new ReportResource($report->load(['reporter', 'reportable', 'handledBy', 'ticket'])));
+        return ApiResponseHelper::successResponse(
+            new ReportResource($report->load(['reporter', 'reportable', 'handledBy', 'ticket'])),
+            'Report retrieved successfully.',
+        );
     }
 
     /**
@@ -79,7 +91,10 @@ class ReportController extends Controller
             'handled_at' => now(),
         ]);
 
-        return response()->json(new ReportResource($report));
+        return ApiResponseHelper::successResponse(
+            new ReportResource($report),
+            'Report updated successfully.',
+        );
     }
 
     /**

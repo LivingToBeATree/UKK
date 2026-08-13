@@ -6,7 +6,9 @@ use App\Models\ArtistProfile;
 use App\Http\Requests\API\V1\ArtistProfile\StoreArtistProfileRequest;
 use App\Http\Requests\API\V1\ArtistProfile\UpdateArtistProfileRequest;
 use App\Http\Resources\API\V1\ArtistProfileResource;
+use App\Http\Helpers\ApiResponseHelper;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 
 class ArtistProfileController extends Controller
@@ -20,7 +22,10 @@ class ArtistProfileController extends Controller
 
         $artistProfiles = ArtistProfile::with('user')->paginate(20);
 
-        return response()->json(ArtistProfileResource::collection($artistProfiles));
+        return ApiResponseHelper::successResponse(
+            ArtistProfileResource::collection($artistProfiles),
+            'Artist profiles retrieved successfully.'
+        );
     }
 
     /**
@@ -35,7 +40,11 @@ class ArtistProfileController extends Controller
             'user_id' => $request->user()->id,
         ]);
 
-        return response()->json(new ArtistProfileResource($artistProfile), 201);
+        return ApiResponseHelper::successResponse(
+            new ArtistProfileResource($artistProfile),
+            'Artist profile created successfully.',
+            Response::HTTP_CREATED,
+        );
     }
 
     /**
@@ -45,7 +54,10 @@ class ArtistProfileController extends Controller
     {
         Gate::authorize('view', $artistProfile);
 
-        return response()->json(new ArtistProfileResource($artistProfile->load('user')));
+        return ApiResponseHelper::successResponse(
+            new ArtistProfileResource($artistProfile->load('user')),
+            'Artist profile retrieved successfully.',
+        );
     }
 
     /**
@@ -55,7 +67,10 @@ class ArtistProfileController extends Controller
     {
         $artistProfile->update($request->validated());
 
-        return response()->json(new ArtistProfileResource($artistProfile));
+        return ApiResponseHelper::successResponse(
+            new ArtistProfileResource($artistProfile),
+            'Artist profile updated successfully.',
+        );
     }
 
     /**
@@ -67,6 +82,6 @@ class ArtistProfileController extends Controller
 
         $artistProfile->delete();
 
-        return response()->json(null, 204);
+        return ApiResponseHelper::successResponse(message: 'Artist profile deleted successfully.');
     }
 }
