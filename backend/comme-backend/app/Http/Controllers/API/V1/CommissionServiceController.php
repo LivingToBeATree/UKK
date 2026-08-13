@@ -22,7 +22,7 @@ class CommissionServiceController extends Controller
 
         $commissionServices = CommissionService::with('artistProfile')->paginate(20);
 
-        return ApiResponseHelper::successResponse(
+        return ApiResponseHelper::paginatedResponse(
             CommissionServiceResource::collection($commissionServices),
             'Commission services retrieved successfully.',
         );

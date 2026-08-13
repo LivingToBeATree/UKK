@@ -30,7 +30,7 @@ class PostCommentController extends Controller
             ->latest()
             ->paginate(20);
 
-        return ApiResponseHelper::successResponse(
+        return ApiResponseHelper::paginatedResponse(
             PostCommentResource::collection($comments),
             'Comments retrieved successfully.',
         );

@@ -22,7 +22,7 @@ class PostController extends Controller
 
         $posts = Post::with(['user', 'portfolio'])->paginate(20);
 
-        return ApiResponseHelper::successResponse(
+        return ApiResponseHelper::paginatedResponse(
             PostResource::collection($posts),
             'Posts retrieved successfully.',
         );

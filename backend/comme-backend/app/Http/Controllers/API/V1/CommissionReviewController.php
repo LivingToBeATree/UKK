@@ -30,7 +30,7 @@ class CommissionReviewController extends Controller
             ->latest()
             ->paginate(20);
 
-        return ApiResponseHelper::successResponse(
+        return ApiResponseHelper::paginatedResponse(
             CommissionReviewResource::collection($reviews),
             'Reviews retrieved successfully.'
         );

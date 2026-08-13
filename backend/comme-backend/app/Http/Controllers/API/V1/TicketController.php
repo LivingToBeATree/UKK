@@ -25,7 +25,7 @@ class TicketController extends Controller
 
         $tickets = Ticket::with(['report', 'assignee'])->latest()->paginate(20);
 
-        return ApiResponseHelper::successResponse(
+        return ApiResponseHelper::paginatedResponse(
             TicketResource::collection($tickets),
             'Tickets retrieved successfully.',
         );

@@ -22,7 +22,7 @@ class PortfolioController extends Controller
 
         $portfolios = Portfolio::with(['artistProfile', 'thumbnailMedia'])->paginate(20);
 
-        return ApiResponseHelper::successResponse(
+        return ApiResponseHelper::paginatedResponse(
             PortfolioResource::collection($portfolios),
             'Portfolios retrieved successfully.',
         );

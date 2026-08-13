@@ -26,7 +26,7 @@ class ReportController extends Controller
 
         $reports = Report::with(['reporter', 'reportable', 'ticket'])->latest()->paginate(20);
 
-        return ApiResponseHelper::successResponse(
+        return ApiResponseHelper::paginatedResponse(
             ReportResource::collection($reports),
             'Reports retrieved successfully.',
         );

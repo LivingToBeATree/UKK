@@ -22,7 +22,7 @@ class ArtistProfileController extends Controller
 
         $artistProfiles = ArtistProfile::with('user')->paginate(20);
 
-        return ApiResponseHelper::successResponse(
+        return ApiResponseHelper::paginatedResponse(
             ArtistProfileResource::collection($artistProfiles),
             'Artist profiles retrieved successfully.'
         );

@@ -33,7 +33,7 @@ class CommissionController extends Controller
             ->with(['commissionService', 'artistProfile', 'user'])
             ->paginate(20);
 
-        return ApiResponseHelper::successResponse(
+        return ApiResponseHelper::paginatedResponse(
             CommissionResource::collection($commissions),
             'Commissions retrieved successfully.',
         );
