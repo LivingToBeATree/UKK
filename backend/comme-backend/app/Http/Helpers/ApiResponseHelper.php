@@ -31,6 +31,30 @@ class ApiResponseHelper
         return response()->json($response, $statusCode);
     }
 
+    /**
+     * For paginated resource collections specifically — reuses Laravel's
+     * own pagination serialization (via ->response()->getData(true)) so
+     * the page-number math isn't reimplemented here, then lifts 'links'
+     * and 'meta' up to sit alongside 'data' in the envelope, instead of
+     * both ending up buried one level deeper under 'data.data'.
+     */
+    public static function paginatedResponse(
+        mixed $resourceCollection,
+        string $message = 'Success',
+        int $statusCode = Response::HTTP_OK,
+    ): JsonResponse {
+        $paginated = $resourceCollection->response()->getData(true);
+
+        return response()->json([
+            'status_code' => $statusCode,
+            'status' => 'SUCCESS',
+            'message' => $message,
+            'data' => $paginated['data'],
+            'links' => $paginated['links'] ?? null,
+            'meta' => $paginated['meta'] ?? null,
+        ], $statusCode);
+    }
+
     public static function errorResponse(
         string $message = 'Error',
         int $statusCode = Response::HTTP_BAD_REQUEST,
