@@ -20,7 +20,7 @@ class CommissionServiceController extends Controller
 
         $commissionServices = CommissionService::with('artistProfile')->paginate(20);
 
-        return response()->json(new CommissionServiceResource($commissionServices));
+        return response()->json(CommissionServiceResource::collection($commissionServices));
     }
 
     /**
@@ -46,7 +46,7 @@ class CommissionServiceController extends Controller
     {
         Gate::authorize('view', $commissionService);
 
-        return response()->json(new CommissionServiceResource($commissionService->load(['artistProfile', 'thumbnailMedia', 'Media', 'options.addons', 'tags'])));
+        return response()->json(new CommissionServiceResource($commissionService->load(['artistProfile', 'thumbnailMedia', 'media', 'options.addons', 'tags'])));
     }
 
     /**
