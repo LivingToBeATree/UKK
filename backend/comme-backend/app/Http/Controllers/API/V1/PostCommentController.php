@@ -26,9 +26,9 @@ class PostCommentController extends Controller
             ->whereNull('parent_comment_id')
             ->with(['user', 'replies.user'])
             ->latest()
-            ->paginate(10);
+            ->paginate(20);
 
-        return response()->json(new PostCommentResource($comments));
+        return response()->json(PostCommentResource::collection($comments));
     }
 
     /**
