@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Auth\Events\Registered;
 
 class AuthController extends Controller
 {
@@ -23,7 +24,10 @@ class AuthController extends Controller
             'email' => $request->email,
             'password'=> $request->password,
             'role' => UserRole::USER,
+
         ]);
+
+        event(new Registered($user));
 
         Auth::login($user);
         $request->session()->regenerate();
