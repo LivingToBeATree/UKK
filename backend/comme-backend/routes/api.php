@@ -4,8 +4,8 @@ use App\Http\Controllers\API\V1\AuthController;
 use Illuminate\Support\Facades\Route;
 
 // Public — no auth required to register or log in.
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:regiter');
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);

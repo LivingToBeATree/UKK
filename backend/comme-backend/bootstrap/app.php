@@ -25,9 +25,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 | Request::HEADER_X_FORWARDED_PROTO,
         );
 
-        $middleware->api(prepend: [
-            ForceJsonResponse::class,
-        ]);
+        $middleware->api(
+            prepend: [ForceJsonResponse::class],
+            append: ['throttle:api'],
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (Throwable $e, Request $request) {
