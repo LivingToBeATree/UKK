@@ -13,7 +13,7 @@ class CommissionReviewPolicy
     {
         return $user->isAdmin() ? true : null;
     }
- 
+
     /**
      * Visibility rules for reviews (e.g. only on completed commissions)
      * are enforced by the query/business logic, not this policy.
@@ -27,7 +27,7 @@ class CommissionReviewPolicy
     {
         return true;
     }
- 
+
     /**
      * There's no CommissionReview instance yet — pass the target Commission
      * so we can check it's actually this user's commission:
@@ -39,20 +39,20 @@ class CommissionReviewPolicy
     {
         return $user->id === $commission->user_id;
     }
- 
+
     public function update(User $user, CommissionReview $commissionReview): bool
     {
         return $user->id === $commissionReview->user_id;
     }
- 
+
     public function delete(User $user, CommissionReview $commissionReview): bool
     {
         return $user->id === $commissionReview->user_id;
     }
- 
+
     public function artistReply(User $user, CommissionReview $commissionReview): bool
     {
         return $user->id === $commissionReview->artistProfile->user_id;
     }
 }
- 
+
