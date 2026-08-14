@@ -2,9 +2,12 @@
 
 namespace App\Providers;
 
+use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -41,6 +44,32 @@ class AppServiceProvider extends ServiceProvider
         // unauthenticated that slips through.
         RateLimiter::for('api', function(Request $request) {
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+        });
+
+        /**
+         * By default, Laravel builds the verification link as a signed
+         * URL pointing at a backend route — fine for a Blade app, wrong
+         * for a React SPA, since the emailed link needs to open the
+         * frontend, not raw JSON. This overrides the URL Laravel puts in
+         * the email while still using Laravel's own signed-URL generator
+         * underneath, so the signature/expiry are exactly what the
+         * 'signed' middleware on the real API route expects to see.
+         */
+
+        VerifyEmail::createUrlUsing(function ($notifiable) {
+            $signedUrl = URL::temporarySignedRoute(
+                'verification.verify',
+                now()->addMinutes(60),
+                ['id' => $notifiable->getKey(), 'hash' => sha1($notifiable->getEmailForVerification())],
+            );
+
+            $query = parse_url($signedUrl, PHP_URL_QUERY);
+
+            return config('app.frontend_url')."/verify-email/{$notifiable->getKey()}/".sha1($notifiable->getEmailForVerification())."?{$query}";
+        });
+
+        ResetPassword::createUrlUsing(function ($notifiable, string $token) {
+            return config('app.frontend_url').'/reset-password?token='.$token.'&email='.urlencode($notifiable->getEmailForPasswordReset());
         });
     }
 }
