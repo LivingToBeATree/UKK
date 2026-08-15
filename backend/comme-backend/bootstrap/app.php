@@ -36,4 +36,5 @@ return Application::configure(basePath: dirname(__DIR__))
                 return app(ApiExceptionHandler::class)->handle($e);;
             }
         });
-    });
+    })
+    ->create();
