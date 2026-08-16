@@ -53,6 +53,10 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => UserRole::class,
+            // Deliberately NOT in $fillable — this is only ever written by
+            // AuthService during login, never accepted directly from a
+            // client request, same reasoning as counters like likes_count.
+            'known_devices' => 'array',
         ];
     }
 
