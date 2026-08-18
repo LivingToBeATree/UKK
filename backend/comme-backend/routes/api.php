@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\V1\AuthController;
 use App\Http\Controllers\API\V1\EmailVerificationController;
 use App\Http\Controllers\API\V1\PasswordResetController;
+use App\Http\Controllers\API\V1\PaymentController;
 use App\Http\Controllers\API\V1\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -11,6 +12,12 @@ Route::post('/register', [AuthController::class, 'register'])->middleware('throt
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 Route::post('/forgot-password', [PasswordResetController::class, 'forgotPassword'])->middleware('throttle:6,1');
 Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])->middleware('throttle:6,1');
+
+// No auth:sanctum, no throttle:api — this is called by Midtrans's own
+// server, not a browser with a session. Authenticity is verified via the
+// signature check inside the controller instead of any route middleware.
+Route::post('/midtrans/webhook', [PaymentController::class, 'webhook'])
+    ->withoutMiddleware('throttle:api');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -30,8 +37,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout-other-devices', [UserController::class, 'logoutOtherDevices']);
 
     // Every resource's routes live in its own file under routes/API/V1/ —
-    // add a new *.php file there and it's picked up automatically, no
-    // need to touch this file again.
+    // add a new *.php file there and it's picked up automatically
     foreach (glob(__DIR__ . '/API/V1/*.php') as $resourceRoutes) {
         require $resourceRoutes;
     }
