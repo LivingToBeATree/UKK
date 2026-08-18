@@ -15,4 +15,5 @@ enum NotificationType: string
     case REVISION_REQUEST = 'revision_request';
     case REVISION_ACCEPTED = 'revision_accepted';
     case REVIEW_RECEIVED = 'review_received';
+    case PAYMENT_RECEIVED = 'payment_received';
 }
