@@ -69,6 +69,16 @@ class Commission extends Model
         return $this->hasOne(CommissionReview::class);
     }
 
+    public function payment(): HasOne
+    {
+        return $this->hasOne(CommissionPayment::class)->latestOfMany();
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(CommissionPayment::class);
+    }
+
     public function revisions(): HasMany
     {
         return $this->hasMany(CommissionRevision::class);
