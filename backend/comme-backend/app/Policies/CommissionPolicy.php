@@ -11,7 +11,7 @@ class CommissionPolicy
     {
         return $user->isAdmin() ? true : null;
     }
- 
+
     /**
      * The query itself must still be scoped to commissions involving the
      * current user — this only gates access to the listing endpoint.
@@ -20,7 +20,7 @@ class CommissionPolicy
     {
         return true;
     }
- 
+
     /**
      * Also gates access to this commission's messages, message media,
      * revisions, revision items, media, and addon selections.
@@ -30,7 +30,7 @@ class CommissionPolicy
         return $user->id === $commission->user_id
             || $user->id === $commission->artistProfile->user_id;
     }
- 
+
     /**
      * Whether the target service is actually open/valid is handled by
      * business logic, not this policy.
@@ -39,7 +39,7 @@ class CommissionPolicy
     {
         return true;
     }
- 
+
     /**
      * General management — client should not arbitrarily update the whole
      * commission. More specific actions have their own abilities below.
@@ -48,17 +48,27 @@ class CommissionPolicy
     {
         return $user->id === $commission->artistProfile->user_id;
     }
- 
+
     public function requestRevision(User $user, Commission $commission): bool
     {
         return $user->id === $commission->user_id;
     }
- 
+
+    /**
+     * Only the buyer pays — whether the commission is actually in a
+     * payable status (e.g. ACCEPTED, not already paid) is a business-state
+     * check, handled in the controller, not here.
+     */
+    public function initiatePayment(User $user, Commission $commission): bool
+    {
+        return $user->id === $commission->user_id;
+    }
+
     public function updateDeadline(User $user, Commission $commission): bool
     {
         return $user->id === $commission->artistProfile->user_id;
     }
- 
+
     /**
      * Whether cancellation is currently allowed (based on status) is
      * handled by business logic, not this policy.
@@ -68,7 +78,7 @@ class CommissionPolicy
         return $user->id === $commission->user_id
             || $user->id === $commission->artistProfile->user_id;
     }
- 
+
     /**
      * Never delete directly — cancellation preserves commission history
      * instead.
@@ -77,12 +87,12 @@ class CommissionPolicy
     {
         return false;
     }
- 
+
     public function restore(User $user, Commission $commission): bool
     {
         return false;
     }
- 
+
     public function forceDelete(User $user, Commission $commission): bool
     {
         return false;
