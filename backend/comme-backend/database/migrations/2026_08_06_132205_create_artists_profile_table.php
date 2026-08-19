@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('artist_profiles', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->unique()->constrained()->cascadeOnDelete();
             $table->text('bio')->nullable();
             $table->string('banner')->nullable();
             $table->boolean('commission_open')->default(false);
