@@ -15,8 +15,29 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('slug');
-            $table->text('description');
+            $table->text('description')->nullable();
             $table->timestamps();
+        });
+
+        Schema::create('post_tag', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('post_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('tag_id')->constrained()->cascadeOnDelete();
+            $table->unique(['post_id', 'tag_id']);
+        });
+
+        Schema::create('portfolio_tag', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('portfolio_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('tag_id')->constrained()->cascadeOnDelete();
+            $table->unique(['portfolio_id', 'tag_id']);
+        });
+
+        Schema::create('commission_service_tag', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('commission_service_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('tag_id')->constrained()->cascadeOnDelete();
+            $table->unique(['commission_service_id', 'tag_id']);
         });
     }
 
@@ -25,6 +46,9 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('commission_service_tag');
+        Schema::dropIfExists('portfolio_tag');
+        Schema::dropIfExists('post_tag');
         Schema::dropIfExists('tags');
     }
 };
