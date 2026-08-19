@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', config('app.name', 'Comme')) - Commission & Art Marketplace API</title>
 
+    <!-- Favicon & Icons from /icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('icons/32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="64x64" href="{{ asset('icons/64x64.png') }}">
+    <link rel="apple-touch-icon" sizes="128x128" href="{{ asset('icons/128x128.png') }}">
+    <link rel="apple-touch-icon" sizes="256x256" href="{{ asset('icons/256x256.png') }}">
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,17 +19,17 @@
     <!-- Styles -->
     <style>
         :root {
-            --bg-primary: #0b0c10;
-            --bg-secondary: #12141a;
-            --bg-card: #181b22;
-            --border-color: #232732;
-            --text-primary: #f0f2f7;
-            --text-secondary: #8c93a4;
-            --text-muted: #5e6475;
-            --accent-purple: #8b5cf6;
-            --accent-indigo: #6366f1;
-            --accent-gradient: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-            --accent-green: #10b981;
+            --bg-primary: #0a0812;
+            --bg-secondary: #120e22;
+            --bg-card: #19142e;
+            --border-color: #2b234d;
+            --text-primary: #f8f6fc;
+            --text-secondary: #a39cb8;
+            --text-muted: #6e6785;
+            --accent-purple: #9c0bda;
+            --accent-teal: #16e1aa;
+            --accent-yellow: #f7bd26;
+            --accent-gradient: linear-gradient(135deg, #9c0bda 0%, #16e1aa 100%);
         }
 
         * {
@@ -71,7 +77,7 @@
         .btn-primary {
             background: var(--accent-gradient);
             color: #ffffff;
-            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
+            box-shadow: 0 4px 18px rgba(156, 11, 218, 0.35);
         }
 
         .btn-primary:hover {
@@ -86,28 +92,28 @@
         }
 
         .btn-secondary:hover {
-            background: #20242e;
-            border-color: #313746;
+            background: #231c40;
+            border-color: #3f346e;
         }
 
         .badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 4px 10px;
+            padding: 4px 12px;
             border-radius: 9999px;
             font-size: 12px;
             font-weight: 600;
-            background: rgba(16, 185, 129, 0.12);
-            color: var(--accent-green);
-            border: 1px solid rgba(16, 185, 129, 0.24);
+            background: rgba(22, 225, 170, 0.12);
+            color: var(--accent-teal);
+            border: 1px solid rgba(22, 225, 170, 0.28);
         }
 
         .badge-dot {
             width: 6px;
             height: 6px;
             border-radius: 50%;
-            background-color: var(--accent-green);
+            background-color: var(--accent-teal);
             animation: pulse 2s infinite;
         }
 
