@@ -8,7 +8,8 @@ use App\Http\Controllers\API\V1\UserController;
 use Illuminate\Support\Facades\Route;
 
 // Public — no auth required to register or log in.
-Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:register');
+Route::post('/register', [AuthController::class, 'initiateRegister'])->middleware('throttle:register');
+Route::post('/register/confirm', [AuthController::class, 'confirmRegistration'])->middleware('throttle:register-confirm');
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 Route::post('/forgot-password', [PasswordResetController::class, 'forgotPassword'])->middleware('throttle:6,1');
 Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])->middleware('throttle:6,1');
