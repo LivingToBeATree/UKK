@@ -201,4 +201,33 @@ class RegistrationFlowTest extends TestCase
 
         $this->assertDatabaseMissing('pending_registrations', ['email' => 'newuser@example.com']);
     }
+
+    public function test_prune_command_deletes_expired_pending_registrations_and_keeps_active_ones(): void
+    {
+        PendingRegistration::create([
+            'username' => 'expired_user',
+            'display_name' => 'Expired User',
+            'email' => 'expired@example.com',
+            'password' => Hash::make('password'),
+            'role' => 'user',
+            'code' => Hash::make('123456'),
+            'expires_at' => now()->subMinutes(5),
+        ]);
+
+        PendingRegistration::create([
+            'username' => 'active_user',
+            'display_name' => 'Active User',
+            'email' => 'active@example.com',
+            'password' => Hash::make('password'),
+            'role' => 'user',
+            'code' => Hash::make('654321'),
+            'expires_at' => now()->addMinutes(10),
+        ]);
+
+        $this->artisan('model:prune', ['--model' => [PendingRegistration::class]])
+            ->assertSuccessful();
+
+        $this->assertDatabaseMissing('pending_registrations', ['email' => 'expired@example.com']);
+        $this->assertDatabaseHas('pending_registrations', ['email' => 'active@example.com']);
+    }
 }
