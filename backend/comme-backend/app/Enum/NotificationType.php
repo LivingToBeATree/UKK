@@ -16,4 +16,7 @@ enum NotificationType: string
     case REVISION_ACCEPTED = 'revision_accepted';
     case REVIEW_RECEIVED = 'review_received';
     case PAYMENT_RECEIVED = 'payment_received';
+    case ARTIST_APPLICATION_SUBMITTED = 'artist_application_submitted';
+    case ARTIST_APPLICATION_APPROVED = 'artist_application_approved';
+    case ARTIST_APPLICATION_REJECTED = 'artist_application_rejected';
 }
