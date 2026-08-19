@@ -39,7 +39,7 @@ WORKDIR /var/www/html
 COPY . /var/www/html
 
 # Install Composer dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+RUN composer install --optimize-autoloader --no-interaction --prefer-dist
 
 # Copy configuration files
 COPY docker/nginx.conf /etc/nginx/http.d/default.conf
