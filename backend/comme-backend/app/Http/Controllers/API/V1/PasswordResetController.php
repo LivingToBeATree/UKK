@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V1;
 use App\Http\Helpers\ApiResponseHelper;
 use App\Http\Requests\API\V1\User\Auth\ForgotPasswordRequest;
 use App\Http\Requests\API\V1\User\Auth\ResetPasswordRequest;
+use App\Notifications\API\V1\User\Auth\PasswordChangedNotification;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
@@ -39,7 +40,7 @@ class PasswordResetController extends Controller
     public function resetPassword(ResetPasswordRequest $request): JsonResponse
     {
         $status = Password::reset(
-            $request->only('email', 'password', 'password_verification', 'token'),
+            $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($user) use ($request) {
                 $user->forceFill([
                     'password' => $request->password // hashed automatically via the model's cast
@@ -48,6 +49,8 @@ class PasswordResetController extends Controller
                 $user->save();
 
                 event(new PasswordReset($user));
+
+                $user->notify(new PasswordChangedNotification(now(), $request->ip()));
             },
         );
 

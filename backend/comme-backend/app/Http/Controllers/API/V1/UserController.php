@@ -6,6 +6,7 @@ use App\Http\Helpers\ApiResponseHelper;
 use App\Http\Requests\API\V1\User\Auth\ChangePasswordRequest;
 use App\Http\Requests\API\V1\User\UpdateUserRequest;
 use App\Http\Resources\API\V1\UserResource;
+use App\Notifications\API\V1\User\Auth\PasswordChangedNotification;
 use App\Services\API\V1\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -32,9 +33,13 @@ class UserController extends Controller
 
     public function changePassword(ChangePasswordRequest $request): JsonResponse
     {
-        $request->user()->update([
+        $user = $request->user();
+
+        $user->update([
             'password' => $request->password,
         ]);
+
+        $user->notify(new PasswordChangedNotification(now(), $request->ip()));
 
         return ApiResponseHelper::successResponse(message: 'Password changed successfully.');
     }
