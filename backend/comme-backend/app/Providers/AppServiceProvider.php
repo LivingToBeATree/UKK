@@ -39,6 +39,14 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perHour(3)->by($request->ip());
         });
 
+        // A 6-digit code is only 1,000,000 combinations — at 5 attempts
+        // per minute, exhausting that within the 15-minute code lifetime
+        // is completely infeasible, keyed by email and IP so it doesn't collide
+        // with the login limiter's attempt budget or lock out on null emails.
+        RateLimiter::for('register-confirm', function (Request $request) {
+            return Limit::perMinute(5)->by(($request->input('email') ?? 'none').'|'.$request->ip());
+        });
+
         // General catch-all for everything else — by user ID once logged
         // in (fair per-person), falling back to IP for anything
         // unauthenticated that slips through.
