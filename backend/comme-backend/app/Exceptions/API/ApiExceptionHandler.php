@@ -40,7 +40,7 @@ class ApiExceptionHandler
                 Response::HTTP_UNAUTHORIZED,
             ),
 
-            $e instanceof AuthorizationException => ApiResponseHelper::errorResponse(
+            $e instanceof AuthorizationException, $e instanceof \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException => ApiResponseHelper::errorResponse(
                 $e->getMessage() ?: 'This action is unauthorized.',
                 Response::HTTP_FORBIDDEN,
             ),
@@ -53,6 +53,11 @@ class ApiExceptionHandler
             $e instanceof MethodNotAllowedHttpException => ApiResponseHelper::errorResponse(
                 'This HTTP method is not supported for this endpoint.',
                 Response::HTTP_METHOD_NOT_ALLOWED,
+            ),
+
+            $e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface => ApiResponseHelper::errorResponse(
+                $e->getMessage() ?: 'Error',
+                $e->getStatusCode(),
             ),
 
             // Anything else (a raw QueryException, a bug, whatever) — hide
