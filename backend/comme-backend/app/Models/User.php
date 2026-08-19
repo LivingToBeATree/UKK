@@ -150,10 +150,30 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Report::class, 'handled_by');
     }
 
+    public function artistApplications(): HasMany
+    {
+        return $this->hasMany(ArtistApplication::class);
+    }
+
+    public function latestArtistApplication(): HasOne
+    {
+        return $this->hasOne(ArtistApplication::class)->latestOfMany();
+    }
+
     // helpers
     public function hasArtistProfile(): bool
     {
         return $this->artistProfile()->exists();
+    }
+
+    public function hasPendingArtistApplication(): bool
+    {
+        return $this->artistApplications()->where('status', \App\Enum\ArtistApplicationStatus::PENDING)->exists();
+    }
+
+    public function canApplyForArtistProfile(): bool
+    {
+        return ! $this->hasArtistProfile() && ! $this->hasPendingArtistApplication();
     }
 
     public function isArtist(): bool
