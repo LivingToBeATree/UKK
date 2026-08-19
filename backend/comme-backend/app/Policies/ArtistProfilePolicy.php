@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\ArtistProfile;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class ArtistProfilePolicy
 {
@@ -24,12 +23,12 @@ class ArtistProfilePolicy
     }
  
     /**
-     * Ownership ("for themselves, not another user") is enforced by always
-     * setting user_id from auth()->id() in the controller, not here.
+     * Direct creation of artist profiles without an application is reserved
+     * for staff / admin roles. Regular users must apply through ArtistApplication.
      */
     public function create(User $user): bool
     {
-        return ! $user->hasArtistProfile();
+        return $user->isStaff();
     }
  
     public function update(User $user, ArtistProfile $artistProfile): bool
