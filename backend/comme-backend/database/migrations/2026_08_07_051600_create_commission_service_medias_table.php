@@ -22,10 +22,6 @@ return new class extends Migration
             $table->unsignedSmallInteger('sort_order');
             $table->timestamps();
         });
-
-        Schema::table('commission_services', function (Blueprint $table) {
-            $table->foreign('thumbnail_media_id')->references('id')->on('commission_service_medias')->nullOnDelete();
-        });
     }
 
     /**
@@ -33,10 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('commission_services', function (Blueprint $table) {
-            $table->dropForeign(['thumbnail_media_id']);
-        });
-
         Schema::dropIfExists('commission_service_medias');
     }
 };

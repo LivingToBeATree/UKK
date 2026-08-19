@@ -24,10 +24,6 @@ return new class extends Migration
             $table->boolean('is_thumbnail')->default(false);
             $table->timestamps();
         });
-
-        Schema::table('portfolios', function (Blueprint $table) {
-            $table->foreign('thumbnail_media_id')->references('id')->on('portfolio_medias')->nullOnDelete();
-        });
     }
 
     /**
@@ -35,10 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('portfolios', function (Blueprint $table) {
-            $table->dropForeign(['thumbnail_media_id']);
-        });
-
         Schema::dropIfExists('portfolio_medias');
     }
 };
