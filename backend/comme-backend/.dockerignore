@@ -1,0 +1,17 @@
+.git
+.github
+.env
+.phpunit.result.cache
+node_modules
+vendor
+storage/*.key
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+tests
+Dockerfile
+docker-compose.yml
+cloudbuild.yaml
+.agents
+.gemini
