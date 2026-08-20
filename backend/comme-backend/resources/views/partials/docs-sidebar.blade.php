@@ -1,18 +1,23 @@
-<aside class="docs-sidebar">
-    <!-- Live Search Input -->
-    <div style="position: relative;">
-        <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 14px;">🔍</span>
-        <input type="text" id="docsSearch" class="search-input" placeholder="Filter endpoints..." autocomplete="off" />
+<aside id="docsDrawer" class="docs-drawer" aria-label="API Navigation Drawer">
+    <!-- Drawer Header with Brand & Close Button -->
+    <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 18px; border-bottom: 1px solid var(--border-subtle);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="{{ asset('icons/64x64.png') }}" alt="Comme" style="width: 28px; height: 28px; border-radius: 7px; box-shadow: 0 4px 12px rgba(156, 11, 218, 0.35);" />
+            <span style="font-weight: 800; font-size: 16px; color: var(--text-primary); letter-spacing: -0.02em;">Navigation</span>
+        </div>
+        <button id="drawerCloseBtn" style="background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border-subtle); color: var(--text-secondary); border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px;" title="Close Menu">
+            ✕
+        </button>
     </div>
 
     <!-- Navigation Tree -->
-    <nav style="display: flex; flex-direction: column; gap: 20px;">
+    <nav style="display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px;">
         <!-- Group: Overview -->
         <div>
             <div class="nav-category">Overview</div>
             <a href="#getting-started" class="nav-link"><span>Introduction & Base URLs</span></a>
-            <a href="#authentication-flow" class="nav-link"><span>Auth & OTP Flow</span></a>
-            <a href="#errors-status-codes" class="nav-link"><span>Errors & Status Codes</span></a>
+            <a href="#authentication-flow" class="nav-link"><span>Auth & Bearer Token Flow</span></a>
+            <a href="#errors-status-codes" class="nav-link"><span>Status Codes & Errors</span></a>
         </div>
 
         <!-- Group: Authentication -->

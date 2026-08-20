@@ -14,24 +14,24 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Design System Tokens & Base Styles -->
     <style>
         :root {
-            --bg-body: #0a0812;
-            --bg-sidebar: #0f0c1b;
-            --bg-surface: #141024;
-            --bg-surface-elevated: #1b1630;
-            --bg-code: #08060f;
+            --bg-body: #090713;
+            --bg-sidebar: #0e0a1e;
+            --bg-surface: #140f29;
+            --bg-surface-elevated: #1b1536;
+            --bg-code: #080512;
             
-            --border-subtle: #231c3d;
-            --border-strong: #372d5c;
+            --border-subtle: #231b42;
+            --border-strong: #382c63;
             --border-focus: #9c0bda;
 
-            --text-primary: #f5f3fa;
-            --text-secondary: #a79fc0;
-            --text-muted: #6e6488;
+            --text-primary: #f8f6fc;
+            --text-secondary: #a89ec4;
+            --text-muted: #6f648d;
             --text-on-accent: #ffffff;
 
             --brand-purple: #9c0bda;
@@ -42,12 +42,12 @@
             --brand-gradient: linear-gradient(135deg, #9c0bda 0%, #7000ff 50%, #16e1aa 100%);
             
             --method-get: #16e1aa;
-            --method-post: #9c0bda;
+            --method-post: #b84eff;
             --method-patch: #f7bd26;
             --method-delete: #ff4365;
             
-            --sidebar-width: 300px;
-            --header-height: 68px;
+            --sidebar-width: 320px;
+            --header-height: 72px;
         }
 
         * {
@@ -85,97 +85,147 @@
             display: flex;
             width: 100%;
             min-height: calc(100vh - var(--header-height));
+            justify-content: center;
         }
 
-        .docs-sidebar {
+        /* Drawer Overlay */
+        .drawer-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 3, 8, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 150;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .drawer-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Off-canvas Slide-out Drawer */
+        .docs-drawer {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: var(--sidebar-width);
-            flex-shrink: 0;
-            position: sticky;
-            top: var(--header-height);
-            height: calc(100vh - var(--header-height));
+            height: 100vh;
             background: var(--bg-sidebar);
             border-right: 1px solid var(--border-subtle);
+            z-index: 200;
+            transform: translateX(-100%);
+            transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
             overflow-y: auto;
-            padding: 24px 16px;
+            padding: 24px 20px;
             display: flex;
             flex-direction: column;
             gap: 24px;
+            box-shadow: 12px 0 40px rgba(0, 0, 0, 0.6);
             scrollbar-width: thin;
             scrollbar-color: var(--border-strong) transparent;
+        }
+
+        .docs-drawer.active {
+            transform: translateX(0);
         }
 
         .docs-content {
             flex: 1;
             min-width: 0;
-            padding: 40px 48px 120px 48px;
-            max-width: 1040px;
+            padding: 48px 32px 140px 32px;
+            max-width: 1080px;
+            margin: 0 auto;
         }
 
-        @media (max-width: 960px) {
-            .docs-wrapper {
-                flex-direction: column;
-            }
-            .docs-sidebar {
-                display: none;
-                width: 100%;
-                height: auto;
-                position: static;
-                border-right: none;
-                border-bottom: 1px solid var(--border-subtle);
-            }
-            .docs-sidebar.active {
-                display: flex;
-            }
-            .docs-content {
-                padding: 24px 20px 80px 20px;
-            }
+        /* Header Navigation Styles */
+        .header-search-container {
+            flex: 1;
+            max-width: 480px;
+            margin: 0 24px;
+            position: relative;
+        }
+
+        .header-search-input {
+            width: 100%;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 9px 40px 9px 42px;
+            color: var(--text-primary);
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .header-search-input:focus {
+            border-color: var(--brand-purple);
+            box-shadow: 0 0 0 3px rgba(156, 11, 218, 0.25);
+            background: var(--bg-surface-elevated);
+        }
+
+        .header-search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            opacity: 0.65;
+            pointer-events: none;
+        }
+
+        .header-search-shortcut {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-subtle);
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
         }
 
         /* Buttons & Badges */
-        .btn {
-            display: inline-flex;
+        .btn-menu {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            width: 42px;
+            height: 42px;
+            display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
             cursor: pointer;
-            transition: all 0.15s ease;
-            border: 1px solid transparent;
-            font-family: inherit;
+            transition: all 0.2s ease;
         }
 
-        .btn-primary {
-            background: var(--brand-gradient);
-            color: var(--text-on-accent);
-            box-shadow: 0 4px 14px rgba(156, 11, 218, 0.35);
-        }
-
-        .btn-primary:hover {
-            opacity: 0.94;
-            transform: translateY(-1px);
-        }
-
-        .btn-secondary {
-            background: var(--bg-surface-elevated);
-            color: var(--text-primary);
-            border-color: var(--border-subtle);
-        }
-
-        .btn-secondary:hover {
-            background: #231c40;
+        .btn-menu:hover {
+            background: rgba(255, 255, 255, 0.12);
             border-color: var(--border-strong);
+            transform: scale(1.02);
+        }
+
+        .btn-menu img {
+            width: 20px;
+            height: 20px;
         }
 
         .btn-copy {
             background: rgba(255, 255, 255, 0.06);
             color: var(--text-secondary);
             border: 1px solid var(--border-subtle);
-            padding: 4px 10px;
+            padding: 5px 12px;
             border-radius: 6px;
-            font-size: 11px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-family: inherit;
         }
 
         .btn-copy:hover {
@@ -198,7 +248,7 @@
         }
 
         .method-get { background: rgba(22, 225, 170, 0.12); color: var(--method-get); border: 1px solid rgba(22, 225, 170, 0.28); }
-        .method-post { background: rgba(156, 11, 218, 0.15); color: #c464fa; border: 1px solid rgba(156, 11, 218, 0.35); }
+        .method-post { background: rgba(156, 11, 218, 0.16); color: var(--method-post); border: 1px solid rgba(156, 11, 218, 0.35); }
         .method-patch { background: rgba(247, 189, 38, 0.12); color: var(--method-patch); border: 1px solid rgba(247, 189, 38, 0.28); }
         .method-delete { background: rgba(255, 67, 101, 0.12); color: var(--method-delete); border: 1px solid rgba(255, 67, 101, 0.28); }
 
@@ -208,7 +258,7 @@
             gap: 4px;
             font-size: 11px;
             font-weight: 600;
-            padding: 2px 8px;
+            padding: 3px 9px;
             border-radius: 6px;
             background: rgba(255, 255, 255, 0.05);
             color: var(--text-secondary);
@@ -225,14 +275,15 @@
         .endpoint-card {
             background: var(--bg-surface);
             border: 1px solid var(--border-subtle);
-            border-radius: 12px;
-            margin-bottom: 32px;
+            border-radius: 14px;
+            margin-bottom: 28px;
             overflow: hidden;
-            transition: border-color 0.2s;
+            transition: all 0.2s ease;
         }
 
         .endpoint-card:hover {
             border-color: var(--border-strong);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
         }
 
         .endpoint-header {
@@ -278,7 +329,7 @@
             font-weight: 600;
             font-size: 11px;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.06em;
             border-bottom: 1px solid var(--border-subtle);
         }
 
@@ -318,7 +369,7 @@
         .code-container {
             background: var(--bg-code);
             border: 1px solid var(--border-subtle);
-            border-radius: 8px;
+            border-radius: 10px;
             overflow: hidden;
             margin-top: 8px;
         }
@@ -327,41 +378,24 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 8px 14px;
-            background: rgba(255, 255, 255, 0.02);
+            padding: 9px 16px;
+            background: rgba(255, 255, 255, 0.025);
             border-bottom: 1px solid var(--border-subtle);
             font-size: 12px;
             color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
         }
 
         .code-block {
-            padding: 16px;
+            padding: 18px;
             font-size: 12px;
-            line-height: 1.55;
+            line-height: 1.6;
             color: #e2def2;
             overflow-x: auto;
             white-space: pre;
         }
 
-        /* Search & Nav items */
-        .search-input {
-            width: 100%;
-            background: var(--bg-surface);
-            border: 1px solid var(--border-subtle);
-            border-radius: 8px;
-            padding: 10px 14px 10px 36px;
-            color: var(--text-primary);
-            font-size: 13px;
-            font-family: inherit;
-            outline: none;
-            transition: all 0.2s;
-        }
-
-        .search-input:focus {
-            border-color: var(--brand-purple);
-            box-shadow: 0 0 0 3px rgba(156, 11, 218, 0.2);
-        }
-
+        /* Nav Drawer Items */
         .nav-category {
             font-size: 11px;
             font-weight: 700;
@@ -378,40 +412,41 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 7px 12px;
-            border-radius: 6px;
+            padding: 8px 12px;
+            border-radius: 8px;
             font-size: 13px;
             color: var(--text-secondary);
-            transition: all 0.15s;
-            margin-bottom: 2px;
+            transition: all 0.15s ease;
+            margin-bottom: 3px;
         }
 
         .nav-link:hover {
             color: var(--text-primary);
             background: var(--bg-surface);
         }
-
-        .nav-link.active {
-            color: #ffffff;
-            background: var(--bg-surface-elevated);
-            border-left: 2px solid var(--brand-teal);
-        }
     </style>
 </head>
 <body>
+    <!-- Top Header -->
     @include('partials.header')
 
-    <div class="docs-wrapper">
-        @include('partials.docs-sidebar')
+    <!-- Drawer Overlay -->
+    <div id="drawerOverlay" class="drawer-overlay"></div>
 
+    <!-- Off-canvas Sidebar Drawer -->
+    @include('partials.docs-sidebar')
+
+    <!-- Main Content Container -->
+    <div class="docs-wrapper">
         <main class="docs-content">
             @yield('content')
         </main>
     </div>
 
+    <!-- Footer -->
     @include('partials.footer')
 
-    <!-- Interactive Copy & Search Script -->
+    <!-- Interactive Scripts -->
     <script>
         function copyCode(btn, elementId) {
             const el = document.getElementById(elementId);
@@ -428,7 +463,7 @@
         }
 
         function copyCurl(btn, method, path, body = null) {
-            const baseUrl = document.getElementById('baseUrlSelect')?.value || window.location.origin;
+            const baseUrl = window.location.origin;
             let cmd = `curl -X ${method} "${baseUrl}${path}" \\\n  -H "Accept: application/json"`;
             
             if (method !== 'GET' && method !== 'DELETE') {
@@ -451,33 +486,70 @@
             });
         }
 
-        // Live Endpoint Search Filter
+        // Drawer toggle controls
+        function toggleDrawer(open = null) {
+            const drawer = document.getElementById('docsDrawer');
+            const overlay = document.getElementById('drawerOverlay');
+            if (!drawer || !overlay) return;
+
+            const shouldOpen = open !== null ? open : !drawer.classList.contains('active');
+            if (shouldOpen) {
+                drawer.classList.add('active');
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            } else {
+                drawer.classList.remove('active');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('menuToggleBtn');
+            const closeBtn = document.getElementById('drawerCloseBtn');
+            const overlay = document.getElementById('drawerOverlay');
             const searchInput = document.getElementById('docsSearch');
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleDrawer(true);
+                });
+            }
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => toggleDrawer(false));
+            }
+
+            if (overlay) {
+                overlay.addEventListener('click', () => toggleDrawer(false));
+            }
+
+            // Close on escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') toggleDrawer(false);
+                // Shortcut / to focus search
+                if (e.key === '/' && document.activeElement !== searchInput) {
+                    e.preventDefault();
+                    searchInput?.focus();
+                }
+            });
+
+            // Close drawer when clicking any nav link
+            document.querySelectorAll('.docs-drawer .nav-link').forEach(link => {
+                link.addEventListener('click', () => toggleDrawer(false));
+            });
+
+            // Live Endpoint Search Filter
             if (searchInput) {
                 searchInput.addEventListener('input', (e) => {
                     const query = e.target.value.toLowerCase().trim();
                     const cards = document.querySelectorAll('.endpoint-card');
-                    const navLinks = document.querySelectorAll('.nav-link');
                     
                     cards.forEach(card => {
                         const text = card.innerText.toLowerCase();
                         card.style.display = text.includes(query) ? '' : 'none';
                     });
-
-                    navLinks.forEach(link => {
-                        const text = link.innerText.toLowerCase();
-                        link.style.display = text.includes(query) ? '' : 'none';
-                    });
-                });
-            }
-
-            // Mobile menu toggle
-            const toggleBtn = document.getElementById('toggleSidebarBtn');
-            const sidebar = document.querySelector('.docs-sidebar');
-            if (toggleBtn && sidebar) {
-                toggleBtn.addEventListener('click', () => {
-                    sidebar.classList.toggle('active');
                 });
             }
         });
