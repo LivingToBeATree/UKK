@@ -1,5 +1,5 @@
-<footer style="border-top: 1px solid var(--border-color); background: var(--bg-secondary); padding: 40px 0; margin-top: 60px;">
-    <div class="container" style="display: flex; flex-direction: column; gap: 24px;">
+<footer style="border-top: 1px solid var(--border-subtle); background: var(--bg-surface-elevated); padding: 40px 20px; margin-top: 60px;">
+    <div style="display: flex; flex-direction: column; gap: 24px; width: 100%;">
         <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px;">
             <div style="display: flex; align-items: center; gap: 12px;">
                 <img src="{{ asset('icons/32x32.png') }}" alt="Comme Icon" style="width: 24px; height: 24px; border-radius: 6px;" />
@@ -17,7 +17,7 @@
             </div>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 20px; font-size: 12px; color: var(--text-muted);">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 20px; font-size: 12px; color: var(--text-muted);">
             <p>&copy; {{ date('Y') }} Comme Platform. All rights reserved.</p>
             <p>Empowering digital artists and creative commissions.</p>
         </div>

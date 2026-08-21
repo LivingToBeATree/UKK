@@ -184,6 +184,105 @@ Authorization: Bearer &lt;personal_access_token&gt;</div>
             <p style="font-size: 14px; color: var(--text-secondary);">Returns currently logged-in user profile, roles, and artist profile if applicable.</p>
         </div>
     </div>
+
+    <!-- POST /api/logout -->
+    <div class="endpoint-card" id="post-api-logout">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/logout</span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <span class="auth-badge">Authenticated</span>
+                <button class="btn btn-copy" onclick="copyCurl(this, 'POST', '/api/logout')">Copy cURL</button>
+            </div>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Revokes the current Sanctum token and ends the session.</p>
+            <div class="code-container">
+                <div class="code-header"><span>Response (200 OK)</span></div>
+                <div class="code-block">{ "message": "Logged out successfully." }</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- POST /api/forgot-password -->
+    <div class="endpoint-card" id="post-api-forgot-password">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/forgot-password</span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <span class="auth-badge">Public</span>
+                <button class="btn btn-copy" onclick="copyCurl(this, 'POST', '/api/forgot-password', { email: 'user@example.com' })">Copy cURL</button>
+            </div>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Sends a password reset link to the provided email address. Rate-limited to 6 requests per minute.</p>
+            <table class="param-table">
+                <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="param-name">email</span> <span class="param-required">req</span></td><td><span class="param-type">string</span></td><td>Registered email address.</td></tr>
+                </tbody>
+            </table>
+            <div class="code-container">
+                <div class="code-header"><span>Response (200 OK)</span></div>
+                <div class="code-block">{ "message": "Password reset link sent." }</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- POST /api/reset-password -->
+    <div class="endpoint-card" id="post-api-reset-password">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/reset-password</span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <span class="auth-badge">Public</span>
+                <button class="btn btn-copy" onclick="copyCurl(this, 'POST', '/api/reset-password', { token: 'reset-token', email: 'user@example.com', password: 'NewPassword123!', password_confirmation: 'NewPassword123!' })">Copy cURL</button>
+            </div>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Resets user password using the token from the email link. Sends a "Password Changed" confirmation notification.</p>
+            <table class="param-table">
+                <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="param-name">token</span> <span class="param-required">req</span></td><td><span class="param-type">string</span></td><td>Password reset token from email.</td></tr>
+                    <tr><td><span class="param-name">email</span> <span class="param-required">req</span></td><td><span class="param-type">string</span></td><td>Registered email address.</td></tr>
+                    <tr><td><span class="param-name">password</span> <span class="param-required">req</span></td><td><span class="param-type">string</span></td><td>New password (min 8 chars).</td></tr>
+                    <tr><td><span class="param-name">password_confirmation</span> <span class="param-required">req</span></td><td><span class="param-type">string</span></td><td>Must match password.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- PUT /api/profile/password (change password) -->
+    <div class="endpoint-card" id="post-api-change-password">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">PUT</span>
+                <span>/api/profile/password</span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <span class="auth-badge">Authenticated</span>
+                <button class="btn btn-copy" onclick="copyCurl(this, 'PUT', '/api/profile/password', { current_password: 'OldPassword!', password: 'NewPassword123!', password_confirmation: 'NewPassword123!' })">Copy cURL</button>
+            </div>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Changes password for the authenticated user. Requires current password verification. Sends a "Password Changed" notification.</p>
+            <table class="param-table">
+                <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="param-name">current_password</span> <span class="param-required">req</span></td><td><span class="param-type">string</span></td><td>Existing password for verification.</td></tr>
+                    <tr><td><span class="param-name">password</span> <span class="param-required">req</span></td><td><span class="param-type">string</span></td><td>New password (min 8 chars).</td></tr>
+                    <tr><td><span class="param-name">password_confirmation</span> <span class="param-required">req</span></td><td><span class="param-type">string</span></td><td>Must match new password.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </section>
 
 <!-- SECTION 2: ARTIST APPLICATIONS -->
@@ -225,6 +324,34 @@ Authorization: Bearer &lt;personal_access_token&gt;</div>
         </div>
     </div>
 
+    <!-- GET /api/artist-applications/my-application -->
+    <div class="endpoint-card" id="get-api-artist-applications-my">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-get">GET</span>
+                <span>/api/artist-applications/my-application</span>
+            </div>
+            <span class="auth-badge">Authenticated</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Returns the current user's own artist application and its status (pending/approved/rejected).</p>
+        </div>
+    </div>
+
+    <!-- GET /api/artist-applications -->
+    <div class="endpoint-card" id="get-api-artist-applications">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-get">GET</span>
+                <span>/api/artist-applications</span>
+            </div>
+            <span class="auth-badge staff">Staff Only</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Lists all artist applications with pagination. Staff/admin only — regular users receive 403.</p>
+        </div>
+    </div>
+
     <!-- POST /api/artist-applications/{id}/approve -->
     <div class="endpoint-card" id="post-api-artist-applications-approve">
         <div class="endpoint-header">
@@ -262,11 +389,140 @@ Authorization: Bearer &lt;personal_access_token&gt;</div>
     </div>
 </section>
 
-<!-- SECTION 3: COMMISSIONS & MESSAGES -->
+<!-- SECTION 3: COMMISSION SERVICES & ORDERS -->
 <section id="commissions-section" style="margin-bottom: 64px;">
     <div style="margin-bottom: 24px;">
-        <h2 style="font-size: 24px; font-weight: 700;">3. Commission Orders & Chat</h2>
-        <p style="font-size: 14px; color: var(--text-secondary);">Service catalog, order statuses, revision items, and direct order communication.</p>
+        <h2 style="font-size: 24px; font-weight: 700;">3. Commission Services & Orders</h2>
+        <p style="font-size: 14px; color: var(--text-secondary);">Service catalog, order lifecycle, status transitions, revisions, and reviews.</p>
+    </div>
+
+    <!-- GET /api/commission-services -->
+    <div class="endpoint-card" id="get-api-commission-services">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-get">GET</span>
+                <span>/api/commission-services</span>
+            </div>
+            <span class="auth-badge">Authenticated</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Lists all available commission service listings with pricing, categories, and artist info. Paginated.</p>
+        </div>
+    </div>
+
+    <!-- POST /api/commission-services -->
+    <div class="endpoint-card" id="post-api-commission-services">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/commission-services</span>
+            </div>
+            <span class="auth-badge">Artist Only</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Creates a new commission service listing. Only users with an artist profile can create services.</p>
+            <table class="param-table">
+                <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="param-name">title</span> <span class="param-required">req</span></td><td><span class="param-type">string</span></td><td>Service title (e.g. "Full Character Illustration").</td></tr>
+                    <tr><td><span class="param-name">description</span> <span class="param-required">req</span></td><td><span class="param-type">string</span></td><td>Detailed description of the service.</td></tr>
+                    <tr><td><span class="param-name">price</span> <span class="param-required">req</span></td><td><span class="param-type">integer</span></td><td>Price in IDR (smallest unit).</td></tr>
+                    <tr><td><span class="param-name">max_revisions</span> <span class="param-optional">opt</span></td><td><span class="param-type">integer</span></td><td>Maximum free revisions included.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- GET /api/commissions -->
+    <div class="endpoint-card" id="get-api-commissions">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-get">GET</span>
+                <span>/api/commissions</span>
+            </div>
+            <span class="auth-badge">Authenticated</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Lists commissions for the authenticated user — both as buyer and as artist. Paginated.</p>
+        </div>
+    </div>
+
+    <!-- POST /api/commissions -->
+    <div class="endpoint-card" id="post-api-commissions">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/commissions</span>
+            </div>
+            <span class="auth-badge">Authenticated</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Creates a new commission order from a service listing. The artist receives a notification.</p>
+            <table class="param-table">
+                <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="param-name">commission_service_id</span> <span class="param-required">req</span></td><td><span class="param-type">integer</span></td><td>ID of the service to order.</td></tr>
+                    <tr><td><span class="param-name">notes</span> <span class="param-optional">opt</span></td><td><span class="param-type">string</span></td><td>Additional instructions for the artist.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- PATCH /api/commissions/{id}/cancel -->
+    <div class="endpoint-card" id="patch-api-commissions-status">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-patch">PATCH</span>
+                <span>/api/commissions/{id}/cancel</span>
+            </div>
+            <span class="auth-badge">Order Participants</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Cancels the commission. Can be called by either buyer or artist depending on commission status.</p>
+        </div>
+    </div>
+
+    <!-- POST /api/commissions/{id}/revisions -->
+    <div class="endpoint-card" id="post-api-commission-revisions">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/commissions/{id}/revisions</span>
+            </div>
+            <span class="auth-badge">Order Participants</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Submits a revision request or deliverable on the commission. Tracks revision count against the max allowed.</p>
+        </div>
+    </div>
+
+    <!-- POST /api/commissions/{id}/reviews -->
+    <div class="endpoint-card" id="post-api-commission-reviews">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/commissions/{id}/reviews</span>
+            </div>
+            <span class="auth-badge">Commission Buyer</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Leaves a review and rating on a completed commission. One review per commission.</p>
+            <table class="param-table">
+                <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="param-name">rating</span> <span class="param-required">req</span></td><td><span class="param-type">integer</span></td><td>1-5 star rating.</td></tr>
+                    <tr><td><span class="param-name">comment</span> <span class="param-optional">opt</span></td><td><span class="param-type">string</span></td><td>Review text.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION 3b: COMMISSION CHAT -->
+<section id="chat-section" style="margin-bottom: 64px;">
+    <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 24px; font-weight: 700;">3b. Commission Chat</h2>
+        <p style="font-size: 14px; color: var(--text-secondary);">Direct messaging between buyer and artist within a commission order.</p>
     </div>
 
     <!-- GET /api/commissions/{id}/messages -->
@@ -305,11 +561,46 @@ Authorization: Bearer &lt;personal_access_token&gt;</div>
     </div>
 </section>
 
-<!-- SECTION 4: FEED, SOCIAL & NOTIFICATIONS -->
+<!-- SECTION 4: FEED & SOCIAL -->
 <section id="social-section" style="margin-bottom: 64px;">
     <div style="margin-bottom: 24px;">
-        <h2 style="font-size: 24px; font-weight: 700;">4. Feed, Social & In-App Notifications</h2>
-        <p style="font-size: 14px; color: var(--text-secondary);">Explore posts, like/bookmark artwork, follow artists, and query user alerts.</p>
+        <h2 style="font-size: 24px; font-weight: 700;">4. Feed, Posts & Social</h2>
+        <p style="font-size: 14px; color: var(--text-secondary);">Explore posts, like/bookmark artwork, comment, and follow artists.</p>
+    </div>
+
+    <!-- GET /api/posts -->
+    <div class="endpoint-card" id="get-api-posts">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-get">GET</span>
+                <span>/api/posts</span>
+            </div>
+            <span class="auth-badge">Authenticated</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Lists public feed posts from artists. Paginated with optional filters.</p>
+        </div>
+    </div>
+
+    <!-- POST /api/posts -->
+    <div class="endpoint-card" id="post-api-posts">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/posts</span>
+            </div>
+            <span class="auth-badge">Artist Only</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Creates a new artwork post. Artists can share portfolio pieces, WIPs, and completed commissions.</p>
+            <table class="param-table">
+                <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="param-name">content</span> <span class="param-required">req</span></td><td><span class="param-type">string</span></td><td>Post caption or description.</td></tr>
+                    <tr><td><span class="param-name">media_ids</span> <span class="param-optional">opt</span></td><td><span class="param-type">array</span></td><td>Array of uploaded media IDs to attach.</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- POST /api/posts/{id}/like -->
@@ -344,6 +635,80 @@ Authorization: Bearer &lt;personal_access_token&gt;</div>
         </div>
     </div>
 
+    <!-- GET /api/me/bookmarks -->
+    <div class="endpoint-card" id="get-api-me-bookmarks">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-get">GET</span>
+                <span>/api/me/bookmarks</span>
+            </div>
+            <span class="auth-badge">Authenticated</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Lists all posts bookmarked by the current user. Paginated.</p>
+        </div>
+    </div>
+
+    <!-- POST /api/post-comments -->
+    <div class="endpoint-card" id="post-api-post-comments">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/posts/{post}/comments</span>
+            </div>
+            <span class="auth-badge">Authenticated</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Adds a comment to a post. Notifies the post author.</p>
+            <table class="param-table">
+                <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="param-name">body</span> <span class="param-required">req</span></td><td><span class="param-type">string</span></td><td>Comment text.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- POST /api/users/{id}/follow -->
+    <div class="endpoint-card" id="post-api-users-follow">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/users/{id}/follow</span>
+            </div>
+            <span class="auth-badge">Authenticated</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Toggles follow/unfollow for the target user. Cannot follow yourself.</p>
+            <div class="code-container">
+                <div class="code-header"><span>Response (200 OK)</span></div>
+                <div class="code-block">{ "following": true }</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GET /api/users/{id}/followers -->
+    <div class="endpoint-card" id="get-api-users-followers">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-get">GET</span>
+                <span>/api/users/{id}/followers</span>
+            </div>
+            <span class="auth-badge">Authenticated</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Lists users who follow the specified user. Paginated.</p>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION 4b: NOTIFICATIONS -->
+<section id="notifications-section" style="margin-bottom: 64px;">
+    <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 24px; font-weight: 700;">4b. Notifications</h2>
+        <p style="font-size: 14px; color: var(--text-secondary);">Query, manage, and mark notifications as read for the authenticated user.</p>
+    </div>
+
     <!-- GET /api/notifications -->
     <div class="endpoint-card" id="get-api-notifications">
         <div class="endpoint-header">
@@ -355,6 +720,52 @@ Authorization: Bearer &lt;personal_access_token&gt;</div>
         </div>
         <div class="endpoint-body">
             <p style="font-size: 14px; color: var(--text-secondary);">Fetches paginated user notifications. Filter with <code>?unread=true</code>.</p>
+        </div>
+    </div>
+
+    <!-- GET /api/notifications/unread-count -->
+    <div class="endpoint-card" id="get-api-notifications-unread">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-get">GET</span>
+                <span>/api/notifications/unread-count</span>
+            </div>
+            <span class="auth-badge">Authenticated</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Returns the count of unread notifications for badge display.</p>
+            <div class="code-container">
+                <div class="code-header"><span>Response (200 OK)</span></div>
+                <div class="code-block">{ "unread_count": 7 }</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PATCH /api/notifications/read-all -->
+    <div class="endpoint-card" id="patch-api-notifications-read-all">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-patch">PATCH</span>
+                <span>/api/notifications/read-all</span>
+            </div>
+            <span class="auth-badge">Authenticated</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Marks all of the current user's notifications as read in one batch.</p>
+        </div>
+    </div>
+
+    <!-- PATCH /api/notifications/{id}/read -->
+    <div class="endpoint-card" id="patch-api-notifications-read">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-patch">PATCH</span>
+                <span>/api/notifications/{id}/read</span>
+            </div>
+            <span class="auth-badge">Authenticated</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Marks a single notification as read. Only the notification owner can mark it.</p>
         </div>
     </div>
 </section>
@@ -400,6 +811,70 @@ Authorization: Bearer &lt;personal_access_token&gt;</div>
             <p style="font-size: 14px; color: var(--text-secondary);">
                 Validates SHA-512 signature from Midtrans and updates commission payment status to <code>paid</code> or <code>failed</code>.
             </p>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION 6: MODERATION & SUPPORT -->
+<section id="moderation-section" style="margin-bottom: 64px;">
+    <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 24px; font-weight: 700;">6. Moderation & Support Tickets</h2>
+        <p style="font-size: 14px; color: var(--text-secondary);">Content reporting, support tickets, and staff moderation workflows.</p>
+    </div>
+
+    <!-- POST /api/reports -->
+    <div class="endpoint-card" id="post-api-reports">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/reports</span>
+            </div>
+            <span class="auth-badge">Authenticated</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Submits a content report for review by staff. Can report posts, users, or commission disputes.</p>
+            <table class="param-table">
+                <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="param-name">reportable_type</span> <span class="param-required">req</span></td><td><span class="param-type">string</span></td><td>Type of content being reported (e.g. "post", "user").</td></tr>
+                    <tr><td><span class="param-name">reportable_id</span> <span class="param-required">req</span></td><td><span class="param-type">integer</span></td><td>ID of the reported content.</td></tr>
+                    <tr><td><span class="param-name">reason</span> <span class="param-required">req</span></td><td><span class="param-type">string</span></td><td>Reason for the report.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- GET /api/tickets -->
+    <div class="endpoint-card" id="get-api-tickets">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-get">GET</span>
+                <span>/api/tickets</span>
+            </div>
+            <span class="auth-badge">Authenticated</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Lists support tickets for the current user. Staff can view all tickets.</p>
+        </div>
+    </div>
+
+    <!-- POST /api/tickets/{id}/messages -->
+    <div class="endpoint-card" id="post-api-tickets-messages">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/tickets/{id}/messages</span>
+            </div>
+            <span class="auth-badge">Ticket Participants</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Sends a message on a support ticket thread. Ticket owner and staff can reply.</p>
+            <table class="param-table">
+                <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="param-name">message</span> <span class="param-required">req</span></td><td><span class="param-type">string</span></td><td>Message content.</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </section>
