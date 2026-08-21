@@ -12,7 +12,7 @@
         <span style="font-size: 13px; color: var(--text-muted);">Standardized RFC-7807 Compliant Envelopes</span>
     </div>
     
-    <h1 style="font-size: 38px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 14px; background: linear-gradient(135deg, #ffffff 0%, #ffc2d1 50%, #d1c8e8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+    <h1 class="heading-gradient" style="font-size: 38px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 14px;">
         API Error Collection & Handling Guide
     </h1>
     

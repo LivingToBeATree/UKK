@@ -27,6 +27,8 @@ html[data-theme="dark"] {
     --brand-rose: #ff4365;
 
     --brand-gradient: linear-gradient(135deg, #A802F5 0%, #7000ff 50%, #02F5A8 100%);
+    --gradient-hero: linear-gradient(135deg, #ffffff 0%, #d1c8e8 100%);
+    --param-name-color: #d1b4ff;
 
     --method-get: #02F5A8;
     --method-post: #c34aff;
@@ -35,43 +37,39 @@ html[data-theme="dark"] {
 
     --header-height: 72px;
     --drawer-width: 340px;
-
-    --icon-filter: none;
-    --icon-suffix: 'white';
     
     color-scheme: dark;
 }
 
 html[data-theme="light"] {
-    --bg-body: #f5f3fa;
-    --bg-sidebar: #ede9f7;
+    --bg-body: #f8f6fd;
+    --bg-sidebar: #ede7f8;
     --bg-surface: #ffffff;
-    --bg-surface-elevated: #f0ecfa;
-    --bg-code: #faf8ff;
+    --bg-surface-elevated: #f4effd;
+    --bg-code: #f2eefc;
 
-    --border-subtle: #ddd5f0;
-    --border-strong: #c4b8e0;
-    --border-focus: #A802F5;
+    --border-subtle: #ded3f3;
+    --border-strong: #c4b3e6;
+    --border-focus: #8500c4;
 
-    --text-primary: #1a1230;
-    --text-secondary: #5a4e78;
-    --text-muted: #8a7eaa;
+    --text-primary: #120a26;
+    --text-secondary: #4a3e68;
+    --text-muted: #796b99;
     --text-on-accent: #ffffff;
 
-    --brand-purple: #9000e0;
-    --brand-teal: #00c98a;
-    --brand-gold: #d99200;
-    --brand-rose: #e03050;
+    --brand-purple: #8500c4;
+    --brand-teal: #008f62;
+    --brand-gold: #b87a00;
+    --brand-rose: #c9183c;
 
-    --brand-gradient: linear-gradient(135deg, #9000e0 0%, #6000cc 50%, #00c98a 100%);
+    --brand-gradient: linear-gradient(135deg, #8500c4 0%, #5800b8 50%, #008f62 100%);
+    --gradient-hero: linear-gradient(135deg, #120a26 0%, #5800b8 100%);
+    --param-name-color: #7b00b8;
 
-    --method-get: #00b080;
-    --method-post: #9000e0;
-    --method-patch: #c88a00;
-    --method-delete: #d03050;
-
-    --icon-filter: invert(1);
-    --icon-suffix: 'black';
+    --method-get: #008f62;
+    --method-post: #8500c4;
+    --method-patch: #a66e00;
+    --method-delete: #c9183c;
 
     color-scheme: light;
 }
@@ -94,11 +92,18 @@ body {
     display: flex;
     flex-direction: column;
     overflow-x: hidden;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 a { color: inherit; text-decoration: none; }
 code, pre { font-family: 'JetBrains Mono', monospace; }
+
+/* ── Headings ────────────────────────────────────────────── */
+.heading-gradient {
+    background: var(--gradient-hero);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
 
 /* ── Page Layout ─────────────────────────────────────────── */
 .docs-wrapper {
@@ -150,7 +155,7 @@ code, pre { font-family: 'JetBrains Mono', monospace; }
     padding: 0;
     display: flex;
     flex-direction: column;
-    box-shadow: 16px 0 60px rgba(0, 0, 0, 0.5);
+    box-shadow: 16px 0 60px rgba(0, 0, 0, 0.35);
     scrollbar-width: thin;
     scrollbar-color: var(--border-strong) transparent;
 }
@@ -182,7 +187,7 @@ code, pre { font-family: 'JetBrains Mono', monospace; }
     transform: translateY(-50%);
     width: 14px;
     height: 14px;
-    opacity: 0.5;
+    opacity: 0.6;
     pointer-events: none;
 }
 
@@ -362,7 +367,7 @@ code, pre { font-family: 'JetBrains Mono', monospace; }
 
 .endpoint-card:hover {
     border-color: var(--border-strong);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
 }
 
 .endpoint-header {
@@ -418,7 +423,7 @@ code, pre { font-family: 'JetBrains Mono', monospace; }
     vertical-align: top;
 }
 
-.param-name  { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #d1b4ff; }
+.param-name  { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--param-name-color); }
 .param-type  { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--brand-teal); }
 
 .param-required {
@@ -445,7 +450,7 @@ code, pre { font-family: 'JetBrains Mono', monospace; }
     align-items: center;
     justify-content: space-between;
     padding: 9px 16px;
-    background: rgba(128, 128, 128, 0.04);
+    background: rgba(128, 128, 128, 0.06);
     border-bottom: 1px solid var(--border-subtle);
     font-size: 12px;
     color: var(--text-muted);
@@ -605,28 +610,13 @@ code, pre { font-family: 'JetBrains Mono', monospace; }
     box-shadow: 0 2px 8px rgba(168, 2, 245, 0.35);
 }
 
-.theme-toggle-btn.active .icon-themed {
-    filter: none !important;
-}
-
-/* ── Theme-aware SVG icons ───────────────────────────────── */
+/* ── Theme-aware SVG icons (JS swaps filename white<->black) ── */
 .icon-themed {
-    transition: filter 0.3s ease;
+    display: inline-block;
+    vertical-align: middle;
 }
 
-html[data-theme="light"] .icon-themed {
-    filter: invert(1);
-}
-
-/* ── Utility: nav-category (kept for backward compat) ──── */
-.nav-category {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-muted);
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+/* When theme toggle button is active, force white icon on its purple background */
+.theme-toggle-btn.active .icon-themed {
+    filter: brightness(0) invert(1);
 }

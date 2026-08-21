@@ -71,7 +71,9 @@ function applyTheme(mode) {
     const suffix = resolved === 'dark' ? 'white' : 'black';
     document.querySelectorAll('.icon-themed').forEach(img => {
         const src = img.getAttribute('src') || '';
-        img.setAttribute('src', src.replace(/(white|black)/, suffix));
+        if (src.includes('-white.svg') || src.includes('-black.svg')) {
+            img.setAttribute('src', src.replace(/-(white|black)\.svg/, `-${suffix}.svg`));
+        }
     });
 }
 
