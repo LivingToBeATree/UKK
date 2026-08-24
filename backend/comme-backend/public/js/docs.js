@@ -1,8 +1,6 @@
-/* ============================================================
-   Comme API Docs — Interactive Scripts
-   ============================================================ */
+// Comme API Docs — Interactive Scripts
 
-// ── Clipboard Helpers ────────────────────────────────────────
+// Clipboard Helpers
 function copyCode(btn, elementId) {
     const el = document.getElementById(elementId);
     if (!el) return;
@@ -35,7 +33,7 @@ function copyCurl(btn, method, path, body = null) {
     });
 }
 
-// ── Drawer Toggle ────────────────────────────────────────────
+// Drawer Toggle
 function toggleDrawer(open = null) {
     const drawer = document.getElementById('docsDrawer');
     const overlay = document.getElementById('drawerOverlay');
@@ -53,7 +51,7 @@ function toggleDrawer(open = null) {
     }
 }
 
-// ── Theme Manager ────────────────────────────────────────────
+// Theme Manager
 function getSystemTheme() {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
@@ -94,7 +92,7 @@ function initTheme() {
     });
 }
 
-// ── Active Nav Link Detection ────────────────────────────────
+// Active Nav Link Detection
 function updateActiveNavLink() {
     const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
     const currentHash = window.location.hash.replace('#', '');
@@ -178,7 +176,7 @@ function scrollSpyUpdate() {
     }
 }
 
-// ── DOM Ready ────────────────────────────────────────────────
+// DOM Ready
 document.addEventListener('DOMContentLoaded', () => {
     // Init theme
     initTheme();

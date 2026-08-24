@@ -1,4 +1,4 @@
-<!-- SECTION 4b: NOTIFICATIONS -->
+<!-- Section 4b: Notifications -->
 <section id="notifications-section" style="margin-bottom: 64px;">
     <div style="margin-bottom: 24px;">
         <h2 style="font-size: 24px; font-weight: 700; color: var(--text-primary);">4b. Notifications</h2>

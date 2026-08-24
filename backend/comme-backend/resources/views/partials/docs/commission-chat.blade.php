@@ -1,4 +1,4 @@
-<!-- SECTION 3b: COMMISSION CHAT -->
+<!-- Section 3b: Commission Chat -->
 <section id="chat-section" style="margin-bottom: 64px;">
     <div style="margin-bottom: 24px;">
         <h2 style="font-size: 24px; font-weight: 700; color: var(--text-primary);">3b. Commission Chat</h2>

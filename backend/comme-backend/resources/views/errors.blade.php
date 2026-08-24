@@ -92,7 +92,7 @@
     <a href="#error-500" class="method-pill method-delete" style="padding: 6px 12px; font-size: 12px; text-decoration: none;">500 Server Error</a>
 </div>
 
-<!-- SECTION 1: 401 UNAUTHENTICATED -->
+<!-- 401 Unauthenticated -->
 <div class="endpoint-card" id="error-401">
     <div class="endpoint-header">
         <div class="endpoint-path">
@@ -128,7 +128,7 @@
     </div>
 </div>
 
-<!-- SECTION 2: 403 FORBIDDEN -->
+<!-- 403 Forbidden -->
 <div class="endpoint-card" id="error-403">
     <div class="endpoint-header">
         <div class="endpoint-path">
@@ -176,7 +176,7 @@
     </div>
 </div>
 
-<!-- SECTION 3: 422 VALIDATION ERROR -->
+<!-- 422 Validation Error -->
 <div class="endpoint-card" id="error-422">
     <div class="endpoint-header">
         <div class="endpoint-path">
@@ -224,7 +224,7 @@
     </div>
 </div>
 
-<!-- SECTION 4: 404 NOT FOUND -->
+<!-- 404 Not Found -->
 <div class="endpoint-card" id="error-404">
     <div class="endpoint-header">
         <div class="endpoint-path">
@@ -252,7 +252,7 @@
     </div>
 </div>
 
-<!-- SECTION 5: 409 CONFLICT -->
+<!-- 409 Conflict -->
 <div class="endpoint-card" id="error-409">
     <div class="endpoint-header">
         <div class="endpoint-path">
@@ -297,7 +297,7 @@
     </div>
 </div>
 
-<!-- SECTION 6: 429 TOO MANY REQUESTS -->
+<!-- 429 Too Many Requests -->
 <div class="endpoint-card" id="error-429">
     <div class="endpoint-header">
         <div class="endpoint-path">
@@ -357,7 +357,7 @@
     </div>
 </div>
 
-<!-- SECTION 7: 405 METHOD NOT ALLOWED -->
+<!-- 405 Method Not Allowed -->
 <div class="endpoint-card" id="error-405">
     <div class="endpoint-header">
         <div class="endpoint-path">
@@ -385,7 +385,7 @@
     </div>
 </div>
 
-<!-- SECTION 8: 400 BAD REQUEST -->
+<!-- 400 Bad Request -->
 <div class="endpoint-card" id="error-400">
     <div class="endpoint-header">
         <div class="endpoint-path">
@@ -413,7 +413,7 @@
     </div>
 </div>
 
-<!-- SECTION 9: 500 INTERNAL SERVER ERROR -->
+<!-- 500 Internal Server Error -->
 <div class="endpoint-card" id="error-500">
     <div class="endpoint-header">
         <div class="endpoint-path">

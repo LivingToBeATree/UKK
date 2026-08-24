@@ -1,4 +1,4 @@
-<!-- SECTION 1: AUTHENTICATION -->
+<!-- Section 1: Authentication -->
 <section id="auth-section" style="margin-bottom: 64px;">
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
         <div>

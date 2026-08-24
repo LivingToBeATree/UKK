@@ -1,4 +1,4 @@
-<!-- SECTION 5: PAYMENTS -->
+<!-- Section 5: Payments -->
 <section id="payments-section" style="margin-bottom: 64px;">
     <div style="margin-bottom: 24px;">
         <h2 style="font-size: 24px; font-weight: 700; color: var(--text-primary);">5. Midtrans Payments & Webhooks</h2>

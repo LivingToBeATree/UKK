@@ -1,4 +1,4 @@
-<!-- SECTION 6: MODERATION & SUPPORT -->
+<!-- Section 6: Moderation & Support -->
 <section id="moderation-section" style="margin-bottom: 64px;">
     <div style="margin-bottom: 24px;">
         <h2 style="font-size: 24px; font-weight: 700; color: var(--text-primary);">6. Moderation & Support Tickets</h2>

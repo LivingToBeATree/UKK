@@ -1,4 +1,4 @@
-<!-- SECTION 2: ARTIST APPLICATIONS -->
+<!-- Section 2: Artist Applications -->
 <section id="apps-section" style="margin-bottom: 64px;">
     <div style="margin-bottom: 24px;">
         <h2 style="font-size: 24px; font-weight: 700; color: var(--text-primary);">2. Artist Applications & Seller Vetting</h2>

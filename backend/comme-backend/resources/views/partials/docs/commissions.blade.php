@@ -1,4 +1,4 @@
-<!-- SECTION 3: COMMISSION SERVICES & ORDERS -->
+<!-- Section 3: Commission Services & Orders -->
 <section id="commissions-section" style="margin-bottom: 64px;">
     <div style="margin-bottom: 24px;">
         <h2 style="font-size: 24px; font-weight: 700; color: var(--text-primary);">3. Commission Services & Orders</h2>
