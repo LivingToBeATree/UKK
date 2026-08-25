@@ -1,9 +1,9 @@
 import { api } from './api';
-import type { 
-  ApiResponse, 
-  AuthResponse, 
-  PendingRegistrationResponse, 
-  User 
+import type {
+    ApiResponse,
+    AuthResponse,
+    PendingRegistrationResponse,
+    User
 } from '@/types';
 
 export const authService = {
@@ -38,7 +38,7 @@ export const authService = {
 
     // Get Current User Profile (/api/me)
     getMe: async () => {
-        const res = await api.post<ApiResponse<User>>('/me')
+        const res = await api.get<ApiResponse<User>>('/me')
         return res.data.data
     },
 
