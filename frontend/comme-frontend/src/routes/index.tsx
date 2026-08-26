@@ -1,4 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
+export { ProtectedRoute } from './protectedRoutes';
+export { GuestRoute } from './GuestRoute';
 
 function AppRoutes() {
     return (
