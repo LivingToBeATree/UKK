@@ -91,16 +91,16 @@ export const PlaygroundPage: React.FC = () => {
             animate="show"
             className="min-h-screen bg-background text-foreground p-6 sm:p-12 max-w-6xl mx-auto space-y-12 font-sans"
         >
-            {/* Header */}
+            {/* Header with Theme-Aware Star Accent */}
             <motion.div variants={itemVariants} className="space-y-2 border-b border-border pb-6">
                 <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-purple-600/15 border border-purple-500/30 text-purple-400">
-                        <Sparkles className="h-6 w-6" />
+                    <div className="p-2.5 rounded-xl bg-primary/15 border border-primary/30 text-primary">
+                        <Sparkles className="h-6 w-6 text-primary" />
                     </div>
                     <div>
                         <h1 className="text-3xl font-extrabold tracking-tight">Comme Design System</h1>
                         <p className="text-sm text-muted-foreground">
-                            Interactive showcase for all 19 atomic components, Motion micro-interactions & brand tokens
+                            Interactive showcase for all 19 atomic components, Motion micro-interactions & brand color themes
                         </p>
                     </div>
                 </div>
@@ -108,7 +108,7 @@ export const PlaygroundPage: React.FC = () => {
 
             {/* 1. Buttons & Badges */}
             <motion.section variants={itemVariants} className="space-y-4">
-                <h2 className="text-xl font-bold border-l-4 border-purple-500 pl-3">1. Buttons & Badges</h2>
+                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">1. Buttons & Badges</h2>
                 <Card>
                     <CardContent className="p-6 space-y-6">
                         <div className="flex flex-wrap items-center gap-3">
@@ -122,7 +122,7 @@ export const PlaygroundPage: React.FC = () => {
                             <Button size="lg">Large CTA</Button>
                         </div>
 
-                        {/* Badges & Pills */}
+                        {/* Predetermined Fixed Badges */}
                         <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border">
                             <Badge variant="purple">Purple Accent</Badge>
                             <Badge variant="teal">Teal / Mint</Badge>
@@ -139,7 +139,7 @@ export const PlaygroundPage: React.FC = () => {
 
             {/* 2. Toast Notifications */}
             <motion.section variants={itemVariants} className="space-y-4">
-                <h2 className="text-xl font-bold border-l-4 border-emerald-500 pl-3">2. Sonner Toast Notifications</h2>
+                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">2. Sonner Toast Notifications</h2>
                 <Card>
                     <CardContent className="p-6 flex flex-wrap gap-3">
                         <Button
@@ -169,7 +169,7 @@ export const PlaygroundPage: React.FC = () => {
                                 })
                             }
                         >
-                            <MessageSquare className="h-4 w-4 mr-1 text-purple-400" /> Trigger Info Toast
+                            <MessageSquare className="h-4 w-4 mr-1 text-primary" /> Trigger Info Toast
                         </Button>
                     </CardContent>
                 </Card>
@@ -177,7 +177,7 @@ export const PlaygroundPage: React.FC = () => {
 
             {/* 3. Form Controls (Input, Textarea, Select, Checkbox) */}
             <motion.section variants={itemVariants} className="space-y-4">
-                <h2 className="text-xl font-bold border-l-4 border-amber-500 pl-3">3. Form Controls</h2>
+                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">3. Form Controls</h2>
                 <Card>
                     <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
@@ -219,7 +219,7 @@ export const PlaygroundPage: React.FC = () => {
 
             {/* 4. Avatars & Progress */}
             <motion.section variants={itemVariants} className="space-y-4">
-                <h2 className="text-xl font-bold border-l-4 border-purple-500 pl-3">4. Avatars & Progress</h2>
+                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">4. Avatars & Progress</h2>
                 <Card>
                     <CardContent className="p-6 space-y-6">
                         <div className="flex items-center gap-4">
@@ -250,7 +250,7 @@ export const PlaygroundPage: React.FC = () => {
 
             {/* 5. Modals (Dialog & AlertDialog & Dropdown) */}
             <motion.section variants={itemVariants} className="space-y-4">
-                <h2 className="text-xl font-bold border-l-4 border-rose-500 pl-3">5. Dialogs & Dropdowns (Animated)</h2>
+                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">5. Dialogs & Dropdowns (Animated)</h2>
                 <Card>
                     <CardContent className="p-6 flex flex-wrap gap-4 items-center">
                         {/* Standard Dialog using asChild with spring animation */}
@@ -291,7 +291,7 @@ export const PlaygroundPage: React.FC = () => {
                             </DialogContent>
                         </Dialog>
 
-                        {/* Alert Dialog using asChild with spring animation */}
+                        {/* Alert Dialog using asChild with destructive predetermined style */}
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
                                 <Button variant="destructive">
@@ -346,7 +346,7 @@ export const PlaygroundPage: React.FC = () => {
 
             {/* 6. Tabs & Scroll Area */}
             <motion.section variants={itemVariants} className="space-y-4">
-                <h2 className="text-xl font-bold border-l-4 border-emerald-500 pl-3">6. Tabs (Gliding Indicator) & ScrollArea</h2>
+                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">6. Tabs (Gliding Indicator) & ScrollArea</h2>
                 <Card>
                     <CardContent className="p-6">
                         <Tabs defaultValue="overview">
@@ -374,8 +374,8 @@ export const PlaygroundPage: React.FC = () => {
                                         </div>
                                     </div>
                                     <div className="flex gap-3 text-xs justify-end">
-                                        <div className="bg-purple-600/20 text-purple-200 p-3 rounded-lg border border-purple-500/30">
-                                            <span className="font-bold block mb-1">Artist:</span>
+                                        <div className="bg-primary/15 text-foreground p-3 rounded-lg border border-primary/30">
+                                            <span className="font-bold block mb-1 text-primary">Artist:</span>
                                             Got it! I will start on the thumbnail sketch today.
                                         </div>
                                         <Avatar size="sm" fallback="Artist" isOnline={true} />
@@ -393,7 +393,7 @@ export const PlaygroundPage: React.FC = () => {
 
             {/* 7. Moderation Table & Pagination */}
             <motion.section variants={itemVariants} className="space-y-4">
-                <h2 className="text-xl font-bold border-l-4 border-amber-500 pl-3">7. Table & Pagination</h2>
+                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">7. Table & Pagination</h2>
                 <Card>
                     <CardContent className="p-6 space-y-4">
                         <Table>
@@ -452,9 +452,9 @@ export const PlaygroundPage: React.FC = () => {
                 </Card>
             </motion.section>
 
-            {/* 8. Skeleton Loading States */}
+            {/* 8. Skeleton Loading States (Dynamic Theme Shimmers) */}
             <motion.section variants={itemVariants} className="space-y-4">
-                <h2 className="text-xl font-bold border-l-4 border-purple-500 pl-3">8. Skeleton Shimmers</h2>
+                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">8. Skeleton Shimmers</h2>
                 <Card>
                     <CardContent className="p-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
                         {[1, 2, 3].map((i) => (
@@ -472,7 +472,7 @@ export const PlaygroundPage: React.FC = () => {
 
             {/* 9. Domain-Specific Notification Cards */}
             <motion.section variants={itemVariants} className="space-y-4">
-                <h2 className="text-xl font-bold border-l-4 border-emerald-500 pl-3">9. Notification Cards (Comme Model)</h2>
+                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">9. Notification Cards (Comme Model)</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <NotificationCard
                         notification={{
