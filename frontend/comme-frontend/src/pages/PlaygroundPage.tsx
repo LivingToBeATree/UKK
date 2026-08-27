@@ -8,6 +8,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
 import { NotificationCard } from '@/components/NotificationCard';
+import { AppSidebar } from '@/components/AppSidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -83,6 +85,7 @@ export const PlaygroundPage: React.FC = () => {
     const [progressVal, setProgressVal] = useState(65);
     const [rememberMe, setRememberMe] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
+    const [sidebarTab, setSidebarTab] = useState('overview');
 
     return (
         <motion.div
@@ -506,6 +509,54 @@ export const PlaygroundPage: React.FC = () => {
                         onActionClick={(url) => toast.success(`Navigating to ${url}`)}
                     />
                 </div>
+            </motion.section>
+
+            {/* 10. Collapsible Studio Sidebar Component */}
+            <motion.section variants={itemVariants} className="space-y-4">
+                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">10. Collapsible Studio Sidebar</h2>
+                <Card className="overflow-hidden border border-border">
+                    <SidebarProvider defaultCollapsed={false}>
+                        <div className="flex h-[420px] w-full bg-background/50">
+                            {/* App Sidebar Instance */}
+                            <AppSidebar activeTab={sidebarTab} onTabChange={(t) => setSidebarTab(t)} />
+
+                            {/* Simulated Live Content Area */}
+                            <div className="flex-1 p-6 overflow-y-auto space-y-4">
+                                <div className="flex items-center justify-between border-b border-border/60 pb-3">
+                                    <div>
+                                        <h3 className="text-lg font-bold capitalize">
+                                            {sidebarTab.replace('_', ' ')} Panel
+                                        </h3>
+                                        <p className="text-xs text-muted-foreground">
+                                            Simulated workspace view inside dashboard layout
+                                        </p>
+                                    </div>
+                                    <Badge variant="purple">Live Layout Preview</Badge>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="p-4 rounded-xl border border-border bg-card/60 space-y-2">
+                                        <span className="text-xs font-semibold text-muted-foreground">Active Order Revenue</span>
+                                        <p className="text-xl font-black text-foreground">Rp 4,250,000</p>
+                                        <p className="text-[11px] text-emerald-400 font-medium">↑ +18% from last month</p>
+                                    </div>
+                                    <div className="p-4 rounded-xl border border-border bg-card/60 space-y-2">
+                                        <span className="text-xs font-semibold text-muted-foreground">Pending Revisions</span>
+                                        <p className="text-xl font-black text-foreground">2 Orders</p>
+                                        <p className="text-[11px] text-amber-400 font-medium">Due in 48 hours</p>
+                                    </div>
+                                </div>
+
+                                <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 space-y-2">
+                                    <p className="text-xs font-semibold text-primary">💡 Pro Tip:</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Click the collapse button at the bottom of the sidebar to see smooth spring transitions between full navigation and compact icon-only mode!
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </SidebarProvider>
+                </Card>
             </motion.section>
         </motion.div>
     );
