@@ -23,7 +23,7 @@ export default defineConfig([
         'warn',
         {
           allowConstantExport: true,
-          allowExportNames: ['buttonVariants', 'badgeVariants', 'cardVariants'],
+          allowExportNames: ['buttonVariants', 'badgeVariants', 'cardVariants', 'toast'],
         },
       ],
     },
