@@ -65,7 +65,7 @@ export interface DropdownMenuTriggerProps extends React.ButtonHTMLAttributes<HTM
 }
 
 export const DropdownMenuTrigger = React.forwardRef<HTMLElement, DropdownMenuTriggerProps>(
-    ({ asChild, children, onClick, ...props }, ref) => {
+    ({ asChild, children, onClick, className, ...props }, ref) => {
         const context = React.useContext(DropdownContext);
         if (!context) throw new Error('DropdownMenuTrigger must be used within DropdownMenu');
 
@@ -77,13 +77,14 @@ export const DropdownMenuTrigger = React.forwardRef<HTMLElement, DropdownMenuTri
         if (asChild && React.isValidElement(children)) {
             const childElement = children as React.ReactElement<React.HTMLAttributes<HTMLElement> & { ref?: React.Ref<HTMLElement> }>;
             return React.cloneElement(childElement, {
+                ...props,
                 ref,
+                className: cn(childElement.props.className, className),
                 'aria-expanded': context.open,
                 onClick: (e: React.MouseEvent<HTMLElement>) => {
                     childElement.props.onClick?.(e);
                     handleClick(e);
                 },
-                ...props,
             });
         }
 
@@ -91,6 +92,7 @@ export const DropdownMenuTrigger = React.forwardRef<HTMLElement, DropdownMenuTri
             <button
                 ref={ref as React.Ref<HTMLButtonElement>}
                 type="button"
+                className={className}
                 aria-expanded={context.open}
                 onClick={handleClick}
                 {...props}

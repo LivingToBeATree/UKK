@@ -40,7 +40,7 @@ export interface DialogTriggerProps extends React.ButtonHTMLAttributes<HTMLButto
 }
 
 export const DialogTrigger = React.forwardRef<HTMLElement, DialogTriggerProps>(
-    ({ asChild, children, onClick, ...props }, ref) => {
+    ({ asChild, children, onClick, className, ...props }, ref) => {
         const context = React.useContext(DialogContext);
         if (!context) throw new Error('DialogTrigger must be used within Dialog');
 
@@ -52,12 +52,13 @@ export const DialogTrigger = React.forwardRef<HTMLElement, DialogTriggerProps>(
         if (asChild && React.isValidElement(children)) {
             const childElement = children as React.ReactElement<React.HTMLAttributes<HTMLElement> & { ref?: React.Ref<HTMLElement> }>;
             return React.cloneElement(childElement, {
+                ...props,
                 ref,
+                className: cn(childElement.props.className, className),
                 onClick: (e: React.MouseEvent<HTMLElement>) => {
                     childElement.props.onClick?.(e);
                     handleClick(e);
                 },
-                ...props,
             });
         }
 
@@ -65,6 +66,7 @@ export const DialogTrigger = React.forwardRef<HTMLElement, DialogTriggerProps>(
             <button
                 ref={ref as React.Ref<HTMLButtonElement>}
                 type="button"
+                className={className}
                 onClick={handleClick}
                 {...props}
             >
