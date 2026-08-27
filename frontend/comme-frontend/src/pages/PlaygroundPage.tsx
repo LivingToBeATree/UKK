@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -6,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
+import { NotificationCard } from '@/components/NotificationCard';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -54,15 +56,43 @@ import {
     Shield,
 } from 'lucide-react';
 
+const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.08,
+        },
+    },
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 15 },
+    show: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            type: 'spring' as const,
+            damping: 24,
+            stiffness: 280,
+        },
+    },
+};
+
 export const PlaygroundPage: React.FC = () => {
     const [progressVal, setProgressVal] = useState(65);
     const [rememberMe, setRememberMe] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
 
     return (
-        <div className="min-h-screen bg-background text-foreground p-6 sm:p-12 max-w-6xl mx-auto space-y-12 font-sans">
+        <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+            className="min-h-screen bg-background text-foreground p-6 sm:p-12 max-w-6xl mx-auto space-y-12 font-sans"
+        >
             {/* Header */}
-            <div className="space-y-2 border-b border-border pb-6">
+            <motion.div variants={itemVariants} className="space-y-2 border-b border-border pb-6">
                 <div className="flex items-center gap-3">
                     <div className="p-2.5 rounded-xl bg-purple-600/15 border border-purple-500/30 text-purple-400">
                         <Sparkles className="h-6 w-6" />
@@ -70,14 +100,14 @@ export const PlaygroundPage: React.FC = () => {
                     <div>
                         <h1 className="text-3xl font-extrabold tracking-tight">Comme Design System</h1>
                         <p className="text-sm text-muted-foreground">
-                            Interactive showcase for all 19 atomic components & brand tokens
+                            Interactive showcase for all 19 atomic components, Motion micro-interactions & brand tokens
                         </p>
                     </div>
                 </div>
-            </div>
+            </motion.div>
 
             {/* 1. Buttons & Badges */}
-            <section className="space-y-4">
+            <motion.section variants={itemVariants} className="space-y-4">
                 <h2 className="text-xl font-bold border-l-4 border-purple-500 pl-3">1. Buttons & Badges</h2>
                 <Card>
                     <CardContent className="p-6 space-y-6">
@@ -105,10 +135,10 @@ export const PlaygroundPage: React.FC = () => {
                         </div>
                     </CardContent>
                 </Card>
-            </section>
+            </motion.section>
 
             {/* 2. Toast Notifications */}
-            <section className="space-y-4">
+            <motion.section variants={itemVariants} className="space-y-4">
                 <h2 className="text-xl font-bold border-l-4 border-emerald-500 pl-3">2. Sonner Toast Notifications</h2>
                 <Card>
                     <CardContent className="p-6 flex flex-wrap gap-3">
@@ -143,10 +173,10 @@ export const PlaygroundPage: React.FC = () => {
                         </Button>
                     </CardContent>
                 </Card>
-            </section>
+            </motion.section>
 
             {/* 3. Form Controls (Input, Textarea, Select, Checkbox) */}
-            <section className="space-y-4">
+            <motion.section variants={itemVariants} className="space-y-4">
                 <h2 className="text-xl font-bold border-l-4 border-amber-500 pl-3">3. Form Controls</h2>
                 <Card>
                     <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -185,10 +215,10 @@ export const PlaygroundPage: React.FC = () => {
                         </div>
                     </CardContent>
                 </Card>
-            </section>
+            </motion.section>
 
             {/* 4. Avatars & Progress */}
-            <section className="space-y-4">
+            <motion.section variants={itemVariants} className="space-y-4">
                 <h2 className="text-xl font-bold border-l-4 border-purple-500 pl-3">4. Avatars & Progress</h2>
                 <Card>
                     <CardContent className="p-6 space-y-6">
@@ -216,18 +246,18 @@ export const PlaygroundPage: React.FC = () => {
                         </div>
                     </CardContent>
                 </Card>
-            </section>
+            </motion.section>
 
             {/* 5. Modals (Dialog & AlertDialog & Dropdown) */}
-            <section className="space-y-4">
-                <h2 className="text-xl font-bold border-l-4 border-rose-500 pl-3">5. Dialogs & Dropdowns</h2>
+            <motion.section variants={itemVariants} className="space-y-4">
+                <h2 className="text-xl font-bold border-l-4 border-rose-500 pl-3">5. Dialogs & Dropdowns (Animated)</h2>
                 <Card>
                     <CardContent className="p-6 flex flex-wrap gap-4 items-center">
-                        {/* Standard Dialog using asChild */}
+                        {/* Standard Dialog using asChild with spring animation */}
                         <Dialog>
                             <DialogTrigger asChild>
                                 <Button variant="outline">
-                                    <Upload className="h-4 w-4 mr-2" /> Open Upload Modal
+                                    <Upload className="h-4 w-4 mr-2" /> Open Animated Modal
                                 </Button>
                             </DialogTrigger>
                             <DialogContent>
@@ -261,7 +291,7 @@ export const PlaygroundPage: React.FC = () => {
                             </DialogContent>
                         </Dialog>
 
-                        {/* Alert Dialog using asChild */}
+                        {/* Alert Dialog using asChild with spring animation */}
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
                                 <Button variant="destructive">
@@ -290,7 +320,7 @@ export const PlaygroundPage: React.FC = () => {
                             </AlertDialogContent>
                         </AlertDialog>
 
-                        {/* Dropdown Menu using asChild */}
+                        {/* Dropdown Menu with fade-scale animation */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" size="icon">
@@ -312,11 +342,11 @@ export const PlaygroundPage: React.FC = () => {
                         </DropdownMenu>
                     </CardContent>
                 </Card>
-            </section>
+            </motion.section>
 
             {/* 6. Tabs & Scroll Area */}
-            <section className="space-y-4">
-                <h2 className="text-xl font-bold border-l-4 border-emerald-500 pl-3">6. Tabs & ScrollArea</h2>
+            <motion.section variants={itemVariants} className="space-y-4">
+                <h2 className="text-xl font-bold border-l-4 border-emerald-500 pl-3">6. Tabs (Gliding Indicator) & ScrollArea</h2>
                 <Card>
                     <CardContent className="p-6">
                         <Tabs defaultValue="overview">
@@ -359,10 +389,10 @@ export const PlaygroundPage: React.FC = () => {
                         </Tabs>
                     </CardContent>
                 </Card>
-            </section>
+            </motion.section>
 
             {/* 7. Moderation Table & Pagination */}
-            <section className="space-y-4">
+            <motion.section variants={itemVariants} className="space-y-4">
                 <h2 className="text-xl font-bold border-l-4 border-amber-500 pl-3">7. Table & Pagination</h2>
                 <Card>
                     <CardContent className="p-6 space-y-4">
@@ -420,10 +450,10 @@ export const PlaygroundPage: React.FC = () => {
                         />
                     </CardContent>
                 </Card>
-            </section>
+            </motion.section>
 
             {/* 8. Skeleton Loading States */}
-            <section className="space-y-4">
+            <motion.section variants={itemVariants} className="space-y-4">
                 <h2 className="text-xl font-bold border-l-4 border-purple-500 pl-3">8. Skeleton Shimmers</h2>
                 <Card>
                     <CardContent className="p-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -438,7 +468,45 @@ export const PlaygroundPage: React.FC = () => {
                         ))}
                     </CardContent>
                 </Card>
-            </section>
-        </div>
+            </motion.section>
+
+            {/* 9. Domain-Specific Notification Cards */}
+            <motion.section variants={itemVariants} className="space-y-4">
+                <h2 className="text-xl font-bold border-l-4 border-emerald-500 pl-3">9. Notification Cards (Comme Model)</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <NotificationCard
+                        notification={{
+                            id: 1,
+                            user_id: 42,
+                            type: 'commission_request',
+                            data: {
+                                title: 'New Commission Inquiry',
+                                message: '@kazuma sent a request for Full Body Anime Illustration (Deadline: 7 Days)',
+                                action_url: '/commissions/4921',
+                            },
+                            read_at: null,
+                            created_at: '2026-08-27T08:30:00Z',
+                        }}
+                        onMarkAsRead={() => toast.info('Marked notification as read')}
+                        onActionClick={(url) => toast.success(`Navigating to ${url}`)}
+                    />
+                    <NotificationCard
+                        notification={{
+                            id: 2,
+                            user_id: 42,
+                            type: 'payment_received',
+                            data: {
+                                title: 'Midtrans Payment Verified',
+                                message: 'Escrow payment of Rp 750,000 was captured for Order #CM-4921.',
+                                action_url: '/orders/4921',
+                            },
+                            read_at: '2026-08-27T08:00:00Z',
+                            created_at: '2026-08-27T06:30:00Z',
+                        }}
+                        onActionClick={(url) => toast.success(`Navigating to ${url}`)}
+                    />
+                </div>
+            </motion.section>
+        </motion.div>
     );
 };
