@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { motion, type HTMLMotionProps } from 'motion/react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence, type HTMLMotionProps } from 'motion/react';
+import { ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './button';
 import { SidebarContext } from '@/contexts/sidebarContextDef';
@@ -31,6 +31,27 @@ export function SidebarProvider({
     const toggleSidebar = () => setCollapsed(!collapsed);
     const toggleMobile = () => setMobileOpen(!mobileOpen);
 
+    // Auto-close mobile drawer when window resizes to desktop breakpoint
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(min-width: 768px)');
+        const handleResize = (e: MediaQueryListEvent) => {
+            if (e.matches) setMobileOpen(false);
+        };
+        mediaQuery.addEventListener('change', handleResize);
+        return () => mediaQuery.removeEventListener('change', handleResize);
+    }, []);
+
+    // Close on Escape key on mobile
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && mobileOpen) {
+                setMobileOpen(false);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [mobileOpen]);
+
     return (
         <SidebarContext.Provider
             value={{
@@ -53,20 +74,64 @@ export interface SidebarProps extends Omit<HTMLMotionProps<'aside'>, 'children'>
 }
 
 export function Sidebar({ className, children, ...props }: SidebarProps) {
-    const { collapsed } = useSidebar();
+    const { collapsed, mobileOpen, setMobileOpen } = useSidebar();
 
     return (
-        <motion.aside
-            animate={{ width: collapsed ? 72 : 256 }}
-            transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-            className={cn(
-                'relative flex flex-col h-full shrink-0 border-r border-border bg-card/60 backdrop-blur-md z-30 transition-colors',
-                className
-            )}
-            {...props}
-        >
-            {children}
-        </motion.aside>
+        <>
+            {/* Desktop Sidebar (md and above) */}
+            <motion.aside
+                animate={{ width: collapsed ? 72 : 256 }}
+                transition={{ type: 'spring', damping: 26, stiffness: 300 }}
+                className={cn(
+                    'hidden md:flex relative flex-col h-full shrink-0 border-r border-border bg-card/60 backdrop-blur-md z-30 transition-colors',
+                    className
+                )}
+                {...props}
+            >
+                {children}
+            </motion.aside>
+
+            {/* 2. Mobile Slide-Over Drawer (< md) */}
+            <AnimatePresence>
+                {mobileOpen && (
+                    <>
+                        {/* Backdrop overlay */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setMobileOpen(false)}
+                            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs md:hidden"
+                        />
+
+                        {/* Slide-over Drawer Panel */}
+                        <motion.aside
+                            initial={{ x: '-100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '-100%' }}
+                            transition={{ type: 'spring', damping: 26, stiffness: 300 }}
+                            className={cn(
+                                'fixed inset-y-0 left-0 z-50 flex flex-col w-70 bg-card border-r border-border shadow-2xl md:hidden',
+                                className
+                            )}
+                            {...props}
+                        >
+                            <div className="absolute top-4 right-3 z-10 md:hidden">
+                                <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    onClick={() => setMobileOpen(false)}
+                                    aria-label="Close sidebar"
+                                >
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </div>
+                            {children}
+                        </motion.aside>
+                    </>
+                )}
+            </AnimatePresence>
+        </>
     );
 }
 
@@ -131,14 +196,11 @@ export function SidebarGroupLabel({
 }: React.HTMLAttributes<HTMLDivElement>) {
     const { collapsed } = useSidebar();
 
-    if (collapsed) {
-        return <div className="h-2" />;
-    }
-
     return (
         <div
             className={cn(
                 'px-3 text-[11px] font-bold tracking-wider uppercase text-muted-foreground/70 truncate',
+                collapsed && 'hidden md:hidden',
                 className
             )}
             {...props}
@@ -173,19 +235,27 @@ export function SidebarMenuButton({
     icon: Icon,
     isActive = false,
     badge,
+    onClick,
     ...props
 }: SidebarMenuButtonProps) {
-    const { collapsed } = useSidebar();
+    const { collapsed, setMobileOpen } = useSidebar();
+
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+        onClick?.(e);
+        // Auto close mobile drawer on item click
+        setMobileOpen(false);
+    };
 
     return (
         <li>
             <button
+                onClick={handleClick}
                 className={cn(
                     'group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold transition-all cursor-pointer select-none outline-none',
                     isActive
                         ? 'bg-primary/10 text-primary border-l-2 border-primary font-bold shadow-sm'
                         : 'text-muted-foreground hover:bg-secondary/80 hover:text-foreground',
-                    collapsed && 'justify-center px-0 py-2.5',
+                    collapsed && 'md:justify-center md:px-0 md:py-2.5',
                     className
                 )}
                 {...props}
@@ -198,11 +268,16 @@ export function SidebarMenuButton({
                         )}
                     />
                 )}
-                {!collapsed && (
-                    <span className="flex-1 text-left truncate">{children}</span>
-                )}
-                {!collapsed && badge !== undefined && (
-                    <span className="ml-auto rounded-full bg-primary/20 text-primary px-2 py-0.5 text-[10px] font-extrabold">
+                <span className={cn('flex-1 text-left truncate', collapsed && 'md:hidden')}>
+                    {children}
+                </span>
+                {badge !== undefined && (
+                    <span
+                        className={cn(
+                            'ml-auto rounded-full bg-primary/20 text-primary px-2 py-0.5 text-[10px] font-extrabold',
+                            collapsed && 'md:hidden'
+                        )}
+                    >
                         {badge}
                     </span>
                 )}
@@ -222,11 +297,31 @@ export function SidebarTrigger({
             variant="ghost"
             size="icon-sm"
             onClick={toggleSidebar}
-            aria-label="Toggle sidebar"
-            className={cn('text-muted-foreground hover:text-foreground', className)}
+            aria-label="Toggle desktop sidebar"
+            className={cn('text-muted-foreground hover:text-foreground hidden md:inline-flex', className)}
             {...props}
         >
             {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+        </Button>
+    );
+}
+
+export function SidebarMobileTrigger({
+    className,
+    ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+    const { toggleMobile } = useSidebar();
+
+    return (
+        <Button
+            variant="outline"
+            size="icon-sm"
+            onClick={toggleMobile}
+            aria-label="Open mobile navigation sidebar"
+            className={cn('md:hidden text-muted-foreground hover:text-foreground', className)}
+            {...props}
+        >
+            <Menu className="h-4 w-4" />
         </Button>
     );
 }

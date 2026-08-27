@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
 import { NotificationCard } from '@/components/NotificationCard';
 import { AppSidebar } from '@/components/AppSidebar';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarMobileTrigger } from '@/components/ui/sidebar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -109,7 +109,7 @@ export const PlaygroundPage: React.FC = () => {
                 </div>
             </motion.div>
 
-            {/* 1. Buttons & Badges */}
+            {/* Buttons & Badges */}
             <motion.section variants={itemVariants} className="space-y-4">
                 <h2 className="text-xl font-bold border-l-4 border-primary pl-3">1. Buttons & Badges</h2>
                 <Card>
@@ -140,7 +140,7 @@ export const PlaygroundPage: React.FC = () => {
                 </Card>
             </motion.section>
 
-            {/* 2. Toast Notifications */}
+            {/* Toast Notifications */}
             <motion.section variants={itemVariants} className="space-y-4">
                 <h2 className="text-xl font-bold border-l-4 border-primary pl-3">2. Sonner Toast Notifications</h2>
                 <Card>
@@ -178,7 +178,7 @@ export const PlaygroundPage: React.FC = () => {
                 </Card>
             </motion.section>
 
-            {/* 3. Form Controls (Input, Textarea, Select, Checkbox) */}
+            {/* Form Controls (Input, Textarea, Select, Checkbox) */}
             <motion.section variants={itemVariants} className="space-y-4">
                 <h2 className="text-xl font-bold border-l-4 border-primary pl-3">3. Form Controls</h2>
                 <Card>
@@ -220,7 +220,7 @@ export const PlaygroundPage: React.FC = () => {
                 </Card>
             </motion.section>
 
-            {/* 4. Avatars & Progress */}
+            {/* Avatars & Progress */}
             <motion.section variants={itemVariants} className="space-y-4">
                 <h2 className="text-xl font-bold border-l-4 border-primary pl-3">4. Avatars & Progress</h2>
                 <Card>
@@ -251,7 +251,7 @@ export const PlaygroundPage: React.FC = () => {
                 </Card>
             </motion.section>
 
-            {/* 5. Modals (Dialog & AlertDialog & Dropdown) */}
+            {/* Modals (Dialog & AlertDialog & Dropdown) */}
             <motion.section variants={itemVariants} className="space-y-4">
                 <h2 className="text-xl font-bold border-l-4 border-primary pl-3">5. Dialogs & Dropdowns (Animated)</h2>
                 <Card>
@@ -347,7 +347,7 @@ export const PlaygroundPage: React.FC = () => {
                 </Card>
             </motion.section>
 
-            {/* 6. Tabs & Scroll Area */}
+            {/* Tabs & Scroll Area */}
             <motion.section variants={itemVariants} className="space-y-4">
                 <h2 className="text-xl font-bold border-l-4 border-primary pl-3">6. Tabs (Gliding Indicator) & ScrollArea</h2>
                 <Card>
@@ -394,7 +394,7 @@ export const PlaygroundPage: React.FC = () => {
                 </Card>
             </motion.section>
 
-            {/* 7. Moderation Table & Pagination */}
+            {/* Moderation Table & Pagination */}
             <motion.section variants={itemVariants} className="space-y-4">
                 <h2 className="text-xl font-bold border-l-4 border-primary pl-3">7. Table & Pagination</h2>
                 <Card>
@@ -455,7 +455,7 @@ export const PlaygroundPage: React.FC = () => {
                 </Card>
             </motion.section>
 
-            {/* 8. Skeleton Loading States (Dynamic Theme Shimmers) */}
+            {/* Skeleton Loading States (Dynamic Theme Shimmers) */}
             <motion.section variants={itemVariants} className="space-y-4">
                 <h2 className="text-xl font-bold border-l-4 border-primary pl-3">8. Skeleton Shimmers</h2>
                 <Card>
@@ -473,7 +473,7 @@ export const PlaygroundPage: React.FC = () => {
                 </Card>
             </motion.section>
 
-            {/* 9. Domain-Specific Notification Cards */}
+            {/* Domain-Specific Notification Cards */}
             <motion.section variants={itemVariants} className="space-y-4">
                 <h2 className="text-xl font-bold border-l-4 border-primary pl-3">9. Notification Cards (Comme Model)</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -511,25 +511,28 @@ export const PlaygroundPage: React.FC = () => {
                 </div>
             </motion.section>
 
-            {/* 10. Collapsible Studio Sidebar Component */}
+            {/* Collapsible Studio Sidebar Component */}
             <motion.section variants={itemVariants} className="space-y-4">
                 <h2 className="text-xl font-bold border-l-4 border-primary pl-3">10. Collapsible Studio Sidebar</h2>
                 <Card className="overflow-hidden border border-border">
                     <SidebarProvider defaultCollapsed={false}>
-                        <div className="flex h-[420px] w-full bg-background/50">
+                        <div className="flex h-105 w-full bg-background/50">
                             {/* App Sidebar Instance */}
                             <AppSidebar activeTab={sidebarTab} onTabChange={(t) => setSidebarTab(t)} />
 
                             {/* Simulated Live Content Area */}
                             <div className="flex-1 p-6 overflow-y-auto space-y-4">
                                 <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                                    <div>
-                                        <h3 className="text-lg font-bold capitalize">
-                                            {sidebarTab.replace('_', ' ')} Panel
-                                        </h3>
-                                        <p className="text-xs text-muted-foreground">
-                                            Simulated workspace view inside dashboard layout
-                                        </p>
+                                    <div className="flex items-center gap-2.5">
+                                        <SidebarMobileTrigger />
+                                        <div>
+                                            <h3 className="text-lg font-bold capitalize">
+                                                {sidebarTab.replace('_', ' ')} Panel
+                                            </h3>
+                                            <p className="text-xs text-muted-foreground">
+                                                Simulated workspace view inside dashboard layout
+                                            </p>
+                                        </div>
                                     </div>
                                     <Badge variant="purple">Live Layout Preview</Badge>
                                 </div>
