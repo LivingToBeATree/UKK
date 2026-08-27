@@ -133,7 +133,7 @@ export const DropdownMenuContent = React.forwardRef<
                     exit={{ opacity: 0, scale: 0.95, y: -4 }}
                     transition={{ duration: 0.15, ease: 'easeOut' }}
                     className={cn(
-                        'absolute z-50 mt-2 min-w-[180px] overflow-hidden rounded-xl border border-border bg-card p-1 text-card-foreground shadow-xl',
+                        'absolute z-50 mt-2 min-w-45 overflow-hidden rounded-xl border border-border bg-card p-1 text-card-foreground shadow-xl',
                         alignClasses[align],
                         className
                     )}
