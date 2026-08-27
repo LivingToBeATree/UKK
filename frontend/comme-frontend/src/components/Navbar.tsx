@@ -44,9 +44,7 @@ export const Navbar: React.FC = () => {
     };
 
     const navLinks = [
-        { label: 'Explore', path: '/', icon: Compass },
-        { label: 'Artists', path: '/artists', icon: Palette },
-        { label: 'Commissions', path: '/commissions', icon: Layers },
+        { label: 'Sandbox', path: '/', icon: Compass },
     ];
 
     return (
