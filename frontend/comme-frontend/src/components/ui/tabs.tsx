@@ -1,9 +1,11 @@
 import * as React from 'react';
+import { motion, AnimatePresence, type HTMLMotionProps } from 'motion/react';
 import { cn } from '@/lib/utils';
 
 interface TabsContextValue {
     activeTab: string;
     setActiveTab: (value: string) => void;
+    id: string;
 }
 
 const TabsContext = React.createContext<TabsContextValue | undefined>(undefined);
@@ -17,6 +19,7 @@ export interface TabsProps extends React.HTMLAttributes<HTMLDivElement> {
 export const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
     ({ defaultValue, value, onValueChange, className, children, ...props }, ref) => {
         const [tab, setTab] = React.useState(value || defaultValue || '');
+        const id = React.useId();
 
         const activeTab = value !== undefined ? value : tab;
         const setActiveTab = React.useCallback(
@@ -28,7 +31,7 @@ export const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
         );
 
         return (
-            <TabsContext.Provider value={{ activeTab, setActiveTab }}>
+            <TabsContext.Provider value={{ activeTab, setActiveTab, id }}>
                 <div ref={ref} className={cn('w-full', className)} {...props}>
                     {children}
                 </div>
@@ -43,7 +46,7 @@ export const TabsList = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HT
         <div
             ref={ref}
             className={cn(
-                'inline-flex h-10 items-center justify-center rounded-lg bg-secondary/80 p-1 text-muted-foreground',
+                'inline-flex h-10 items-center justify-center rounded-xl bg-secondary/80 p-1 text-muted-foreground border border-border/50 relative',
                 className
             )}
             {...props}
@@ -71,14 +74,19 @@ export const TabsTrigger = React.forwardRef<HTMLButtonElement, TabsTriggerProps>
                 aria-selected={isActive}
                 onClick={() => context.setActiveTab(value)}
                 className={cn(
-                    'inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-semibold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
-                    isActive
-                        ? 'bg-background text-foreground shadow-sm'
-                        : 'hover:bg-background/50 hover:text-foreground',
+                    'relative inline-flex items-center justify-center whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs font-semibold ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 disabled:pointer-events-none disabled:opacity-50 cursor-pointer z-10',
+                    isActive ? 'text-foreground font-bold' : 'text-muted-foreground hover:text-foreground',
                     className
                 )}
                 {...props}
             >
+                {isActive && (
+                    <motion.div
+                        layoutId={`active-tab-${context.id}`}
+                        transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+                        className="absolute inset-0 rounded-lg bg-card shadow-sm border border-border/60 -z-10"
+                    />
+                )}
                 {children}
             </button>
         );
@@ -86,7 +94,8 @@ export const TabsTrigger = React.forwardRef<HTMLButtonElement, TabsTriggerProps>
 );
 TabsTrigger.displayName = 'TabsTrigger';
 
-export interface TabsContentProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface TabsContentProps extends Omit<HTMLMotionProps<'div'>, 'children'> {
+    children?: React.ReactNode;
     value: string;
 }
 
@@ -95,17 +104,23 @@ export const TabsContent = React.forwardRef<HTMLDivElement, TabsContentProps>(
         const context = React.useContext(TabsContext);
         if (!context) throw new Error('TabsContent must be used within Tabs');
 
-        if (context.activeTab !== value) return null;
-
         return (
-            <div
-                ref={ref}
-                role="tabpanel"
-                className={cn('mt-3 ring-offset-background focus-visible:outline-none', className)}
-                {...props}
-            >
-                {children}
-            </div>
+            <AnimatePresence mode="wait">
+                {context.activeTab === value && (
+                    <motion.div
+                        ref={ref}
+                        role="tabpanel"
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.2 }}
+                        className={cn('mt-3 ring-offset-background focus-visible:outline-none', className)}
+                        {...props}
+                    >
+                        {children}
+                    </motion.div>
+                )}
+            </AnimatePresence>
         );
     }
 );

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { createPortal } from 'react-dom';
+import { motion, AnimatePresence, type HTMLMotionProps } from 'motion/react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -8,7 +9,7 @@ interface DialogContextValue {
     setOpen: (open: boolean) => void;
 }
 
-const DialogContext = React.createContext<DialogContextValue | undefined>(undefined);
+export const DialogContext = React.createContext<DialogContextValue | undefined>(undefined);
 
 export interface DialogProps {
     open?: boolean;
@@ -78,9 +79,14 @@ export const DialogTrigger = React.forwardRef<HTMLElement, DialogTriggerProps>(
 );
 DialogTrigger.displayName = 'DialogTrigger';
 
+export interface DialogContentProps extends Omit<HTMLMotionProps<'div'>, 'children'> {
+    children?: React.ReactNode;
+    onClose?: () => void;
+}
+
 export const DialogContent = React.forwardRef<
     HTMLDivElement,
-    React.HTMLAttributes<HTMLDivElement> & { onClose?: () => void }
+    DialogContentProps
 >(({ className, children, onClose, ...props }, ref) => {
     const context = React.useContext(DialogContext);
     if (!context) throw new Error('DialogContent must be used within Dialog');
@@ -102,43 +108,53 @@ export const DialogContent = React.forwardRef<
         };
     }, [context.open, context, onClose]);
 
-    if (!context.open) return null;
-
     return createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <div
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
-                onClick={() => {
-                    context.setOpen(false);
-                    onClose?.();
-                }}
-            />
-            {/* Modal Card */}
-            <div
-                ref={ref}
-                role="dialog"
-                aria-modal="true"
-                className={cn(
-                    'relative z-50 w-full max-w-lg rounded-2xl border border-border bg-card p-6 text-card-foreground shadow-2xl transition-all',
-                    className
-                )}
-                {...props}
-            >
-                {children}
-                <button
-                    type="button"
-                    onClick={() => {
-                        context.setOpen(false);
-                        onClose?.();
-                    }}
-                    className="absolute right-4 top-4 rounded-lg p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus:outline-none"
-                >
-                    <X className="h-4 w-4" />
-                    <span className="sr-only">Close</span>
-                </button>
-            </div>
-        </div>,
+        <AnimatePresence>
+            {context.open && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    {/* Backdrop */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+                        onClick={() => {
+                            context.setOpen(false);
+                            onClose?.();
+                        }}
+                    />
+                    {/* Modal Card */}
+                    <motion.div
+                        ref={ref}
+                        role="dialog"
+                        aria-modal="true"
+                        initial={{ opacity: 0, scale: 0.95, y: 8 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 8 }}
+                        transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+                        className={cn(
+                            'relative z-50 w-full max-w-lg rounded-2xl border border-border bg-card p-6 text-card-foreground shadow-2xl',
+                            className
+                        )}
+                        {...props}
+                    >
+                        {children}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                context.setOpen(false);
+                                onClose?.();
+                            }}
+                            className="absolute right-4 top-4 rounded-lg p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus:outline-none"
+                        >
+                            <X className="h-4 w-4" />
+                            <span className="sr-only">Close</span>
+                        </button>
+                    </motion.div>
+                </div>
+            )}
+        </AnimatePresence>,
         document.body
     );
 });

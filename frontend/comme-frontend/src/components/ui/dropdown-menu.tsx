@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { motion, AnimatePresence, type HTMLMotionProps } from 'motion/react';
 import { cn } from '@/lib/utils';
 
 interface DropdownContextValue {
@@ -104,14 +105,17 @@ export const DropdownMenuTrigger = React.forwardRef<HTMLElement, DropdownMenuTri
 );
 DropdownMenuTrigger.displayName = 'DropdownMenuTrigger';
 
+export interface DropdownMenuContentProps extends Omit<HTMLMotionProps<'div'>, 'children'> {
+    children?: React.ReactNode;
+    align?: 'start' | 'end' | 'center';
+}
+
 export const DropdownMenuContent = React.forwardRef<
     HTMLDivElement,
-    React.HTMLAttributes<HTMLDivElement> & { align?: 'start' | 'end' | 'center' }
+    DropdownMenuContentProps
 >(({ className, align = 'end', children, ...props }, ref) => {
     const context = React.useContext(DropdownContext);
     if (!context) throw new Error('DropdownMenuContent must be used within DropdownMenu');
-
-    if (!context.open) return null;
 
     const alignClasses = {
         start: 'left-0 origin-top-left',
@@ -120,17 +124,25 @@ export const DropdownMenuContent = React.forwardRef<
     };
 
     return (
-        <div
-            ref={ref}
-            className={cn(
-                'absolute z-50 mt-2 min-w-45 overflow-hidden rounded-xl border border-border bg-card p-1 text-card-foreground shadow-xl transition-all',
-                alignClasses[align],
-                className
+        <AnimatePresence>
+            {context.open && (
+                <motion.div
+                    ref={ref}
+                    initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                    transition={{ duration: 0.15, ease: 'easeOut' }}
+                    className={cn(
+                        'absolute z-50 mt-2 min-w-[180px] overflow-hidden rounded-xl border border-border bg-card p-1 text-card-foreground shadow-xl',
+                        alignClasses[align],
+                        className
+                    )}
+                    {...props}
+                >
+                    {children}
+                </motion.div>
             )}
-            {...props}
-        >
-            {children}
-        </div>
+        </AnimatePresence>
     );
 });
 DropdownMenuContent.displayName = 'DropdownMenuContent';
