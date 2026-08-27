@@ -1,33 +1,26 @@
-import axios from 'axios'
+import axios from 'axios';
+
+const backendRoot = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace(/\/api\/?$/, '');
 
 export const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
     headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
     },
-    withCredentials: true, // Required for Sanctum stateful cookie session support
+    withCredentials: true,
 });
 
-// Request Interceptor: Auto-attach Bearer Token
-api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('comme_token');
-        if (token && config.headers) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => Promise.reject(error)
-);
+// Sanctum CSRF Cookie Initializer
+export const initCsrf = async () => {
+    return axios.get(`${backendRoot}/sanctum/csrf-cookie`, { withCredentials: true });
+};
 
-// Response Interceptor: Global Error Handling
+// Response Interceptor: Catch 401 Session Expiry
 api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            // Token expired or invalid: clear local storage
-            localStorage.removeItem('comme_token');
             localStorage.removeItem('comme_user');
 
             if (!window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/register')) {
