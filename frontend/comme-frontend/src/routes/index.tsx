@@ -1,5 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
-import { PlaygroundPage } from '@/pages/dev/PlaygroundPage';
+import { PlaygroundPage } from '@/pages/dev/Playground/PlaygroundPage';
 export { ProtectedRoute } from './protectedRoutes';
 export { GuestRoute } from './GuestRoute';
 
