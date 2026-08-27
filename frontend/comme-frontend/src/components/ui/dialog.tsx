@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -91,13 +92,19 @@ export const DialogContent = React.forwardRef<
                 onClose?.();
             }
         };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [context, onClose]);
+        if (context.open) {
+            document.body.style.overflow = 'hidden';
+            window.addEventListener('keydown', handleKeyDown);
+        }
+        return () => {
+            document.body.style.overflow = '';
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [context.open, context, onClose]);
 
     if (!context.open) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             {/* Backdrop */}
             <div
@@ -125,13 +132,14 @@ export const DialogContent = React.forwardRef<
                         context.setOpen(false);
                         onClose?.();
                     }}
-                    className="absolute right-4 top-4 rounded-md p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus:outline-none"
+                    className="absolute right-4 top-4 rounded-lg p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus:outline-none"
                 >
                     <X className="h-4 w-4" />
                     <span className="sr-only">Close</span>
                 </button>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 });
 DialogContent.displayName = 'DialogContent';

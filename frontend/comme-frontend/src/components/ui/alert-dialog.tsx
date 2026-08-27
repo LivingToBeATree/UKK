@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import {
     Dialog,
     DialogTrigger,
@@ -20,22 +21,25 @@ export const AlertDialogFooter = DialogFooter;
 export const AlertDialogContent = React.forwardRef<
     HTMLDivElement,
     React.HTMLAttributes<HTMLDivElement>
->(({ className, children, ...props }, ref) => (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
-        <div
-            ref={ref}
-            role="alertdialog"
-            className={cn(
-                'relative z-50 w-full max-w-md rounded-2xl border border-destructive/30 bg-card p-6 text-card-foreground shadow-2xl transition-all',
-                className
-            )}
-            {...props}
-        >
-            {children}
-        </div>
-    </div>
-));
+>(({ className, children, ...props }, ref) => {
+    return createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
+            <div
+                ref={ref}
+                role="alertdialog"
+                className={cn(
+                    'relative z-50 w-full max-w-md rounded-2xl border border-border bg-card p-6 text-card-foreground shadow-2xl transition-all',
+                    className
+                )}
+                {...props}
+            >
+                {children}
+            </div>
+        </div>,
+        document.body
+    );
+});
 AlertDialogContent.displayName = 'AlertDialogContent';
 
 export const AlertDialogAction = React.forwardRef<
