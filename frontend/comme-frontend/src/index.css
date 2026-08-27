@@ -23,30 +23,6 @@
   --radius: 0.75rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #090713;
-    --foreground: #f8f6fc;
-    --card: #140f29;
-    --card-foreground: #f8f6fc;
-    --popover: #140f29;
-    --popover-foreground: #f8f6fc;
-    --primary: #a802f5;
-    --primary-foreground: #ffffff;
-    --secondary: #1f183c;
-    --secondary-foreground: #f8f6fc;
-    --muted: #1c1537;
-    --muted-foreground: #9a8eb6;
-    --accent: #02f5a8;
-    --accent-foreground: #023826;
-    --destructive: #ff3366;
-    --destructive-foreground: #ffffff;
-    --border: #2c2152;
-    --input: #2c2152;
-    --ring: #a802f5;
-  }
-}
-
 .dark {
   --background: #090713;
   --foreground: #f8f6fc;
@@ -67,6 +43,25 @@
   --border: #2c2152;
   --input: #2c2152;
   --ring: #a802f5;
+}
+
+/* ── Brand Color Themes (Purple, Teal, Orange/Gold) ── */
+[data-color-theme="purple"] {
+  --primary: #a802f5;
+  --primary-foreground: #ffffff;
+  --ring: #a802f5;
+}
+
+[data-color-theme="teal"] {
+  --primary: #02f5a8;
+  --primary-foreground: #032b1f;
+  --ring: #02f5a8;
+}
+
+[data-color-theme="orange"] {
+  --primary: #f5aa02;
+  --primary-foreground: #2d1b01;
+  --ring: #f5aa02;
 }
 
 @theme {
