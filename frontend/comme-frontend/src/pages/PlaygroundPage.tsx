@@ -223,10 +223,12 @@ export const PlaygroundPage: React.FC = () => {
                 <h2 className="text-xl font-bold border-l-4 border-rose-500 pl-3">5. Dialogs & Dropdowns</h2>
                 <Card>
                     <CardContent className="p-6 flex flex-wrap gap-4 items-center">
-                        {/* Standard Dialog */}
+                        {/* Standard Dialog using asChild */}
                         <Dialog>
-                            <DialogTrigger className="inline-flex items-center justify-center rounded-lg border border-border bg-card px-4 py-2 text-xs font-semibold hover:bg-secondary transition-colors">
-                                <Upload className="h-4 w-4 mr-2" /> Open Upload Modal
+                            <DialogTrigger asChild>
+                                <Button variant="outline">
+                                    <Upload className="h-4 w-4 mr-2" /> Open Upload Modal
+                                </Button>
                             </DialogTrigger>
                             <DialogContent>
                                 <DialogHeader>
@@ -259,10 +261,12 @@ export const PlaygroundPage: React.FC = () => {
                             </DialogContent>
                         </Dialog>
 
-                        {/* Alert Dialog (Destructive) */}
+                        {/* Alert Dialog using asChild */}
                         <AlertDialog>
-                            <AlertDialogTrigger className="inline-flex items-center justify-center rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/30 px-4 py-2 text-xs font-semibold hover:bg-rose-500/20 transition-colors">
-                                <AlertTriangle className="h-4 w-4 mr-2" /> Cancel Commission
+                            <AlertDialogTrigger asChild>
+                                <Button variant="destructive">
+                                    <AlertTriangle className="h-4 w-4 mr-2" /> Cancel Commission
+                                </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                                 <AlertDialogHeader>
@@ -286,10 +290,12 @@ export const PlaygroundPage: React.FC = () => {
                             </AlertDialogContent>
                         </AlertDialog>
 
-                        {/* Dropdown Menu */}
+                        {/* Dropdown Menu using asChild */}
                         <DropdownMenu>
-                            <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-lg border border-border bg-card p-2 text-xs font-semibold hover:bg-secondary transition-colors">
-                                <MoreHorizontal className="h-4 w-4" />
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="icon">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => toast.info('Post Bookmarked')}>

@@ -35,25 +35,44 @@ export const Dialog: React.FC<DialogProps> = ({ open: controlledOpen, onOpenChan
     );
 };
 
-export const DialogTrigger = React.forwardRef<
-    HTMLButtonElement,
-    React.ButtonHTMLAttributes<HTMLButtonElement>
->(({ onClick, ...props }, ref) => {
-    const context = React.useContext(DialogContext);
-    if (!context) throw new Error('DialogTrigger must be used within Dialog');
+export interface DialogTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+    asChild?: boolean;
+}
 
-    return (
-        <button
-            ref={ref}
-            type="button"
-            onClick={(e) => {
-                onClick?.(e);
-                context.setOpen(true);
-            }}
-            {...props}
-        />
-    );
-});
+export const DialogTrigger = React.forwardRef<HTMLElement, DialogTriggerProps>(
+    ({ asChild, children, onClick, ...props }, ref) => {
+        const context = React.useContext(DialogContext);
+        if (!context) throw new Error('DialogTrigger must be used within Dialog');
+
+        const handleClick = (e: React.MouseEvent) => {
+            onClick?.(e as React.MouseEvent<HTMLButtonElement>);
+            context.setOpen(true);
+        };
+
+        if (asChild && React.isValidElement(children)) {
+            const childElement = children as React.ReactElement<React.HTMLAttributes<HTMLElement> & { ref?: React.Ref<HTMLElement> }>;
+            return React.cloneElement(childElement, {
+                ref,
+                onClick: (e: React.MouseEvent<HTMLElement>) => {
+                    childElement.props.onClick?.(e);
+                    handleClick(e);
+                },
+                ...props,
+            });
+        }
+
+        return (
+            <button
+                ref={ref as React.Ref<HTMLButtonElement>}
+                type="button"
+                onClick={handleClick}
+                {...props}
+            >
+                {children}
+            </button>
+        );
+    }
+);
 DialogTrigger.displayName = 'DialogTrigger';
 
 export const DialogContent = React.forwardRef<

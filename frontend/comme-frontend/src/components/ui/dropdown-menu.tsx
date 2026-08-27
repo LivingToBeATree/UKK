@@ -60,26 +60,46 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({ open: controlledOpen
     );
 };
 
-export const DropdownMenuTrigger = React.forwardRef<
-    HTMLButtonElement,
-    React.ButtonHTMLAttributes<HTMLButtonElement>
->(({ onClick, ...props }, ref) => {
-    const context = React.useContext(DropdownContext);
-    if (!context) throw new Error('DropdownMenuTrigger must be used within DropdownMenu');
+export interface DropdownMenuTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+    asChild?: boolean;
+}
 
-    return (
-        <button
-            ref={ref}
-            type="button"
-            aria-expanded={context.open}
-            onClick={(e) => {
-                onClick?.(e);
-                context.setOpen(!context.open);
-            }}
-            {...props}
-        />
-    );
-});
+export const DropdownMenuTrigger = React.forwardRef<HTMLElement, DropdownMenuTriggerProps>(
+    ({ asChild, children, onClick, ...props }, ref) => {
+        const context = React.useContext(DropdownContext);
+        if (!context) throw new Error('DropdownMenuTrigger must be used within DropdownMenu');
+
+        const handleClick = (e: React.MouseEvent) => {
+            onClick?.(e as React.MouseEvent<HTMLButtonElement>);
+            context.setOpen(!context.open);
+        };
+
+        if (asChild && React.isValidElement(children)) {
+            const childElement = children as React.ReactElement<React.HTMLAttributes<HTMLElement> & { ref?: React.Ref<HTMLElement> }>;
+            return React.cloneElement(childElement, {
+                ref,
+                'aria-expanded': context.open,
+                onClick: (e: React.MouseEvent<HTMLElement>) => {
+                    childElement.props.onClick?.(e);
+                    handleClick(e);
+                },
+                ...props,
+            });
+        }
+
+        return (
+            <button
+                ref={ref as React.Ref<HTMLButtonElement>}
+                type="button"
+                aria-expanded={context.open}
+                onClick={handleClick}
+                {...props}
+            >
+                {children}
+            </button>
+        );
+    }
+);
 DropdownMenuTrigger.displayName = 'DropdownMenuTrigger';
 
 export const DropdownMenuContent = React.forwardRef<
@@ -101,7 +121,7 @@ export const DropdownMenuContent = React.forwardRef<
         <div
             ref={ref}
             className={cn(
-                'absolute z-50 mt-2 min-w-[180px] overflow-hidden rounded-xl border border-border bg-card p-1 text-card-foreground shadow-xl transition-all',
+                'absolute z-50 mt-2 min-w-45 overflow-hidden rounded-xl border border-border bg-card p-1 text-card-foreground shadow-xl transition-all',
                 alignClasses[align],
                 className
             )}
