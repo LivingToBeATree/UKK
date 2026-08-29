@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
+    Sparkles,
     Bell,
     Palette,
     Compass,
@@ -44,7 +45,10 @@ export const Navbar: React.FC = () => {
     };
 
     const navLinks = [
-        { label: 'Sandbox', path: '/dev/sandbox', icon: Compass },
+        { label: 'Explore', path: '/', icon: Compass },
+        { label: 'Artists', path: '/artists', icon: Palette },
+        { label: 'Commissions', path: '/commissions', icon: Layers },
+        ...(import.meta.env.DEV ? [{ label: '🛠️ Sandbox', path: '/dev/sandbox', icon: Sparkles }] : []),
     ];
 
     return (
