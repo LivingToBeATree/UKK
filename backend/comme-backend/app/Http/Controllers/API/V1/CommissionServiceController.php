@@ -36,10 +36,24 @@ class CommissionServiceController extends Controller
      */
     public function store(StoreCommissionServiceRequest $request): JsonResponse
     {
+        $validated = $request->validated();
+        $optionsData = $validated['options'] ?? null;
+        unset($validated['options']);
+
         $commissionService = CommissionService::create([
-            ...$request->validated(),
+            ...$validated,
             'artist_profile_id' => $request->user()->artistProfile->id,
         ]);
+
+        if (! empty($optionsData) && is_array($optionsData)) {
+            foreach ($optionsData as $opt) {
+                $commissionService->options()->create([
+                    'title' => $opt['title'] ?? 'Standard Tier',
+                    'description' => $opt['description'] ?? null,
+                    'base_price' => $opt['base_price'] ?? 0,
+                ]);
+            }
+        }
 
         return ApiResponseHelper::successResponse(
             new CommissionServiceResource($commissionService->load(['artistProfile', 'thumbnailMedia', 'media', 'options.addons', 'tags'])),

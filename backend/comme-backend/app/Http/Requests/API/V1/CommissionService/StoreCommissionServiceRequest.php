@@ -27,6 +27,10 @@ class StoreCommissionServiceRequest extends FormRequest
             'alt_text' => ['nullable', 'string', 'max:255'],
             'thumbnail_media_id' => ['nullable', 'exists:medias,id'],
             'status' => ['sometimes', new Enum(ServiceStatus::class)],
+            'options' => ['sometimes', 'array'],
+            'options.*.title' => ['required_with:options', 'string', 'max:255'],
+            'options.*.description' => ['nullable', 'string'],
+            'options.*.base_price' => ['required_with:options', 'numeric', 'min:0'],
         ];
     }
 }
