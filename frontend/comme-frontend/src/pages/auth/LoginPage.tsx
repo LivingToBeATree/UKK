@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { LogIn, Eye, EyeOff } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod/v4';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,7 +26,9 @@ export const LoginPage: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/';
 
-    const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginForm>();
+    const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginForm>({
+        resolver: zodResolver(loginSchema),
+    });
 
     const onSubmit = async (data: LoginForm) => {
         try {

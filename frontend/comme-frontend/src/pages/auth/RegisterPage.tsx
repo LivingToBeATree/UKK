@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { UserPlus, Eye, EyeOff } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod/v4';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { authService } from '@/services/authService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,7 +28,9 @@ export const RegisterPage: React.FC = () => {
     const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
 
-    const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterForm>();
+    const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterForm>({
+        resolver: zodResolver(registerSchema),
+    });
 
     const onSubmit = async (data: RegisterForm) => {
         try {

@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod/v4';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { authService } from '@/services/authService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,7 +30,9 @@ export const ResetPasswordPage: React.FC = () => {
     const token = searchParams.get('token') || '';
     const email = searchParams.get('email') || '';
 
-    const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<ResetForm>();
+    const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<ResetForm>({
+        resolver: zodResolver(schema),
+    });
 
     const onSubmit = async (data: ResetForm) => {
         try {

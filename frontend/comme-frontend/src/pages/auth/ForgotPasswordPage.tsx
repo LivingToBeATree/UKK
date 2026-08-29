@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { KeyRound } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod/v4';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { authService } from '@/services/authService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,7 +19,9 @@ const schema = z.object({
 type ForgotForm = z.infer<typeof schema>;
 
 export const ForgotPasswordPage: React.FC = () => {
-    const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<ForgotForm>();
+    const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<ForgotForm>({
+        resolver: zodResolver(schema),
+    });
 
     const onSubmit = async (data: ForgotForm) => {
         try {
