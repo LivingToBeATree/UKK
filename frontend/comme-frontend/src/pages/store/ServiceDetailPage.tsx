@@ -118,12 +118,14 @@ export const ServiceDetailPage: React.FC = () => {
                                             <div className="text-right shrink-0">
                                                 <p className="font-bold text-primary flex items-center gap-1">
                                                     <DollarSign className="h-4 w-4" />
-                                                    {option.price.toLocaleString()}
+                                                    {(option.base_price ?? option.price ?? 0).toLocaleString()}
                                                 </p>
-                                                <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                                                    <Clock className="h-3 w-3" />
-                                                    {option.duration_days} days
-                                                </p>
+                                                {option.duration_days && (
+                                                    <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                                                        <Clock className="h-3 w-3" />
+                                                        {option.duration_days} days
+                                                    </p>
+                                                )}
                                             </div>
                                         </CardContent>
                                     </Card>
@@ -156,11 +158,11 @@ export const ServiceDetailPage: React.FC = () => {
                                                 {new Date(review.created_at).toLocaleDateString()}
                                             </span>
                                         </div>
-                                        <p className="text-sm">{review.body}</p>
-                                        {review.reply && (
+                                        <p className="text-sm">{review.comment}</p>
+                                        {review.artist_reply && (
                                             <div className="ml-4 pl-4 border-l-2 border-primary/30 mt-2">
                                                 <p className="text-xs text-muted-foreground">Artist reply:</p>
-                                                <p className="text-sm">{review.reply}</p>
+                                                <p className="text-sm">{review.artist_reply}</p>
                                             </div>
                                         )}
                                     </CardContent>
@@ -179,11 +181,13 @@ export const ServiceDetailPage: React.FC = () => {
                                 <div className="space-y-2">
                                     <p className="text-sm">{selectedOption.title}</p>
                                     <p className="text-2xl font-bold text-primary">
-                                        ${selectedOption.price.toLocaleString()}
+                                        ${(selectedOption.base_price ?? selectedOption.price ?? 0).toLocaleString()}
                                     </p>
-                                    <p className="text-xs text-muted-foreground">
-                                        Estimated delivery: {selectedOption.duration_days} days
-                                    </p>
+                                    {selectedOption.duration_days && (
+                                        <p className="text-xs text-muted-foreground">
+                                            Estimated delivery: {selectedOption.duration_days} days
+                                        </p>
+                                    )}
                                 </div>
                             ) : (
                                 <p className="text-sm text-muted-foreground">Select an option above</p>

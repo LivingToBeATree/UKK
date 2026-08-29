@@ -196,7 +196,7 @@ export const ArtistProfilePage: React.FC = () => {
                                                     {new Date(review.created_at).toLocaleDateString()}
                                                 </span>
                                             </div>
-                                            <p className="text-sm">{review.body}</p>
+                                            <p className="text-sm">{review.comment}</p>
                                         </CardContent>
                                     </Card>
                                 ))

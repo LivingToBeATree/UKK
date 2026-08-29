@@ -18,28 +18,58 @@ export const StorePage: React.FC = () => {
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
 
-    const fetchServices = async (p: number) => {
+    const loadMore = async () => {
+        const nextPage = page + 1;
+        try {
+            const params: Record<string, string> = {};
+            if (search) params.search = search;
+            const res = await commissionServiceApi.list(nextPage, params);
+            setServices((prev) => [...prev, ...res.data]);
+            setMeta(res.meta ?? null);
+            setPage(nextPage);
+        } catch {
+            toast.error('Failed to load more services');
+        }
+    };
+
+    const handleSearch = async (e: React.FormEvent) => {
+        e.preventDefault();
         try {
             setLoading(true);
             const params: Record<string, string> = {};
             if (search) params.search = search;
-            const res = await commissionServiceApi.list(p, params);
-            setServices(p === 1 ? res.data : [...services, ...res.data]);
+            const res = await commissionServiceApi.list(1, params);
+            setServices(res.data);
             setMeta(res.meta ?? null);
+            setPage(1);
         } catch {
-            toast.error('Failed to load services');
+            toast.error('Failed to search services');
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => { fetchServices(1); }, []);
-
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        setPage(1);
-        fetchServices(1);
-    };
+    useEffect(() => {
+        let isMounted = true;
+        const load = async () => {
+            try {
+                setLoading(true);
+                const res = await commissionServiceApi.list(1);
+                if (isMounted) {
+                    setServices(res.data);
+                    setMeta(res.meta ?? null);
+                }
+            } catch {
+                if (isMounted) toast.error('Failed to load services');
+            } finally {
+                if (isMounted) setLoading(false);
+            }
+        };
+        load();
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     return (
         <div className="max-w-6xl mx-auto px-4 py-8">
@@ -109,7 +139,7 @@ export const StorePage: React.FC = () => {
                                         <p className="text-xs text-muted-foreground line-clamp-2">{service.description}</p>
                                         {service.options && service.options.length > 0 && (
                                             <p className="text-sm font-semibold text-primary">
-                                                From ${Math.min(...service.options.map((o) => o.price)).toLocaleString()}
+                                                From ${(Math.min(...service.options.map((o) => o.base_price ?? o.price ?? 0))).toLocaleString()}
                                             </p>
                                         )}
                                     </CardContent>
@@ -123,7 +153,7 @@ export const StorePage: React.FC = () => {
             {/* Load More */}
             {meta && meta.current_page < meta.last_page && (
                 <div className="text-center mt-8">
-                    <Button variant="outline" onClick={() => { setPage(page + 1); fetchServices(page + 1); }} disabled={loading}>
+                    <Button variant="outline" onClick={loadMore} disabled={loading}>
                         {loading ? 'Loading...' : 'Load More'}
                     </Button>
                 </div>

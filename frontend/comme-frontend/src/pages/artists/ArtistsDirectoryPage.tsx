@@ -19,28 +19,58 @@ export const ArtistsDirectoryPage: React.FC = () => {
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
 
-    const fetchArtists = async (p: number) => {
+    const loadMore = async () => {
+        const nextPage = page + 1;
+        try {
+            const params: Record<string, string> = {};
+            if (search) params.search = search;
+            const res = await artistProfileApi.list(nextPage, params);
+            setArtists((prev) => [...prev, ...res.data]);
+            setMeta(res.meta ?? null);
+            setPage(nextPage);
+        } catch {
+            toast.error('Failed to load more artists');
+        }
+    };
+
+    const handleSearch = async (e: React.FormEvent) => {
+        e.preventDefault();
         try {
             setLoading(true);
             const params: Record<string, string> = {};
             if (search) params.search = search;
-            const res = await artistProfileApi.list(p, params);
-            setArtists(p === 1 ? res.data : [...artists, ...res.data]);
+            const res = await artistProfileApi.list(1, params);
+            setArtists(res.data);
             setMeta(res.meta ?? null);
+            setPage(1);
         } catch {
-            toast.error('Failed to load artists');
+            toast.error('Failed to search artists');
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => { fetchArtists(1); }, []);
-
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        setPage(1);
-        fetchArtists(1);
-    };
+    useEffect(() => {
+        let isMounted = true;
+        const load = async () => {
+            try {
+                setLoading(true);
+                const res = await artistProfileApi.list(1);
+                if (isMounted) {
+                    setArtists(res.data);
+                    setMeta(res.meta ?? null);
+                }
+            } catch {
+                if (isMounted) toast.error('Failed to load artists');
+            } finally {
+                if (isMounted) setLoading(false);
+            }
+        };
+        load();
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     return (
         <div className="max-w-6xl mx-auto px-4 py-8">
@@ -118,7 +148,7 @@ export const ArtistsDirectoryPage: React.FC = () => {
 
             {meta && meta.current_page < meta.last_page && (
                 <div className="text-center mt-8">
-                    <Button variant="outline" onClick={() => { setPage(page + 1); fetchArtists(page + 1); }} disabled={loading}>
+                    <Button variant="outline" onClick={loadMore} disabled={loading}>
                         Load More
                     </Button>
                 </div>

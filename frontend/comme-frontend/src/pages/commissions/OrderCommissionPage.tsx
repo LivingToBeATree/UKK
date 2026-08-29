@@ -64,7 +64,7 @@ export const OrderCommissionPage: React.FC = () => {
                         <p className="text-sm text-muted-foreground">Option: {selectedOption.title}</p>
                         <div className="flex items-center justify-between pt-3 border-t border-border">
                             <span className="text-sm text-muted-foreground">Total</span>
-                            <span className="text-xl font-bold text-primary">${selectedOption.price.toLocaleString()}</span>
+                            <span className="text-xl font-bold text-primary">${(selectedOption.base_price ?? selectedOption.price ?? 0).toLocaleString()}</span>
                         </div>
                     </CardContent>
                 </Card>

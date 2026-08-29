@@ -27,24 +27,43 @@ export const MyCommissionsPage: React.FC = () => {
     const [page, setPage] = useState(1);
     const [filter, setFilter] = useState<string>('');
 
-    const fetchCommissions = async (p = 1) => {
+    const loadMore = async () => {
+        const nextPage = page + 1;
         try {
-            setLoading(true);
             const params: Record<string, string> = {};
             if (filter) params.status = filter;
-            const res = await commissionOrderApi.list(p, params);
-            setCommissions(p === 1 ? res.data : [...commissions, ...res.data]);
+            const res = await commissionOrderApi.list(nextPage, params);
+            setCommissions((prev) => [...prev, ...res.data]);
             setMeta(res.meta ?? null);
+            setPage(nextPage);
         } catch {
-            toast.error('Failed to load commissions');
-        } finally {
-            setLoading(false);
+            toast.error('Failed to load more commissions');
         }
     };
 
     useEffect(() => {
-        setPage(1);
-        fetchCommissions(1);
+        let isMounted = true;
+        const load = async () => {
+            try {
+                setLoading(true);
+                const params: Record<string, string> = {};
+                if (filter) params.status = filter;
+                const res = await commissionOrderApi.list(1, params);
+                if (isMounted) {
+                    setCommissions(res.data);
+                    setMeta(res.meta ?? null);
+                    setPage(1);
+                }
+            } catch {
+                if (isMounted) toast.error('Failed to load commissions');
+            } finally {
+                if (isMounted) setLoading(false);
+            }
+        };
+        load();
+        return () => {
+            isMounted = false;
+        };
     }, [filter]);
 
     const statusFilters = ['', 'pending', 'accepted', 'in_progress', 'completed', 'cancelled'];
@@ -121,11 +140,7 @@ export const MyCommissionsPage: React.FC = () => {
                     <div className="text-center pt-4">
                         <Button
                             variant="outline"
-                            onClick={() => {
-                                const next = page + 1;
-                                setPage(next);
-                                fetchCommissions(next);
-                            }}
+                            onClick={loadMore}
                             disabled={loading}
                         >
                             {loading ? 'Loading...' : 'Load More'}

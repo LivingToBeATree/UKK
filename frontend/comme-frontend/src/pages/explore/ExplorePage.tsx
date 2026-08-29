@@ -18,20 +18,39 @@ export const ExplorePage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
 
-    const fetchPosts = async (p: number) => {
+    const loadMore = async () => {
+        const nextPage = page + 1;
         try {
-            setLoading(true);
-            const res = await postService.list(p);
-            setPosts(p === 1 ? res.data : [...posts, ...res.data]);
+            const res = await postService.list(nextPage);
+            setPosts((prev) => [...prev, ...res.data]);
             setMeta(res.meta ?? null);
+            setPage(nextPage);
         } catch {
-            toast.error('Failed to load posts');
-        } finally {
-            setLoading(false);
+            toast.error('Failed to load more posts');
         }
     };
 
-    useEffect(() => { fetchPosts(page); }, [page]);
+    useEffect(() => {
+        let isMounted = true;
+        const load = async () => {
+            try {
+                setLoading(true);
+                const res = await postService.list(1);
+                if (isMounted) {
+                    setPosts(res.data);
+                    setMeta(res.meta ?? null);
+                }
+            } catch {
+                if (isMounted) toast.error('Failed to load posts');
+            } finally {
+                if (isMounted) setLoading(false);
+            }
+        };
+        load();
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     const handleLike = async (postId: number) => {
         try {
@@ -191,7 +210,7 @@ export const ExplorePage: React.FC = () => {
                 {/* Load More */}
                 {meta && meta.current_page < meta.last_page && (
                     <div className="text-center pt-4">
-                        <Button variant="outline" onClick={() => setPage(page + 1)} disabled={loading}>
+                        <Button variant="outline" onClick={loadMore} disabled={loading}>
                             {loading ? 'Loading...' : 'Load More'}
                         </Button>
                     </div>
