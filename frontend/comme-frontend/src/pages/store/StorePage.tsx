@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/sonner';
+import { formatPrice } from '@/utils/format';
 import type { CommissionService, PaginationMeta } from '@/types';
 
 export const StorePage: React.FC = () => {
@@ -139,7 +140,7 @@ export const StorePage: React.FC = () => {
                                         <p className="text-xs text-muted-foreground line-clamp-2">{service.description}</p>
                                         {service.options && service.options.length > 0 && (
                                             <p className="text-sm font-semibold text-primary">
-                                                From ${(Math.min(...service.options.map((o) => o.base_price ?? o.price ?? 0))).toLocaleString()}
+                                                From {formatPrice(Math.min(...service.options.map((o) => o.base_price ?? o.price ?? 0)))}
                                             </p>
                                         )}
                                     </CardContent>

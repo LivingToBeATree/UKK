@@ -14,6 +14,10 @@ export interface User {
     created_at: string;
     updated_at: string;
     artist_profile?: ArtistProfile | null;
+    followers_count?: number;
+    following_count?: number;
+    posts_count?: number;
+    is_following?: boolean;
 }
 
 export const isArtist = (user?: User | null): boolean => {

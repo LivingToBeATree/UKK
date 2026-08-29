@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/sonner';
+import { formatPrice } from '@/utils/format';
 import type { CommissionService, CommissionOption } from '@/types';
 
 export const OrderCommissionPage: React.FC = () => {
@@ -64,7 +65,7 @@ export const OrderCommissionPage: React.FC = () => {
                         <p className="text-sm text-muted-foreground">Option: {selectedOption.title}</p>
                         <div className="flex items-center justify-between pt-3 border-t border-border">
                             <span className="text-sm text-muted-foreground">Total</span>
-                            <span className="text-xl font-bold text-primary">${(selectedOption.base_price ?? selectedOption.price ?? 0).toLocaleString()}</span>
+                            <span className="text-xl font-bold text-primary">{formatPrice(selectedOption.base_price ?? selectedOption.price ?? 0)}</span>
                         </div>
                     </CardContent>
                 </Card>

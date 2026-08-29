@@ -18,6 +18,7 @@ import {
 import { commissionOrderApi, commissionReviewApi } from '@/services/commissionService';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
+import { formatPrice } from '@/utils/format';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -163,9 +164,7 @@ export const CommissionDetailPage: React.FC = () => {
                     },
                 });
             } else {
-                toast.info(`Snap Token created: ${payment.snap_token || payment.order_id}. Simulating payment hold.`);
-                // Fallback simulation for dev/sandbox
-                await commissionOrderApi.update(commission.id, { status: 'in_progress' });
+                toast.info(`Snap token generated: ${payment.snap_token || payment.order_id}`);
                 refreshData();
             }
         } catch {
@@ -182,7 +181,6 @@ export const CommissionDetailPage: React.FC = () => {
             const formData = new FormData();
             formData.append('message', `[Revision Request]: ${revisionNotes}`);
             await commissionOrderApi.sendMessage(commission.id, formData);
-            await commissionOrderApi.update(commission.id, { status: 'in_progress' });
             toast.success('Revision request sent to artist');
             setRevisionModalOpen(false);
             setRevisionNotes('');
@@ -285,10 +283,6 @@ export const CommissionDetailPage: React.FC = () => {
             </div>
         );
     }
-
-    const formatPrice = (val: number) => {
-        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
-    };
 
     return (
         <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">

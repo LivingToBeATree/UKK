@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/sonner';
+import { formatPrice } from '@/utils/format';
 import type { CommissionOrder, PaginationMeta } from '@/types';
 
 const statusColors: Record<string, string> = {
@@ -128,7 +129,7 @@ export const MyCommissionsPage: React.FC = () => {
                                                 {new Date(commission.created_at).toLocaleDateString()}
                                             </p>
                                         </div>
-                                        <p className="font-bold text-primary shrink-0">${commission.total_price.toLocaleString()}</p>
+                                        <p className="font-bold text-primary shrink-0">{formatPrice(commission.total_price)}</p>
                                     </CardContent>
                                 </Card>
                             </Link>

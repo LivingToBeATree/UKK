@@ -14,8 +14,9 @@ import {
     Share2,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { followApi, artistProfileApi, portfolioApi, type Portfolio } from '@/services/artistService';
+import { followApi, portfolioApi, type Portfolio } from '@/services/artistService';
 import { commissionServiceApi } from '@/services/commissionService';
+import { userService } from '@/services/userService';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
@@ -31,110 +32,63 @@ export const UserProfilePage: React.FC = () => {
     const navigate = useNavigate();
 
     const cleanUsername = username?.replace(/^@/, '') || currentUser?.username;
-    const isOwnProfile = currentUser && currentUser.username === cleanUsername;
+    const isOwnProfile = !!(currentUser && cleanUsername && currentUser.username.toLowerCase() === cleanUsername.toLowerCase());
 
     const [user, setUser] = useState<User | null>(isOwnProfile ? currentUser : null);
-    const [artistProfile, setArtistProfile] = useState<ArtistProfile | null>(
-        isOwnProfile ? currentUser?.artist_profile || null : null
-    );
+    const [artistProfile, setArtistProfile] = useState<ArtistProfile | null>(currentUser?.artist_profile || null);
     const [services, setServices] = useState<CommissionService[]>([]);
     const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
     const [following, setFollowing] = useState(false);
-    const [loading, setLoading] = useState(!isOwnProfile);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        let isMounted = true;
         const fetchUserData = async () => {
-            if (!cleanUsername) return;
+            if (!cleanUsername) {
+                if (isMounted) setLoading(false);
+                return;
+            }
             setLoading(true);
             try {
-                // If own profile, we already have currentUser
-                if (isOwnProfile && currentUser) {
-                    setUser(currentUser);
-                    setArtistProfile(currentUser.artist_profile || null);
-                    if (currentUser.artist_profile) {
-                        const [svcRes, portRes] = await Promise.all([
-                            commissionServiceApi.list(1, { artist_profile_id: String(currentUser.artist_profile.id) }),
-                            portfolioApi.list(1).catch(() => ({ data: [] })),
-                        ]);
-                        setServices(svcRes.data);
-                        setPortfolios(portRes.data);
-                    }
-                    return;
-                }
+                const fetchedUser = await userService.getByUsername(cleanUsername);
+                if (isMounted) {
+                    setUser(fetchedUser);
+                    setFollowing(!!fetchedUser.is_following);
+                    const profile = fetchedUser.artist_profile || null;
+                    setArtistProfile(profile);
 
-                // If looking at another user by username:
-                // Check if they are an artist via artist-profiles endpoint
-                try {
-                    const artistsRes = await artistProfileApi.list(1);
-                    const match = artistsRes.data.find(
-                        (a) => a.user?.username.toLowerCase() === cleanUsername.toLowerCase()
-                    );
-                    if (match) {
-                        setArtistProfile(match);
-                        setUser(match.user || {
-                            id: match.user_id,
-                            username: cleanUsername,
-                            display_name: cleanUsername,
-                            role: 'user',
-                            email: '',
-                            avatar_url: null,
-                            bio: match.bio,
-                            email_verified_at: null,
-                            created_at: match.created_at,
-                            updated_at: match.updated_at,
-                            artist_profile: match,
-                        });
+                    if (profile) {
                         const [svcRes, portRes] = await Promise.all([
-                            commissionServiceApi.list(1, { artist_profile_id: String(match.id) }),
+                            commissionServiceApi.list(1, { artist_profile_id: String(profile.id) }).catch(() => ({ data: [] })),
                             portfolioApi.list(1).catch(() => ({ data: [] })),
                         ]);
-                        setServices(svcRes.data);
-                        setPortfolios(portRes.data);
-                    } else {
-                        // Regular user fallback
-                        setUser({
-                            id: 0,
-                            username: cleanUsername,
-                            display_name: cleanUsername,
-                            role: 'user',
-                            email: '',
-                            avatar_url: null,
-                            bio: 'Member of the Comme community.',
-                            email_verified_at: null,
-                            created_at: new Date().toISOString(),
-                            updated_at: new Date().toISOString(),
-                        });
+                        if (isMounted) {
+                            setServices(svcRes.data);
+                            setPortfolios(portRes.data);
+                        }
                     }
-                } catch {
-                    setUser({
-                        id: 0,
-                        username: cleanUsername,
-                        display_name: cleanUsername,
-                        role: 'user',
-                        email: '',
-                        avatar_url: null,
-                        bio: 'Comme Member',
-                        email_verified_at: null,
-                        created_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString(),
-                    });
                 }
             } catch {
-                toast.error('Failed to load profile');
+                if (isMounted) {
+                    setUser(null);
+                }
             } finally {
-                setLoading(false);
+                if (isMounted) setLoading(false);
             }
         };
 
         fetchUserData();
-    }, [cleanUsername, isOwnProfile, currentUser]);
+        return () => {
+            isMounted = false;
+        };
+    }, [cleanUsername]);
 
     const handleFollow = async () => {
-        if (!user?.id) return;
+        if (!user || user.id === 0) return;
         try {
             const res = await followApi.toggle(user.id);
             setFollowing(res.following);
-            toast.success(res.following ? 'Following creator' : 'Unfollowed creator');
+            toast.success(res.following ? `Following @${user.username}` : `Unfollowed @${user.username}`);
         } catch {
             toast.error('Failed to update follow status');
         }

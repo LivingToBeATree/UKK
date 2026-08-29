@@ -23,4 +23,9 @@ export const userService = {
         const res = await api.post<ApiResponse<{ message: string }>>('/logout-other-devices', { password });
         return res.data;
     },
+
+    getByUsername: async (username: string) => {
+        const res = await api.get<ApiResponse<User>>(`/users/${username}`);
+        return res.data.data;
+    },
 };

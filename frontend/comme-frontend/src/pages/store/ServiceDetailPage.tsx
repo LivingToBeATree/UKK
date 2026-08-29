@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { ArrowLeft, Star, ShoppingCart, Clock, DollarSign } from 'lucide-react';
+import { ArrowLeft, Star, ShoppingCart, Clock } from 'lucide-react';
 import { commissionServiceApi, commissionReviewApi, type CommissionReview } from '@/services/commissionService';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/sonner';
+import { formatPrice } from '@/utils/format';
 import type { CommissionService, CommissionOption } from '@/types';
 
 export const ServiceDetailPage: React.FC = () => {
@@ -116,9 +117,8 @@ export const ServiceDetailPage: React.FC = () => {
                                                 )}
                                             </div>
                                             <div className="text-right shrink-0">
-                                                <p className="font-bold text-primary flex items-center gap-1">
-                                                    <DollarSign className="h-4 w-4" />
-                                                    {(option.base_price ?? option.price ?? 0).toLocaleString()}
+                                                <p className="font-bold text-primary text-sm">
+                                                    {formatPrice(option.base_price ?? option.price ?? 0)}
                                                 </p>
                                                 {option.duration_days && (
                                                     <p className="text-[11px] text-muted-foreground flex items-center gap-1">
@@ -134,42 +134,55 @@ export const ServiceDetailPage: React.FC = () => {
                         </div>
                     )}
 
+                    {/* Description */}
+                    <Card>
+                        <CardContent className="p-6 space-y-4">
+                            <h2 className="font-bold">About This Service</h2>
+                            <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
+                                {service.description}
+                            </p>
+                        </CardContent>
+                    </Card>
+
                     {/* Reviews */}
-                    <div className="space-y-3">
-                        <h2 className="font-bold text-lg">Reviews ({reviews.length})</h2>
-                        {reviews.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">No reviews yet</p>
-                        ) : (
-                            reviews.map((review) => (
-                                <Card key={review.id}>
-                                    <CardContent className="p-4 space-y-2">
-                                        <div className="flex items-center gap-2">
-                                            <div className="flex items-center gap-0.5">
-                                                {Array.from({ length: 5 }).map((_, i) => (
-                                                    <Star
-                                                        key={i}
-                                                        className={`h-3 w-3 ${
-                                                            i < review.rating ? 'text-amber-400 fill-current' : 'text-muted'
-                                                        }`}
-                                                    />
-                                                ))}
+                    <Card>
+                        <CardContent className="p-6 space-y-4">
+                            <h2 className="font-bold flex items-center gap-2">
+                                <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
+                                Reviews ({reviews.length})
+                            </h2>
+                            {reviews.length === 0 ? (
+                                <p className="text-xs text-muted-foreground">No reviews yet for this artist.</p>
+                            ) : (
+                                <div className="space-y-4 divide-y divide-border">
+                                    {reviews.map((rev) => (
+                                        <div key={rev.id} className="pt-3 first:pt-0 space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <div className="flex">
+                                                    {[1, 2, 3, 4, 5].map((s) => (
+                                                        <Star
+                                                            key={s}
+                                                            className={`h-3 w-3 ${
+                                                                s <= rev.rating ? 'text-amber-400 fill-amber-400' : 'text-muted'
+                                                            }`}
+                                                        />
+                                                    ))}
+                                                </div>
+                                                {rev.title && <span className="text-xs font-semibold">{rev.title}</span>}
                                             </div>
-                                            <span className="text-[11px] text-muted-foreground">
-                                                {new Date(review.created_at).toLocaleDateString()}
-                                            </span>
+                                            <p className="text-xs text-muted-foreground">{rev.comment}</p>
+                                            {rev.artist_reply && (
+                                                <div className="ml-4 mt-2 p-2.5 rounded-lg bg-secondary/50 border-l-2 border-primary text-xs space-y-1">
+                                                    <p className="font-semibold text-[11px] text-primary">Artist Reply</p>
+                                                    <p className="text-muted-foreground">{rev.artist_reply}</p>
+                                                </div>
+                                            )}
                                         </div>
-                                        <p className="text-sm">{review.comment}</p>
-                                        {review.artist_reply && (
-                                            <div className="ml-4 pl-4 border-l-2 border-primary/30 mt-2">
-                                                <p className="text-xs text-muted-foreground">Artist reply:</p>
-                                                <p className="text-sm">{review.artist_reply}</p>
-                                            </div>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            ))
-                        )}
-                    </div>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
                 </div>
 
                 {/* Right: Order Sidebar */}
@@ -181,7 +194,7 @@ export const ServiceDetailPage: React.FC = () => {
                                 <div className="space-y-2">
                                     <p className="text-sm">{selectedOption.title}</p>
                                     <p className="text-2xl font-bold text-primary">
-                                        ${(selectedOption.base_price ?? selectedOption.price ?? 0).toLocaleString()}
+                                        {formatPrice(selectedOption.base_price ?? selectedOption.price ?? 0)}
                                     </p>
                                     {selectedOption.duration_days && (
                                         <p className="text-xs text-muted-foreground">

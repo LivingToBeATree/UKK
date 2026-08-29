@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/sonner';
+import { formatPrice } from '@/utils/format';
 import type { CommissionOrder } from '@/types';
 
 export const ArtistCommissionsPage: React.FC = () => {
@@ -86,7 +87,7 @@ export const ArtistCommissionsPage: React.FC = () => {
                                     </div>
                                     <div className="text-right shrink-0">
                                         <Badge variant="secondary">{c.status.replace('_', ' ')}</Badge>
-                                        <p className="text-sm font-bold text-primary mt-1">${c.total_price.toLocaleString()}</p>
+                                        <p className="text-sm font-bold text-primary mt-1">{formatPrice(c.total_price)}</p>
                                     </div>
                                 </div>
 
