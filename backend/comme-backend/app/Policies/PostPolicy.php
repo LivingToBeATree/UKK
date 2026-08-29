@@ -9,28 +9,28 @@ use Illuminate\Auth\Access\Response;
 
 class PostPolicy
 {
-    public function before(User $user, string $ability): ?bool
+    public function before(?User $user, string $ability): ?bool
     {
-        return $user->isAdmin() ? true : null;
+        return $user?->isAdmin() ? true : null;
     }
  
-    public function viewAny(User $user): bool
+    public function viewAny(?User $user): bool
     {
         return true;
     }
  
-    public function view(User $user, Post $post): bool
+    public function view(?User $user, Post $post): bool
     {
-        if ($user->id === $post->user_id) {
+        if ($user && $user->id === $post->user_id) {
             return true;
         }
  
         return match ($post->visibility) {
             PostVisibilityType::PUBLIC => true,
             // FOLLOWERS: confirm the requester actually follows the author.
-            PostVisibilityType::FOLLOWERS => $post->user->followers()
+            PostVisibilityType::FOLLOWERS => $user ? $post->user->followers()
                 ->where('follower_id', $user->id)
-                ->exists(),
+                ->exists() : false,
             default => false,
         };
     }

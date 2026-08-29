@@ -8,14 +8,14 @@ use Illuminate\Auth\Access\Response;
 
 class PostCommentPolicy
 {
-    public function before(User $user, string $ability): ?bool
+    public function before(?User $user, string $ability): ?bool
     {
-        return $user->isAdmin() ? true : null;
+        return $user?->isAdmin() ? true : null;
     }
  
-    public function view(User $user, PostComment $postComment): bool
+    public function view(?User $user, PostComment $postComment): bool
     {
-        return $user->can('view', $postComment->post);
+        return true;
     }
  
     public function create(User $user): bool

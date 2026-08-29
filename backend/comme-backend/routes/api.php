@@ -7,18 +7,24 @@ use App\Http\Controllers\API\V1\PaymentController;
 use App\Http\Controllers\API\V1\UserController;
 use Illuminate\Support\Facades\Route;
 
-// Public — no auth required to register or log in.
+// Public auth endpoints
 Route::post('/register', [AuthController::class, 'initiateRegister'])->middleware('throttle:register');
 Route::post('/register/confirm', [AuthController::class, 'confirmRegistration'])->middleware('throttle:register-confirm');
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 Route::post('/forgot-password', [PasswordResetController::class, 'forgotPassword'])->middleware('throttle:6,1');
 Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])->middleware('throttle:6,1');
 
-// No auth:sanctum, no throttle:api — this is called by Midtrans's own
-// server, not a browser with a session. Authenticity is verified via the
-// signature check inside the controller instead of any route middleware.
+// Public user profile lookup
+Route::get('/users/{username}', [UserController::class, 'show']);
+
+// Midtrans webhook
 Route::post('/midtrans/webhook', [PaymentController::class, 'webhook'])
     ->withoutMiddleware('throttle:api');
+
+// Every resource's routes live in its own file under routes/API/V1/
+foreach (glob(__DIR__ . '/API/V1/*.php') as $resourceRoutes) {
+    require $resourceRoutes;
+}
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -36,10 +42,4 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/profile', [UserController::class, 'update']);
     Route::put('/profile/password', [UserController::class, 'changePassword']);
     Route::post('/logout-other-devices', [UserController::class, 'logoutOtherDevices']);
-
-    // Every resource's routes live in its own file under routes/API/V1/ —
-    // add a new *.php file there and it's picked up automatically
-    foreach (glob(__DIR__ . '/API/V1/*.php') as $resourceRoutes) {
-        require $resourceRoutes;
-    }
 });

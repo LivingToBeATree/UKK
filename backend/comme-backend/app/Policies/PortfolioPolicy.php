@@ -9,26 +9,24 @@ use Illuminate\Auth\Access\Response;
 
 class PortfolioPolicy
 {
-    public function before(User $user, string $ability): ?bool
+    public function before(?User $user, string $ability): ?bool
     {
-        return $user->isAdmin() ? true : null;
+        return $user?->isAdmin() ? true : null;
     }
  
-    public function viewAny(User $user): bool
+    public function viewAny(?User $user): bool
     {
         return true;
     }
  
-    public function view(User $user, Portfolio $portfolio): bool
+    public function view(?User $user, Portfolio $portfolio): bool
     {
-        if ($user->id === $portfolio->artistProfile->user_id) {
+        if ($user && $user->id === $portfolio->artistProfile->user_id) {
             return true;
         }
  
         return match ($portfolio->visibility) {
             CommissionVisibility::PUBLIC => true,
-            // RESTRICTED/ENLISTED need an allow-list this schema doesn't
-            // track yet — treat as owner-only until that's added.
             default => false,
         };
     }

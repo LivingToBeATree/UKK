@@ -7,17 +7,17 @@ use App\Models\User;
 
 class ArtistProfilePolicy
 {
-    public function before(User $user, string $ability): ?bool
+    public function before(?User $user, string $ability): ?bool
     {
-        return $user->isAdmin() ? true : null;
+        return $user?->isAdmin() ? true : null;
     }
  
-    public function viewAny(User $user): bool
+    public function viewAny(?User $user): bool
     {
         return true;
     }
  
-    public function view(User $user, ArtistProfile $artistProfile): bool
+    public function view(?User $user, ArtistProfile $artistProfile): bool
     {
         return true;
     }

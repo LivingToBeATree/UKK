@@ -7,12 +7,12 @@ use App\Models\User;
 
 class CommissionServicePolicy
 {
-    public function before(User $user, string $ability): ?bool
+    public function before(?User $user, string $ability): ?bool
     {
-        return $user->isAdmin() ? true : null;
+        return $user?->isAdmin() ? true : null;
     }
  
-    public function viewAny(User $user): bool
+    public function viewAny(?User $user): bool
     {
         return true;
     }
@@ -21,7 +21,7 @@ class CommissionServicePolicy
      * Status/availability (open, closed, draft) is enforced by business
      * logic, not authorization.
      */
-    public function view(User $user, CommissionService $commissionService): bool
+    public function view(?User $user, CommissionService $commissionService): bool
     {
         return true;
     }

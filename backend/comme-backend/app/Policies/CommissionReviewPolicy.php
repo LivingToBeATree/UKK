@@ -9,21 +9,21 @@ use Illuminate\Auth\Access\Response;
 
 class CommissionReviewPolicy
 {
-    public function before(User $user, string $ability): ?bool
+    public function before(?User $user, string $ability): ?bool
     {
-        return $user->isAdmin() ? true : null;
+        return $user?->isAdmin() ? true : null;
     }
 
     /**
      * Visibility rules for reviews (e.g. only on completed commissions)
      * are enforced by the query/business logic, not this policy.
      */
-    public function view(User $user, CommissionReview $commissionReview): bool
+    public function view(?User $user, CommissionReview $commissionReview): bool
     {
         return true;
     }
 
-    public function viewAny(User $user): bool
+    public function viewAny(?User $user): bool
     {
         return true;
     }

@@ -7,6 +7,7 @@ use App\Http\Requests\API\V1\User\Auth\ChangePasswordRequest;
 use App\Http\Requests\API\V1\User\UpdateUserRequest;
 use App\Http\Resources\API\V1\UserResource;
 use App\Notifications\API\V1\User\Auth\PasswordChangedNotification;
+use App\Models\User;
 use App\Services\API\V1\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,11 +16,20 @@ use Illuminate\Support\Facades\DB;
 class UserController extends Controller
 {
     /**
-     * No route-model-binding parameter at all — this only ever operates
-     * on $request->user(), never an arbitrary user by ID. There's no
-     * "edit someone else's profile" endpoint, so there's nothing to
-     * authorize beyond just being logged in.
+     * Public user profile lookup by username.
      */
+    public function show(string $username): JsonResponse
+    {
+        $user = User::where('username', $username)
+            ->with(['artistProfile'])
+            ->withCount(['followers', 'following', 'posts'])
+            ->firstOrFail();
+
+        return ApiResponseHelper::successResponse(
+            new UserResource($user),
+            'User profile retrieved successfully.'
+        );
+    }
 
     public function update(UpdateUserRequest $request): JsonResponse
     {
