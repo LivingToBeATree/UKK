@@ -1,7 +1,7 @@
 import { api } from './api';
 import type { ApiResponse, ArtistProfile, ArtistApplication } from '@/types';
 
-// ── Artist Profiles ──
+// Artist profiles
 export const artistProfileApi = {
     list: async (page = 1, params?: Record<string, string>) => {
         const res = await api.get<ApiResponse<ArtistProfile[]>>('/artist-profiles', { params: { page, ...params } });
@@ -19,7 +19,7 @@ export const artistProfileApi = {
     },
 };
 
-// ── Artist Applications ──
+// Artist applications
 export const artistApplicationApi = {
     list: async (page = 1) => {
         const res = await api.get<ApiResponse<ArtistApplication[]>>('/artist-applications', { params: { page } });
@@ -52,7 +52,7 @@ export const artistApplicationApi = {
     },
 };
 
-// ── Portfolios ──
+// Portfolios
 export interface Portfolio {
     id: number;
     artist_profile_id: number;
@@ -93,7 +93,7 @@ export const portfolioApi = {
     },
 };
 
-// ── Follows ──
+// Follows
 export const followApi = {
     toggle: async (userId: number) => {
         const res = await api.post<ApiResponse<{ following: boolean }>>(`/users/${userId}/follow`);

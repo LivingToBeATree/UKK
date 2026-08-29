@@ -45,7 +45,7 @@
   --ring: #a802f5;
 }
 
-/* ── Brand Color Themes (Purple, Teal, Orange/Gold) ── */
+/* Brand color themes */
 [data-color-theme="purple"] {
   --primary: #a802f5;
   --primary-foreground: #ffffff;

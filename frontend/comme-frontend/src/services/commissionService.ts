@@ -10,7 +10,7 @@ import type {
 
 export type { CommissionReview };
 
-// ── Commission Services (what artists offer) ──
+// Commission services
 export const commissionServiceApi = {
     list: async (page = 1, params?: Record<string, string | number>) => {
         const res = await api.get<ApiResponse<CommissionService[]>>('/commission-services', { params: { page, ...params } });
@@ -45,7 +45,7 @@ export const commissionServiceApi = {
     },
 };
 
-// ── Commission Orders ──
+// Commission orders
 export const commissionOrderApi = {
     list: async (page = 1, params?: Record<string, string | number>) => {
         const res = await api.get<ApiResponse<CommissionOrder[]>>('/commissions', { params: { page, ...params } });
@@ -103,7 +103,7 @@ export const commissionOrderApi = {
     },
 };
 
-// ── Commission Reviews ──
+// Commission reviews
 export const commissionReviewApi = {
     listForArtist: async (artistProfileId: number, page = 1) => {
         const res = await api.get<ApiResponse<CommissionReview[]>>(`/artist-profiles/${artistProfileId}/reviews`, { params: { page } });

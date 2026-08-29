@@ -76,7 +76,7 @@ export const OrderCommissionPage: React.FC = () => {
                                 <Label htmlFor="description">Describe your commission</Label>
                                 <Textarea
                                     id="description"
-                                    placeholder="Tell the artist what you'd like — style, characters, mood, references..."
+                                    placeholder="Include character references, specific poses, or visual background notes..."
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
                                     rows={6}

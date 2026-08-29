@@ -551,9 +551,9 @@ export const PlaygroundPage: React.FC = () => {
                                 </div>
 
                                 <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 space-y-2">
-                                    <p className="text-xs font-semibold text-primary">💡 Pro Tip:</p>
+                                    <p className="text-xs font-semibold text-primary">Tip:</p>
                                     <p className="text-xs text-muted-foreground">
-                                        Click the collapse button at the bottom of the sidebar to see smooth spring transitions between full navigation and compact icon-only mode!
+                                        Click the collapse button at the bottom of the sidebar to see smooth spring transitions between full navigation and compact icon-only mode.
                                     </p>
                                 </div>
                             </div>

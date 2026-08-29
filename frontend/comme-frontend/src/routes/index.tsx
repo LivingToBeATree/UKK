@@ -66,7 +66,7 @@ export { GuestRoute } from './GuestRoute';
 function AppRoutes() {
     return (
         <Routes>
-            {/* ─── Public Routes ─── */}
+            {/* Public routes */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/explore" element={<ExplorePage />} />
             <Route path="/posts/:id" element={<PostDetailPage />} />
@@ -75,12 +75,12 @@ function AppRoutes() {
             <Route path="/artists" element={<ArtistsDirectoryPage />} />
             <Route path="/artists/:id" element={<ArtistProfilePage />} />
 
-            {/* User Profiles */}
+            {/* User profiles */}
             <Route path="/@:username" element={<UserProfilePage />} />
             <Route path="/users/:username" element={<UserProfilePage />} />
             <Route path="/profile" element={<UserProfilePage />} />
 
-            {/* ─── Guest-Only Routes (redirect to / if already logged in) ─── */}
+            {/* Guest only routes */}
             <Route element={<GuestRoute />}>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
@@ -89,7 +89,7 @@ function AppRoutes() {
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
             </Route>
 
-            {/* ─── Protected Routes (require auth) ─── */}
+            {/* Authenticated user routes */}
             <Route element={<ProtectedRoute />}>
                 {/* Post actions */}
                 <Route path="/posts/create" element={<CreatePostPage />} />
@@ -101,7 +101,7 @@ function AppRoutes() {
                 <Route path="/orders" element={<Navigate to="/commissions" replace />} />
                 <Route path="/orders/:id" element={<Navigate to="/commissions/:id" replace />} />
 
-                {/* User pages */}
+                {/* User dashboard */}
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
                 <Route path="/bookmarks" element={<BookmarksPage />} />
@@ -110,7 +110,7 @@ function AppRoutes() {
                 <Route path="/artist-application/apply" element={<Navigate to="/apply-artist" replace />} />
                 <Route path="/artist-application/status" element={<Navigate to="/apply-artist/status" replace />} />
 
-                {/* Artist Dashboard (requires artist profile) */}
+                {/* Artist studio */}
                 <Route element={<ProtectedRoute requireArtist={true} />}>
                     <Route path="/dashboard" element={<DashboardLayout />}>
                         <Route index element={<DashboardHomePage />} />
@@ -124,7 +124,7 @@ function AppRoutes() {
                     <Route path="/dashboard/artist" element={<Navigate to="/dashboard" replace />} />
                 </Route>
 
-                {/* Admin / Staff Panel (requires admin or moderator role) */}
+                {/* Staff administration */}
                 <Route element={<ProtectedRoute requireStaff={true} />}>
                     <Route path="/admin" element={<AdminLayout />}>
                         <Route index element={<AdminDashboardPage />} />
@@ -138,7 +138,7 @@ function AppRoutes() {
                 </Route>
             </Route>
 
-            {/* ─── Dev Routes ─── */}
+            {/* Development sandbox */}
             {import.meta.env.DEV && (
                 <>
                     <Route path="/dev" element={<Navigate to="/dev/sandbox" replace />} />
@@ -146,7 +146,7 @@ function AppRoutes() {
                 </>
             )}
 
-            {/* ─── Fallback ─── */}
+            {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
     );

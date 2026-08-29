@@ -48,7 +48,7 @@ export const Navbar: React.FC = () => {
         { label: 'Explore', path: '/', icon: Compass },
         { label: 'Artists', path: '/artists', icon: Palette },
         { label: 'Commissions', path: '/commissions', icon: Layers },
-        ...(import.meta.env.DEV ? [{ label: '🛠️ Sandbox', path: '/dev/sandbox', icon: Sparkles }] : []),
+        ...(import.meta.env.DEV ? [{ label: 'Sandbox', path: '/dev/sandbox', icon: Sparkles }] : []),
     ];
 
     return (

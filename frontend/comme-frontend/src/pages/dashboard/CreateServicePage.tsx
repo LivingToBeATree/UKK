@@ -90,12 +90,12 @@ export const CreateServicePage: React.FC = () => {
             <div>
                 <h1 className="text-2xl font-black tracking-tight">Create Commission Service</h1>
                 <p className="text-xs text-muted-foreground mt-1">
-                    Set up your commission listing, description, and pricing tiers for prospective clients.
+                    Set up your listing details and base pricing tiers for clients.
                 </p>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                {/* 1. General Service Details */}
+                {/* Service details */}
                 <Card>
                     <CardContent className="p-6 space-y-4">
                         <h2 className="text-base font-bold flex items-center gap-2">
@@ -116,7 +116,7 @@ export const CreateServicePage: React.FC = () => {
                             <Label htmlFor="description">Detailed Description & Terms *</Label>
                             <Textarea
                                 id="description"
-                                placeholder="Describe what you draw (poses, backgrounds, formats) and your terms of service..."
+                                placeholder="What do you specialize in? Note drawing styles, turnaround expectations, or NSFW/commercial terms..."
                                 {...register('description', { required: 'Description is required' })}
                                 rows={4}
                             />
@@ -138,7 +138,7 @@ export const CreateServicePage: React.FC = () => {
                     </CardContent>
                 </Card>
 
-                {/* 2. Pricing Tiers Builder */}
+                {/* Pricing tiers */}
                 <Card>
                     <CardContent className="p-6 space-y-4">
                         <div className="flex items-center justify-between">

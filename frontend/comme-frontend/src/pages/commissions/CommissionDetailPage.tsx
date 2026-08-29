@@ -180,7 +180,7 @@ export const CommissionDetailPage: React.FC = () => {
         setActionLoading(true);
         try {
             const formData = new FormData();
-            formData.append('message', `📝 [REVISION REQUEST]: ${revisionNotes}`);
+            formData.append('message', `[Revision Request]: ${revisionNotes}`);
             await commissionOrderApi.sendMessage(commission.id, formData);
             await commissionOrderApi.update(commission.id, { status: 'in_progress' });
             toast.success('Revision request sent to artist');
@@ -389,7 +389,7 @@ export const CommissionDetailPage: React.FC = () => {
                             </div>
                         )}
 
-                        {/* ─── ACTION TOOLBAR ─── */}
+                        {/* Actions */}
                         <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-border">
                             {/* BUYER: Pay with Midtrans (When Status is 'accepted') */}
                             {isBuyer && commission.status === 'accepted' && (
@@ -422,7 +422,7 @@ export const CommissionDetailPage: React.FC = () => {
                                         <div className="space-y-3 py-2">
                                             <Label>Revision Notes & Feedback</Label>
                                             <Textarea
-                                                placeholder="e.g. Please adjust the eye color to amethyst purple and raise the lighting on the sword blade..."
+                                                placeholder="e.g. Shift the eye color toward amethyst and brighten the weapon highlights..."
                                                 rows={4}
                                                 value={revisionNotes}
                                                 onChange={(e) => setRevisionNotes(e.target.value)}
@@ -633,7 +633,7 @@ export const CommissionDetailPage: React.FC = () => {
                                         id="review-comment"
                                         value={reviewComment}
                                         onChange={(e) => setReviewComment(e.target.value)}
-                                        placeholder="Describe your collaboration with the artist, turnaround speed, and final art quality..."
+                                        placeholder="Leave feedback on communication, turnaround, or the final artwork..."
                                         rows={4}
                                         required
                                     />

@@ -28,29 +28,29 @@ const stagger = {
     show: { opacity: 1, transition: { staggerChildren: 0.1 } },
 };
 
-const howItWorks = [
+const workflowSteps = [
     {
         step: '01',
-        title: 'Discover Creators',
-        description: 'Browse verified illustrators, Vtuber riggers, and concept artists by style and tier.',
+        title: 'Find Your Illustrator',
+        description: 'Filter listings by art style, turnaround timeline, and base rates.',
         icon: Users,
     },
     {
         step: '02',
-        title: 'Submit Your Brief',
-        description: 'Choose options, define deadline limits, and attach character reference sheets.',
+        title: 'Submit Character Brief',
+        description: 'Choose options, specify your deadline, and attach reference sheets.',
         icon: Sparkles,
     },
     {
         step: '03',
         title: 'Midtrans Escrow Hold',
-        description: 'Funds are securely locked in escrow and only disbursed when you approve deliverables.',
+        description: 'Payment stays locked in escrow until you inspect and accept milestone deliverables.',
         icon: Lock,
     },
     {
         step: '04',
-        title: 'Collaborate & Approve',
-        description: 'Inspect sketches, request revisions in the commission chat, and download source files.',
+        title: 'Review & Download',
+        description: 'Request adjustments in chat and receive full-res source files upon completion.',
         icon: CheckCircle2,
     },
 ];
@@ -58,7 +58,7 @@ const howItWorks = [
 const launchHighlights = [
     { value: '0%', label: 'Platform Fees (Launch Period)' },
     { value: '100%', label: 'Midtrans Escrow Guarantee' },
-    { value: 'Milestones', label: 'Review & Revision Rounds' },
+    { value: 'Milestones', label: 'Draft Revisions Included' },
     { value: 'Instant', label: 'QRIS, Snap & Bank Transfer' },
 ];
 
@@ -73,7 +73,6 @@ export const LandingPage: React.FC = () => {
                 const res = await artistProfileApi.list(1);
                 setArtists(res.data.slice(0, 4));
             } catch {
-                // Fallback to empty
                 setArtists([]);
             } finally {
                 setLoadingArtists(false);
@@ -84,9 +83,8 @@ export const LandingPage: React.FC = () => {
 
     return (
         <div className="min-h-screen">
-            {/* ─── Hero Section ─── */}
+            {/* Hero */}
             <section className="relative overflow-hidden py-20 sm:py-32">
-                {/* Background gradient */}
                 <div className="absolute inset-0 -z-10">
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-accent/5" />
                     <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
@@ -98,7 +96,7 @@ export const LandingPage: React.FC = () => {
                         <motion.div variants={fadeUp}>
                             <Badge variant="secondary" className="mb-4 px-4 py-1.5 text-xs font-semibold">
                                 <Sparkles className="h-3 w-3 mr-1.5 text-primary" />
-                                The Anime & Digital Art Commission Hub
+                                Independent Creator Commission Hub
                             </Badge>
                         </motion.div>
 
@@ -106,9 +104,9 @@ export const LandingPage: React.FC = () => {
                             variants={fadeUp}
                             className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight leading-tight"
                         >
-                            Where Commission Art Finds Its{' '}
+                            Commission Art with{' '}
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-emerald-400 to-amber-400">
-                                Flow.
+                                Zero Friction.
                             </span>
                         </motion.h1>
 
@@ -116,7 +114,7 @@ export const LandingPage: React.FC = () => {
                             variants={fadeUp}
                             className="max-w-2xl mx-auto text-base sm:text-lg text-muted-foreground leading-relaxed"
                         >
-                            Connect with verified digital illustrators, commission tailor-made artwork with milestone approvals, and pay with complete peace of mind through Midtrans escrow protection.
+                            Order custom illustrations directly from digital artists with milestone check-ins and escrow-backed payments.
                         </motion.p>
 
                         <motion.div variants={fadeUp} className="flex items-center justify-center gap-4 pt-4">
@@ -147,12 +145,12 @@ export const LandingPage: React.FC = () => {
                                 <>
                                     <Link to="/register">
                                         <Button size="lg" className="gap-2">
-                                            Get Started Free <ArrowRight className="h-4 w-4" />
+                                            Create Account <ArrowRight className="h-4 w-4" />
                                         </Button>
                                     </Link>
                                     <Link to="/explore">
                                         <Button size="lg" variant="outline">
-                                            Explore Artwork
+                                            Explore Feed
                                         </Button>
                                     </Link>
                                 </>
@@ -162,7 +160,7 @@ export const LandingPage: React.FC = () => {
                 </div>
             </section>
 
-            {/* ─── Highlights Bar ─── */}
+            {/* Highlights */}
             <section className="border-y border-border bg-card/50">
                 <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
                     <motion.div
@@ -182,7 +180,7 @@ export const LandingPage: React.FC = () => {
                 </div>
             </section>
 
-            {/* ─── How It Works ─── */}
+            {/* Workflow */}
             <section className="py-20 sm:py-28">
                 <div className="max-w-6xl mx-auto px-4 sm:px-8">
                     <motion.div
@@ -193,10 +191,10 @@ export const LandingPage: React.FC = () => {
                         className="text-center mb-16"
                     >
                         <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-extrabold">
-                            How Commissioning on Comme Works
+                            How Orders Flow
                         </motion.h2>
                         <motion.p variants={fadeUp} className="text-muted-foreground mt-3 max-w-xl mx-auto text-xs sm:text-sm">
-                            Clear milestone approvals, built-in communication, and automated Midtrans escrow protection.
+                            Clear milestones, direct messaging, and automated escrow protection from brief to delivery.
                         </motion.p>
                     </motion.div>
 
@@ -207,7 +205,7 @@ export const LandingPage: React.FC = () => {
                         viewport={{ once: true }}
                         className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
                     >
-                        {howItWorks.map((item) => {
+                        {workflowSteps.map((item) => {
                             const Icon = item.icon;
                             return (
                                 <motion.div key={item.step} variants={fadeUp}>
@@ -232,7 +230,7 @@ export const LandingPage: React.FC = () => {
                 </div>
             </section>
 
-            {/* ─── Featured Creators ─── */}
+            {/* Featured Creators */}
             <section className="py-20 sm:py-28 bg-card/30 border-y border-border">
                 <div className="max-w-6xl mx-auto px-4 sm:px-8">
                     <motion.div
@@ -246,7 +244,7 @@ export const LandingPage: React.FC = () => {
                             Featured Creators
                         </motion.h2>
                         <motion.p variants={fadeUp} className="text-muted-foreground mt-3 max-w-xl mx-auto text-xs sm:text-sm">
-                            Verified artists ready to collaborate and bring your ideas to life.
+                            Verified artists currently accepting commission requests.
                         </motion.p>
                     </motion.div>
 
@@ -285,7 +283,7 @@ export const LandingPage: React.FC = () => {
                                                     <p className="text-xs text-muted-foreground">@{artist.user?.username}</p>
                                                 </div>
                                                 <Badge variant="teal" className="text-[10px]">
-                                                    Available for Orders
+                                                    Open for Orders
                                                 </Badge>
                                             </CardContent>
                                         </Card>
@@ -295,7 +293,7 @@ export const LandingPage: React.FC = () => {
                         </motion.div>
                     ) : (
                         <div className="text-center py-10 space-y-3">
-                            <p className="text-sm text-muted-foreground">Join our first wave of verified creators!</p>
+                            <p className="text-sm text-muted-foreground">Join our initial cohort of verified artists.</p>
                             <Link to="/apply-artist">
                                 <Button size="sm" className="gap-2">
                                     <Sparkles className="h-4 w-4" /> Apply as an Artist
@@ -306,29 +304,29 @@ export const LandingPage: React.FC = () => {
                 </div>
             </section>
 
-            {/* ─── CTA Section ─── */}
+            {/* Bottom CTA */}
             <section className="py-20 sm:py-28">
                 <div className="max-w-4xl mx-auto px-4 sm:px-8 text-center">
                     <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-card to-accent/5 p-8 sm:p-12">
                         <CardContent className="space-y-6 p-0">
                             <Badge variant="secondary" className="px-4 py-1 text-xs">
-                                <Zap className="h-3 w-3 mr-1.5 text-primary" /> Start Creating Today
+                                <Zap className="h-3 w-3 mr-1.5 text-primary" /> Commission with Confidence
                             </Badge>
                             <h2 className="text-3xl sm:text-4xl font-extrabold">
-                                Ready to Bring Your Vision to Life?
+                                Got an OC that needs drawing?
                             </h2>
                             <p className="text-sm sm:text-base text-muted-foreground max-w-lg mx-auto">
-                                Join thousands of art lovers and creators. Order your first commission with complete escrow protection today.
+                                Browse creator styles, agree on milestones, and pay securely through Midtrans escrow.
                             </p>
                             <div className="flex items-center justify-center gap-4 pt-2">
                                 <Link to="/register">
                                     <Button size="lg" className="gap-2">
-                                        Sign Up Now <ArrowRight className="h-4 w-4" />
+                                        Get Started <ArrowRight className="h-4 w-4" />
                                     </Button>
                                 </Link>
                                 <Link to="/store">
                                     <Button size="lg" variant="outline">
-                                        Browse Services
+                                        Browse Listings
                                     </Button>
                                 </Link>
                             </div>
