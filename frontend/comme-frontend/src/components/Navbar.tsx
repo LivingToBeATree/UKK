@@ -132,25 +132,30 @@ export const Navbar: React.FC = () => {
                                     </div>
 
                                     <DropdownMenuItem onClick={() => navigate(`/@${user.username}`)}>
-                                        <UserIcon className="h-4 w-4 mr-2 text-purple-400" />
+                                        <UserIcon className="h-4 w-4 mr-2 text-primary" />
                                         <span>My Profile</span>
                                     </DropdownMenuItem>
 
-                                    {user.role === 'artist' && (
-                                        <DropdownMenuItem onClick={() => navigate('/dashboard/artist')}>
+                                    {user.artist_profile ? (
+                                        <DropdownMenuItem onClick={() => navigate('/dashboard')}>
                                             <Palette className="h-4 w-4 mr-2 text-emerald-400" />
                                             <span>Artist Studio</span>
                                         </DropdownMenuItem>
-                                    )}
-
-                                    {user.role === 'admin' && (
-                                        <DropdownMenuItem onClick={() => navigate('/admin')}>
-                                            <Shield className="h-4 w-4 mr-2 text-amber-400" />
-                                            <span>Admin Panel</span>
+                                    ) : (
+                                        <DropdownMenuItem onClick={() => navigate('/apply-artist')}>
+                                            <Sparkles className="h-4 w-4 mr-2 text-amber-400" />
+                                            <span>Become an Artist</span>
                                         </DropdownMenuItem>
                                     )}
 
-                                    <DropdownMenuItem onClick={() => navigate('/orders')}>
+                                    {(user.role === 'admin' || user.role === 'moderator') && (
+                                        <DropdownMenuItem onClick={() => navigate('/admin')}>
+                                            <Shield className="h-4 w-4 mr-2 text-amber-400" />
+                                            <span>Staff Admin Panel</span>
+                                        </DropdownMenuItem>
+                                    )}
+
+                                    <DropdownMenuItem onClick={() => navigate('/commissions')}>
                                         <Layers className="h-4 w-4 mr-2 text-blue-400" />
                                         <span>My Commission Orders</span>
                                     </DropdownMenuItem>

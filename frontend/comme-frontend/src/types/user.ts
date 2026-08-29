@@ -1,6 +1,6 @@
 import type { ArtistProfile } from './artist';
 
-export type UserRole = 'user' | 'artist' | 'staff' | 'admin';
+export type UserRole = 'user' | 'moderator' | 'admin';
 
 export interface User {
     id: number;
@@ -16,10 +16,13 @@ export interface User {
     artist_profile?: ArtistProfile | null;
 }
 
-export interface AuthResponse {
-    token: string;
-    user: User;
-}
+export const isArtist = (user?: User | null): boolean => {
+    return !!user?.artist_profile;
+};
+
+export const isStaff = (user?: User | null): boolean => {
+    return user?.role === 'admin' || user?.role === 'moderator';
+};
 
 export interface PendingRegistrationResponse {
     message: string;

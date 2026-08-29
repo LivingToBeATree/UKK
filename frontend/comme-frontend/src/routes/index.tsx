@@ -8,6 +8,7 @@ import { AdminLayout } from '@/layouts/AdminLayout';
 
 // Public
 import { LandingPage } from '@/pages/LandingPage';
+import { UserProfilePage } from '@/pages/profile/UserProfilePage';
 
 // Auth
 import { LoginPage } from '@/pages/auth/LoginPage';
@@ -74,6 +75,11 @@ function AppRoutes() {
             <Route path="/artists" element={<ArtistsDirectoryPage />} />
             <Route path="/artists/:id" element={<ArtistProfilePage />} />
 
+            {/* User Profiles */}
+            <Route path="/@:username" element={<UserProfilePage />} />
+            <Route path="/users/:username" element={<UserProfilePage />} />
+            <Route path="/profile" element={<UserProfilePage />} />
+
             {/* ─── Guest-Only Routes (redirect to / if already logged in) ─── */}
             <Route element={<GuestRoute />}>
                 <Route path="/login" element={<LoginPage />} />
@@ -92,6 +98,8 @@ function AppRoutes() {
                 <Route path="/store/:serviceId/order" element={<OrderCommissionPage />} />
                 <Route path="/commissions" element={<MyCommissionsPage />} />
                 <Route path="/commissions/:id" element={<CommissionDetailPage />} />
+                <Route path="/orders" element={<Navigate to="/commissions" replace />} />
+                <Route path="/orders/:id" element={<Navigate to="/commissions/:id" replace />} />
 
                 {/* User pages */}
                 <Route path="/settings" element={<SettingsPage />} />
@@ -99,27 +107,34 @@ function AppRoutes() {
                 <Route path="/bookmarks" element={<BookmarksPage />} />
                 <Route path="/apply-artist" element={<ApplyArtistPage />} />
                 <Route path="/apply-artist/status" element={<ApplicationStatusPage />} />
+                <Route path="/artist-application/apply" element={<Navigate to="/apply-artist" replace />} />
+                <Route path="/artist-application/status" element={<Navigate to="/apply-artist/status" replace />} />
 
-                {/* Artist Dashboard (with sidebar layout) */}
-                <Route path="/dashboard" element={<DashboardLayout />}>
-                    <Route index element={<DashboardHomePage />} />
-                    <Route path="services" element={<ManageServicesPage />} />
-                    <Route path="services/new" element={<CreateServicePage />} />
-                    <Route path="services/:id/edit" element={<CreateServicePage />} />
-                    <Route path="portfolio" element={<ManagePortfolioPage />} />
-                    <Route path="posts" element={<ManagePostsPage />} />
-                    <Route path="commissions" element={<ArtistCommissionsPage />} />
+                {/* Artist Dashboard (requires artist profile) */}
+                <Route element={<ProtectedRoute requireArtist={true} />}>
+                    <Route path="/dashboard" element={<DashboardLayout />}>
+                        <Route index element={<DashboardHomePage />} />
+                        <Route path="services" element={<ManageServicesPage />} />
+                        <Route path="services/new" element={<CreateServicePage />} />
+                        <Route path="services/:id/edit" element={<CreateServicePage />} />
+                        <Route path="portfolio" element={<ManagePortfolioPage />} />
+                        <Route path="posts" element={<ManagePostsPage />} />
+                        <Route path="commissions" element={<ArtistCommissionsPage />} />
+                    </Route>
+                    <Route path="/dashboard/artist" element={<Navigate to="/dashboard" replace />} />
                 </Route>
 
-                {/* Admin Panel (with admin layout) */}
-                <Route path="/admin" element={<AdminLayout />}>
-                    <Route index element={<AdminDashboardPage />} />
-                    <Route path="users" element={<UserManagementPage />} />
-                    <Route path="applications" element={<ArtistApplicationsPage />} />
-                    <Route path="reports" element={<ReportsPage />} />
-                    <Route path="tickets" element={<TicketsPage />} />
-                    <Route path="tickets/:id" element={<TicketDetailPage />} />
-                    <Route path="moderation-log" element={<ModerationLogPage />} />
+                {/* Admin / Staff Panel (requires admin or moderator role) */}
+                <Route element={<ProtectedRoute requireStaff={true} />}>
+                    <Route path="/admin" element={<AdminLayout />}>
+                        <Route index element={<AdminDashboardPage />} />
+                        <Route path="users" element={<UserManagementPage />} />
+                        <Route path="applications" element={<ArtistApplicationsPage />} />
+                        <Route path="reports" element={<ReportsPage />} />
+                        <Route path="tickets" element={<TicketsPage />} />
+                        <Route path="tickets/:id" element={<TicketDetailPage />} />
+                        <Route path="moderation-log" element={<ModerationLogPage />} />
+                    </Route>
                 </Route>
             </Route>
 
