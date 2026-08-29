@@ -123,7 +123,7 @@ export const UserProfilePage: React.FC = () => {
         <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="max-w-6xl mx-auto p-4 sm:p-8 space-y-8"
+            className="max-w-[1440px] mx-auto px-6 sm:px-12 py-8 space-y-8"
         >
             {/* Header Card */}
             <Card className="overflow-hidden border border-border">

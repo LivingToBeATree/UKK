@@ -2,6 +2,7 @@ import AppRoutes from './routes';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ColorThemeProvider } from '@/components/color-theme-provider';
 import { Navbar } from '@/components/Navbar';
+import { Footer } from '@/components/Footer';
 import { Toaster } from '@/components/ui/sonner';
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
                     <main className="flex-1">
                         <AppRoutes />
                     </main>
+                    <Footer />
                     <Toaster />
                 </div>
             </ColorThemeProvider>

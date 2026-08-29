@@ -1,18 +1,15 @@
-import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
     Sparkles,
     Bell,
     Palette,
-    Compass,
-    Layers,
     User as UserIcon,
     Settings,
     LogOut,
-    Menu,
-    X,
     Shield,
+    Layers,
+    Terminal,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { ModeToggle } from './mode-toggle';
@@ -30,8 +27,6 @@ import { toast } from './ui/sonner';
 
 export const Navbar: React.FC = () => {
     const { user, isAuthenticated, logout } = useAuth();
-    const [mobileOpen, setMobileOpen] = useState(false);
-    const location = useLocation();
     const navigate = useNavigate();
 
     const handleLogout = async () => {
@@ -44,16 +39,9 @@ export const Navbar: React.FC = () => {
         }
     };
 
-    const navLinks = [
-        { label: 'Explore', path: '/', icon: Compass },
-        { label: 'Artists', path: '/artists', icon: Palette },
-        { label: 'Commissions', path: '/commissions', icon: Layers },
-        ...(import.meta.env.DEV ? [{ label: 'Sandbox', path: '/dev/sandbox', icon: Sparkles }] : []),
-    ];
-
     return (
         <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-background/80 backdrop-blur-md">
-            <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 sm:px-8">
+            <div className="max-w-[1440px] mx-auto flex h-16 items-center justify-between px-6 sm:px-12">
                 {/* 1. Official Comme Wordmark Logo */}
                 <div className="flex items-center gap-6">
                     <Link to="/" className="flex items-center gap-2 group py-1">
@@ -63,39 +51,17 @@ export const Navbar: React.FC = () => {
                             className="h-8 sm:h-9 w-auto object-contain transition-transform group-hover:scale-105"
                         />
                     </Link>
-
-                    {/* Desktop Navigation Links */}
-                    <nav className="hidden md:flex items-center gap-1">
-                        {navLinks.map((link) => {
-                            const Icon = link.icon;
-                            const isActive = location.pathname === link.path;
-                            return (
-                                <Link
-                                    key={link.path}
-                                    to={link.path}
-                                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors ${
-                                        isActive
-                                            ? 'bg-secondary text-foreground'
-                                            : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
-                                    }`}
-                                >
-                                    <Icon className="h-3.5 w-3.5" />
-                                    {link.label}
-                                </Link>
-                            );
-                        })}
-                    </nav>
                 </div>
 
-                {/* 2. Actions (Color Theme Toggle + Mode Toggle + Auth Profile / Bell) */}
-                <div className="flex items-center gap-2">
+                {/* 2. Actions (Theme toggles + Auth Profile / Bell / Login) */}
+                <div className="flex items-center gap-2.5">
                     {/* Color Theme Selector (Purple, Teal, Orange) */}
                     <ColorThemeToggle />
 
                     {/* Dark/Light/System Mode Toggle */}
                     <ModeToggle />
 
-                    {isAuthenticated && user && (
+                    {isAuthenticated && user ? (
                         <>
                             {/* Notification Bell */}
                             <Button
@@ -157,8 +123,15 @@ export const Navbar: React.FC = () => {
 
                                     <DropdownMenuItem onClick={() => navigate('/commissions')}>
                                         <Layers className="h-4 w-4 mr-2 text-blue-400" />
-                                        <span>My Commission Orders</span>
+                                        <span>My Commissions</span>
                                     </DropdownMenuItem>
+
+                                    {(import.meta.env.DEV || user.role === 'admin') && (
+                                        <DropdownMenuItem onClick={() => navigate('/dev/sandbox')}>
+                                            <Terminal className="h-4 w-4 mr-2 text-purple-400" />
+                                            <span>Dev Sandbox</span>
+                                        </DropdownMenuItem>
+                                    )}
 
                                     <DropdownMenuItem onClick={() => navigate('/settings')}>
                                         <Settings className="h-4 w-4 mr-2" />
@@ -174,54 +147,22 @@ export const Navbar: React.FC = () => {
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </>
+                    ) : (
+                        <div className="flex items-center gap-2 pl-1">
+                            <Link to="/login">
+                                <Button variant="ghost" size="sm" className="text-xs">
+                                    Sign In
+                                </Button>
+                            </Link>
+                            <Link to="/register">
+                                <Button size="sm" className="text-xs">
+                                    Get Started
+                                </Button>
+                            </Link>
+                        </div>
                     )}
-
-                    {/* Mobile Menu Button */}
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        className="md:hidden"
-                        onClick={() => setMobileOpen(!mobileOpen)}
-                        aria-label="Toggle mobile menu"
-                    >
-                        {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-                    </Button>
                 </div>
             </div>
-
-            {/* Mobile Nav Drawer */}
-            <AnimatePresence>
-                {mobileOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="md:hidden border-t border-border bg-card px-4 py-4 space-y-3"
-                    >
-                        <nav className="flex flex-col space-y-1">
-                            {navLinks.map((link) => {
-                                const Icon = link.icon;
-                                const isActive = location.pathname === link.path;
-                                return (
-                                    <Link
-                                        key={link.path}
-                                        to={link.path}
-                                        onClick={() => setMobileOpen(false)}
-                                        className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold ${
-                                            isActive
-                                                ? 'bg-secondary text-foreground'
-                                                : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
-                                        }`}
-                                    >
-                                        <Icon className="h-4 w-4" />
-                                        {link.label}
-                                    </Link>
-                                );
-                            })}
-                        </nav>
-                    </motion.div>
-                )}
-            </AnimatePresence>
         </header>
     );
 };
