@@ -4,6 +4,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class ArtistProfile extends Model
 {
@@ -48,6 +49,16 @@ class ArtistProfile extends Model
     public function reviews(): HasMany
     {
         return $this->hasMany(CommissionReview::class);
+    }
+
+    public function payoutAccount(): HasOne
+    {
+        return $this->hasOne(ArtistPayoutAccount::class)->where('is_active', true)->latestOfMany();
+    }
+
+    public function payoutAccounts(): HasMany
+    {
+        return $this->hasMany(ArtistPayoutAccount::class);
     }
 
     public function followers(): HasMany
