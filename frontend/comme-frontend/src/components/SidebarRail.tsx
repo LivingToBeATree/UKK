@@ -46,33 +46,31 @@ const RailItem: React.FC<RailItemProps> = ({
 }) => {
     const [showTooltip, setShowTooltip] = useState(false);
 
-    const content = (
+    const buttonNode = (
         <button
             onClick={onClick}
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
-            className={`relative flex items-center rounded-xl transition-colors duration-150 cursor-pointer focus:outline-none ${
-                isCollapsed
-                    ? 'justify-center h-11 w-11'
-                    : 'w-full px-3 h-11 gap-3'
-            } ${
+            className={`w-full h-11 flex items-center rounded-xl px-2 gap-3 transition-colors duration-150 cursor-pointer focus:outline-none overflow-hidden ${
                 isActive
                     ? 'bg-secondary text-foreground font-semibold shadow-xs ring-1 ring-border/50'
                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
             }`}
             aria-label={label}
         >
-            <Icon className={`h-5 w-5 shrink-0 transition-transform ${isActive ? 'text-primary' : ''}`} />
+            <div className="w-7 h-7 flex items-center justify-center shrink-0">
+                <Icon className={`h-5 w-5 transition-transform ${isActive ? 'text-primary' : ''}`} />
+            </div>
             
             {/* Animated Label */}
-            <AnimatePresence>
+            <AnimatePresence initial={false}>
                 {!isCollapsed && (
                     <motion.span
                         initial={{ opacity: 0, x: -6 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -6 }}
                         transition={{ duration: 0.15 }}
-                        className="text-xs font-semibold truncate tracking-tight text-foreground/90 whitespace-nowrap"
+                        className="text-xs font-semibold truncate tracking-tight text-foreground/90 whitespace-nowrap text-left"
                     >
                         {label}
                     </motion.span>
@@ -81,7 +79,7 @@ const RailItem: React.FC<RailItemProps> = ({
 
             {/* Hover Tooltip (Only when collapsed) */}
             {isCollapsed && showTooltip && (
-                <div className="absolute left-14 z-50 px-2.5 py-1 text-xs font-semibold text-foreground bg-card border border-border/80 rounded-lg shadow-lg whitespace-nowrap pointer-events-none backdrop-blur-md animate-in fade-in zoom-in-95 duration-150">
+                <div className="absolute left-16 z-50 px-2.5 py-1 text-xs font-semibold text-foreground bg-card border border-border/80 rounded-lg shadow-lg whitespace-nowrap pointer-events-none backdrop-blur-md animate-in fade-in zoom-in-95 duration-150">
                     {label}
                 </div>
             )}
@@ -90,13 +88,13 @@ const RailItem: React.FC<RailItemProps> = ({
 
     if (path) {
         return (
-            <Link to={path} className={`focus:outline-none flex justify-center ${isCollapsed ? 'w-auto' : 'w-full'}`}>
-                {content}
+            <Link to={path} className="w-full focus:outline-none block">
+                {buttonNode}
             </Link>
         );
     }
 
-    return <div className={`flex justify-center ${isCollapsed ? 'w-auto' : 'w-full'}`}>{content}</div>;
+    return <div className="w-full block">{buttonNode}</div>;
 };
 
 export const SidebarRail: React.FC = () => {
@@ -119,26 +117,26 @@ export const SidebarRail: React.FC = () => {
         <motion.aside
             initial={false}
             animate={{ width: collapsed ? 64 : 240 }}
-            transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-            className="fixed left-0 top-0 bottom-0 z-50 bg-card/95 backdrop-blur-xl border-r border-border/70 flex flex-col justify-between py-3 px-2 select-none overflow-hidden"
+            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+            className="fixed left-0 top-0 bottom-0 z-50 bg-card/95 backdrop-blur-xl border-r border-border/70 flex flex-col justify-between py-3 px-2.5 select-none overflow-hidden"
         >
             {/* TOP GROUP: Logo & Navigation Links */}
             <div className="flex flex-col items-center gap-1.5 w-full">
-                {/* 1. Official Comme Logo Header (Clicking anywhere toggles expand/collapse) */}
+                {/* 1. Official Comme Logo Header (Clicking toggles expand/collapse) */}
                 <button
                     onClick={toggleSidebar}
-                    className={`flex items-center rounded-xl hover:bg-secondary/60 transition-colors cursor-pointer focus:outline-none ${
-                        collapsed ? 'justify-center h-11 w-11' : 'w-full px-2.5 h-11 gap-3'
-                    }`}
+                    className="w-full h-11 flex items-center rounded-xl px-2 gap-3 hover:bg-secondary/60 transition-colors cursor-pointer focus:outline-none overflow-hidden"
                     title={collapsed ? 'Click to expand sidebar' : 'Click to collapse sidebar'}
                     aria-label="Toggle Sidebar"
                 >
-                    <img
-                        src="/Comme_Emblem.svg"
-                        alt="Comme"
-                        className="h-8 w-8 object-contain shrink-0 transition-transform group-hover:scale-105"
-                    />
-                    <AnimatePresence>
+                    <div className="w-7 h-7 flex items-center justify-center shrink-0">
+                        <img
+                            src="/Comme_Emblem.svg"
+                            alt="Comme"
+                            className="h-7 w-7 object-contain transition-transform group-hover:scale-105"
+                        />
+                    </div>
+                    <AnimatePresence initial={false}>
                         {!collapsed && (
                             <motion.div
                                 initial={{ opacity: 0, x: -6 }}
@@ -147,10 +145,10 @@ export const SidebarRail: React.FC = () => {
                                 transition={{ duration: 0.15 }}
                                 className="flex flex-col text-left whitespace-nowrap overflow-hidden"
                             >
-                                <span className="font-extrabold text-sm tracking-tight text-foreground">
+                                <span className="font-extrabold text-sm tracking-tight text-foreground leading-tight">
                                     COMME
                                 </span>
-                                <span className="text-[10px] text-muted-foreground font-medium">
+                                <span className="text-[10px] text-muted-foreground font-medium leading-none">
                                     Art & Commissions
                                 </span>
                             </motion.div>
@@ -177,7 +175,9 @@ export const SidebarRail: React.FC = () => {
                 />
 
                 {/* Divider */}
-                <div className={`${collapsed ? 'w-6' : 'w-full'} h-[1px] bg-border/80 my-1 transition-all`} />
+                <div className="w-full px-1 my-1">
+                    <div className="w-full h-[1px] bg-border/80" />
+                </div>
 
                 {/* 4. Explore */}
                 <RailItem
@@ -207,7 +207,9 @@ export const SidebarRail: React.FC = () => {
                 />
 
                 {/* Divider */}
-                <div className={`${collapsed ? 'w-6' : 'w-full'} h-[1px] bg-border/80 my-1 transition-all`} />
+                <div className="w-full px-1 my-1">
+                    <div className="w-full h-[1px] bg-border/80" />
+                </div>
 
                 {/* 7. My Commissions / Orders */}
                 <RailItem
@@ -219,9 +221,9 @@ export const SidebarRail: React.FC = () => {
                 />
             </div>
 
-            {/* BOTTOM GROUP: Settings & User Profile Avatar (Perfect vertical center alignment) */}
+            {/* BOTTOM GROUP: Settings & User Profile Avatar (100% Perfectly Aligned) */}
             <div className="flex flex-col items-center gap-1.5 w-full pt-2 border-t border-border/60">
-                {/* 1. Settings (Direct link to Settings page) */}
+                {/* 1. Settings */}
                 <RailItem
                     icon={Settings}
                     label="Settings & Appearance"
@@ -230,18 +232,16 @@ export const SidebarRail: React.FC = () => {
                     isCollapsed={collapsed}
                 />
 
-                {/* 2. User Avatar & Menu (Centered in column) */}
+                {/* 2. User Avatar & Menu (Full width, matching avatar alignment) */}
                 {isAuthenticated && user ? (
-                    <div className="w-full flex justify-center">
+                    <div className="w-full block">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <button
-                                    className={`flex items-center rounded-xl hover:bg-secondary/60 transition-colors focus:outline-none cursor-pointer ${
-                                        collapsed ? 'justify-center h-11 w-11' : 'w-full px-2.5 h-11 gap-3'
-                                    }`}
+                                    className="w-full h-11 flex items-center rounded-xl px-2 gap-3 hover:bg-secondary/60 transition-colors focus:outline-none cursor-pointer overflow-hidden text-left"
                                     title={user.display_name || user.username}
                                 >
-                                    <div className="shrink-0 flex items-center justify-center">
+                                    <div className="w-7 h-7 flex items-center justify-center shrink-0">
                                         <Avatar
                                             size="sm"
                                             fallback={user.display_name || user.username}
@@ -249,7 +249,7 @@ export const SidebarRail: React.FC = () => {
                                             isOnline={true}
                                         />
                                     </div>
-                                    <AnimatePresence>
+                                    <AnimatePresence initial={false}>
                                         {!collapsed && (
                                             <motion.div
                                                 initial={{ opacity: 0, x: -6 }}
