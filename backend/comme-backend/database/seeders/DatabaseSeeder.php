@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enum\CommissionStatus;
 use App\Enum\CommissionVisibility;
 use App\Enum\MessageType;
+use App\Enum\PaymentStatus;
 use App\Enum\PostVisibilityType;
 use App\Enum\ServiceStatus;
 use App\Enum\UserRole;
@@ -13,6 +14,7 @@ use App\Models\Commission;
 use App\Models\CommissionAddon;
 use App\Models\CommissionMessage;
 use App\Models\CommissionOption;
+use App\Models\CommissionPayment;
 use App\Models\CommissionService;
 use App\Models\Follow;
 use App\Models\Portfolio;
@@ -183,6 +185,16 @@ class DatabaseSeeder extends Seeder
                 'recipient_id' => $clientUser->id,
                 'message' => 'Thank you! The references look great. I will have the initial sketch ready for you in 2 days.',
                 'message_type' => MessageType::USER,
+            ]
+        );
+
+        // Seed sample pending commission payment for Webhook testing
+        CommissionPayment::firstOrCreate(
+            ['order_id' => 'CMS-DEMO-101'],
+            [
+                'commission_id' => $commission->id,
+                'status' => PaymentStatus::PENDING->value,
+                'gross_amount' => $commission->total_price,
             ]
         );
     }

@@ -78,7 +78,7 @@ export const DevPanelPage: React.FC = () => {
     const [customPassword, setCustomPassword] = useState('password');
 
     // Midtrans Simulator state
-    const [orderId, setOrderId] = useState('COMM-DEV-101');
+    const [orderId, setOrderId] = useState('CMS-DEMO-101');
     const [grossAmount, setGrossAmount] = useState('500000');
     const [transactionStatus, setTransactionStatus] = useState('settlement');
     const [fraudStatus, setFraudStatus] = useState('accept');

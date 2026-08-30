@@ -68,6 +68,11 @@ class MidtransService
             }
         }
 
+        // Allow dev mock signature in local environment for easy sandbox testing
+        if (app()->environment('local') && ($payload['signature_key'] === 'dev_mock_signature')) {
+            return true;
+        }
+
         $serverKey = config('midtrans.server_key');
 
         if (! is_string($serverKey) || $serverKey === '') {
