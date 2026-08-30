@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Settings, Lock, Smartphone, Palette, Sun, Moon, Laptop, Check } from 'lucide-react';
+import { Settings, Lock, Smartphone, Palette, Sun, Moon, Laptop, Check, CreditCard, Building2, Trash2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { userService } from '@/services/userService';
+import { payoutAccountApi } from '@/services/commissionService';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { useColorTheme, type ColorTheme } from '@/hooks/useColorTheme';
@@ -14,12 +15,21 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar } from '@/components/ui/avatar';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/sonner';
+import type { ArtistPayoutAccount } from '@/types';
 
 export const SettingsPage: React.FC = () => {
     const { user, refreshUser } = useAuth();
     const { theme, setTheme } = useTheme();
     const { colorTheme, setColorTheme } = useColorTheme();
     const [savingProfile, setSavingProfile] = useState(false);
+
+    // Payout Account State
+    const [payoutAccount, setPayoutAccount] = useState<ArtistPayoutAccount | null>(null);
+    const [loadingPayout, setLoadingPayout] = useState(false);
+    const [savingPayout, setSavingPayout] = useState(false);
+    const [bankName, setBankName] = useState('BCA');
+    const [accountName, setAccountName] = useState('');
+    const [accountNumber, setAccountNumber] = useState('');
 
     const { register: regProfile, handleSubmit: handleProfile } = useForm({
         defaultValues: {
@@ -31,6 +41,22 @@ export const SettingsPage: React.FC = () => {
     const { register: regPassword, handleSubmit: handlePassword, reset: resetPassword } = useForm({
         defaultValues: { current_password: '', password: '', password_confirmation: '' },
     });
+
+    useEffect(() => {
+        if (user?.artist_profile) {
+            setLoadingPayout(true);
+            payoutAccountApi.get()
+                .then((acc) => {
+                    setPayoutAccount(acc);
+                    if (acc) {
+                        setBankName(acc.bank_name);
+                        setAccountName(acc.bank_account_name);
+                    }
+                })
+                .catch(() => {})
+                .finally(() => setLoadingPayout(false));
+        }
+    }, [user]);
 
     const onProfileSubmit = async (data: { display_name: string; bio: string }) => {
         setSavingProfile(true);
@@ -69,6 +95,45 @@ export const SettingsPage: React.FC = () => {
         }
     };
 
+    const handleSavePayout = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!accountName.trim() || !accountNumber.trim()) {
+            toast.error('Please fill in both account name and account number');
+            return;
+        }
+        setSavingPayout(true);
+        try {
+            const saved = await payoutAccountApi.update({
+                bank_name: bankName,
+                bank_account_name: accountName.trim(),
+                bank_account_number: accountNumber.trim(),
+            });
+            setPayoutAccount(saved);
+            setAccountNumber('');
+            toast.success('Payout account saved successfully! Earnings will disburse here.');
+        } catch {
+            toast.error('Failed to save payout account');
+        } finally {
+            setSavingPayout(false);
+        }
+    };
+
+    const handleDeletePayout = async () => {
+        if (!confirm('Are you sure you want to remove your payout account? Automatic disbursements will be held until a new account is configured.')) return;
+        setSavingPayout(true);
+        try {
+            await payoutAccountApi.delete();
+            setPayoutAccount(null);
+            setAccountName('');
+            setAccountNumber('');
+            toast.success('Payout account removed');
+        } catch {
+            toast.error('Failed to remove payout account');
+        } finally {
+            setSavingPayout(false);
+        }
+    };
+
     return (
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
             <div className="mb-8">
@@ -76,16 +141,17 @@ export const SettingsPage: React.FC = () => {
                     <Settings className="h-6 w-6 text-primary" /> Settings & Preferences
                 </h1>
                 <p className="text-sm text-muted-foreground mt-1">
-                    Manage your account details, security, display appearance, and session devices.
+                    Manage your account details, security, payout account, and display appearance.
                 </p>
             </div>
 
             <Tabs defaultValue="profile">
-                <TabsList className="mb-6 grid grid-cols-4 w-full">
+                <TabsList className={`mb-6 grid ${user?.artist_profile ? 'grid-cols-5' : 'grid-cols-4'} w-full`}>
                     <TabsTrigger value="profile">Profile</TabsTrigger>
                     <TabsTrigger value="appearance">Appearance</TabsTrigger>
                     <TabsTrigger value="security">Security</TabsTrigger>
                     <TabsTrigger value="devices">Devices</TabsTrigger>
+                    {user?.artist_profile && <TabsTrigger value="payouts">Payouts</TabsTrigger>}
                 </TabsList>
 
                 {/* Profile Tab */}
@@ -248,6 +314,93 @@ export const SettingsPage: React.FC = () => {
                         </Card>
                     </motion.div>
                 </TabsContent>
+
+                {/* Payouts Tab (Artist Only) */}
+                {user?.artist_profile && (
+                    <TabsContent value="payouts">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-base flex items-center gap-2">
+                                        <CreditCard className="h-4 w-4 text-primary" /> Artist Payout Account
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Configure the bank account or e-wallet where earnings from completed commissions will be disbursed via Midtrans Iris.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-6">
+                                    {payoutAccount && (
+                                        <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-between">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <Building2 className="h-4 w-4 text-emerald-400" />
+                                                    <span className="font-bold text-sm text-foreground">{payoutAccount.bank_name}</span>
+                                                    <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-mono font-bold">ACTIVE</span>
+                                                </div>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Account: <span className="font-semibold text-foreground">{payoutAccount.bank_account_name}</span> ({payoutAccount.bank_account_number})
+                                                </p>
+                                            </div>
+                                            <Button variant="ghost" size="sm" onClick={handleDeletePayout} disabled={savingPayout} className="text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 gap-1 text-xs">
+                                                <Trash2 className="h-3.5 w-3.5" /> Remove
+                                            </Button>
+                                        </div>
+                                    )}
+
+                                    <form onSubmit={handleSavePayout} className="space-y-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="bank_select">Bank or E-Wallet</Label>
+                                            <select
+                                                id="bank_select"
+                                                value={bankName}
+                                                onChange={(e) => setBankName(e.target.value)}
+                                                className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                            >
+                                                <option value="BCA">BCA (Bank Central Asia)</option>
+                                                <option value="MANDIRI">Bank Mandiri</option>
+                                                <option value="BNI">BNI (Bank Negara Indonesia)</option>
+                                                <option value="BRI">BRI (Bank Rakyat Indonesia)</option>
+                                                <option value="CIMB">CIMB Niaga</option>
+                                                <option value="PERMATA">Bank Permata</option>
+                                                <option value="GOPAY">GoPay E-Wallet</option>
+                                                <option value="OVO">OVO E-Wallet</option>
+                                                <option value="DANA">DANA E-Wallet</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="account_name">Account Holder Name (as registered with bank)</Label>
+                                            <Input
+                                                id="account_name"
+                                                placeholder="e.g. John Doe"
+                                                value={accountName}
+                                                onChange={(e) => setAccountName(e.target.value)}
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="account_number">Bank Account Number / E-Wallet Phone</Label>
+                                            <Input
+                                                id="account_number"
+                                                placeholder="e.g. 1234567890"
+                                                value={accountNumber}
+                                                onChange={(e) => setAccountNumber(e.target.value.replace(/[^0-9]/g, ''))}
+                                                required
+                                            />
+                                            <p className="text-[11px] text-muted-foreground">Numbers only. Your account information is encrypted at rest using AES-256-CBC.</p>
+                                        </div>
+
+                                        <Button type="submit" disabled={savingPayout || loadingPayout} className="gap-2">
+                                            <CreditCard className="h-4 w-4" />
+                                            {savingPayout ? 'Saving Payout Account...' : payoutAccount ? 'Update Payout Account' : 'Save Payout Account'}
+                                        </Button>
+                                    </form>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
+                    </TabsContent>
+                )}
             </Tabs>
         </div>
     );

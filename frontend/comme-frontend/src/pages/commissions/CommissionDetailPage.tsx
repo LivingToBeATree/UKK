@@ -141,6 +141,21 @@ export const CommissionDetailPage: React.FC = () => {
         }
     };
 
+    const handleConfirmCompletion = async () => {
+        if (!commission) return;
+        setActionLoading(true);
+        try {
+            const updated = await commissionOrderApi.confirm(commission.id);
+            setCommission(updated);
+            toast.success('Commission confirmed! Payout has been queued for the artist.');
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to confirm completion';
+            toast.error(msg);
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     const handleInitiatePayment = async () => {
         if (!commission) return;
         setActionLoading(true);
@@ -178,10 +193,11 @@ export const CommissionDetailPage: React.FC = () => {
         if (!commission || !revisionNotes.trim()) return;
         setActionLoading(true);
         try {
+            await commissionOrderApi.requestRevision(commission.id);
             const formData = new FormData();
             formData.append('message', `[Revision Request]: ${revisionNotes}`);
             await commissionOrderApi.sendMessage(commission.id, formData);
-            toast.success('Revision request sent to artist');
+            toast.success('Revision requested. Artist notified.');
             setRevisionModalOpen(false);
             setRevisionNotes('');
             refreshData();
@@ -193,15 +209,43 @@ export const CommissionDetailPage: React.FC = () => {
     };
 
     // Artist actions
-    const handleUpdateStatus = async (status: string) => {
+    const handleAccept = async () => {
         if (!commission) return;
         setActionLoading(true);
         try {
-            const updated = await commissionOrderApi.update(commission.id, { status });
+            const updated = await commissionOrderApi.accept(commission.id);
             setCommission(updated);
-            toast.success(`Commission status updated to ${status.replace('_', ' ')}`);
+            toast.success('Commission accepted! Client can now proceed to payment.');
         } catch {
-            toast.error('Failed to update commission status');
+            toast.error('Failed to accept commission');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleDecline = async () => {
+        if (!commission) return;
+        setActionLoading(true);
+        try {
+            const updated = await commissionOrderApi.decline(commission.id);
+            setCommission(updated);
+            toast.info('Commission request declined.');
+        } catch {
+            toast.error('Failed to decline commission');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleDeliver = async () => {
+        if (!commission) return;
+        setActionLoading(true);
+        try {
+            const updated = await commissionOrderApi.deliver(commission.id);
+            setCommission(updated);
+            toast.success('Work marked as delivered! 7-day client review window started.');
+        } catch {
+            toast.error('Failed to mark work as delivered');
         } finally {
             setActionLoading(false);
         }
@@ -383,6 +427,32 @@ export const CommissionDetailPage: React.FC = () => {
                             </div>
                         )}
 
+                        {/* Review Window Notice when WAITING_FOR_CLIENT */}
+                        {commission.status === 'waiting_for_client' && (
+                            <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 space-y-1 text-xs">
+                                <p className="font-bold text-amber-400 flex items-center gap-1.5">
+                                    <Clock className="h-4 w-4" /> Work Delivered — Review Window Active
+                                </p>
+                                <p className="text-muted-foreground leading-relaxed">
+                                    {isBuyer
+                                        ? `The artist has delivered their work. Please inspect the deliverables. If everything looks good, confirm to release payment. If changes are needed, you can request a revision. If no action is taken, funds will automatically release on ${commission.review_deadline ? new Date(commission.review_deadline).toLocaleDateString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '7 days'}.`
+                                        : `You marked this work as delivered. The client has until ${commission.review_deadline ? new Date(commission.review_deadline).toLocaleDateString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '7 days'} to review or request a revision, after which your payout will automatically be released.`}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Payout Status Banner when COMPLETED */}
+                        {commission.status === 'completed' && commission.payout && (
+                            <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 space-y-1 text-xs">
+                                <p className="font-bold text-emerald-400 flex items-center gap-1.5">
+                                    <CheckCircle2 className="h-4 w-4" /> Payout Ledger Status: {commission.payout.status?.toUpperCase()}
+                                </p>
+                                <p className="text-muted-foreground">
+                                    Reference: <span className="font-mono text-foreground font-semibold">{commission.payout.reference}</span> • Destination: <span className="font-semibold text-foreground">{commission.payout.bank_name || 'Bank'}</span> ({commission.payout.bank_account_number})
+                                </p>
+                            </div>
+                        )}
+
                         {/* Actions */}
                         <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-border">
                             {/* BUYER: Pay with Midtrans (When Status is 'accepted') */}
@@ -398,8 +468,21 @@ export const CommissionDetailPage: React.FC = () => {
                                 </Button>
                             )}
 
-                            {/* BUYER: Request Revision (When In Progress) */}
-                            {isBuyer && commission.status === 'in_progress' && (
+                            {/* BUYER: Confirm & Release Payout (When Status is 'waiting_for_client') */}
+                            {isBuyer && commission.status === 'waiting_for_client' && (
+                                <Button
+                                    size="lg"
+                                    onClick={handleConfirmCompletion}
+                                    disabled={actionLoading}
+                                    className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                                >
+                                    <CheckCircle2 className="h-4 w-4" />
+                                    Accept Deliverables & Release Payout
+                                </Button>
+                            )}
+
+                            {/* BUYER: Request Revision (When Status is 'waiting_for_client' or 'in_progress') */}
+                            {isBuyer && ['waiting_for_client', 'in_progress'].includes(commission.status) && (
                                 <Dialog open={revisionModalOpen} onOpenChange={setRevisionModalOpen}>
                                     <DialogTrigger asChild>
                                         <Button variant="outline" size="sm" className="gap-1.5">
@@ -410,7 +493,7 @@ export const CommissionDetailPage: React.FC = () => {
                                         <DialogHeader>
                                             <DialogTitle>Request Commission Revision</DialogTitle>
                                             <DialogDescription>
-                                                Detail what adjustments you would like the artist to make on the current draft.
+                                                Detail what adjustments you would like the artist to make. This will pause the automatic payout timer.
                                             </DialogDescription>
                                         </DialogHeader>
                                         <div className="space-y-3 py-2">
@@ -450,7 +533,7 @@ export const CommissionDetailPage: React.FC = () => {
                                 <>
                                     <Button
                                         size="sm"
-                                        onClick={() => handleUpdateStatus('accepted')}
+                                        onClick={handleAccept}
                                         disabled={actionLoading}
                                         className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
                                     >
@@ -459,7 +542,7 @@ export const CommissionDetailPage: React.FC = () => {
                                     <Button
                                         variant="destructive"
                                         size="sm"
-                                        onClick={handleCancel}
+                                        onClick={handleDecline}
                                         disabled={actionLoading}
                                         className="gap-1.5"
                                     >
@@ -468,31 +551,20 @@ export const CommissionDetailPage: React.FC = () => {
                                 </>
                             )}
 
-                            {/* ARTIST: Mark In Progress / Completed */}
-                            {isArtistUser && commission.status === 'accepted' && (
+                            {/* ARTIST: Mark as Delivered (When In Progress or Revision) */}
+                            {isArtistUser && ['in_progress', 'revision'].includes(commission.status) && (
                                 <Button
                                     size="sm"
-                                    onClick={() => handleUpdateStatus('in_progress')}
-                                    disabled={actionLoading}
-                                    className="gap-1.5"
-                                >
-                                    <Sparkles className="h-4 w-4" /> Start Working (In Progress)
-                                </Button>
-                            )}
-
-                            {isArtistUser && commission.status === 'in_progress' && (
-                                <Button
-                                    size="sm"
-                                    onClick={() => handleUpdateStatus('completed')}
+                                    onClick={handleDeliver}
                                     disabled={actionLoading}
                                     className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
                                 >
-                                    <CheckCircle2 className="h-4 w-4" /> Mark as Completed & Deliver
+                                    <CheckCircle2 className="h-4 w-4" /> Mark as Delivered (Start 7-Day Review)
                                 </Button>
                             )}
 
                             {/* ARTIST: Update Deadline */}
-                            {isArtistUser && !['completed', 'cancelled'].includes(commission.status) && (
+                            {isArtistUser && !['completed', 'cancelled', 'declined'].includes(commission.status) && (
                                 <Dialog open={deadlineModalOpen} onOpenChange={setDeadlineModalOpen}>
                                     <DialogTrigger asChild>
                                         <Button variant="outline" size="sm" className="gap-1.5">
