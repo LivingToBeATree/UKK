@@ -18,6 +18,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('commissions/{commission}/confirm', [CommissionController::class, 'confirm'])
         ->name('commissions.confirm');
 
+    Route::post('commissions/{commission}/request-revision', [CommissionController::class, 'requestRevision'])
+        ->name('commissions.request-revision');
+
     Route::patch('commissions/{commission}/cancel', [CommissionController::class, 'cancel'])
         ->name('commissions.cancel');
 

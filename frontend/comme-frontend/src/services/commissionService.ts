@@ -116,6 +116,11 @@ export const commissionOrderApi = {
         return res.data.data;
     },
 
+    requestRevision: async (id: number) => {
+        const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${id}/request-revision`);
+        return res.data.data;
+    },
+
     // Payment initiation with Midtrans Snap
     initiatePayment: async (commissionId: number) => {
         const res = await api.post<ApiResponse<CommissionPayment>>(`/commissions/${commissionId}/payment`);

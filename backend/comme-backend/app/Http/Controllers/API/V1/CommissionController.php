@@ -189,6 +189,28 @@ class CommissionController extends Controller
         }
     }
 
+    public function requestRevision(Commission $commission): JsonResponse
+    {
+        Gate::authorize('requestRevision', $commission);
+
+        if ($commission->status !== CommissionStatus::WAITING_FOR_CLIENT) {
+            return ApiResponseHelper::errorResponse(
+                "Revision can only be requested when status is 'waiting_for_client', current: '{$commission->status->value}'.",
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
+        $commission->update([
+            'status' => CommissionStatus::REVISION,
+            'review_deadline' => null,
+        ]);
+
+        return ApiResponseHelper::successResponse(
+            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review'])),
+            'Revision requested. The artist will be notified to make changes.'
+        );
+    }
+
     public function cancel(Commission $commission): JsonResponse
     {
         Gate::authorize('cancel', $commission);
