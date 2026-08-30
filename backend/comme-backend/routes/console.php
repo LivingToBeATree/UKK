@@ -13,3 +13,9 @@ Schedule::command('model:prune', [
     '--model' => [PendingRegistration::class],
 ])->hourly();
 
+Schedule::command('commissions:release-due-payouts')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->runInBackground();
+
+
