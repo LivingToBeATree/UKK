@@ -41,6 +41,8 @@ export type OrderStatus =
   | 'cancelled'
   | 'declined';
 
+export type PayoutStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+
 export interface CommissionReview {
   id: number;
   commission_id: number;
@@ -70,6 +72,27 @@ export interface CommissionPayment {
   updated_at: string;
 }
 
+export interface CommissionPayout {
+  id: number;
+  amount: number;
+  status: PayoutStatus;
+  reference: string;
+  bank_name: string;
+  bank_account_name: string;
+  bank_account_number: string;
+  requested_at?: string | null;
+  completed_at?: string | null;
+}
+
+export interface ArtistPayoutAccount {
+  id: number;
+  bank_name: string;
+  bank_account_name: string;
+  bank_account_number: string;
+  is_active: boolean;
+  updated_at: string;
+}
+
 export interface CommissionOrder {
   id: number;
   commission_service_id: number;
@@ -79,6 +102,9 @@ export interface CommissionOrder {
   status: OrderStatus;
   description?: string | null;
   deadline?: string | null;
+  delivered_at?: string | null;
+  review_deadline?: string | null;
+  completed_at?: string | null;
   total_price: number;
   created_at: string;
   updated_at: string;
@@ -89,6 +115,7 @@ export interface CommissionOrder {
   messages?: CommissionMessage[];
   review?: CommissionReview | null;
   payments?: CommissionPayment[];
+  payout?: CommissionPayout | null;
 }
 
 export interface CommissionMessage {

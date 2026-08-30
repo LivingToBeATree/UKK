@@ -96,10 +96,47 @@ export const commissionOrderApi = {
         return res.data.data;
     },
 
+    accept: async (id: number) => {
+        const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${id}/accept`);
+        return res.data.data;
+    },
+
+    decline: async (id: number) => {
+        const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${id}/decline`);
+        return res.data.data;
+    },
+
+    deliver: async (id: number) => {
+        const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${id}/deliver`);
+        return res.data.data;
+    },
+
+    confirm: async (id: number) => {
+        const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${id}/confirm`);
+        return res.data.data;
+    },
+
     // Payment initiation with Midtrans Snap
     initiatePayment: async (commissionId: number) => {
         const res = await api.post<ApiResponse<CommissionPayment>>(`/commissions/${commissionId}/payment`);
         return res.data.data;
+    },
+};
+
+// Artist payout account API
+export const payoutAccountApi = {
+    get: async () => {
+        const res = await api.get<ApiResponse<import('@/types').ArtistPayoutAccount | null>>('/me/payout-account');
+        return res.data.data;
+    },
+
+    update: async (payload: { bank_name: string; bank_account_name: string; bank_account_number: string }) => {
+        const res = await api.put<ApiResponse<import('@/types').ArtistPayoutAccount>>('/me/payout-account', payload);
+        return res.data.data;
+    },
+
+    delete: async () => {
+        await api.delete('/me/payout-account');
     },
 };
 
