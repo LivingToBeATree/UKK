@@ -18,4 +18,12 @@ Schedule::command('commissions:release-due-payouts')
     ->withoutOverlapping()
     ->runInBackground();
 
+Schedule::command('commissions:reconcile-payouts')
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->runInBackground();
 
+Schedule::command('commissions:retry-failed-payouts')
+    ->everyThirtyMinutes()
+    ->withoutOverlapping()
+    ->runInBackground();
