@@ -1,3 +1,4 @@
+import { motion } from 'motion/react';
 import AppRoutes from './routes';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ColorThemeProvider } from '@/components/color-theme-provider';
@@ -16,18 +17,19 @@ function AppLayout() {
             {/* Fixed Left Expandable Rail */}
             <SidebarRail />
 
-            {/* Main Content Area Offset Dynamically */}
-            <div
-                className={`flex-1 flex flex-col min-w-0 transition-[padding] duration-300 ease-in-out ${
-                    collapsed ? 'pl-16' : 'pl-64'
-                }`}
+            {/* Main Content Area Offset in 100% Sync with Sidebar Width */}
+            <motion.div
+                initial={false}
+                animate={{ paddingLeft: collapsed ? 64 : 240 }}
+                transition={{ type: 'spring', damping: 26, stiffness: 300 }}
+                className="flex-1 flex flex-col min-w-0"
             >
                 <Navbar />
                 <main className="flex-1">
                     <AppRoutes />
                 </main>
                 <Footer />
-            </div>
+            </motion.div>
             <Toaster />
         </div>
     );
