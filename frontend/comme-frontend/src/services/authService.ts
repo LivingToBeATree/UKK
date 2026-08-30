@@ -1,4 +1,4 @@
-import { api, initCsrf } from './api';
+import { api } from './api';
 import type { ApiResponse, User } from '@/types';
 
 export const authService = {
@@ -9,21 +9,18 @@ export const authService = {
         password: string;
         password_confirmation: string;
     }) => {
-        await initCsrf();
         const res = await api.post<ApiResponse<null>>('/register', payload);
         return res.data;
     },
 
     // Confirm Registration OTP (Logs in via session cookie and returns User)
     confirmRegistration: async (payload: { email: string; code: string }) => {
-        await initCsrf();
         const res = await api.post<ApiResponse<User>>('/register/confirm', payload);
         return res.data.data;
     },
 
     // Login (Logs in via session cookie and returns User)
     login: async (payload: { email: string; password: string }) => {
-        await initCsrf();
         const res = await api.post<ApiResponse<User>>('/login', payload);
         return res.data.data;
     },
@@ -42,7 +39,6 @@ export const authService = {
 
     // Forgot Password
     forgotPassword: async (email: string) => {
-        await initCsrf();
         const res = await api.post<ApiResponse<{ message: string }>>('/forgot-password', { email });
         return res.data;
     },
@@ -54,7 +50,6 @@ export const authService = {
         password: string;
         password_confirmation: string;
     }) => {
-        await initCsrf();
         const res = await api.post<ApiResponse<{ message: string }>>('/reset-password', payload);
         return res.data;
     },

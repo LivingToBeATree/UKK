@@ -17,6 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi(); // Sanctum SPA cookie auth — required for auth:sanctum to work with the React app
 
+        $middleware->validateCsrfTokens(except: [
+            'api/*',
+            'midtrans/webhook',
+        ]);
+
         $middleware->trustProxies(
             at: '*',
             headers: Request::HEADER_X_FORWARDED_FOR

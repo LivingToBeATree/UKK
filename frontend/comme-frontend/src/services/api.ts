@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const backendRoot = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace(/\/api\/?$/, '');
+axios.defaults.withCredentials = true;
 
 export const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
@@ -13,10 +13,8 @@ export const api = axios.create({
     xsrfHeaderName: 'X-XSRF-TOKEN',
 });
 
-// Sanctum CSRF Cookie Initializer
-export const initCsrf = async () => {
-    return axios.get(`${backendRoot}/sanctum/csrf-cookie`, { withCredentials: true });
-};
+// Sanctum CSRF Cookie Initializer (no-op since api/* is exempt from CSRF token checks)
+export const initCsrf = async () => Promise.resolve();
 
 // Response Interceptor: Clean storage on 401 without hijacking public route navigation
 api.interceptors.response.use(
