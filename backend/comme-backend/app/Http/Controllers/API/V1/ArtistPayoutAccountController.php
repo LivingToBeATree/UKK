@@ -8,6 +8,7 @@ use App\Models\ArtistPayoutAccount;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 class ArtistPayoutAccountController extends Controller
 {
@@ -49,22 +50,30 @@ class ArtistPayoutAccountController extends Controller
 
     /**
      * Set or update active payout account.
+     *
+     * Uses a transaction with lockForUpdate on the artist profile to
+     * enforce the invariant: at most 1 active payout account per artist.
      */
     public function update(UpdatePayoutAccountRequest $request): JsonResponse
     {
-        $artistProfile = $request->user()->artistProfile;
+        $account = DB::transaction(function () use ($request) {
+            $artistProfile = $request->user()->artistProfile()
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        // Deactivate previous active accounts
-        ArtistPayoutAccount::where('artist_profile_id', $artistProfile->id)
-            ->update(['is_active' => false]);
+            // Deactivate all previous active accounts
+            ArtistPayoutAccount::where('artist_profile_id', $artistProfile->id)
+                ->where('is_active', true)
+                ->update(['is_active' => false]);
 
-        $account = ArtistPayoutAccount::create([
-            'artist_profile_id' => $artistProfile->id,
-            'bank_name' => strtoupper($request->bank_name),
-            'bank_account_name' => $request->bank_account_name,
-            'bank_account_number' => $request->bank_account_number,
-            'is_active' => true,
-        ]);
+            return ArtistPayoutAccount::create([
+                'artist_profile_id' => $artistProfile->id,
+                'bank_name' => strtoupper($request->bank_name),
+                'bank_account_name' => $request->bank_account_name,
+                'bank_account_number' => $request->bank_account_number,
+                'is_active' => true,
+            ]);
+        });
 
         return ApiResponseHelper::successResponse(
             [

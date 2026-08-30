@@ -22,6 +22,7 @@ class CommissionPayout extends Model
         'completed_at',
         'failed_at',
         'failure_reason',
+        'retry_count',
         'raw_response',
     ];
 
@@ -33,7 +34,9 @@ class CommissionPayout extends Model
             'requested_at' => 'datetime',
             'completed_at' => 'datetime',
             'failed_at' => 'datetime',
+            'retry_count' => 'integer',
             'raw_response' => 'array',
+            'bank_account_number' => 'encrypted',
         ];
     }
 

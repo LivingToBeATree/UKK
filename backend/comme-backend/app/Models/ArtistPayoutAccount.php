@@ -19,6 +19,7 @@ class ArtistPayoutAccount extends Model
     {
         return [
             'is_active' => 'boolean',
+            'bank_account_number' => 'encrypted',
         ];
     }
 
@@ -28,16 +29,24 @@ class ArtistPayoutAccount extends Model
     }
 
     /**
-     * Return masked account number for secure API serialization
+     * Return masked account number for secure API serialization.
      * Example: 1234567890 -> ••••••7890
+     *
+     * Works transparently with the 'encrypted' cast — $this->bank_account_number
+     * returns the decrypted plaintext, which we then mask.
      */
     public function getMaskedAccountNumberAttribute(): string
     {
-        $len = strlen($this->bank_account_number);
-        if ($len <= 4) {
-            return str_repeat('•', max(0, $len - 1)) . substr($this->bank_account_number, -1);
+        $number = $this->bank_account_number;
+        if (empty($number)) {
+            return '';
         }
 
-        return str_repeat('•', $len - 4) . substr($this->bank_account_number, -4);
+        $len = strlen($number);
+        if ($len <= 4) {
+            return str_repeat('•', max(0, $len - 1)) . substr($number, -1);
+        }
+
+        return str_repeat('•', $len - 4) . substr($number, -4);
     }
 }
