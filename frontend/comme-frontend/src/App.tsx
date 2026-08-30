@@ -6,7 +6,6 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { useSidebar } from '@/hooks/useSidebar';
 import { SidebarRail } from '@/components/SidebarRail';
 import { Navbar } from '@/components/Navbar';
-import { Footer } from '@/components/Footer';
 import { Toaster } from '@/components/ui/sonner';
 
 function AppLayout() {
@@ -28,7 +27,6 @@ function AppLayout() {
                 <main className="flex-1">
                     <AppRoutes />
                 </main>
-                <Footer />
             </motion.div>
             <Toaster />
         </div>
