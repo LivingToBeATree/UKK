@@ -46,6 +46,7 @@ import {
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { toast } from '@/components/ui/sonner';
+import { useNavigate } from 'react-router-dom';
 import {
     Sparkles,
     Heart,
@@ -56,6 +57,7 @@ import {
     CheckCircle2,
     AlertTriangle,
     Shield,
+    Terminal,
 } from 'lucide-react';
 
 const containerVariants = {
@@ -82,6 +84,7 @@ const itemVariants = {
 };
 
 export const PlaygroundPage: React.FC = () => {
+    const navigate = useNavigate();
     const [progressVal, setProgressVal] = useState(65);
     const [rememberMe, setRememberMe] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
@@ -92,10 +95,10 @@ export const PlaygroundPage: React.FC = () => {
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            className="min-h-screen bg-background text-foreground p-6 sm:p-12 max-w-6xl mx-auto space-y-12 font-sans"
+            className="min-h-screen bg-background text-foreground p-6 sm:p-12 max-w-[1440px] mx-auto space-y-12 font-sans"
         >
-            {/* Header with Theme-Aware Star Accent */}
-            <motion.div variants={itemVariants} className="space-y-2 border-b border-border pb-6">
+            {/* Header with Theme-Aware Star Accent & Dev Console Button */}
+            <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-6">
                 <div className="flex items-center gap-3">
                     <div className="p-2.5 rounded-xl bg-primary/15 border border-primary/30 text-primary">
                         <Sparkles className="h-6 w-6 text-primary" />
@@ -107,6 +110,9 @@ export const PlaygroundPage: React.FC = () => {
                         </p>
                     </div>
                 </div>
+                <Button variant="outline" size="sm" onClick={() => navigate('/dev')} className="gap-2 text-xs font-semibold shrink-0">
+                    <Terminal className="h-4 w-4 text-primary" /> Developer Console
+                </Button>
             </motion.div>
 
             {/* Buttons & Badges */}

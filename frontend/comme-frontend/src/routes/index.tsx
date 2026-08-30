@@ -57,7 +57,8 @@ import { TicketsPage } from '@/pages/admin/TicketsPage';
 import { TicketDetailPage } from '@/pages/admin/TicketDetailPage';
 import { ModerationLogPage } from '@/pages/admin/ModerationLogPage';
 
-// Dev (keep sandbox for development)
+// Dev
+import { DevPanelPage } from '@/pages/dev/Panel/DevPanelPage';
 import { PlaygroundPage } from '@/pages/dev/Playground/PlaygroundPage';
 
 export { ProtectedRoute } from './protectedRoutes';
@@ -138,8 +139,9 @@ function AppRoutes() {
                 </Route>
             </Route>
 
-            {/* Development sandbox for devs and admins */}
-            <Route path="/dev" element={<Navigate to="/dev/sandbox" replace />} />
+            {/* Developer Hub & Sandbox */}
+            <Route path="/dev" element={<DevPanelPage />} />
+            <Route path="/dev/panel" element={<DevPanelPage />} />
             <Route path="/dev/sandbox" element={<PlaygroundPage />} />
 
             {/* Fallback */}

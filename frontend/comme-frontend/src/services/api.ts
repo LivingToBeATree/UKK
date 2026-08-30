@@ -16,16 +16,12 @@ export const initCsrf = async () => {
     return axios.get(`${backendRoot}/sanctum/csrf-cookie`, { withCredentials: true });
 };
 
-// Response Interceptor: Catch 401 Session Expiry
+// Response Interceptor: Clean storage on 401 without hijacking public route navigation
 api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
             localStorage.removeItem('comme_user');
-
-            if (!window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/register')) {
-                window.location.href = '/login';
-            }
         }
         return Promise.reject(error);
     }
