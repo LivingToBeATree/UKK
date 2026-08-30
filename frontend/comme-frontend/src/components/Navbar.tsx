@@ -126,10 +126,10 @@ export const Navbar: React.FC = () => {
                                         <span>My Commissions</span>
                                     </DropdownMenuItem>
 
-                                    {(import.meta.env.DEV || user.role === 'admin') && (
-                                        <DropdownMenuItem onClick={() => navigate('/dev/sandbox')}>
+                                    {import.meta.env.DEV && (
+                                        <DropdownMenuItem onClick={() => navigate('/dev')}>
                                             <Terminal className="h-4 w-4 mr-2 text-purple-400" />
-                                            <span>Dev Sandbox</span>
+                                            <span>Developer Console</span>
                                         </DropdownMenuItem>
                                     )}
 

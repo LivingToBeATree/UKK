@@ -139,10 +139,14 @@ function AppRoutes() {
                 </Route>
             </Route>
 
-            {/* Developer Hub & Sandbox */}
-            <Route path="/dev" element={<DevPanelPage />} />
-            <Route path="/dev/panel" element={<DevPanelPage />} />
-            <Route path="/dev/sandbox" element={<PlaygroundPage />} />
+            {/* Developer Hub & Sandbox (Stripped completely in production builds) */}
+            {import.meta.env.DEV && (
+                <>
+                    <Route path="/dev" element={<DevPanelPage />} />
+                    <Route path="/dev/panel" element={<DevPanelPage />} />
+                    <Route path="/dev/sandbox" element={<PlaygroundPage />} />
+                </>
+            )}
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
