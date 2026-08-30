@@ -18,6 +18,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useSidebar } from '@/hooks/useSidebar';
 import { Avatar } from './ui/avatar';
+import { InfoFlyout } from './InfoFlyout';
 import {
     DropdownMenu,
     DropdownMenuTrigger,
@@ -54,7 +55,7 @@ const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, path, isActive, co
             >
                 {/* Icon Container */}
                 <div className="w-6 h-6 flex items-center justify-center shrink-0">
-                    <Icon className={`h-5 w-5 transition-transform ${isActive ? 'text-primary' : ''}`} />
+                    <Icon className={`h-5 w-5 transition-transform duration-200 group-hover:scale-110 ${isActive ? 'text-primary' : ''}`} />
                 </div>
 
                 {/* Animated Label */}
@@ -73,12 +74,20 @@ const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, path, isActive, co
                 </AnimatePresence>
             </Link>
 
-            {/* Collapsed Hover Tooltip */}
-            {collapsed && showTooltip && (
-                <div className="absolute left-[calc(100%+10px)] top-1/2 -translate-y-1/2 z-50 px-2.5 py-1 text-xs font-medium text-foreground bg-popover border border-border rounded-md shadow-md whitespace-nowrap pointer-events-none animate-in fade-in zoom-in-95 duration-150">
-                    {label}
-                </div>
-            )}
+            {/* Animated Collapsed Floating Tooltip Pill */}
+            <AnimatePresence>
+                {collapsed && showTooltip && (
+                    <motion.div
+                        initial={{ opacity: 0, x: -8, scale: 0.94 }}
+                        animate={{ opacity: 1, x: 0, scale: 1 }}
+                        exit={{ opacity: 0, x: -6, scale: 0.94 }}
+                        transition={{ type: 'spring', damping: 22, stiffness: 420 }}
+                        className="absolute left-[calc(100%+14px)] top-1/2 -translate-y-1/2 z-50 px-3 py-1.5 text-xs font-semibold text-white bg-zinc-900 border border-zinc-700/80 rounded-lg shadow-2xl whitespace-nowrap pointer-events-none select-none"
+                    >
+                        {label}
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
@@ -94,6 +103,8 @@ const SidebarDivider = () => (
 export const SidebarRail: React.FC = () => {
     const { user, isAuthenticated, logout } = useAuth();
     const { collapsed, toggleSidebar } = useSidebar();
+    const [showLogoTooltip, setShowLogoTooltip] = useState(false);
+    const [showUserTooltip, setShowUserTooltip] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -112,43 +123,61 @@ export const SidebarRail: React.FC = () => {
             initial={false}
             animate={{ width: collapsed ? 68 : 260 }}
             transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-            className="fixed left-0 top-0 bottom-0 z-50 bg-card/95 backdrop-blur-xl border-r border-border/70 flex flex-col justify-between py-3 px-2.5 select-none overflow-hidden"
+            className="fixed left-0 top-0 bottom-0 z-50 bg-card/95 backdrop-blur-xl border-r border-border/70 flex flex-col justify-between py-3 px-2.5 select-none overflow-visible"
         >
             {/* ── TOP GROUP: Logo & Primary Navigation Links ── */}
             <div className="flex flex-col items-center gap-1.5 w-full">
                 {/* 1. Official Comme Logo Header (Clicking row toggles expand/collapse) */}
-                <button
-                    onClick={toggleSidebar}
-                    className="w-full h-11 flex items-center rounded-xl pl-2 pr-2.5 gap-3 hover:bg-secondary/60 transition-colors cursor-pointer focus:outline-none overflow-hidden"
-                    title={collapsed ? 'Click to expand sidebar' : 'Click to collapse sidebar'}
-                    aria-label="Toggle Sidebar"
-                >
-                    <div className="w-6 h-6 flex items-center justify-center shrink-0">
-                        <img
-                            src="/Comme_Emblem.svg"
-                            alt="Comme"
-                            className="h-6 w-6 object-contain transition-transform group-hover:scale-105"
-                        />
-                    </div>
-                    <AnimatePresence initial={false}>
-                        {!collapsed && (
+                <div className="w-full relative">
+                    <button
+                        onClick={toggleSidebar}
+                        onMouseEnter={() => setShowLogoTooltip(true)}
+                        onMouseLeave={() => setShowLogoTooltip(false)}
+                        className="w-full h-11 flex items-center rounded-xl pl-2 pr-2.5 gap-3 hover:bg-secondary/60 transition-colors cursor-pointer focus:outline-none overflow-hidden"
+                        aria-label="Toggle Sidebar"
+                    >
+                        <div className="w-6 h-6 flex items-center justify-center shrink-0">
+                            <img
+                                src="/Comme_Emblem.svg"
+                                alt="Comme"
+                                className="h-6 w-6 object-contain transition-transform group-hover:scale-105"
+                            />
+                        </div>
+                        <AnimatePresence initial={false}>
+                            {!collapsed && (
+                                <motion.div
+                                    initial={{ opacity: 0, x: -6 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -6 }}
+                                    transition={{ duration: 0.15 }}
+                                    className="flex flex-col text-left whitespace-nowrap overflow-hidden"
+                                >
+                                    <span className="font-extrabold text-sm tracking-tight text-foreground leading-tight">
+                                        COMME
+                                    </span>
+                                    <span className="text-[10px] text-muted-foreground font-medium leading-none">
+                                        Art &amp; Commissions
+                                    </span>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </button>
+
+                    {/* Animated Logo Tooltip */}
+                    <AnimatePresence>
+                        {collapsed && showLogoTooltip && (
                             <motion.div
-                                initial={{ opacity: 0, x: -6 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -6 }}
-                                transition={{ duration: 0.15 }}
-                                className="flex flex-col text-left whitespace-nowrap overflow-hidden"
+                                initial={{ opacity: 0, x: -8, scale: 0.94 }}
+                                animate={{ opacity: 1, x: 0, scale: 1 }}
+                                exit={{ opacity: 0, x: -6, scale: 0.94 }}
+                                transition={{ type: 'spring', damping: 22, stiffness: 420 }}
+                                className="absolute left-[calc(100%+14px)] top-1/2 -translate-y-1/2 z-50 px-3 py-1.5 text-xs font-semibold text-white bg-zinc-900 border border-zinc-700/80 rounded-lg shadow-2xl whitespace-nowrap pointer-events-none select-none"
                             >
-                                <span className="font-extrabold text-sm tracking-tight text-foreground leading-tight">
-                                    COMME
-                                </span>
-                                <span className="text-[10px] text-muted-foreground font-medium leading-none">
-                                    Art &amp; Commissions
-                                </span>
+                                Expand Sidebar
                             </motion.div>
                         )}
                     </AnimatePresence>
-                </button>
+                </div>
 
                 {/* 2. Gallery / Feed */}
                 <NavItem
@@ -220,14 +249,19 @@ export const SidebarRail: React.FC = () => {
                     collapsed={collapsed}
                 />
 
-                {/* 2. User Profile / Sign In */}
+                {/* 2. Platform Information & Company Menu (Replaces static footer) */}
+                <InfoFlyout collapsed={collapsed} />
+
+                {/* 3. User Profile / Sign In */}
                 {isAuthenticated && user ? (
-                    <div className="w-full block">
+                    <div className="w-full relative block">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <button
+                                    onMouseEnter={() => setShowUserTooltip(true)}
+                                    onMouseLeave={() => setShowUserTooltip(false)}
                                     className="w-full h-11 flex items-center rounded-xl pl-2 pr-2.5 gap-3 hover:bg-secondary/60 transition-colors focus:outline-none cursor-pointer overflow-hidden text-left"
-                                    title={collapsed ? (user.display_name || user.username) : undefined}
+                                    aria-label="User Menu"
                                 >
                                     <div className="w-6 h-6 flex items-center justify-center shrink-0">
                                         <Avatar
@@ -257,6 +291,21 @@ export const SidebarRail: React.FC = () => {
                                     </AnimatePresence>
                                 </button>
                             </DropdownMenuTrigger>
+
+                            {/* Animated User Avatar Tooltip */}
+                            <AnimatePresence>
+                                {collapsed && showUserTooltip && (
+                                    <motion.div
+                                        initial={{ opacity: 0, x: -8, scale: 0.94 }}
+                                        animate={{ opacity: 1, x: 0, scale: 1 }}
+                                        exit={{ opacity: 0, x: -6, scale: 0.94 }}
+                                        transition={{ type: 'spring', damping: 22, stiffness: 420 }}
+                                        className="absolute left-[calc(100%+14px)] top-1/2 -translate-y-1/2 z-50 px-3 py-1.5 text-xs font-semibold text-white bg-zinc-900 border border-zinc-700/80 rounded-lg shadow-2xl whitespace-nowrap pointer-events-none select-none"
+                                    >
+                                        {user.display_name || user.username}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                             <DropdownMenuContent
                                 align="start"
                                 className="w-56 bg-card border border-border shadow-xl rounded-xl ml-2"
