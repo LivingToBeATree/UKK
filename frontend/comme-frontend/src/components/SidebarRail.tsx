@@ -27,76 +27,70 @@ import {
 } from './ui/dropdown-menu';
 import { toast } from './ui/sonner';
 
-interface RailItemProps {
+/* ─── Reusable Sidebar Navigation Item ─── */
+interface NavItemProps {
     icon: React.ElementType;
     label: string;
-    path?: string;
-    isActive?: boolean;
-    isCollapsed: boolean;
-    onClick?: () => void;
+    path: string;
+    isActive: boolean;
+    collapsed: boolean;
 }
 
-const RailItem: React.FC<RailItemProps> = ({
-    icon: Icon,
-    label,
-    path,
-    isActive,
-    isCollapsed,
-    onClick,
-}) => {
+const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, path, isActive, collapsed }) => {
     const [showTooltip, setShowTooltip] = useState(false);
 
-    const buttonNode = (
-        <button
-            onClick={onClick}
-            onMouseEnter={() => setShowTooltip(true)}
-            onMouseLeave={() => setShowTooltip(false)}
-            className={`w-full h-11 flex items-center rounded-xl px-3 gap-3 transition-colors duration-150 cursor-pointer focus:outline-none overflow-hidden ${
-                isActive
-                    ? 'bg-secondary text-foreground font-semibold shadow-xs ring-1 ring-border/50'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
-            }`}
-            aria-label={label}
-        >
-            <div className="w-7 h-7 flex items-center justify-center shrink-0">
-                <Icon className={`h-5 w-5 transition-transform ${isActive ? 'text-primary' : ''}`} />
-            </div>
+    return (
+        <div className="w-full relative">
+            <Link
+                to={path}
+                onMouseEnter={() => setShowTooltip(true)}
+                onMouseLeave={() => setShowTooltip(false)}
+                className={`w-full h-11 flex items-center rounded-xl pl-2 pr-2.5 gap-3 transition-colors duration-150 cursor-pointer focus:outline-none overflow-hidden ${
+                    isActive
+                        ? 'bg-secondary text-foreground font-semibold shadow-xs ring-1 ring-border/50'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
+                }`}
+                aria-label={label}
+            >
+                {/* Icon Container */}
+                <div className="w-6 h-6 flex items-center justify-center shrink-0">
+                    <Icon className={`h-5 w-5 transition-transform ${isActive ? 'text-primary' : ''}`} />
+                </div>
 
-            {/* Animated Label */}
-            <AnimatePresence initial={false}>
-                {!isCollapsed && (
-                    <motion.span
-                        initial={{ opacity: 0, x: -6 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -6 }}
-                        transition={{ duration: 0.15 }}
-                        className="text-xs font-semibold truncate tracking-tight text-foreground/90 whitespace-nowrap text-left"
-                    >
-                        {label}
-                    </motion.span>
-                )}
-            </AnimatePresence>
+                {/* Animated Label */}
+                <AnimatePresence initial={false}>
+                    {!collapsed && (
+                        <motion.span
+                            initial={{ opacity: 0, x: -6 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -6 }}
+                            transition={{ duration: 0.15 }}
+                            className="text-xs font-semibold truncate whitespace-nowrap text-left"
+                        >
+                            {label}
+                        </motion.span>
+                    )}
+                </AnimatePresence>
+            </Link>
 
-            {/* Hover Tooltip (Only when collapsed) */}
-            {isCollapsed && showTooltip && (
-                <div className="absolute left-16 z-50 px-2.5 py-1 text-xs font-semibold text-foreground bg-card border border-border/80 rounded-lg shadow-lg whitespace-nowrap pointer-events-none backdrop-blur-md animate-in fade-in zoom-in-95 duration-150">
+            {/* Collapsed Hover Tooltip */}
+            {collapsed && showTooltip && (
+                <div className="absolute left-[calc(100%+10px)] top-1/2 -translate-y-1/2 z-50 px-2.5 py-1 text-xs font-medium text-foreground bg-popover border border-border rounded-md shadow-md whitespace-nowrap pointer-events-none animate-in fade-in zoom-in-95 duration-150">
                     {label}
                 </div>
             )}
-        </button>
+        </div>
     );
-
-    if (path) {
-        return (
-            <Link to={path} className="w-full focus:outline-none block">
-                {buttonNode}
-            </Link>
-        );
-    }
-
-    return <div className="w-full block">{buttonNode}</div>;
 };
 
+/* ─── Divider Line ─── */
+const SidebarDivider = () => (
+    <div className="w-full px-1 my-1">
+        <div className="w-full h-px bg-border/60" />
+    </div>
+);
+
+/* ─── Main Sidebar Rail Component ─── */
 export const SidebarRail: React.FC = () => {
     const { user, isAuthenticated, logout } = useAuth();
     const { collapsed, toggleSidebar } = useSidebar();
@@ -116,24 +110,24 @@ export const SidebarRail: React.FC = () => {
     return (
         <motion.aside
             initial={false}
-            animate={{ width: collapsed ? 72 : 240 }}
+            animate={{ width: collapsed ? 68 : 260 }}
             transition={{ type: 'spring', damping: 28, stiffness: 320 }}
             className="fixed left-0 top-0 bottom-0 z-50 bg-card/95 backdrop-blur-xl border-r border-border/70 flex flex-col justify-between py-3 px-2.5 select-none overflow-hidden"
         >
-            {/* TOP GROUP: Logo & Navigation Links */}
+            {/* ── TOP GROUP: Logo & Primary Navigation Links ── */}
             <div className="flex flex-col items-center gap-1.5 w-full">
-                {/* 1. Official Comme Logo Header (Clicking toggles expand/collapse) */}
+                {/* 1. Official Comme Logo Header (Clicking row toggles expand/collapse) */}
                 <button
                     onClick={toggleSidebar}
-                    className="w-full h-11 flex items-center rounded-xl px-3 gap-3 hover:bg-secondary/60 transition-colors cursor-pointer focus:outline-none overflow-hidden"
+                    className="w-full h-11 flex items-center rounded-xl pl-2 pr-2.5 gap-3 hover:bg-secondary/60 transition-colors cursor-pointer focus:outline-none overflow-hidden"
                     title={collapsed ? 'Click to expand sidebar' : 'Click to collapse sidebar'}
                     aria-label="Toggle Sidebar"
                 >
-                    <div className="w-7 h-7 flex items-center justify-center shrink-0">
+                    <div className="w-6 h-6 flex items-center justify-center shrink-0">
                         <img
                             src="/Comme_Emblem.svg"
                             alt="Comme"
-                            className="h-7 w-7 object-contain transition-transform group-hover:scale-105"
+                            className="h-6 w-6 object-contain transition-transform group-hover:scale-105"
                         />
                     </div>
                     <AnimatePresence initial={false}>
@@ -149,7 +143,7 @@ export const SidebarRail: React.FC = () => {
                                     COMME
                                 </span>
                                 <span className="text-[10px] text-muted-foreground font-medium leading-none">
-                                    Art & Commissions
+                                    Art &amp; Commissions
                                 </span>
                             </motion.div>
                         )}
@@ -157,91 +151,85 @@ export const SidebarRail: React.FC = () => {
                 </button>
 
                 {/* 2. Gallery / Feed */}
-                <RailItem
+                <NavItem
                     icon={GalleryIcon}
                     label="Art Feed & Showcase"
                     path="/"
                     isActive={location.pathname === '/'}
-                    isCollapsed={collapsed}
+                    collapsed={collapsed}
                 />
 
                 {/* 3. Studio / Creator Hub */}
-                <RailItem
+                <NavItem
                     icon={PenTool}
                     label={user?.artist_profile ? 'Artist Studio' : 'Become an Artist'}
                     path={user?.artist_profile ? '/dashboard' : '/apply-artist'}
                     isActive={location.pathname.startsWith('/dashboard') || location.pathname === '/apply-artist'}
-                    isCollapsed={collapsed}
+                    collapsed={collapsed}
                 />
 
-                {/* Divider */}
-                <div className="w-full px-1 my-1">
-                    <div className="w-full h-[1px] bg-border/80" />
-                </div>
+                <SidebarDivider />
 
                 {/* 4. Explore */}
-                <RailItem
+                <NavItem
                     icon={Compass}
                     label="Explore Artwork"
                     path="/explore"
                     isActive={location.pathname === '/explore'}
-                    isCollapsed={collapsed}
+                    collapsed={collapsed}
                 />
 
-                {/* 5. Store / Commission Services */}
-                <RailItem
+                {/* 5. Commission Store */}
+                <NavItem
                     icon={FolderKanban}
                     label="Commission Store"
                     path="/store"
                     isActive={location.pathname === '/store'}
-                    isCollapsed={collapsed}
+                    collapsed={collapsed}
                 />
 
                 {/* 6. Artists Directory */}
-                <RailItem
+                <NavItem
                     icon={Layers}
                     label="Artists Directory"
                     path="/artists"
                     isActive={location.pathname === '/artists'}
-                    isCollapsed={collapsed}
+                    collapsed={collapsed}
                 />
 
-                {/* Divider */}
-                <div className="w-full px-1 my-1">
-                    <div className="w-full h-[1px] bg-border/80" />
-                </div>
+                <SidebarDivider />
 
-                {/* 7. My Commissions / Orders */}
-                <RailItem
+                {/* 7. My Commissions */}
+                <NavItem
                     icon={Bookmark}
                     label="My Commissions"
                     path="/commissions"
                     isActive={location.pathname.startsWith('/commissions')}
-                    isCollapsed={collapsed}
+                    collapsed={collapsed}
                 />
             </div>
 
-            {/* BOTTOM GROUP: Settings & User Profile Avatar (100% Perfectly Aligned) */}
+            {/* ── BOTTOM GROUP: Settings & User Profile ── */}
             <div className="flex flex-col items-center gap-1.5 w-full pt-2 border-t border-border/60">
                 {/* 1. Settings */}
-                <RailItem
+                <NavItem
                     icon={Settings}
                     label="Settings & Appearance"
                     path="/settings"
                     isActive={location.pathname === '/settings'}
-                    isCollapsed={collapsed}
+                    collapsed={collapsed}
                 />
 
-                {/* 2. User Avatar & Menu (Full width, matching avatar alignment) */}
+                {/* 2. User Profile / Sign In */}
                 {isAuthenticated && user ? (
                     <div className="w-full block">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <button
-                                    className="w-full h-11 flex items-center rounded-xl px-3 gap-3 hover:bg-secondary/60 transition-colors focus:outline-none cursor-pointer overflow-hidden text-left"
-                                    title={user.display_name || user.username}
+                                    className="w-full h-11 flex items-center rounded-xl pl-2 pr-2.5 gap-3 hover:bg-secondary/60 transition-colors focus:outline-none cursor-pointer overflow-hidden text-left"
+                                    title={collapsed ? (user.display_name || user.username) : undefined}
                                 >
-                                    <div className="w-7 h-7 flex items-center justify-center shrink-0">
+                                    <div className="w-6 h-6 flex items-center justify-center shrink-0">
                                         <Avatar
                                             size="sm"
                                             fallback={user.display_name || user.username}
@@ -269,7 +257,10 @@ export const SidebarRail: React.FC = () => {
                                     </AnimatePresence>
                                 </button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start" className="w-56 bg-card border border-border shadow-xl rounded-xl ml-2">
+                            <DropdownMenuContent
+                                align="start"
+                                className="w-56 bg-card border border-border shadow-xl rounded-xl ml-2"
+                            >
                                 <div className="px-3 py-2 border-b border-border mb-1">
                                     <p className="font-bold text-xs truncate text-foreground">
                                         {user.display_name || user.username}
@@ -312,7 +303,7 @@ export const SidebarRail: React.FC = () => {
 
                                 <DropdownMenuItem onClick={() => navigate('/settings')}>
                                     <Settings className="h-4 w-4 mr-2" />
-                                    <span>Settings & Appearance</span>
+                                    <span>Settings &amp; Appearance</span>
                                 </DropdownMenuItem>
 
                                 <DropdownMenuSeparator />
@@ -325,12 +316,12 @@ export const SidebarRail: React.FC = () => {
                         </DropdownMenu>
                     </div>
                 ) : (
-                    <RailItem
+                    <NavItem
                         icon={UserIcon}
                         label="Sign In / Register"
                         path="/login"
                         isActive={location.pathname === '/login'}
-                        isCollapsed={collapsed}
+                        collapsed={collapsed}
                     />
                 )}
             </div>

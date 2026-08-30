@@ -20,7 +20,7 @@ function AppLayout() {
             {/* Main Content Area Offset in 100% Sync with Sidebar Width */}
             <motion.div
                 initial={false}
-                animate={{ paddingLeft: collapsed ? 72 : 240 }}
+                animate={{ paddingLeft: collapsed ? 68 : 260 }}
                 transition={{ type: 'spring', damping: 28, stiffness: 320 }}
                 className="flex-1 flex flex-col min-w-0"
             >
