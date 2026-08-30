@@ -29,6 +29,9 @@ class AppServiceProvider extends ServiceProvider
         // IP shouldn't lock out everyone just because one person is
         // guessing passwords on one account.
         RateLimiter::for('login', function (Request $request) {
+            if (app()->environment('local')) {
+                return Limit::none();
+            }
             return Limit::perMinute(5)->by($request->input('email').'|'.$request->ip());
         });
 

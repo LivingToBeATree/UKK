@@ -9,6 +9,8 @@ export const api = axios.create({
         'Content-Type': 'application/json',
     },
     withCredentials: true,
+    xsrfCookieName: 'XSRF-TOKEN',
+    xsrfHeaderName: 'X-XSRF-TOKEN',
 });
 
 // Sanctum CSRF Cookie Initializer

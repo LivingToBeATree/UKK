@@ -93,11 +93,13 @@ export const DevPanelPage: React.FC = () => {
     const handleSwitchPersona = async (email: string) => {
         setSwitchingUser(email);
         try {
-            await initCsrf();
             await login(email, 'password');
             toast.success(`Switched active session to ${email}`);
         } catch (err: unknown) {
-            toast.error(`Login failed for ${email}. Ensure database is seeded.`);
+            const msg = (err as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message
+                || (err as { message?: string })?.message
+                || 'Unknown error';
+            toast.error(`Login failed for ${email}: ${msg}`);
             console.error(err);
         } finally {
             setSwitchingUser(null);
