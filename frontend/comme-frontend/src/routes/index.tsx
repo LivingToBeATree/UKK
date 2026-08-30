@@ -17,6 +17,14 @@ import { VerifyEmailPage } from '@/pages/auth/VerifyEmailPage';
 import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage';
 import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage';
 
+// Legal & Policies
+import { TermsPage } from '@/pages/legal/TermsPage';
+import { PrivacyPage } from '@/pages/legal/PrivacyPage';
+import { LicensePage } from '@/pages/legal/LicensePage';
+import { CookiePage } from '@/pages/legal/CookiePage';
+import { ApiTermsPage } from '@/pages/legal/ApiTermsPage';
+import { EscrowPage } from '@/pages/legal/EscrowPage';
+
 // Explore / Social
 import { ExplorePage } from '@/pages/explore/ExplorePage';
 import { PostDetailPage } from '@/pages/explore/PostDetailPage';
@@ -75,6 +83,14 @@ function AppRoutes() {
             <Route path="/store/:serviceId" element={<ServiceDetailPage />} />
             <Route path="/artists" element={<ArtistsDirectoryPage />} />
             <Route path="/artists/:id" element={<ArtistProfilePage />} />
+
+            {/* Legal & Policies */}
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/cookies" element={<CookiePage />} />
+            <Route path="/license" element={<LicensePage />} />
+            <Route path="/api-terms" element={<ApiTermsPage />} />
+            <Route path="/escrow-terms" element={<EscrowPage />} />
 
             {/* User profiles */}
             <Route path="/@:username" element={<UserProfilePage />} />

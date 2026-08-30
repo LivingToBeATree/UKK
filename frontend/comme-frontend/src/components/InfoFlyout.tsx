@@ -274,12 +274,12 @@ export const InfoFlyout: React.FC<{ collapsed: boolean }> = ({ collapsed }) => {
                         {/* Bottom Legal & Copyright Bar */}
                         <div className="mt-6 pt-4 border-t border-border/60 flex items-center justify-between text-[11px] text-muted-foreground">
                             <div className="flex items-center gap-4">
-                                <span className="hover:text-foreground cursor-pointer transition-colors">License</span>
-                                <span className="hover:text-foreground cursor-pointer transition-colors">Privacy Policy</span>
-                                <span className="hover:text-foreground cursor-pointer transition-colors">Terms of Service</span>
-                                <span className="hover:text-foreground cursor-pointer transition-colors flex items-center gap-1">
+                                <Link to="/license" onClick={() => setIsOpen(false)} className="hover:text-foreground transition-colors">License</Link>
+                                <Link to="/privacy" onClick={() => setIsOpen(false)} className="hover:text-foreground transition-colors">Privacy Policy</Link>
+                                <Link to="/terms" onClick={() => setIsOpen(false)} className="hover:text-foreground transition-colors">Terms of Service</Link>
+                                <Link to="/terms" onClick={() => setIsOpen(false)} className="hover:text-foreground transition-colors flex items-center gap-1">
                                     <Shield className="h-3 w-3 text-emerald-400" /> Escrow Security
-                                </span>
+                                </Link>
                             </div>
                             <div className="flex items-center gap-1.5 text-[10px]">
                                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />

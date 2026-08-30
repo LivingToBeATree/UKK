@@ -8,8 +8,34 @@ import { SidebarRail } from '@/components/SidebarRail';
 import { Navbar } from '@/components/Navbar';
 import { Toaster } from '@/components/ui/sonner';
 
+import { useLocation } from 'react-router-dom';
+
 function AppLayout() {
     const { collapsed } = useSidebar();
+    const location = useLocation();
+
+    // Full-screen layout for dedicated authentication & legal portal flows
+    const isFullScreenRoute = [
+        '/login',
+        '/register',
+        '/register/verify',
+        '/forgot-password',
+        '/license',
+        '/terms',
+        '/privacy',
+        '/cookies',
+        '/api-terms',
+        '/escrow-terms',
+    ].includes(location.pathname) || location.pathname.startsWith('/reset-password');
+
+    if (isFullScreenRoute) {
+        return (
+            <div className="min-h-screen bg-background text-foreground font-sans transition-colors duration-200">
+                <AppRoutes />
+                <Toaster />
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-background text-foreground flex font-sans transition-colors duration-200">
