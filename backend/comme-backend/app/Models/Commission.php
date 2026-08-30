@@ -18,6 +18,9 @@ class Commission extends Model
         'status',
         'description',
         'deadline',
+        'delivered_at',
+        'review_deadline',
+        'completed_at',
         'total_price',
     ];
 
@@ -25,7 +28,11 @@ class Commission extends Model
     {
         return [
             'total_price' => 'decimal:2',
-            'status' => CommissionStatus::class
+            'status' => CommissionStatus::class,
+            'deadline' => 'date',
+            'delivered_at' => 'datetime',
+            'review_deadline' => 'datetime',
+            'completed_at' => 'datetime',
         ];
     }
 
@@ -77,6 +84,16 @@ class Commission extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(CommissionPayment::class);
+    }
+
+    public function payout(): HasOne
+    {
+        return $this->hasOne(CommissionPayout::class)->latestOfMany();
+    }
+
+    public function payouts(): HasMany
+    {
+        return $this->hasMany(CommissionPayout::class);
     }
 
     public function revisions(): HasMany

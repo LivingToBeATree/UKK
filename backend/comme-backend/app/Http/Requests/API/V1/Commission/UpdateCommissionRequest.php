@@ -3,8 +3,6 @@
 namespace App\Http\Requests\API\V1\Commission;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rules\Enum;
-use App\Enum\CommissionStatus;
 
 class UpdateCommissionRequest extends FormRequest
 {
@@ -15,15 +13,13 @@ class UpdateCommissionRequest extends FormRequest
 
     /**
      * Deliberately narrow — general update() is for the artist's routine
-     * management only. deadline and cancellation each have their own
-     * dedicated ability/endpoint (see updateDeadline() and cancel() on
-     * the controller), since those carry different authorization rules.
+     * description adjustments only. Status transitions must occur through
+     * dedicated lifecycle endpoints (accept, decline, deliver, confirm, etc.).
      */
     public function rules(): array
     {
         return [
-            'description' => ['sometimes', 'string'],
-            'status' => ['sometimes', new Enum(CommissionStatus::class)],
+            'description' => ['required', 'string'],
         ];
     }
 }

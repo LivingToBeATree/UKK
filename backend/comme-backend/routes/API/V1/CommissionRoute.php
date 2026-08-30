@@ -5,6 +5,19 @@ use App\Http\Controllers\API\V1\CommissionMessageController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->group(function () {
+    // Explicit lifecycle state transitions
+    Route::post('commissions/{commission}/accept', [CommissionController::class, 'accept'])
+        ->name('commissions.accept');
+
+    Route::post('commissions/{commission}/decline', [CommissionController::class, 'decline'])
+        ->name('commissions.decline');
+
+    Route::post('commissions/{commission}/deliver', [CommissionController::class, 'deliver'])
+        ->name('commissions.deliver');
+
+    Route::post('commissions/{commission}/confirm', [CommissionController::class, 'confirm'])
+        ->name('commissions.confirm');
+
     Route::patch('commissions/{commission}/cancel', [CommissionController::class, 'cancel'])
         ->name('commissions.cancel');
 

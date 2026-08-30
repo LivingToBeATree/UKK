@@ -49,6 +49,26 @@ class CommissionPolicy
         return $user->id === $commission->artistProfile->user_id;
     }
 
+    public function accept(User $user, Commission $commission): bool
+    {
+        return $user->id === $commission->artistProfile->user_id;
+    }
+
+    public function decline(User $user, Commission $commission): bool
+    {
+        return $user->id === $commission->artistProfile->user_id;
+    }
+
+    public function markDelivered(User $user, Commission $commission): bool
+    {
+        return $user->id === $commission->artistProfile->user_id;
+    }
+
+    public function confirmCompletion(User $user, Commission $commission): bool
+    {
+        return $user->id === $commission->user_id;
+    }
+
     public function requestRevision(User $user, Commission $commission): bool
     {
         return $user->id === $commission->user_id;

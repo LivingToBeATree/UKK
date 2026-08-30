@@ -109,6 +109,86 @@ class CommissionController extends Controller
     //      return false
     //  }
 
+    public function accept(Commission $commission): JsonResponse
+    {
+        Gate::authorize('accept', $commission);
+
+        if ($commission->status !== CommissionStatus::PENDING) {
+            return ApiResponseHelper::errorResponse(
+                "Commission cannot be accepted from current status '{$commission->status->value}'.",
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
+        $commission->update(['status' => CommissionStatus::ACCEPTED]);
+
+        return ApiResponseHelper::successResponse(
+            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review'])),
+            'Commission accepted successfully. Client may now proceed to payment.'
+        );
+    }
+
+    public function decline(Commission $commission): JsonResponse
+    {
+        Gate::authorize('decline', $commission);
+
+        if ($commission->status !== CommissionStatus::PENDING) {
+            return ApiResponseHelper::errorResponse(
+                "Commission cannot be declined from current status '{$commission->status->value}'.",
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
+        $commission->update(['status' => CommissionStatus::DECLINED]);
+
+        return ApiResponseHelper::successResponse(
+            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review'])),
+            'Commission request declined.'
+        );
+    }
+
+    public function deliver(Commission $commission): JsonResponse
+    {
+        Gate::authorize('markDelivered', $commission);
+
+        if (!in_array($commission->status, [CommissionStatus::IN_PROGRESS, CommissionStatus::REVISION])) {
+            return ApiResponseHelper::errorResponse(
+                "Commission cannot be marked as delivered from status '{$commission->status->value}'. Expected in_progress or revision.",
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
+        $commission->update([
+            'status' => CommissionStatus::WAITING_FOR_CLIENT,
+            'delivered_at' => now(),
+            'review_deadline' => now()->addDays(7),
+        ]);
+
+        return ApiResponseHelper::successResponse(
+            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review', 'payout'])),
+            'Commission marked as delivered. 7-day client review window has commenced.'
+        );
+    }
+
+    public function confirm(Commission $commission, \App\Services\API\V1\CommissionCompletionService $completionService): JsonResponse
+    {
+        Gate::authorize('confirmCompletion', $commission);
+
+        try {
+            $completed = $completionService->completeCommission($commission, false);
+
+            return ApiResponseHelper::successResponse(
+                new CommissionResource($completed->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review', 'payout'])),
+                'Commission successfully confirmed and completed. Artist payout has been queued.'
+            );
+        } catch (\Exception $e) {
+            return ApiResponseHelper::errorResponse(
+                $e->getMessage(),
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+    }
+
     public function cancel(Commission $commission): JsonResponse
     {
         Gate::authorize('cancel', $commission);
