@@ -140,6 +140,48 @@ class PaymentController extends Controller
         return ApiResponseHelper::successResponse(message: 'Notification processed.');
     }
 
+    /**
+     * Public Midtrans Iris Payout callback.
+     */
+    public function irisWebhook(Request $request): JsonResponse
+    {
+        $payload = $request->all();
+        $reference = $payload['reference_no'] ?? $payload['payout_id'] ?? null;
+
+        if (!$reference) {
+            return ApiResponseHelper::errorResponse('Missing reference_no.', Response::HTTP_BAD_REQUEST);
+        }
+
+        $payout = \App\Models\CommissionPayout::where('reference', $reference)
+            ->orWhere('midtrans_payout_id', $reference)
+            ->first();
+
+        if (!$payout) {
+            return ApiResponseHelper::errorResponse('Payout record not found.', Response::HTTP_NOT_FOUND);
+        }
+
+        $status = strtolower($payload['status'] ?? '');
+
+        if (in_array($status, ['completed', 'done', 'settled', 'success'])) {
+            $payout->update([
+                'status' => \App\Enum\PayoutStatus::COMPLETED,
+                'completed_at' => now(),
+                'raw_response' => $payload,
+            ]);
+            Log::info("Iris webhook: Payout #{$payout->id} marked COMPLETED via webhook.");
+        } elseif (in_array($status, ['failed', 'rejected', 'denied'])) {
+            $payout->update([
+                'status' => \App\Enum\PayoutStatus::FAILED,
+                'failed_at' => now(),
+                'failure_reason' => "Provider webhook reported status: {$status}",
+                'raw_response' => $payload,
+            ]);
+            Log::warning("Iris webhook: Payout #{$payout->id} marked FAILED via webhook.");
+        }
+
+        return ApiResponseHelper::successResponse(message: 'Iris payout notification processed.');
+    }
+
     private function shouldApplyPaymentStatus(PaymentStatus $currentStatus, PaymentStatus $newStatus): bool
     {
         if ($currentStatus === $newStatus) {

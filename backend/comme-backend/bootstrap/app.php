@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'api/*',
             'midtrans/webhook',
+            'midtrans/iris-webhook',
         ]);
 
         $middleware->trustProxies(

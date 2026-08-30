@@ -17,8 +17,10 @@ Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']
 // Public user profile lookup
 Route::get('/users/{username}', [UserController::class, 'show']);
 
-// Midtrans webhook
+// Midtrans webhooks
 Route::post('/midtrans/webhook', [PaymentController::class, 'webhook'])
+    ->withoutMiddleware('throttle:api');
+Route::post('/midtrans/iris-webhook', [PaymentController::class, 'irisWebhook'])
     ->withoutMiddleware('throttle:api');
 
 // Every resource's routes live in its own file under routes/API/V1/
