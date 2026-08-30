@@ -51,7 +51,7 @@ const RailItem: React.FC<RailItemProps> = ({
             onClick={onClick}
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
-            className={`w-full h-11 flex items-center rounded-xl px-2 gap-3 transition-colors duration-150 cursor-pointer focus:outline-none overflow-hidden ${
+            className={`w-full h-11 flex items-center rounded-xl px-3 gap-3 transition-colors duration-150 cursor-pointer focus:outline-none overflow-hidden ${
                 isActive
                     ? 'bg-secondary text-foreground font-semibold shadow-xs ring-1 ring-border/50'
                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
@@ -61,7 +61,7 @@ const RailItem: React.FC<RailItemProps> = ({
             <div className="w-7 h-7 flex items-center justify-center shrink-0">
                 <Icon className={`h-5 w-5 transition-transform ${isActive ? 'text-primary' : ''}`} />
             </div>
-            
+
             {/* Animated Label */}
             <AnimatePresence initial={false}>
                 {!isCollapsed && (
@@ -116,7 +116,7 @@ export const SidebarRail: React.FC = () => {
     return (
         <motion.aside
             initial={false}
-            animate={{ width: collapsed ? 64 : 240 }}
+            animate={{ width: collapsed ? 72 : 240 }}
             transition={{ type: 'spring', damping: 28, stiffness: 320 }}
             className="fixed left-0 top-0 bottom-0 z-50 bg-card/95 backdrop-blur-xl border-r border-border/70 flex flex-col justify-between py-3 px-2.5 select-none overflow-hidden"
         >
@@ -125,7 +125,7 @@ export const SidebarRail: React.FC = () => {
                 {/* 1. Official Comme Logo Header (Clicking toggles expand/collapse) */}
                 <button
                     onClick={toggleSidebar}
-                    className="w-full h-11 flex items-center rounded-xl px-2 gap-3 hover:bg-secondary/60 transition-colors cursor-pointer focus:outline-none overflow-hidden"
+                    className="w-full h-11 flex items-center rounded-xl px-3 gap-3 hover:bg-secondary/60 transition-colors cursor-pointer focus:outline-none overflow-hidden"
                     title={collapsed ? 'Click to expand sidebar' : 'Click to collapse sidebar'}
                     aria-label="Toggle Sidebar"
                 >
@@ -238,7 +238,7 @@ export const SidebarRail: React.FC = () => {
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <button
-                                    className="w-full h-11 flex items-center rounded-xl px-2 gap-3 hover:bg-secondary/60 transition-colors focus:outline-none cursor-pointer overflow-hidden text-left"
+                                    className="w-full h-11 flex items-center rounded-xl px-3 gap-3 hover:bg-secondary/60 transition-colors focus:outline-none cursor-pointer overflow-hidden text-left"
                                     title={user.display_name || user.username}
                                 >
                                     <div className="w-7 h-7 flex items-center justify-center shrink-0">
