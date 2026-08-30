@@ -1,5 +1,7 @@
 import { useContext } from 'react';
-import { ColorThemeContext } from '@/contexts/colorThemeContextDef';
+import { ColorThemeContext, type ColorTheme } from '@/contexts/colorThemeContextDef';
+
+export type { ColorTheme };
 
 export const useColorTheme = () => {
     const context = useContext(ColorThemeContext);
