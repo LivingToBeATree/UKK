@@ -38,6 +38,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { toast } from '@/components/ui/sonner';
 import { TwoFactorSetupModal } from '@/components/auth/TwoFactorSetupModal';
 import { TwoFactorRecoveryModal } from '@/components/auth/TwoFactorRecoveryModal';
+import { CustomColorPicker } from '@/components/ui/color-picker';
 import type { ArtistPayoutAccount } from '@/types';
 
 interface ActiveSession {
@@ -82,14 +83,6 @@ export const SettingsPage: React.FC = () => {
             setTempHex(customColor);
         }
     }, [customColor]);
-
-    const handleCustomColorChange = (hex: string) => {
-        setTempHex(hex);
-        if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
-            setCustomColor(hex);
-            setColorTheme('custom');
-        }
-    };
 
     // Active Sessions State
     const [sessions, setSessions] = useState<ActiveSession[]>([]);
@@ -809,12 +802,12 @@ export const SettingsPage: React.FC = () => {
                                 </CardContent>
                             </Card>
 
-                            {/* Custom Color Wheel Picker */}
+                            {/* Custom Color Wheel Studio */}
                             <Card className={`shadow-sm transition-all ${colorTheme === 'custom' ? 'border-primary ring-2 ring-primary/30 bg-primary/5' : ''}`}>
                                 <CardHeader className="p-6 sm:p-8 pb-4">
                                     <div className="flex items-center justify-between">
                                         <CardTitle className="text-lg lg:text-xl font-bold flex items-center gap-2.5">
-                                            <Pipette className="h-5 w-5 text-primary" /> Custom Accent Color Picker
+                                            <Pipette className="h-5 w-5 text-primary" /> Interactive Custom Color Studio
                                         </CardTitle>
                                         {colorTheme === 'custom' && (
                                             <span className="text-xs font-bold text-primary bg-primary/15 border border-primary/30 px-3 py-1 rounded-full">
@@ -823,76 +816,23 @@ export const SettingsPage: React.FC = () => {
                                         )}
                                     </div>
                                     <CardDescription className="text-sm">
-                                        Choose any custom hex code, click the color swatch for the interactive color wheel, or pick from quick-palette inspiration dots.
+                                        Drag on the 2D gradient saturation canvas and hue spectrum to craft bespoke tones, or fine-tune exact RGB and HEX channels.
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent className="p-6 sm:p-8 pt-2 space-y-6">
-                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 p-5 rounded-2xl border border-border/80 bg-card/60">
-                                        {/* Color preview square / picker trigger */}
-                                        <div className="relative group shrink-0">
-                                            <div
-                                                className="w-16 h-16 rounded-2xl shadow-inner ring-2 ring-border/80 flex items-center justify-center cursor-pointer transition-transform group-hover:scale-105"
-                                                style={{ backgroundColor: tempHex }}
-                                            >
-                                                <Pipette className="h-6 w-6 text-white drop-shadow-md opacity-80 group-hover:opacity-100" />
-                                            </div>
-                                            <input
-                                                type="color"
-                                                value={tempHex.startsWith('#') ? tempHex : '#8b5cf6'}
-                                                onChange={(e) => handleCustomColorChange(e.target.value)}
-                                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                                                title="Open Color Wheel"
-                                            />
-                                        </div>
-
-                                        <div className="space-y-3 flex-1 min-w-0">
-                                            <div className="space-y-1.5">
-                                                <Label htmlFor="custom_hex" className="text-xs font-semibold text-foreground/90">
-                                                    Hex Color Code
-                                                </Label>
-                                                <div className="flex items-center gap-3">
-                                                    <Input
-                                                        id="custom_hex"
-                                                        value={tempHex}
-                                                        onChange={(e) => handleCustomColorChange(e.target.value)}
-                                                        placeholder="#A802F5"
-                                                        className="h-12 w-44 rounded-xl font-mono text-sm uppercase px-4 bg-card border-border/80 font-bold"
-                                                        maxLength={7}
-                                                    />
-                                                    <Button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            if (/^#[0-9A-Fa-f]{6}$/.test(tempHex)) {
-                                                                setCustomColor(tempHex);
-                                                                setColorTheme('custom');
-                                                                toast.success(`Custom color ${tempHex.toUpperCase()} applied!`);
-                                                            } else {
-                                                                toast.error('Please enter a valid 6-digit hex code (e.g. #B899FF)');
-                                                            }
-                                                        }}
-                                                        className="h-12 px-6 font-bold shadow-md text-xs cursor-pointer"
-                                                    >
-                                                        Apply Custom Accent
-                                                    </Button>
-                                                </div>
-                                            </div>
-
-                                            {/* Quick-Pick Swatch Palette */}
-                                            <div className="flex items-center gap-2 pt-1">
-                                                <span className="text-[11px] text-muted-foreground font-medium">Quick swatches:</span>
-                                                {['#B899FF', '#06B6D4', '#10B981', '#F59E0B', '#EC4899', '#6366F1', '#14B8A6', '#F97316'].map((swatch) => (
-                                                    <button
-                                                        key={swatch}
-                                                        type="button"
-                                                        onClick={() => handleCustomColorChange(swatch)}
-                                                        className="h-6 w-6 rounded-full border border-border/80 shadow-xs hover:scale-115 transition-transform cursor-pointer"
-                                                        style={{ backgroundColor: swatch }}
-                                                        title={swatch}
-                                                    />
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
+                                <CardContent className="p-6 sm:p-8 pt-2">
+                                    <CustomColorPicker
+                                        value={customColor || tempHex}
+                                        onChange={(hex) => {
+                                            setTempHex(hex);
+                                            setCustomColor(hex);
+                                            setColorTheme('custom');
+                                        }}
+                                        onApply={(hex) => {
+                                            setCustomColor(hex);
+                                            setColorTheme('custom');
+                                            toast.success(`Custom accent color ${hex.toUpperCase()} applied!`);
+                                        }}
+                                    />
                                 </CardContent>
                             </Card>
                         </motion.div>
