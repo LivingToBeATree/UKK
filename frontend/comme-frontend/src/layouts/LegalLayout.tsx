@@ -43,11 +43,10 @@ export const LegalLayout: React.FC<LegalLayoutProps> = ({ children }) => {
                                     <Link
                                         key={item.path}
                                         to={item.path}
-                                        className={`text-xs sm:text-sm font-medium transition-all py-2.5 px-3 rounded-xl flex items-center justify-between group ${
-                                            isActive
+                                        className={`text-xs sm:text-sm font-medium transition-all py-2.5 px-3 rounded-xl flex items-center justify-between group ${isActive
                                                 ? 'bg-primary/10 text-primary font-bold shadow-xs ring-1 ring-primary/20'
                                                 : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
-                                        }`}
+                                            }`}
                                     >
                                         <span className="flex items-center gap-2.5">
                                             <Icon className={`h-4 w-4 ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`} />

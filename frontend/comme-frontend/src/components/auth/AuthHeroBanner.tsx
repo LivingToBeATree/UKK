@@ -12,28 +12,28 @@ interface SlideData {
 
 const AUTH_SLIDES: SlideData[] = [
     {
-        image: '/digital-art-looking.jpg',
+        image: '/JPGs/digital-art-looking.jpg',
         title: 'Creation starts here',
         description: 'Connect directly with visionary artists, commission custom artwork, and elevate your creative space.',
         author: 'Digital Dreams Studio',
         tag: 'Digital Illustration',
     },
     {
-        image: '/composer-looking-girl.jpg',
+        image: '/JPGs/composer-looking-girl.jpg',
         title: 'Bring your vision to life',
         description: 'Transparent milestone escrow, real-time collaboration, and dedicated creator-first tools.',
         author: 'Studio Lumina',
         tag: 'Character Art',
     },
     {
-        image: '/handcraft-things.jpg',
+        image: '/JPGs/handcraft-things.jpg',
         title: 'Crafted with passion',
         description: 'Discover bespoke handmade commissions, physical artisan pieces, and one-of-a-kind treasures.',
         author: 'Artisan Guild',
         tag: 'Artisan Crafts',
     },
     {
-        image: '/super-cool-abstract-art-thingy.jpg',
+        image: '/JPGs/super-cool-abstract-art-thingy.jpg',
         title: 'Empowering original art',
         description: 'Join a thriving community of independent creators and collectors worldwide.',
         author: 'Vivid Abstract Realm',
@@ -132,11 +132,10 @@ export const AuthHeroBanner: React.FC = () => {
                                 aria-label={`Go to slide ${idx + 1}`}
                             >
                                 <div
-                                    className={`h-1.5 rounded-full transition-all duration-500 ${
-                                        idx === currentIndex
-                                            ? 'w-8 bg-white shadow-sm'
-                                            : 'w-2 bg-white/40 hover:bg-white/70'
-                                    }`}
+                                    className={`h-1.5 rounded-full transition-all duration-500 ${idx === currentIndex
+                                        ? 'w-8 bg-white shadow-sm'
+                                        : 'w-2 bg-white/40 hover:bg-white/70'
+                                        }`}
                                 />
                             </button>
                         ))}
