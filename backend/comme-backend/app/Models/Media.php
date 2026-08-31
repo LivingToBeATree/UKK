@@ -8,6 +8,16 @@ use Illuminate\Database\Eloquent\Model;
 class Media extends Model
 {
     protected $table = 'medias';
+
+    protected $fillable = [
+        'file_name',
+        'file_path',
+        'media_type',
+        'file_size',
+        'mime_type',
+        'sort_order',
+        'is_thumbnail',
+    ];
     
     protected function casts(): array
     {
