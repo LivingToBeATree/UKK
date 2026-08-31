@@ -80,6 +80,23 @@ class CommissionLifecyclePayoutTest extends TestCase
 
     // ─── Existing lifecycle tests ─────────────────────────────────────
 
+    public function test_buyer_can_create_commission_without_option_safely(): void
+    {
+        $this->service->update(['status' => \App\Enum\ServiceStatus::OPEN]);
+
+        $response = $this->actingAs($this->buyerUser)
+            ->postJson('/api/commissions', [
+                'commission_service_id' => $this->service->id,
+                'commission_option_id' => null,
+                'description' => 'Custom design with direct artist quotation',
+                'deadline' => now()->addDays(20)->toDateString(),
+            ])
+            ->assertCreated();
+
+        $this->assertNull($response->json('data.commission_option'));
+        $this->assertEquals(0, $response->json('data.total_price'));
+    }
+
     public function test_artist_can_accept_and_decline_commission(): void
     {
         $this->actingAs($this->buyerUser)

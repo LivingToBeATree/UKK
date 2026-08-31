@@ -60,7 +60,7 @@ class CommissionController extends Controller
             'artist_profile_id' => $service->artist_profile_id,
             'user_id' => $request->user()->id,
             'status' => CommissionStatus::PENDING,
-            'total_price' => $option->base_price ?? 0,
+            'total_price' => $option?->base_price ?? 0,
         ]);
 
         return ApiResponseHelper::successResponse(
