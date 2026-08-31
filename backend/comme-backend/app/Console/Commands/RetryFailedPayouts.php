@@ -59,14 +59,23 @@ class RetryFailedPayouts extends Command
 
         foreach ($eligiblePayouts as $payout) {
             try {
-                $payout->update([
-                    'status' => PayoutStatus::PENDING,
-                    'failed_at' => null,
-                    'failure_reason' => null,
-                    'retry_count' => $payout->retry_count + 1,
-                ]);
+                // Atomic claim: only proceed if the payout is still in FAILED or PENDING status.
+                // This prevents duplicate HTTP disbursements if multiple scheduler workers run concurrently.
+                $claimed = CommissionPayout::where('id', $payout->id)
+                    ->whereIn('status', [PayoutStatus::FAILED, PayoutStatus::PENDING])
+                    ->update([
+                        'status' => PayoutStatus::PROCESSING,
+                        'failed_at' => null,
+                        'failure_reason' => null,
+                        'retry_count' => $payout->retry_count + 1,
+                    ]);
 
-                $this->line("  Retrying Payout #{$payout->id} (attempt {$payout->retry_count}/{" . self::MAX_RETRIES . "})...");
+                if (!$claimed) {
+                    $this->line("  Payout #{$payout->id} already claimed by another process — skipping.");
+                    continue;
+                }
+
+                $this->line("  Retrying Payout #{$payout->id} (attempt " . ($payout->retry_count + 1) . "/" . self::MAX_RETRIES . ")...");
                 $payoutService->processPayout($payout);
 
                 $payout->refresh();

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('commission_payouts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('commission_id')->constrained('commissions')->cascadeOnDelete();
+            $table->foreignId('commission_id')->unique()->constrained('commissions')->cascadeOnDelete();
             $table->foreignId('artist_profile_id')->constrained('artist_profiles')->cascadeOnDelete();
             $table->decimal('amount', 12, 2);
             $table->string('status')->default('pending');

@@ -69,21 +69,23 @@ class CommissionCompletionService
             // The unique constraint on `reference` prevents double-creation.
             $reference = 'PAYOUT-' . $locked->id;
 
-            // Create payout record. Bank fields are nullable — if the artist
+            // Create or retrieve payout record. Bank fields are nullable — if the artist
             // hasn't configured a payout account, we create the record with
             // null bank info and status PENDING. The retry scheduler will
             // pick it up once the artist adds their account.
-            $payout = CommissionPayout::create([
-                'commission_id' => $locked->id,
-                'artist_profile_id' => $locked->artist_profile_id,
-                'amount' => $locked->total_price,
-                'status' => PayoutStatus::PENDING,
-                'reference' => $reference,
-                'bank_name' => $payoutAccount?->bank_name,
-                'bank_account_name' => $payoutAccount?->bank_account_name,
-                'bank_account_number' => $payoutAccount?->bank_account_number,
-                'requested_at' => now(),
-            ]);
+            $payout = CommissionPayout::firstOrCreate(
+                ['commission_id' => $locked->id],
+                [
+                    'artist_profile_id' => $locked->artist_profile_id,
+                    'amount' => $locked->total_price,
+                    'status' => PayoutStatus::PENDING,
+                    'reference' => $reference,
+                    'bank_name' => $payoutAccount?->bank_name,
+                    'bank_account_name' => $payoutAccount?->bank_account_name,
+                    'bank_account_number' => $payoutAccount?->bank_account_number,
+                    'requested_at' => now(),
+                ]
+            );
 
             $hasPayoutAccount = $payoutAccount !== null;
 

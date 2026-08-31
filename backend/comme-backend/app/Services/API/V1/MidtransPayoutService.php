@@ -48,7 +48,9 @@ class MidtransPayoutService
         }
 
         try {
-            $response = Http::withBasicAuth($this->apiKey, '')
+            $response = Http::timeout(15)
+                ->connectTimeout(5)
+                ->withBasicAuth($this->apiKey, '')
                 ->withHeaders([
                     'Idempotency-Key' => $payout->reference,
                     'Content-Type' => 'application/json',
