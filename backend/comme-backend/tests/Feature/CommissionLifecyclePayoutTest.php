@@ -476,10 +476,9 @@ class CommissionLifecyclePayoutTest extends TestCase
         $this->assertStringContainsString('Ambiguous network outcome', $payout->failure_reason);
     }
 
-    public function test_reconciliation_handles_not_found_provider_disbursement_with_grace_window(): void
+    public function test_reconciliation_safely_keeps_non_terminal_unknown_statuses_in_processing(): void
     {
-        // Case 1: Fresh payout within 30m grace window returning 404 should remain in PROCESSING.
-        $freshPayout = CommissionPayout::create([
+        $payout = CommissionPayout::create([
             'commission_id' => $this->createCommissionInWaitingState()->id,
             'artist_profile_id' => $this->artistProfile->id,
             'amount' => 500000,
@@ -488,27 +487,15 @@ class CommissionLifecyclePayoutTest extends TestCase
             'bank_name' => 'BCA',
             'bank_account_name' => 'Artist One',
             'bank_account_number' => '1234567890',
-            'requested_at' => now(), // Fresh
-        ]);
-
-        // Case 2: Aged payout (>30m) returning 404 should transition to FAILED for safe retry.
-        $agedPayout = CommissionPayout::create([
-            'commission_id' => $this->createCommissionInWaitingState()->id,
-            'artist_profile_id' => $this->artistProfile->id,
-            'amount' => 500000,
-            'status' => PayoutStatus::PROCESSING,
-            'reference' => 'PAYOUT-9999',
-            'bank_name' => 'BCA',
-            'bank_account_name' => 'Artist One',
-            'bank_account_number' => '1234567890',
-            'requested_at' => now()->subMinutes(35), // 35 minutes old
+            'requested_at' => now(),
         ]);
 
         $mockIris = $this->createMock(\App\Services\API\V1\MidtransPayoutService::class);
         $mockIris->method('getPayoutStatus')
             ->willReturn([
-                'status' => 'not_found',
-                'error_code' => 404,
+                'status' => 'unknown',
+                'status_code' => 404,
+                'error' => 'Payout not found',
             ]);
 
         $this->app->instance(\App\Services\API\V1\MidtransPayoutService::class, $mockIris);
@@ -516,12 +503,8 @@ class CommissionLifecyclePayoutTest extends TestCase
         $this->artisan('commissions:reconcile-payouts')
             ->assertSuccessful();
 
-        $freshPayout->refresh();
-        $this->assertEquals(PayoutStatus::PROCESSING, $freshPayout->status, 'Fresh 404 should wait for queue propagation');
-
-        $agedPayout->refresh();
-        $this->assertEquals(PayoutStatus::FAILED, $agedPayout->status, 'Aged 404 should transition to FAILED for clean retry');
-        $this->assertStringContainsString('30-minute propagation window', $agedPayout->failure_reason);
+        $payout->refresh();
+        $this->assertEquals(PayoutStatus::PROCESSING, $payout->status, 'Non-terminal or unknown status must never falsely declare failure');
     }
 
     public function test_iris_webhook_respects_terminal_completed_status(): void
@@ -579,5 +562,52 @@ class CommissionLifecyclePayoutTest extends TestCase
 
         $this->assertNotNull($adminNotification);
         $this->assertStringContainsString('Stale Payout In-Flight Alert', $adminNotification->title);
+    }
+
+    public function test_idempotent_lost_response_recovery_flow(): void
+    {
+        $this->actingAs($this->artistUser)
+            ->putJson('/api/me/payout-account', [
+                'bank_name' => 'BCA',
+                'bank_account_name' => 'Artist One',
+                'bank_account_number' => '1234567890',
+            ])
+            ->assertOk();
+
+        $commission = $this->createCommissionInWaitingState();
+
+        // 1. Initial disbursement: Iris receives request but local connection times out
+        $mockIris = $this->createMock(\App\Services\API\V1\MidtransPayoutService::class);
+        $mockIris->method('createPayout')
+            ->willThrowException(new \Exception('cURL error 28: Operation timed out'));
+
+        $payoutService = new \App\Services\API\V1\PayoutService($mockIris);
+        $completionService = new \App\Services\API\V1\CommissionCompletionService($payoutService);
+
+        $completionService->completeCommission($commission);
+
+        $payout = CommissionPayout::where('commission_id', $commission->id)->first();
+        $this->assertEquals(PayoutStatus::PROCESSING, $payout->status);
+        $this->assertEquals("PAYOUT-{$commission->id}", $payout->reference);
+
+        // 2. Next reconciliation cycle: polls Iris with the canonical reference_no
+        $reconcileMock = $this->createMock(\App\Services\API\V1\MidtransPayoutService::class);
+        $reconcileMock->method('getPayoutStatus')
+            ->with($this->callback(fn ($p) => $p->reference === "PAYOUT-{$commission->id}"))
+            ->willReturn([
+                'status' => 'completed',
+                'reference_no' => "PAYOUT-{$commission->id}",
+                'amount' => '500000.00',
+            ]);
+
+        $this->app->instance(\App\Services\API\V1\MidtransPayoutService::class, $reconcileMock);
+
+        $this->artisan('commissions:reconcile-payouts')
+            ->assertSuccessful();
+
+        $payout->refresh();
+        $this->assertEquals(PayoutStatus::COMPLETED, $payout->status);
+        $this->assertNotNull($payout->completed_at);
+        $this->assertEquals(1, CommissionPayout::where('commission_id', $commission->id)->count(), 'Guaranteed zero duplicate payouts');
     }
 }

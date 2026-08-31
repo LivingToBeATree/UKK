@@ -20,7 +20,7 @@ class MidtransPayoutService
 
     /**
      * Create and dispatch a payout via Midtrans Iris API.
-     * Uses the payout's unique `reference` as the Idempotency-Key header.
+     * Uses the payout's deterministic `reference` (PAYOUT-{commission_id}) as the Idempotency-Key.
      */
     public function createPayout(CommissionPayout $payout): array
     {
@@ -31,13 +31,14 @@ class MidtransPayoutService
         }
 
         if (empty($this->apiKey)) {
+            // Fail-closed in production: NEVER simulate disbursements with real money disabled
             if (app()->environment('production') || config('app.env') === 'production') {
                 throw new \RuntimeException(
-                    "FATAL: Midtrans Iris API Key is missing in production environment. Real payout cannot be processed or simulated."
+                    "FATAL: Midtrans Iris API Key (MIDTRANS_IRIS_API_KEY) is missing in production environment. Real payout cannot be processed or simulated."
                 );
             }
 
-            // Sandbox simulation mode: return mock accepted payout
+            // Sandbox simulation mode for local/testing only
             return [
                 'payouts' => [
                     [
@@ -89,8 +90,9 @@ class MidtransPayoutService
 
     /**
      * Poll payout status from Midtrans Iris API.
+     * Uses the canonical Iris `reference_no` (GET /payouts/{reference_no}).
      * Used by the reconciliation scheduler to determine whether a
-     * PROCESSING payout has actually landed in the artist's bank.
+     * PROCESSING payout has reached a terminal status.
      */
     public function getPayoutStatus(CommissionPayout $payout): array
     {
@@ -112,7 +114,8 @@ class MidtransPayoutService
         }
 
         try {
-            $reference = $payout->midtrans_payout_id ?? $payout->reference;
+            // Canonical Iris lookup identifier is reference_no (PAYOUT-{commission_id})
+            $reference = $payout->reference;
 
             $response = Http::timeout(10)
                 ->connectTimeout(5)
@@ -126,21 +129,16 @@ class MidtransPayoutService
                 return $response->json();
             }
 
-            if ($response->status() === 404) {
-                Log::info("Midtrans Iris returned 404 for Payout #{$payout->id} (reference: {$reference}) — not found on provider.");
-                return [
-                    'status' => 'not_found',
-                    'error_code' => 404,
-                ];
-            }
-
-            Log::warning("Midtrans Iris status check failed for Payout #{$payout->id}", [
+            // Non-2xx responses (including 404 or transient errors) are treated as 'unknown'
+            // so reconciliation safely keeps the payout in PROCESSING without assuming false failure.
+            Log::warning("Midtrans Iris status check returned non-2xx for Payout #{$payout->id} (reference: {$reference})", [
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
 
             return [
                 'status' => 'unknown',
+                'status_code' => $response->status(),
                 'error' => $response->body(),
             ];
         } catch (Exception $e) {
