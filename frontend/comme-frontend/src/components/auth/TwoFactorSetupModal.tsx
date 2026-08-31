@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { QRCodeSVG } from 'qrcode.react';
-import { ShieldCheck, Copy, Check, KeyRound, AlertTriangle, ArrowRight, X } from 'lucide-react';
+import { ShieldCheck, Copy, Check, KeyRound, AlertTriangle, ArrowRight, X, Download } from 'lucide-react';
 import { twoFactorService, type TwoFactorSetupData } from '@/services/twoFactorService';
+import { copyToClipboard, downloadTextFile } from '@/lib/clipboard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -46,12 +47,16 @@ export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
 
     if (!isOpen) return null;
 
-    const handleCopyKey = () => {
+    const handleCopyKey = async () => {
         if (!setupData?.secret) return;
-        navigator.clipboard.writeText(setupData.secret);
-        setCopiedKey(true);
-        toast.success('Secret key copied to clipboard.');
-        setTimeout(() => setCopiedKey(false), 2000);
+        const success = await copyToClipboard(setupData.secret);
+        if (success) {
+            setCopiedKey(true);
+            toast.success('Secret key copied to clipboard.');
+            setTimeout(() => setCopiedKey(false), 2000);
+        } else {
+            toast.error('Failed to copy secret key.');
+        }
     };
 
     const handleConfirm = async (e: React.FormEvent) => {
@@ -75,11 +80,27 @@ export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
         }
     };
 
-    const handleCopyAllCodes = () => {
-        navigator.clipboard.writeText(recoveryCodes.join('\n'));
-        setCopiedCodes(true);
-        toast.success('All recovery codes copied to clipboard.');
-        setTimeout(() => setCopiedCodes(false), 2000);
+    const handleCopyAllCodes = async () => {
+        if (!recoveryCodes || recoveryCodes.length === 0) {
+            toast.error('No recovery codes available.');
+            return;
+        }
+        const text = `Comme 2FA Emergency Recovery Codes:\n\n${recoveryCodes.join('\n')}\n\nKeep these codes safe and secret.`;
+        const success = await copyToClipboard(text);
+        if (success) {
+            setCopiedCodes(true);
+            toast.success('All recovery codes copied to clipboard!');
+            setTimeout(() => setCopiedCodes(false), 2500);
+        } else {
+            toast.error('Failed to copy automatically. Please select and copy codes manually.');
+        }
+    };
+
+    const handleDownloadCodes = () => {
+        if (!recoveryCodes || recoveryCodes.length === 0) return;
+        const text = `Comme 2FA Emergency Recovery Codes\nGenerated at: ${new Date().toISOString()}\n\n${recoveryCodes.join('\n')}\n\nKeep these codes safe and secret.`;
+        downloadTextFile('comme-2fa-recovery-codes.txt', text);
+        toast.success('Recovery codes downloaded.');
     };
 
     const handleFinish = () => {
@@ -157,7 +178,7 @@ export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
                             <Button
                                 onClick={() => setStep('confirm')}
                                 disabled={loadingSetup || !setupData}
-                                className="w-full h-11 rounded-xl font-bold shadow-md gap-2"
+                                className="w-full h-11 rounded-xl font-bold shadow-md gap-2 cursor-pointer"
                             >
                                 <span>Continue to Confirmation</span>
                                 <ArrowRight className="h-4 w-4" />
@@ -207,14 +228,14 @@ export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
                                         type="button"
                                         variant="outline"
                                         onClick={() => setStep('setup')}
-                                        className="flex-1 h-11 rounded-xl text-xs font-semibold"
+                                        className="flex-1 h-11 rounded-xl text-xs font-semibold cursor-pointer"
                                     >
                                         Back
                                     </Button>
                                     <Button
                                         type="submit"
                                         disabled={confirming || code.length !== 6}
-                                        className="flex-1 h-11 rounded-xl font-bold shadow-md"
+                                        className="flex-1 h-11 rounded-xl font-bold shadow-md cursor-pointer"
                                     >
                                         {confirming ? 'Verifying...' : 'Enable 2FA'}
                                     </Button>
@@ -249,7 +270,7 @@ export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
                                 <span>Store these codes in a secure password manager. Each code can only be used once.</span>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-2 bg-secondary/50 p-4 rounded-xl border border-border/80 font-mono text-xs font-bold text-center text-foreground">
+                            <div className="grid grid-cols-2 gap-2 bg-secondary/50 p-4 rounded-xl border border-border/80 font-mono text-xs font-bold text-center text-foreground select-all">
                                 {recoveryCodes.map((c, i) => (
                                     <div key={i} className="p-1.5 bg-card/80 rounded border border-border/60">
                                         {c}
@@ -257,24 +278,34 @@ export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
                                 ))}
                             </div>
 
-                            <div className="flex gap-2">
+                            <div className="flex flex-col sm:flex-row gap-2">
                                 <Button
                                     type="button"
                                     variant="outline"
                                     onClick={handleCopyAllCodes}
-                                    className="flex-1 h-11 rounded-xl text-xs font-semibold gap-1.5"
+                                    className="flex-1 h-11 rounded-xl text-xs font-semibold gap-1.5 cursor-pointer"
                                 >
                                     {copiedCodes ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
                                     <span>{copiedCodes ? 'Copied!' : 'Copy All Codes'}</span>
                                 </Button>
                                 <Button
                                     type="button"
-                                    onClick={handleFinish}
-                                    className="flex-1 h-11 rounded-xl font-bold shadow-md"
+                                    variant="outline"
+                                    onClick={handleDownloadCodes}
+                                    className="flex-1 h-11 rounded-xl text-xs font-semibold gap-1.5 cursor-pointer"
                                 >
-                                    I Have Saved My Codes
+                                    <Download className="h-3.5 w-3.5" />
+                                    <span>Download .txt</span>
                                 </Button>
                             </div>
+
+                            <Button
+                                type="button"
+                                onClick={handleFinish}
+                                className="w-full h-11 rounded-xl font-bold shadow-md cursor-pointer"
+                            >
+                                I Have Saved My Codes
+                            </Button>
                         </motion.div>
                     )}
                 </AnimatePresence>

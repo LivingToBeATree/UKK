@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { ShieldCheck, Copy, Check, RefreshCw, Lock, X, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, Copy, Check, RefreshCw, Lock, X, AlertTriangle, Download } from 'lucide-react';
 import { twoFactorService } from '@/services/twoFactorService';
+import { copyToClipboard, downloadTextFile } from '@/lib/clipboard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -58,12 +59,24 @@ export const TwoFactorRecoveryModal: React.FC<TwoFactorRecoveryModalProps> = ({
         }
     };
 
-    const handleCopyAll = () => {
-        if (!recoveryCodes) return;
-        navigator.clipboard.writeText(recoveryCodes.join('\n'));
-        setCopiedCodes(true);
-        toast.success('Recovery codes copied.');
-        setTimeout(() => setCopiedCodes(false), 2000);
+    const handleCopyAll = async () => {
+        if (!recoveryCodes || recoveryCodes.length === 0) return;
+        const text = `Comme 2FA Emergency Recovery Codes:\n\n${recoveryCodes.join('\n')}\n\nKeep these codes safe and secret.`;
+        const success = await copyToClipboard(text);
+        if (success) {
+            setCopiedCodes(true);
+            toast.success('Recovery codes copied to clipboard.');
+            setTimeout(() => setCopiedCodes(false), 2500);
+        } else {
+            toast.error('Failed to copy to clipboard. Please copy manually.');
+        }
+    };
+
+    const handleDownloadCodes = () => {
+        if (!recoveryCodes || recoveryCodes.length === 0) return;
+        const text = `Comme 2FA Emergency Recovery Codes\nGenerated at: ${new Date().toISOString()}\n\n${recoveryCodes.join('\n')}\n\nKeep these codes safe and secret.`;
+        downloadTextFile('comme-2fa-recovery-codes.txt', text);
+        toast.success('Recovery codes downloaded.');
     };
 
     const handleClose = () => {
@@ -122,7 +135,7 @@ export const TwoFactorRecoveryModal: React.FC<TwoFactorRecoveryModalProps> = ({
                             <Button
                                 type="submit"
                                 disabled={loading || !password}
-                                className="w-full h-11 rounded-xl font-bold shadow-md"
+                                className="w-full h-11 rounded-xl font-bold shadow-md cursor-pointer"
                             >
                                 {loading ? 'Unlocking...' : 'Unlock Recovery Codes'}
                             </Button>
@@ -148,7 +161,7 @@ export const TwoFactorRecoveryModal: React.FC<TwoFactorRecoveryModalProps> = ({
                             <span>Each recovery code can only be used once to sign into your account.</span>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2 bg-secondary/50 p-4 rounded-xl border border-border/80 font-mono text-xs font-bold text-center text-foreground">
+                        <div className="grid grid-cols-2 gap-2 bg-secondary/50 p-4 rounded-xl border border-border/80 font-mono text-xs font-bold text-center text-foreground select-all">
                             {recoveryCodes.map((c, i) => (
                                 <div key={i} className="p-1.5 bg-card/80 rounded border border-border/60">
                                     {c}
@@ -156,21 +169,30 @@ export const TwoFactorRecoveryModal: React.FC<TwoFactorRecoveryModalProps> = ({
                             ))}
                         </div>
 
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                             <Button
                                 type="button"
                                 variant="outline"
                                 onClick={handleRegenerate}
                                 disabled={regenerating}
-                                className="flex-1 h-11 rounded-xl text-xs font-semibold gap-1.5"
+                                className="flex-1 h-11 rounded-xl text-xs font-semibold gap-1.5 cursor-pointer"
                             >
                                 <RefreshCw className={`h-3.5 w-3.5 ${regenerating ? 'animate-spin' : ''}`} />
                                 <span>{regenerating ? 'Regenerating...' : 'Regenerate'}</span>
                             </Button>
                             <Button
                                 type="button"
+                                variant="outline"
+                                onClick={handleDownloadCodes}
+                                className="flex-1 h-11 rounded-xl text-xs font-semibold gap-1.5 cursor-pointer"
+                            >
+                                <Download className="h-3.5 w-3.5" />
+                                <span>Download .txt</span>
+                            </Button>
+                            <Button
+                                type="button"
                                 onClick={handleCopyAll}
-                                className="flex-1 h-11 rounded-xl font-bold shadow-md gap-1.5"
+                                className="flex-1 h-11 rounded-xl font-bold shadow-md gap-1.5 cursor-pointer"
                             >
                                 {copiedCodes ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                                 <span>{copiedCodes ? 'Copied' : 'Copy All'}</span>
