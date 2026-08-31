@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, MessageSquare, Bookmark, Plus, ImageIcon } from 'lucide-react';
+import {
+    Heart,
+    MessageSquare,
+    Bookmark,
+    Plus,
+    Layers,
+    Sparkles,
+    Image as ImageIcon,
+} from 'lucide-react';
 import { postService } from '@/services/postService';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/sonner';
@@ -43,7 +50,7 @@ export const ExplorePage: React.FC = () => {
                     setMeta(res.meta ?? null);
                 }
             } catch {
-                if (isMounted) toast.error('Failed to load posts');
+                if (isMounted) toast.error('Failed to load artwork feed');
             } finally {
                 if (isMounted) setLoading(false);
             }
@@ -54,7 +61,9 @@ export const ExplorePage: React.FC = () => {
         };
     }, []);
 
-    const handleLike = async (postId: number) => {
+    const handleLike = async (e: React.MouseEvent, postId: number) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (!requireAuth('like')) return;
         try {
             const res = await postService.toggleLike(postId);
@@ -68,13 +77,23 @@ export const ExplorePage: React.FC = () => {
         }
     };
 
-    const handleBookmark = async (postId: number) => {
+    const handleBookmark = async (e: React.MouseEvent, postId: number) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (!requireAuth('bookmark')) return;
         try {
             const res = await postService.toggleBookmark(postId);
             setPosts((prev) =>
                 prev.map((p) =>
-                    p.id === postId ? { ...p, is_bookmarked: res.bookmarked } : p
+                    p.id === postId
+                        ? {
+                              ...p,
+                              is_bookmarked: res.bookmarked,
+                              bookmarks_count: res.bookmarked
+                                  ? (p.bookmarks_count || 0) + 1
+                                  : Math.max(0, (p.bookmarks_count || 1) - 1),
+                          }
+                        : p
                 )
             );
         } catch {
@@ -83,147 +102,219 @@ export const ExplorePage: React.FC = () => {
     };
 
     return (
-        <div className="max-w-4xl mx-auto px-6 sm:px-12 py-8">
+        <div className="max-w-[1440px] mx-auto px-6 sm:px-12 py-8">
             {/* Header */}
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold">Explore</h1>
-                    <p className="text-sm text-muted-foreground">See what the community is creating</p>
+                    <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
+                        Artwork Feed
+                    </h1>
+                    <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
+                        Discover original illustrations, character designs, and creative artwork from independent creators
+                    </p>
                 </div>
-                {isAuthenticated ? (
-                    <Link to="/posts/create">
-                        <Button>
-                            <Plus className="h-4 w-4 mr-2" /> New Post
+
+                <div className="flex items-center gap-3">
+                    {isAuthenticated ? (
+                        <Link to="/posts/create">
+                            <Button className="font-semibold shadow-md">
+                                <Plus className="h-4 w-4 mr-2" /> Share Artwork
+                            </Button>
+                        </Link>
+                    ) : (
+                        <Button
+                            onClick={() => requireAuth('generic')}
+                            className="font-semibold shadow-md"
+                        >
+                            <Plus className="h-4 w-4 mr-2" /> Share Artwork
                         </Button>
-                    </Link>
-                ) : (
-                    <Button onClick={() => requireAuth('generic')}>
-                        <Plus className="h-4 w-4 mr-2" /> New Post
-                    </Button>
-                )}
+                    )}
+                </div>
             </div>
 
-            {/* Posts Feed */}
-            <div className="space-y-4">
-                {loading && posts.length === 0 ? (
-                    Array.from({ length: 3 }).map((_, i) => (
-                        <Card key={i}>
-                            <CardContent className="p-6 space-y-4">
-                                <div className="flex items-center gap-3">
-                                    <Skeleton className="h-10 w-10 rounded-full" />
-                                    <div className="space-y-1.5">
-                                        <Skeleton className="h-3 w-28" />
-                                        <Skeleton className="h-2.5 w-20" />
-                                    </div>
-                                </div>
-                                <Skeleton className="h-20 w-full" />
-                            </CardContent>
-                        </Card>
-                    ))
-                ) : posts.length === 0 ? (
-                    <Card>
-                        <CardContent className="p-12 text-center">
-                            <ImageIcon className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
-                            <p className="text-muted-foreground">No posts yet. Be the first to share!</p>
-                        </CardContent>
-                    </Card>
-                ) : (
+            {/* Masonry Feed Container */}
+            {loading && posts.length === 0 ? (
+                /* Loading Skeletons */
+                <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 [column-fill:_balance]">
+                    {[280, 360, 240, 420, 310, 260, 390, 300].map((height, i) => (
+                        <div key={i} className="break-inside-avoid mb-4">
+                            <Skeleton
+                                style={{ height: `${height}px` }}
+                                className="w-full rounded-2xl"
+                            />
+                        </div>
+                    ))}
+                </div>
+            ) : posts.length === 0 ? (
+                /* Rich Empty State */
+                <div className="rounded-3xl border border-border/80 bg-card/60 p-12 text-center max-w-2xl mx-auto my-12 space-y-6">
+                    <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shadow-inner">
+                        <ImageIcon className="h-8 w-8" />
+                    </div>
+                    <div className="space-y-2">
+                        <h2 className="text-xl font-bold text-foreground">No artworks shared yet</h2>
+                        <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+                            Be the first creator to showcase your art, concept designs, sketches, or 3D models with the community!
+                        </p>
+                    </div>
+                    <div className="flex justify-center gap-3 pt-2">
+                        {isAuthenticated ? (
+                            <Link to="/posts/create">
+                                <Button className="font-bold">
+                                    <Sparkles className="h-4 w-4 mr-2" /> Create First Post
+                                </Button>
+                            </Link>
+                        ) : (
+                            <Button onClick={() => requireAuth('generic')} className="font-bold">
+                                <Sparkles className="h-4 w-4 mr-2" /> Create First Post
+                            </Button>
+                        )}
+                        <Link to="/store">
+                            <Button variant="outline">Browse Store</Button>
+                        </Link>
+                    </div>
+                </div>
+            ) : (
+                /* Masonry Artwork Grid */
+                <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 [column-fill:_balance]">
                     <AnimatePresence>
-                        {posts.map((post) => (
-                            <motion.div
-                                key={post.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0 }}
-                            >
-                                <Card className="hover:border-primary/30 transition-colors">
-                                    <CardContent className="p-5">
-                                        {/* Author */}
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <Avatar
-                                                size="sm"
-                                                fallback={post.user?.display_name || post.user?.username || '?'}
-                                                src={post.user?.avatar_url}
-                                            />
-                                            <div>
-                                                <Link
-                                                    to={`/artists/${post.user_id}`}
-                                                    className="font-semibold text-sm hover:text-primary transition-colors"
-                                                >
-                                                    {post.user?.display_name || post.user?.username}
-                                                </Link>
-                                                <p className="text-[11px] text-muted-foreground">
-                                                    {new Date(post.created_at).toLocaleDateString()}
-                                                </p>
+                        {posts.map((post) => {
+                            const mediaUrl = post.media && post.media[0] ? post.media[0].url : null;
+
+                            return (
+                                <motion.div
+                                    key={post.id}
+                                    initial={{ opacity: 0, y: 14 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="break-inside-avoid mb-4"
+                                >
+                                    <Link
+                                        to={`/posts/${post.id}`}
+                                        className="group relative block rounded-2xl overflow-hidden bg-card border border-border/70 hover:border-primary/50 shadow-xs hover:shadow-xl transition-all duration-300 cursor-pointer"
+                                    >
+                                        {/* Image Display or Text-Only Creative Canvas */}
+                                        {mediaUrl ? (
+                                            <div className="relative w-full overflow-hidden bg-muted">
+                                                <img
+                                                    src={mediaUrl}
+                                                    alt={post.content || 'Artwork'}
+                                                    className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                                                    loading="lazy"
+                                                />
+                                                {post.media && post.media.length > 1 && (
+                                                    <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-bold flex items-center gap-1 shadow-md">
+                                                        <Layers className="h-3 w-3" />
+                                                        <span>+{post.media.length - 1}</span>
+                                                    </div>
+                                                )}
                                             </div>
-                                        </div>
-
-                                        {/* Content */}
-                                        <Link to={`/posts/${post.id}`}>
-                                            <p className="text-sm leading-relaxed mb-4 whitespace-pre-wrap">
-                                                {post.content}
-                                            </p>
-                                        </Link>
-
-                                        {/* Media */}
-                                        {post.media && post.media.length > 0 && (
-                                            <div className="grid grid-cols-2 gap-2 mb-4 rounded-lg overflow-hidden">
-                                                {post.media.slice(0, 4).map((m) => (
-                                                    <img
-                                                        key={m.id}
-                                                        src={m.url}
-                                                        alt=""
-                                                        className="w-full h-48 object-cover bg-muted"
+                                        ) : (
+                                            <div className="p-6 bg-gradient-to-br from-primary/15 via-accent/10 to-secondary min-h-[180px] flex flex-col justify-between">
+                                                <p className="text-sm font-medium leading-relaxed text-foreground line-clamp-4 italic">
+                                                    "{post.content}"
+                                                </p>
+                                                <div className="pt-4 flex items-center gap-2">
+                                                    <Avatar
+                                                        size="sm"
+                                                        fallback={post.user?.display_name || post.user?.username || '?'}
+                                                        src={post.user?.avatar_url}
                                                     />
-                                                ))}
+                                                    <span className="text-xs font-semibold text-foreground/80">
+                                                        {post.user?.display_name || post.user?.username}
+                                                    </span>
+                                                </div>
                                             </div>
                                         )}
 
-                                        {/* Actions */}
-                                        <div className="flex items-center gap-4 pt-2 border-t border-border">
-                                            <button
-                                                onClick={() => handleLike(post.id)}
-                                                className={`flex items-center gap-1.5 text-xs transition-colors ${
-                                                    post.is_liked ? 'text-rose-400' : 'text-muted-foreground hover:text-rose-400'
-                                                }`}
-                                            >
-                                                <Heart className={`h-4 w-4 ${post.is_liked ? 'fill-current' : ''}`} />
-                                                {post.likes_count}
-                                            </button>
+                                        {/* Bottom Editorial Hover/Persistent Overlay */}
+                                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-3.5 pt-8 opacity-95 group-hover:opacity-100 transition-opacity flex flex-col justify-end text-white">
+                                            {/* Author Info & Post Snippet */}
+                                            <div className="flex items-center gap-2 mb-1.5">
+                                                <Avatar
+                                                    size="sm"
+                                                    fallback={post.user?.display_name || post.user?.username || '?'}
+                                                    src={post.user?.avatar_url}
+                                                    className="border border-white/30 shrink-0 h-6 w-6"
+                                                />
+                                                <span className="text-xs font-bold text-white truncate drop-shadow-sm">
+                                                    {post.user?.display_name || post.user?.username}
+                                                </span>
+                                            </div>
 
-                                            <Link
-                                                to={`/posts/${post.id}`}
-                                                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
-                                            >
-                                                <MessageSquare className="h-4 w-4" />
-                                                {post.comments_count}
-                                            </Link>
+                                            {post.content && (
+                                                <p className="text-[11px] text-white/85 line-clamp-2 leading-tight mb-2 font-normal drop-shadow-xs">
+                                                    {post.content}
+                                                </p>
+                                            )}
 
-                                            <button
-                                                onClick={() => handleBookmark(post.id)}
-                                                className={`flex items-center gap-1.5 text-xs transition-colors ml-auto ${
-                                                    post.is_bookmarked ? 'text-amber-400' : 'text-muted-foreground hover:text-amber-400'
-                                                }`}
-                                            >
-                                                <Bookmark className={`h-4 w-4 ${post.is_bookmarked ? 'fill-current' : ''}`} />
-                                            </button>
+                                            {/* Interactive Stats & Actions Strip */}
+                                            <div className="flex items-center justify-between pt-1.5 border-t border-white/20 text-xs">
+                                                <div className="flex items-center gap-3">
+                                                    {/* Like Button */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => handleLike(e, post.id)}
+                                                        className={`flex items-center gap-1 transition-transform active:scale-125 cursor-pointer ${
+                                                            post.is_liked
+                                                                ? 'text-rose-400 font-bold'
+                                                                : 'text-white/80 hover:text-rose-400'
+                                                        }`}
+                                                        aria-label="Like"
+                                                    >
+                                                        <Heart
+                                                            className={`h-3.5 w-3.5 ${
+                                                                post.is_liked ? 'fill-current' : ''
+                                                            }`}
+                                                        />
+                                                        <span className="text-[11px]">
+                                                            {post.likes_count || 0}
+                                                        </span>
+                                                    </button>
+
+                                                    {/* Comments Count */}
+                                                    <span className="flex items-center gap-1 text-white/80 text-[11px]">
+                                                        <MessageSquare className="h-3.5 w-3.5" />
+                                                        <span>{post.comments_count || 0}</span>
+                                                    </span>
+                                                </div>
+
+                                                {/* Bookmark Button */}
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => handleBookmark(e, post.id)}
+                                                    className={`transition-transform active:scale-125 cursor-pointer p-0.5 ${
+                                                        post.is_bookmarked
+                                                            ? 'text-amber-400'
+                                                            : 'text-white/80 hover:text-amber-400'
+                                                    }`}
+                                                    aria-label="Bookmark"
+                                                >
+                                                    <Bookmark
+                                                        className={`h-3.5 w-3.5 ${
+                                                            post.is_bookmarked ? 'fill-current' : ''
+                                                        }`}
+                                                    />
+                                                </button>
+                                            </div>
                                         </div>
-                                    </CardContent>
-                                </Card>
-                            </motion.div>
-                        ))}
+                                    </Link>
+                                </motion.div>
+                            );
+                        })}
                     </AnimatePresence>
-                )}
+                </div>
+            )}
 
-                {/* Load More */}
-                {meta && meta.current_page < meta.last_page && (
-                    <div className="text-center pt-4">
-                        <Button variant="outline" onClick={loadMore} disabled={loading}>
-                            {loading ? 'Loading...' : 'Load More'}
-                        </Button>
-                    </div>
-                )}
-            </div>
+            {/* Load More Button */}
+            {meta && meta.current_page < meta.last_page && (
+                <div className="text-center pt-8 pb-4">
+                    <Button variant="outline" size="lg" onClick={loadMore} disabled={loading}>
+                        {loading ? 'Loading artworks...' : 'Load More Artworks'}
+                    </Button>
+                </div>
+            )}
         </div>
     );
 };

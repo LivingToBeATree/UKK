@@ -14,8 +14,9 @@ function AppLayout() {
     const { collapsed } = useSidebar();
     const location = useLocation();
 
-    // Full-screen layout for dedicated authentication flows only
+    // Full-screen layout for landing page and dedicated authentication flows
     const isFullScreenRoute = [
+        '/',
         '/login',
         '/register',
         '/register/verify',

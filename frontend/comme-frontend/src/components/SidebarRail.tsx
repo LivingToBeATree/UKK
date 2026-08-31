@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-    Image as GalleryIcon,
     PenTool,
     Compass,
     FolderKanban,
@@ -192,16 +191,36 @@ export const SidebarRail: React.FC = () => {
                     </AnimatePresence>
                 </div>
 
-                {/* 2. Gallery / Feed */}
+                {/* 1. Artwork Feed */}
                 <NavItem
-                    icon={GalleryIcon}
-                    label="Art Feed & Showcase"
-                    path="/"
-                    isActive={location.pathname === '/'}
+                    icon={Compass}
+                    label="Artwork Feed"
+                    path="/explore"
+                    isActive={location.pathname === '/explore' || location.pathname.startsWith('/posts')}
                     collapsed={collapsed}
                 />
 
-                {/* 3. Studio / Creator Hub */}
+                {/* 2. Commission Store */}
+                <NavItem
+                    icon={FolderKanban}
+                    label="Commission Store"
+                    path="/store"
+                    isActive={location.pathname.startsWith('/store')}
+                    collapsed={collapsed}
+                />
+
+                {/* 3. Artists Directory */}
+                <NavItem
+                    icon={Layers}
+                    label="Artists Directory"
+                    path="/artists"
+                    isActive={location.pathname.startsWith('/artists')}
+                    collapsed={collapsed}
+                />
+
+                <SidebarDivider />
+
+                {/* 4. Studio / Creator Hub */}
                 <NavItem
                     icon={PenTool}
                     label={user?.artist_profile ? 'Artist Studio' : 'Become an Artist'}
@@ -211,43 +230,12 @@ export const SidebarRail: React.FC = () => {
                     onClick={guardNav('studio')}
                 />
 
-                <SidebarDivider />
-
-                {/* 4. Explore */}
-                <NavItem
-                    icon={Compass}
-                    label="Explore Artwork"
-                    path="/explore"
-                    isActive={location.pathname === '/explore'}
-                    collapsed={collapsed}
-                />
-
-                {/* 5. Commission Store */}
-                <NavItem
-                    icon={FolderKanban}
-                    label="Commission Store"
-                    path="/store"
-                    isActive={location.pathname === '/store'}
-                    collapsed={collapsed}
-                />
-
-                {/* 6. Artists Directory */}
-                <NavItem
-                    icon={Layers}
-                    label="Artists Directory"
-                    path="/artists"
-                    isActive={location.pathname === '/artists'}
-                    collapsed={collapsed}
-                />
-
-                <SidebarDivider />
-
-                {/* 7. My Commissions */}
+                {/* 5. My Commissions */}
                 <NavItem
                     icon={Bookmark}
                     label="My Commissions"
                     path="/commissions"
-                    isActive={location.pathname.startsWith('/commissions')}
+                    isActive={location.pathname.startsWith('/commissions') || location.pathname.startsWith('/orders')}
                     collapsed={collapsed}
                     onClick={guardNav('commission')}
                 />
