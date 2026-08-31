@@ -19,9 +19,9 @@ class StorePortfolioRequest extends FormRequest
         return [
             'title' => ['required','string','max:255'],
             'description' => ['nullable','string'],
-            'thumbnail_media_id' => ['nullable', 'exist:medias,id'],
+            'thumbnail_media_id' => ['nullable', 'exists:medias,id'],
             'visibility' => ['sometimes', new Enum(CommissionVisibility::class)],
-            'sttared' => ['sometimes', 'boolean'],
+            'starred' => ['sometimes', 'boolean'],
 
             // views, likes, and bookmarks are deliberately absent — those
             // are counters incremented by their own actions (viewing,

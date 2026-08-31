@@ -18,9 +18,9 @@ class UpdatePortfolioRequest extends FormRequest
         return [
             'title' => ['sometimes','string','max:255'],
             'description' => ['sometimes', 'nullable' ,'string'],
-            'thumbnail_media_id' => ['sometimes', 'nullable', 'exist:medias,id'],
+            'thumbnail_media_id' => ['sometimes', 'nullable', 'exists:medias,id'],
             'visibility' => ['sometimes', new Enum(CommissionVisibility::class)],
-            'sttared' => ['sometimes', 'boolean'],
+            'starred' => ['sometimes', 'boolean'],
         ];
     }
 }

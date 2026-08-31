@@ -13,6 +13,7 @@ class PortfolioResource extends JsonResource
             'id' => $this->id,
             'title' => $this->title,
             'description' => $this->description,
+            'thumbnail_media_id' => $this->thumbnail_media_id,
             'visibility' => $this->visibility?->value,
             'starred' => $this->starred,
 
