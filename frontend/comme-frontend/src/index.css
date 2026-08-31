@@ -64,6 +64,36 @@
   --ring: #f5aa02;
 }
 
+[data-color-theme="blue"] {
+  --primary: #0284f5;
+  --primary-foreground: #ffffff;
+  --ring: #0284f5;
+}
+
+[data-color-theme="rose"] {
+  --primary: #f5025a;
+  --primary-foreground: #ffffff;
+  --ring: #f5025a;
+}
+
+[data-color-theme="emerald"] {
+  --primary: #10b981;
+  --primary-foreground: #ffffff;
+  --ring: #10b981;
+}
+
+[data-color-theme="magenta"] {
+  --primary: #ec4899;
+  --primary-foreground: #ffffff;
+  --ring: #ec4899;
+}
+
+[data-color-theme="gold"] {
+  --primary: #eab308;
+  --primary-foreground: #2d1b01;
+  --ring: #eab308;
+}
+
 @theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

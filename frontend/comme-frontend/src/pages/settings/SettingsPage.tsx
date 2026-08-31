@@ -19,6 +19,7 @@ import {
     CheckCircle2,
     RefreshCw,
     Shield,
+    Pipette,
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { userService } from '@/services/userService';
@@ -70,9 +71,24 @@ function parseUserAgent(ua: string | null): { browser: string; os: string; isMob
 export const SettingsPage: React.FC = () => {
     const { user, refreshUser, logout } = useAuth();
     const { theme, setTheme } = useTheme();
-    const { colorTheme, setColorTheme } = useColorTheme();
+    const { colorTheme, setColorTheme, customColor, setCustomColor } = useColorTheme();
+    const [tempHex, setTempHex] = useState(customColor || '#A802F5');
     const [activeTab, setActiveTab] = useState<'account' | 'security' | 'appearance' | 'payouts' | 'notifications' | 'privacy'>('account');
     const [savingAccount, setSavingAccount] = useState(false);
+
+    useEffect(() => {
+        if (customColor) {
+            setTempHex(customColor);
+        }
+    }, [customColor]);
+
+    const handleCustomColorChange = (hex: string) => {
+        setTempHex(hex);
+        if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+            setCustomColor(hex);
+            setColorTheme('custom');
+        }
+    };
 
     // Active Sessions State
     const [sessions, setSessions] = useState<ActiveSession[]>([]);
@@ -742,21 +758,27 @@ export const SettingsPage: React.FC = () => {
                                 </CardContent>
                             </Card>
 
+                            {/* Preset Brand Colors */}
                             <Card className="shadow-sm">
                                 <CardHeader className="p-6 sm:p-8 pb-4">
                                     <CardTitle className="text-lg lg:text-xl font-bold flex items-center gap-2.5">
-                                        <Palette className="h-5 w-5 text-primary" /> Brand Accent Color
+                                        <Palette className="h-5 w-5 text-primary" /> Curated Brand Accent Palettes
                                     </CardTitle>
                                     <CardDescription className="text-sm">
-                                        Select your preferred highlight color across buttons, pills, active borders, and badges.
+                                        Select from curated accent colors crafted for high contrast across buttons, active borders, and badges.
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="p-6 sm:p-8 pt-2">
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                         {[
-                                            { id: 'purple', label: 'Royal Purple', hex: '#A802F5', bg: 'bg-[#A802F5]', desc: 'Original energetic brand highlight' },
+                                            { id: 'purple', label: 'Royal Purple', hex: '#A802F5', bg: 'bg-[#A802F5]', desc: 'Original signature highlight' },
                                             { id: 'teal', label: 'Neon Teal', hex: '#02F5A8', bg: 'bg-[#02F5A8]', desc: 'High-contrast futuristic glow' },
-                                            { id: 'orange', label: 'Solar Orange', hex: '#F5AA02', bg: 'bg-[#F5AA02]', desc: 'Warm creative amber tone' },
+                                            { id: 'orange', label: 'Solar Orange', hex: '#F5AA02', bg: 'bg-[#F5AA02]', desc: 'Warm creative amber energy' },
+                                            { id: 'blue', label: 'Electric Blue', hex: '#0284F5', bg: 'bg-[#0284F5]', desc: 'Vivid deep cobalt focus' },
+                                            { id: 'rose', label: 'Crimson Rose', hex: '#F5025A', bg: 'bg-[#F5025A]', desc: 'Radiant passionate ruby' },
+                                            { id: 'emerald', label: 'Emerald Jade', hex: '#10B981', bg: 'bg-[#10B981]', desc: 'Lush organic emerald tone' },
+                                            { id: 'magenta', label: 'Sunset Magenta', hex: '#EC4899', bg: 'bg-[#EC4899]', desc: 'Playful vivid hyper-pink' },
+                                            { id: 'gold', label: 'Cyber Gold', hex: '#EAB308', bg: 'bg-[#EAB308]', desc: 'Luxury high-visibility gold' },
                                         ].map((c) => {
                                             const isActive = colorTheme === c.id;
                                             return (
@@ -764,21 +786,91 @@ export const SettingsPage: React.FC = () => {
                                                     key={c.id}
                                                     type="button"
                                                     onClick={() => setColorTheme(c.id as ColorTheme)}
-                                                    className={`flex flex-col items-start p-6 rounded-2xl border text-left transition-all cursor-pointer ${
+                                                    className={`flex flex-col items-start p-5 rounded-2xl border text-left transition-all cursor-pointer ${
                                                         isActive
                                                             ? 'border-primary bg-primary/10 text-foreground ring-2 ring-primary/40 shadow-xs'
                                                             : 'border-border hover:bg-secondary/60 text-muted-foreground'
                                                     }`}
                                                 >
-                                                    <div className="flex items-center justify-between w-full mb-4">
-                                                        <span className={`h-8 w-8 rounded-full ${c.bg} shadow-md ring-2 ring-border`} />
-                                                        {isActive && <Check className="h-5 w-5 text-primary" />}
+                                                    <div className="flex items-center justify-between w-full mb-3">
+                                                        <span className={`h-7 w-7 rounded-full ${c.bg} shadow-md ring-2 ring-border/80`} />
+                                                        {isActive && <Check className="h-4 w-4 text-primary" />}
                                                     </div>
-                                                    <span className="text-base font-bold text-foreground">{c.label}</span>
-                                                    <span className="text-xs text-muted-foreground mt-1">{c.desc}</span>
+                                                    <span className="text-sm font-bold text-foreground">{c.label}</span>
+                                                    <span className="text-xs text-muted-foreground mt-0.5">{c.desc}</span>
                                                 </button>
                                             );
                                         })}
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Custom Color Wheel Picker */}
+                            <Card className={`shadow-sm transition-all ${colorTheme === 'custom' ? 'border-primary ring-2 ring-primary/30 bg-primary/5' : ''}`}>
+                                <CardHeader className="p-6 sm:p-8 pb-4">
+                                    <div className="flex items-center justify-between">
+                                        <CardTitle className="text-lg lg:text-xl font-bold flex items-center gap-2.5">
+                                            <Pipette className="h-5 w-5 text-primary" /> Custom Accent Color Picker
+                                        </CardTitle>
+                                        {colorTheme === 'custom' && (
+                                            <span className="text-xs font-bold text-primary bg-primary/15 border border-primary/30 px-3 py-1 rounded-full">
+                                                ACTIVE CUSTOM THEME
+                                            </span>
+                                        )}
+                                    </div>
+                                    <CardDescription className="text-sm">
+                                        Choose any custom hex code or click the color swatch to open the interactive color wheel.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="p-6 sm:p-8 pt-2 space-y-6">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 p-5 rounded-2xl border border-border/80 bg-card/60">
+                                        {/* Color preview square / picker trigger */}
+                                        <div className="relative group shrink-0">
+                                            <div
+                                                className="w-16 h-16 rounded-2xl shadow-inner ring-2 ring-border/80 flex items-center justify-center cursor-pointer transition-transform group-hover:scale-105"
+                                                style={{ backgroundColor: tempHex }}
+                                            >
+                                                <Pipette className="h-6 w-6 text-white drop-shadow-md opacity-80 group-hover:opacity-100" />
+                                            </div>
+                                            <input
+                                                type="color"
+                                                value={tempHex.startsWith('#') ? tempHex : '#8b5cf6'}
+                                                onChange={(e) => handleCustomColorChange(e.target.value)}
+                                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                                title="Open Color Wheel"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1.5 flex-1 min-w-0">
+                                            <Label htmlFor="custom_hex" className="text-xs font-semibold text-foreground/90">
+                                                Hex Color Code
+                                            </Label>
+                                            <div className="flex items-center gap-3">
+                                                <Input
+                                                    id="custom_hex"
+                                                    value={tempHex}
+                                                    onChange={(e) => handleCustomColorChange(e.target.value)}
+                                                    placeholder="#A802F5"
+                                                    className="h-12 w-44 rounded-xl font-mono text-sm uppercase px-4 bg-card border-border/80 font-bold"
+                                                    maxLength={7}
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (/^#[0-9A-Fa-f]{6}$/.test(tempHex)) {
+                                                            setCustomColor(tempHex);
+                                                            setColorTheme('custom');
+                                                            toast.success(`Custom color ${tempHex.toUpperCase()} applied!`);
+                                                        } else {
+                                                            toast.error('Please enter a valid 6-digit hex code (e.g. #3B82F6)');
+                                                        }
+                                                    }}
+                                                    className="h-12 px-6 font-bold shadow-md text-xs cursor-pointer"
+                                                >
+                                                    Apply Custom Accent
+                                                </Button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>
