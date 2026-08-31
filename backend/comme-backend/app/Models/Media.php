@@ -4,12 +4,14 @@ namespace App\Models;
 
 use App\Enum\MediaType;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Media extends Model
 {
     protected $table = 'medias';
 
     protected $fillable = [
+        'user_id',
         'file_name',
         'file_path',
         'media_type',
@@ -22,11 +24,17 @@ class Media extends Model
     protected function casts(): array
     {
         return [
+            'user_id' => 'integer',
             'file_size' => 'integer',
             'sort_order' => 'integer',
             'is_thumbnail' => 'boolean',
             'media_type' => MediaType::class,
         ];
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     // Helpers

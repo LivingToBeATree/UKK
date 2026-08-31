@@ -9,6 +9,7 @@ use App\Http\Resources\API\V1\MediaResource;
 use App\Models\Media;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -16,6 +17,7 @@ class MediaController extends Controller
 {
     /**
      * Store and upload a new media file.
+     * Attaches the authenticated user as the media owner.
      */
     public function store(StoreMediaRequest $request): JsonResponse
     {
@@ -35,6 +37,7 @@ class MediaController extends Controller
         $path = $file->storeAs('uploads/' . date('Y/m'), $fileName, 'public');
 
         $media = Media::create([
+            'user_id' => $request->user()->id,
             'file_name' => $originalName,
             'file_path' => $path,
             'media_type' => $mediaType,
@@ -61,9 +64,12 @@ class MediaController extends Controller
 
     /**
      * Remove the specified media from storage.
+     * Strictly authorized via MediaPolicy: only the owner or an admin can delete.
      */
     public function destroy(Media $media): JsonResponse
     {
+        Gate::authorize('delete', $media);
+
         if ($media->file_path && Storage::disk('public')->exists($media->file_path)) {
             Storage::disk('public')->delete($media->file_path);
         }

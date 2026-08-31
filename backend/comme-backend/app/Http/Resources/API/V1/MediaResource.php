@@ -12,6 +12,7 @@ class MediaResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'user_id' => $this->user_id,
             'file_name' => $this->file_name,
             'file_path' => $this->file_path,
             'url' => Storage::disk('public')->url($this->file_path),
