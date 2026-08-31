@@ -9,7 +9,10 @@ export const authService = {
         password: string;
         password_confirmation: string;
     }) => {
-        const res = await api.post<ApiResponse<null>>('/register', payload);
+        const res = await api.post<ApiResponse<null>>('/register', {
+            ...payload,
+            display_name: payload.username,
+        });
         return res.data;
     },
 
@@ -19,9 +22,15 @@ export const authService = {
         return res.data.data;
     },
 
-    // Login (Logs in via session cookie and returns User)
+    // Resend Registration OTP
+    resendRegistrationCode: async (email: string) => {
+        const res = await api.post<ApiResponse<null>>('/register/resend', { email });
+        return res.data;
+    },
+
+    // Login (Logs in via session cookie and returns User or 2FA challenge)
     login: async (payload: { email: string; password: string }) => {
-        const res = await api.post<ApiResponse<User>>('/login', payload);
+        const res = await api.post<ApiResponse<User | { requires_2fa: true; two_factor_token: string }>>('/login', payload);
         return res.data.data;
     },
 

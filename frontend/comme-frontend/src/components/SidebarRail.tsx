@@ -10,9 +10,6 @@ import {
     User as UserIcon,
     Settings,
     LogOut,
-    Shield,
-    Sparkles,
-    Terminal,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/contexts/AuthModalContext';
@@ -330,37 +327,6 @@ export const SidebarRail: React.FC = () => {
                                 <DropdownMenuItem onClick={() => navigate(`/@${user.username}`)}>
                                     <UserIcon className="h-4 w-4 mr-2 text-primary" />
                                     <span>My Profile</span>
-                                </DropdownMenuItem>
-
-                                {user.artist_profile ? (
-                                    <DropdownMenuItem onClick={() => navigate('/dashboard')}>
-                                        <PenTool className="h-4 w-4 mr-2 text-emerald-400" />
-                                        <span>Artist Studio</span>
-                                    </DropdownMenuItem>
-                                ) : (
-                                    <DropdownMenuItem onClick={() => navigate('/apply-artist')}>
-                                        <Sparkles className="h-4 w-4 mr-2 text-amber-400" />
-                                        <span>Become an Artist</span>
-                                    </DropdownMenuItem>
-                                )}
-
-                                {(user.role === 'admin' || user.role === 'moderator') && (
-                                    <DropdownMenuItem onClick={() => navigate('/admin')}>
-                                        <Shield className="h-4 w-4 mr-2 text-amber-400" />
-                                        <span>Staff Admin Panel</span>
-                                    </DropdownMenuItem>
-                                )}
-
-                                {import.meta.env.DEV && (
-                                    <DropdownMenuItem onClick={() => navigate('/dev')}>
-                                        <Terminal className="h-4 w-4 mr-2 text-purple-400" />
-                                        <span>Developer Console</span>
-                                    </DropdownMenuItem>
-                                )}
-
-                                <DropdownMenuItem onClick={() => navigate('/settings')}>
-                                    <Settings className="h-4 w-4 mr-2" />
-                                    <span>Settings &amp; Appearance</span>
                                 </DropdownMenuItem>
 
                                 <DropdownMenuSeparator />
