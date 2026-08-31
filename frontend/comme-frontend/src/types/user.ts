@@ -18,6 +18,7 @@ export interface User {
     following_count?: number;
     posts_count?: number;
     is_following?: boolean;
+    two_factor_enabled?: boolean;
 }
 
 export const isArtist = (user?: User | null): boolean => {

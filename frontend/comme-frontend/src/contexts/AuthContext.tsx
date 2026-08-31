@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { authService } from '@/services/authService';
+import { twoFactorService } from '@/services/twoFactorService';
 import { AuthContext } from './authContextDef';
 import type { User } from '@/types';
 
@@ -30,9 +31,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Login
     const login = async (email: string, password: string) => {
-        const loggedInUser = await authService.login({ email, password });
+        const res = await authService.login({ email, password });
+        if ('requires_2fa' in res && res.requires_2fa) {
+            return res;
+        }
+        const loggedInUser = res as User;
         setUser(loggedInUser);
         localStorage.setItem('comme_user', JSON.stringify(loggedInUser));
+        return loggedInUser;
+    };
+
+    // Login with 2FA
+    const loginWith2FA = async (token: string, code: string) => {
+        const loggedInUser = await twoFactorService.loginWithTwoFactor({
+            two_factor_token: token,
+            code,
+        });
+        setUser(loggedInUser);
+        localStorage.setItem('comme_user', JSON.stringify(loggedInUser));
+        return loggedInUser;
     };
 
     // Confirm Registration OTP
@@ -71,6 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 isAuthenticated: !!user,
                 isLoading,
                 login,
+                loginWith2FA,
                 confirmRegistration,
                 logout,
                 refreshUser,

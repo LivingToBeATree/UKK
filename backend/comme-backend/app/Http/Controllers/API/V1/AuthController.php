@@ -14,6 +14,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -31,6 +33,20 @@ class AuthController extends Controller
         return ApiResponseHelper::successResponse(
             message: 'Registration code sent. Confirm the code to create your account.',
             statusCode: Response::HTTP_ACCEPTED,
+        );
+    }
+
+    public function resendRegistrationCode(Request $request, RegistrationService $registrationService): JsonResponse
+    {
+        $request->validate([
+            'email' => ['required', 'string', 'email'],
+        ]);
+
+        $registrationService->resend($request->email);
+
+        return ApiResponseHelper::successResponse(
+            message: 'A new verification code has been sent to your email.',
+            statusCode: Response::HTTP_OK,
         );
     }
 
@@ -66,11 +82,28 @@ class AuthController extends Controller
             return ApiResponseHelper::errorResponse('Invalid credentials.', Response::HTTP_UNAUTHORIZED);
         }
 
+        $user = Auth::user();
+
+        // If Two-Factor Authentication is enabled, require TOTP verification before issuing session
+        if ($user->hasTwoFactorEnabled()) {
+            Auth::guard('web')->logout();
+
+            $challengeToken = Str::random(40);
+            Cache::put("2fa_challenge_{$challengeToken}", [
+                'user_id' => $user->id,
+                'remember' => $request->boolean('remember'),
+            ], now()->addMinutes(5));
+
+            return ApiResponseHelper::successResponse([
+                'requires_2fa' => true,
+                'two_factor_token' => $challengeToken,
+            ], 'Two-factor authentication code required.');
+        }
+
         if ($request->hasSession()) {
             $request->session()->regenerate();
         }
 
-        $user = Auth::user();
         $deviceHash = $authService->hashDevice($user, $request);
         $isNewDevice = ! $authService->isDeviceKnown($user, $deviceHash);
 

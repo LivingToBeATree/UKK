@@ -27,6 +27,7 @@ class UserResource extends JsonResource
             // Only visible to the user themselves — never on anyone else's
             // profile, no matter where this resource gets nested.
             'email' => $this->when($isSelf, $this->email),
+            'two_factor_enabled' => $this->when($isSelf, $this->hasTwoFactorEnabled()),
 
             'artist_profile' => new ArtistProfileResource($this->whenLoaded('artistProfile')),
         ];
