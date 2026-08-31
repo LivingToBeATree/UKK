@@ -4,6 +4,7 @@ import { motion, type Variants } from 'motion/react';
 import { ArrowRight, ArrowUpRight, Palette, ShieldCheck, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 
 const heroReveal: Variants = {
     hidden: { opacity: 0, y: 16 },
@@ -50,6 +51,7 @@ const gallery = [
 
 export const LandingPage: React.FC = () => {
     const { isAuthenticated, user } = useAuth();
+    const { requireAuth } = useAuthModal();
 
     return (
         <div className="w-full bg-background text-foreground">
@@ -194,12 +196,22 @@ export const LandingPage: React.FC = () => {
                             </p>
                         </div>
                         <div className="lg:col-span-4 flex lg:justify-end">
-                            <Link to={isAuthenticated ? (user?.artist_profile ? '/dashboard' : '/apply-artist') : '/register'}>
-                                <Button size="lg" variant="secondary">
-                                    {isAuthenticated ? (user?.artist_profile ? 'Go to studio' : 'Apply as an artist') : 'Get started'}
-                                    <ArrowRight className="h-4 w-4 ml-2" />
+                            {isAuthenticated ? (
+                                <Link to={user?.artist_profile ? '/dashboard' : '/apply-artist'}>
+                                    <Button size="lg" variant="secondary">
+                                        {user?.artist_profile ? 'Go to studio' : 'Apply as an artist'}
+                                        <ArrowRight className="h-4 w-4 ml-2" />
+                                    </Button>
+                                </Link>
+                            ) : (
+                                <Button
+                                    size="lg"
+                                    variant="secondary"
+                                    onClick={() => requireAuth('studio')}
+                                >
+                                    Get started <ArrowRight className="h-4 w-4 ml-2" />
                                 </Button>
-                            </Link>
+                            )}
                         </div>
                     </div>
                 </div>

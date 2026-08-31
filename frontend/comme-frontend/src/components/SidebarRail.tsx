@@ -16,6 +16,7 @@ import {
     Terminal,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 import { useSidebar } from '@/hooks/useSidebar';
 import { Avatar } from './ui/avatar';
 import { InfoFlyout } from './InfoFlyout';
@@ -36,15 +37,17 @@ interface NavItemProps {
     path: string;
     isActive: boolean;
     collapsed: boolean;
+    onClick?: (e: React.MouseEvent) => void;
 }
 
-const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, path, isActive, collapsed }) => {
+const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, path, isActive, collapsed, onClick }) => {
     const [showTooltip, setShowTooltip] = useState(false);
 
     return (
         <div className="w-full relative">
             <Link
                 to={path}
+                onClick={onClick}
                 onMouseEnter={() => setShowTooltip(true)}
                 onMouseLeave={() => setShowTooltip(false)}
                 className={`w-full h-11 flex items-center rounded-xl pl-2 pr-2.5 gap-3 transition-colors duration-150 cursor-pointer focus:outline-none overflow-hidden ${
@@ -103,11 +106,20 @@ const SidebarDivider = () => (
 /* ─── Main Sidebar Rail Component ─── */
 export const SidebarRail: React.FC = () => {
     const { user, isAuthenticated, logout } = useAuth();
+    const { requireAuth, openAuthModal } = useAuthModal();
     const { collapsed, toggleSidebar } = useSidebar();
     const [showLogoTooltip, setShowLogoTooltip] = useState(false);
     const [showUserTooltip, setShowUserTooltip] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
+
+    /** Intercept clicks on auth-gated sidebar links for guests */
+    const guardNav = (intent: Parameters<typeof requireAuth>[0]) => (e: React.MouseEvent) => {
+        if (!isAuthenticated) {
+            e.preventDefault();
+            requireAuth(intent);
+        }
+    };
 
     const handleLogout = async () => {
         try {
@@ -196,6 +208,7 @@ export const SidebarRail: React.FC = () => {
                     path={user?.artist_profile ? '/dashboard' : '/apply-artist'}
                     isActive={location.pathname.startsWith('/dashboard') || location.pathname === '/apply-artist'}
                     collapsed={collapsed}
+                    onClick={guardNav('studio')}
                 />
 
                 <SidebarDivider />
@@ -236,6 +249,7 @@ export const SidebarRail: React.FC = () => {
                     path="/commissions"
                     isActive={location.pathname.startsWith('/commissions')}
                     collapsed={collapsed}
+                    onClick={guardNav('commission')}
                 />
             </div>
 
@@ -248,6 +262,7 @@ export const SidebarRail: React.FC = () => {
                     path="/settings"
                     isActive={location.pathname === '/settings'}
                     collapsed={collapsed}
+                    onClick={guardNav('generic')}
                 />
 
                 {/* 2. Platform Information & Company Menu (Replaces static footer) */}
@@ -373,9 +388,13 @@ export const SidebarRail: React.FC = () => {
                     <NavItem
                         icon={UserIcon}
                         label="Sign In / Register"
-                        path="/login"
-                        isActive={location.pathname === '/login'}
+                        path="/"
+                        isActive={false}
                         collapsed={collapsed}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            openAuthModal('generic');
+                        }}
                     />
                 )}
             </div>
