@@ -5,11 +5,11 @@ import { LegalLayout } from '@/layouts/LegalLayout';
 export const CookiePage: React.FC = () => {
     return (
         <LegalLayout>
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
                 {/* Center Column */}
-                <div className="lg:col-span-8 space-y-10">
-                    <div className="space-y-4">
-                        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+                <div className="lg:col-span-8 space-y-8">
+                    <div className="space-y-2">
+                        <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground">
                             Cookie Policy
                         </h1>
                         <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
@@ -18,28 +18,33 @@ export const CookiePage: React.FC = () => {
                     </div>
 
                     {/* Checklist */}
-                    <div className="space-y-3.5">
-                        <div className="flex items-start gap-3">
-                            <span className="h-5 w-5 rounded-md bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 font-bold">
-                                <Check className="h-3.5 w-3.5 stroke-[3]" />
-                            </span>
-                            <p className="text-sm sm:text-base text-foreground font-medium">
-                                <strong>Strictly Essential Only:</strong> Session authentication and CSRF security tokens required to use your account safely.
-                            </p>
-                        </div>
-                        <div className="flex items-start gap-3">
-                            <span className="h-5 w-5 rounded-md bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 font-bold">
-                                <Check className="h-3.5 w-3.5 stroke-[3]" />
-                            </span>
-                            <p className="text-sm sm:text-base text-foreground font-medium">
-                                <strong>Zero Ad Trackers:</strong> No cross-site advertising pixels, third-party marketing beacons, or data trackers.
-                            </p>
+                    <div className="space-y-4">
+                        <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                            Privacy-First Approach
+                        </h2>
+                        <div className="space-y-3">
+                            <div className="flex items-start gap-3 p-3.5 rounded-xl border border-border/60 bg-secondary/20">
+                                <span className="h-5 w-5 rounded-md bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 font-bold">
+                                    <Check className="h-3.5 w-3.5 stroke-[3]" />
+                                </span>
+                                <p className="text-xs sm:text-sm text-foreground font-medium leading-relaxed">
+                                    <strong>Strictly Essential Only:</strong> Session authentication and CSRF security tokens required to use your account safely.
+                                </p>
+                            </div>
+                            <div className="flex items-start gap-3 p-3.5 rounded-xl border border-border/60 bg-secondary/20">
+                                <span className="h-5 w-5 rounded-md bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 font-bold">
+                                    <Check className="h-3.5 w-3.5 stroke-[3]" />
+                                </span>
+                                <p className="text-xs sm:text-sm text-foreground font-medium leading-relaxed">
+                                    <strong>Zero Ad Trackers:</strong> No cross-site advertising pixels, third-party marketing beacons, or telemetry trackers.
+                                </p>
+                            </div>
                         </div>
                     </div>
 
                     {/* Cookie Breakdown Table */}
-                    <div className="space-y-4 pt-6 border-t border-border/60 text-sm leading-relaxed text-muted-foreground">
-                        <h2 className="text-lg font-bold text-foreground">
+                    <div className="space-y-4 pt-6 border-t border-border/60 text-xs sm:text-sm leading-relaxed text-muted-foreground">
+                        <h2 className="text-base font-bold text-foreground">
                             Cookies &amp; Storage Tokens Used by Comme
                         </h2>
 
@@ -86,7 +91,7 @@ export const CookiePage: React.FC = () => {
 
                 {/* Right Column: Cookie Info Card */}
                 <div className="lg:col-span-4">
-                    <div className="sticky top-12 p-5 rounded-2xl bg-card border border-border/80 shadow-xs space-y-3.5 text-xs text-muted-foreground">
+                    <div className="sticky top-24 p-5 rounded-2xl bg-card border border-border/80 shadow-xs space-y-3.5 text-xs text-muted-foreground">
                         <h3 className="font-bold text-foreground text-sm flex items-center justify-between">
                             <span className="flex items-center gap-1.5">
                                 <Cookie className="h-4 w-4 text-amber-400" />

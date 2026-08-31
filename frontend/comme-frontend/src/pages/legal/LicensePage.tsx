@@ -1,84 +1,89 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Check, Ban, ArrowUpRight } from 'lucide-react';
+import { Check, Ban, ArrowUpRight, Sparkles } from 'lucide-react';
 import { LegalLayout } from '@/layouts/LegalLayout';
 
 export const LicensePage: React.FC = () => {
     return (
         <LegalLayout>
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
                 {/* Center Column: License summary & checklist */}
-                <div className="lg:col-span-8 space-y-10">
+                <div className="lg:col-span-8 space-y-8">
                     {/* Header */}
-                    <div className="space-y-4">
-                        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-                            License
+                    <div className="space-y-2">
+                        <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground">
+                            Comme Art License
                         </h1>
                         <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                            Comme artworks and commissioned deliverables are made for direct creator-client collaboration. Our license reflects that.
+                            Comme artworks and commissioned deliverables are crafted for direct creator-client collaboration. Our transparent licensing structure reflects that.
                         </p>
                     </div>
 
                     {/* What is permitted checklist */}
-                    <div className="space-y-3.5">
-                        <div className="flex items-start gap-3">
-                            <span className="h-5 w-5 rounded-md bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 font-bold">
-                                <Check className="h-3.5 w-3.5 stroke-[3]" />
-                            </span>
-                            <p className="text-sm sm:text-base text-foreground font-medium">
-                                All commissioned artworks can be <strong>downloaded in full resolution</strong> and used freely according to your selected tier
-                            </p>
-                        </div>
-                        <div className="flex items-start gap-3">
-                            <span className="h-5 w-5 rounded-md bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 font-bold">
-                                <Check className="h-3.5 w-3.5 stroke-[3]" />
-                            </span>
-                            <p className="text-sm sm:text-base text-foreground font-medium">
-                                <strong>Commercial and non-commercial</strong> purposes supported with transparent add-on licensing
-                            </p>
-                        </div>
-                        <div className="flex items-start gap-3">
-                            <span className="h-5 w-5 rounded-md bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 font-bold">
-                                <Check className="h-3.5 w-3.5 stroke-[3]" />
-                            </span>
-                            <p className="text-sm sm:text-base text-foreground font-medium">
-                                <strong>No additional permission needed</strong> (though crediting your artist is appreciated!)
-                            </p>
+                    <div className="space-y-4">
+                        <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                            What is permitted
+                        </h2>
+                        <div className="space-y-3">
+                            <div className="flex items-start gap-3 p-3.5 rounded-xl border border-border/60 bg-secondary/20">
+                                <span className="h-5 w-5 rounded-md bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 font-bold">
+                                    <Check className="h-3.5 w-3.5 stroke-[3]" />
+                                </span>
+                                <p className="text-xs sm:text-sm text-foreground font-medium leading-relaxed">
+                                    All commissioned artworks can be <strong>downloaded in original full resolution</strong> and used freely according to your selected tier agreement.
+                                </p>
+                            </div>
+                            <div className="flex items-start gap-3 p-3.5 rounded-xl border border-border/60 bg-secondary/20">
+                                <span className="h-5 w-5 rounded-md bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 font-bold">
+                                    <Check className="h-3.5 w-3.5 stroke-[3]" />
+                                </span>
+                                <p className="text-xs sm:text-sm text-foreground font-medium leading-relaxed">
+                                    <strong>Commercial and non-commercial</strong> usages are supported transparently with creator-defined add-on licensing options.
+                                </p>
+                            </div>
+                            <div className="flex items-start gap-3 p-3.5 rounded-xl border border-border/60 bg-secondary/20">
+                                <span className="h-5 w-5 rounded-md bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 font-bold">
+                                    <Check className="h-3.5 w-3.5 stroke-[3]" />
+                                </span>
+                                <p className="text-xs sm:text-sm text-foreground font-medium leading-relaxed">
+                                    <strong>No additional permissions needed</strong> for agreed project scope (though crediting your artist is always appreciated!).
+                                </p>
+                            </div>
                         </div>
                     </div>
 
                     {/* What is not permitted */}
-                    <div className="space-y-4 pt-4">
-                        <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-                            What is not permitted <span role="img" aria-label="thumbs down">👎</span>
+                    <div className="space-y-4">
+                        <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                            <span>What is not permitted</span>
                         </h2>
                         <div className="space-y-3">
-                            <div className="flex items-start gap-3">
-                                <span className="h-5 w-5 rounded-md bg-red-500/20 text-red-400 flex items-center justify-center shrink-0 mt-0.5 font-bold">
-                                    <Ban className="h-3.5 w-3.5 stroke-[2.5]" />
+                            <div className="flex items-start gap-3 p-3.5 rounded-xl border border-rose-500/20 bg-rose-500/5">
+                                <span className="h-5 w-5 rounded-md bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 mt-0.5 font-bold">
+                                    <Ban className="h-3.5 w-3.5 stroke-[3]" />
                                 </span>
-                                <p className="text-sm text-muted-foreground">
-                                    Standard personal commission assets cannot be <strong>resold or monetized</strong> without purchasing the commercial rights tier.
+                                <p className="text-xs sm:text-sm text-foreground font-medium leading-relaxed">
+                                    Standard personal commission deliverables cannot be <strong>resold, sublicensed, or monetized</strong> without purchasing a commercial license option.
                                 </p>
                             </div>
-                            <div className="flex items-start gap-3">
-                                <span className="h-5 w-5 rounded-md bg-red-500/20 text-red-400 flex items-center justify-center shrink-0 mt-0.5 font-bold">
-                                    <Ban className="h-3.5 w-3.5 stroke-[2.5]" />
+                            <div className="flex items-start gap-3 p-3.5 rounded-xl border border-rose-500/20 bg-rose-500/5">
+                                <span className="h-5 w-5 rounded-md bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 mt-0.5 font-bold">
+                                    <Ban className="h-3.5 w-3.5 stroke-[3]" />
                                 </span>
-                                <p className="text-sm text-muted-foreground">
-                                    Scraping or compiling artwork from Comme to <strong>train generative AI models</strong> or replicate a competing marketplace.
+                                <p className="text-xs sm:text-sm text-foreground font-medium leading-relaxed">
+                                    Scraping, harvesting, or compiling artworks from Comme to <strong>train generative AI models</strong> or replicate a competing marketplace.
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    {/* Longform Legal Text */}
-                    <div className="space-y-4 pt-8 border-t border-border/60 text-sm leading-relaxed text-muted-foreground">
-                        <h2 className="text-lg font-bold text-foreground">
-                            Longform
+                    {/* Longform Summary */}
+                    <div className="space-y-4 pt-6 border-t border-border/60 text-xs sm:text-sm leading-relaxed text-muted-foreground">
+                        <h2 className="text-base font-bold text-foreground">
+                            Grant of License
                         </h2>
                         <p>
-                            Upon milestone completion and escrow release, the artist grants the client an irrevocable, worldwide license to download, display, and utilize the commissioned artwork in accordance with the purchased order specifications.
+                            Upon buyer approval and milestone release, the creator grants the client an irrevocable, worldwide license to download, display, and utilize the commissioned artwork in accordance with the purchased tier specifications.
                         </p>
                         <p>
                             For personal tier commissions, this license permits private display, personal social media avatars, and non-commercial reproduction. For commercial tier commissions, this license encompasses global commercial distribution, branding, streaming, and merchandise manufacturing.
@@ -98,16 +103,19 @@ export const LicensePage: React.FC = () => {
 
                 {/* Right Column: Unsplash-style Tip Box */}
                 <div className="lg:col-span-4">
-                    <div className="sticky top-12 p-5 rounded-2xl bg-card border border-border/80 shadow-xs space-y-3.5 text-xs text-muted-foreground">
+                    <div className="sticky top-24 p-5 rounded-2xl bg-card border border-border/80 shadow-xs space-y-3.5 text-xs text-muted-foreground">
                         <h3 className="font-bold text-foreground text-sm flex items-center justify-between">
-                            <span>Tip: How to give attribution</span>
+                            <span className="flex items-center gap-1.5">
+                                <Sparkles className="h-4 w-4 text-primary" />
+                                Attribution Guidelines
+                            </span>
                             <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
                         </h3>
                         <p className="leading-relaxed">
-                            Even though artist attribution isn&apos;t mandatory for commercial licenses, Comme creators appreciate it as it provides exposure to their craft and supports their creative growth.
+                            Even though artist attribution isn&apos;t mandatory for commercial licenses, Comme creators appreciate it as it provides exposure to their craft.
                         </p>
-                        <div className="p-3 rounded-xl bg-secondary/70 border-l-2 border-primary font-mono text-[11px] text-foreground">
-                            Art by <span className="underline">@artist_handle</span> on Comme
+                        <div className="p-2.5 rounded-lg bg-secondary/50 font-mono text-[11px] text-foreground">
+                            Artwork by @creator on Comme
                         </div>
                     </div>
                 </div>
