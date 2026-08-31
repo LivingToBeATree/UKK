@@ -18,8 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi(); // Sanctum SPA cookie auth — required for auth:sanctum to work with the React app
 
         $middleware->validateCsrfTokens(except: [
-            'api/midtrans/webhook',
-            'api/midtrans/iris-webhook',
+            'api/*',
             'midtrans/webhook',
             'midtrans/iris-webhook',
         ]);
