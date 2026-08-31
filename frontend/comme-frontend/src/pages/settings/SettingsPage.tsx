@@ -275,9 +275,9 @@ export const SettingsPage: React.FC = () => {
     };
 
     const navItems = [
-        { id: 'account', label: 'Account Information', icon: User, desc: 'Administrative identity & public presentation' },
+        { id: 'account', label: 'Account Information', icon: User, desc: 'Administrative identity & public handle' },
         { id: 'security', label: 'Security & 2FA', icon: Lock, desc: 'Password, two-factor auth & devices' },
-        { id: 'appearance', label: 'Appearance & Theme', icon: Palette, desc: 'Display mode & accent colors' },
+        { id: 'appearance', label: 'Appearance & Theme', icon: Palette, desc: 'Display theme & brand accent color' },
         ...(user?.artist_profile ? [
             { id: 'payouts', label: 'Artist Payout Account', icon: CreditCard, desc: 'Bank & e-wallet disbursement' }
         ] : []),
@@ -288,7 +288,7 @@ export const SettingsPage: React.FC = () => {
     const getTabMeta = () => {
         switch (activeTab) {
             case 'account':
-                return { title: 'Account Information', desc: 'Manage your administrative identity, email verification, handle, and bio statement.' };
+                return { title: 'Account Information', desc: 'Manage your administrative credentials, email verification status, handle, and public artist statement.' };
             case 'security':
                 return { title: 'Security & Authentication', desc: 'Protect your account with high-entropy passwords, 2FA TOTP apps, and device session monitoring.' };
             case 'appearance':
@@ -309,33 +309,33 @@ export const SettingsPage: React.FC = () => {
     return (
         <div className="flex-1 min-h-screen flex flex-col md:flex-row bg-background text-foreground">
             
-            {/* ── Left Sticky Settings Sidebar (Edge-to-Edge) ── */}
-            <aside className="w-full md:w-72 lg:w-80 shrink-0 border-r border-border/70 bg-card/30 flex flex-col justify-between min-h-screen p-5 lg:p-6 sticky top-0 md:h-screen overflow-y-auto">
-                <div className="space-y-6">
-                    {/* User Identity Mini Card */}
-                    <div className="p-4 rounded-2xl border border-border/80 bg-card/80 shadow-xs space-y-3">
-                        <div className="flex items-center gap-3">
-                            <Avatar size="md" fallback={user?.display_name || user?.username || '?'} src={user?.avatar_url} />
+            {/* ── Left Sticky Settings Sidebar (Edge-to-Edge, Wider & More Prominent) ── */}
+            <aside className="w-full md:w-80 lg:w-88 shrink-0 border-r border-border/70 bg-card/30 flex flex-col justify-between min-h-screen p-6 lg:p-7 sticky top-0 md:h-screen overflow-y-auto">
+                <div className="space-y-7">
+                    {/* User Identity Card */}
+                    <div className="p-4 sm:p-5 rounded-2xl border border-border/80 bg-card/90 shadow-sm space-y-3.5">
+                        <div className="flex items-center gap-3.5">
+                            <Avatar size="lg" fallback={user?.display_name || user?.username || '?'} src={user?.avatar_url} />
                             <div className="overflow-hidden min-w-0">
-                                <p className="font-bold text-sm text-foreground truncate">{user?.display_name || user?.username}</p>
-                                <p className="text-xs text-muted-foreground truncate">@{user?.username}</p>
+                                <p className="font-bold text-base text-foreground truncate">{user?.display_name || user?.username}</p>
+                                <p className="text-xs text-muted-foreground truncate font-medium">@{user?.username}</p>
                             </div>
                         </div>
-                        <div className="pt-2 border-t border-border/60 flex items-center justify-between text-[11px]">
+                        <div className="pt-2.5 border-t border-border/60 flex items-center justify-between text-xs">
                             <span className="text-muted-foreground font-medium">Account Role</span>
-                            <span className="font-bold uppercase tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">
+                            <span className="font-bold uppercase tracking-wider text-primary bg-primary/10 px-2.5 py-0.5 rounded-lg border border-primary/20 text-[11px]">
                                 {user?.artist_profile ? 'Artist' : user?.role || 'User'}
                             </span>
                         </div>
                     </div>
 
                     {/* Section Label */}
-                    <div className="space-y-1">
-                        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground px-2">
+                    <div className="space-y-1.5">
+                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-2">
                             Preferences &amp; Security
                         </p>
                         {/* Navigation Links */}
-                        <nav className="flex flex-col space-y-1">
+                        <nav className="flex flex-col space-y-1.5">
                             {navItems.map((item) => {
                                 const Icon = item.icon;
                                 const isActive = activeTab === item.id;
@@ -344,7 +344,7 @@ export const SettingsPage: React.FC = () => {
                                         key={item.id}
                                         type="button"
                                         onClick={() => setActiveTab(item.id as typeof activeTab)}
-                                        className={`w-full text-left transition-all py-3 px-3.5 rounded-xl flex items-center justify-between group cursor-pointer ${
+                                        className={`w-full text-left transition-all py-3.5 px-4 rounded-xl flex items-center justify-between group cursor-pointer ${
                                             isActive
                                                 ? item.isDestructive
                                                     ? 'bg-rose-500/15 text-rose-400 font-bold ring-1 ring-rose-500/30 shadow-xs'
@@ -354,16 +354,16 @@ export const SettingsPage: React.FC = () => {
                                                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
                                         }`}
                                     >
-                                        <div className="flex items-center gap-3">
-                                            <Icon className={`h-4 w-4 shrink-0 ${
+                                        <div className="flex items-center gap-3.5">
+                                            <Icon className={`h-5 w-5 shrink-0 ${
                                                 isActive
                                                     ? item.isDestructive ? 'text-rose-400' : 'text-primary'
                                                     : item.isDestructive ? 'text-rose-400/80' : 'text-muted-foreground group-hover:text-foreground'
                                             }`} />
-                                            <span className="text-xs font-semibold">{item.label}</span>
+                                            <span className="text-sm font-semibold">{item.label}</span>
                                         </div>
                                         {isActive && (
-                                            <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${item.isDestructive ? 'bg-rose-400' : 'bg-primary'}`} />
+                                            <span className={`h-2 w-2 rounded-full shrink-0 ${item.isDestructive ? 'bg-rose-400' : 'bg-primary'}`} />
                                         )}
                                     </button>
                                 );
@@ -373,20 +373,20 @@ export const SettingsPage: React.FC = () => {
                 </div>
 
                 {/* Footer Security Badge */}
-                <div className="pt-6 border-t border-border/50 text-[11px] text-muted-foreground flex items-center gap-2">
-                    <Shield className="h-3.5 w-3.5 text-primary shrink-0" />
+                <div className="pt-6 border-t border-border/50 text-xs text-muted-foreground flex items-center gap-2.5">
+                    <Shield className="h-4 w-4 text-primary shrink-0" />
                     <span>Encrypted &amp; Protected by Comme Core</span>
                 </div>
             </aside>
 
-            {/* ── Right Content Area (Spacious & Responsive) ── */}
-            <main className="flex-1 min-w-0 p-6 sm:p-10 lg:p-12 overflow-y-auto max-w-5xl">
+            {/* ── Right Content Area (Comfortable, Generously Sized & Max-W-6xl) ── */}
+            <main className="flex-1 min-w-0 p-6 sm:p-10 lg:p-14 overflow-y-auto max-w-6xl">
                 {/* Active Section Header */}
-                <div className="mb-8 space-y-1.5 border-b border-border/60 pb-5">
-                    <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-foreground">
+                <div className="mb-8 space-y-2 border-b border-border/60 pb-6">
+                    <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground">
                         {tabMeta.title}
                     </h1>
-                    <p className="text-xs lg:text-sm text-muted-foreground leading-relaxed">
+                    <p className="text-sm lg:text-base text-muted-foreground leading-relaxed">
                         {tabMeta.desc}
                     </p>
                 </div>
@@ -399,80 +399,80 @@ export const SettingsPage: React.FC = () => {
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -8 }}
-                            className="space-y-6"
+                            className="space-y-8"
                         >
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-base font-bold flex items-center gap-2">
-                                        <User className="h-4 w-4 text-primary" /> Profile Presentation &amp; Email
+                            <Card className="shadow-sm">
+                                <CardHeader className="p-6 sm:p-8 pb-4">
+                                    <CardTitle className="text-lg lg:text-xl font-bold flex items-center gap-2.5">
+                                        <User className="h-5 w-5 text-primary" /> Profile Presentation &amp; Email
                                     </CardTitle>
-                                    <CardDescription className="text-xs">
+                                    <CardDescription className="text-sm">
                                         Your primary administrative credentials and public creator identity.
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent className="space-y-6">
-                                    <form onSubmit={handleAccount(onAccountSubmit)} className="space-y-5">
+                                <CardContent className="p-6 sm:p-8 pt-2 space-y-6">
+                                    <form onSubmit={handleAccount(onAccountSubmit)} className="space-y-6">
                                         {/* Registered Email */}
-                                        <div className="space-y-1.5">
+                                        <div className="space-y-2">
                                             <div className="flex items-center justify-between">
-                                                <Label htmlFor="email" className="text-xs font-semibold text-foreground/90">
+                                                <Label htmlFor="email" className="text-sm font-semibold text-foreground/90">
                                                     Registered Email Address
                                                 </Label>
-                                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                                                    <CheckCircle2 className="h-3 w-3" /> Verified
+                                                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                                                    <CheckCircle2 className="h-3.5 w-3.5" /> Verified
                                                 </span>
                                             </div>
                                             <Input
                                                 id="email"
                                                 value={user?.email || ''}
                                                 disabled
-                                                className="h-11 rounded-xl bg-muted/60 text-muted-foreground border-border/60 cursor-not-allowed font-mono text-xs"
+                                                className="h-12 rounded-xl bg-muted/60 text-muted-foreground border-border/60 cursor-not-allowed font-mono text-sm px-4"
                                             />
-                                            <p className="text-[11px] text-muted-foreground">
+                                            <p className="text-xs text-muted-foreground">
                                                 Email changes require identity verification. Contact staff support if you need to update your email.
                                             </p>
                                         </div>
 
                                         {/* 2-Column Row for Username & Display Name */}
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            <div className="space-y-1.5">
-                                                <Label htmlFor="username" className="text-xs font-semibold text-foreground/90">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="username" className="text-sm font-semibold text-foreground/90">
                                                     Username <span className="text-muted-foreground font-normal">(@handle)</span>
                                                 </Label>
                                                 <Input
                                                     id="username"
-                                                    className="h-11 rounded-xl bg-card border-border/80 focus-visible:ring-primary font-mono text-sm"
+                                                    className="h-12 rounded-xl bg-card border-border/80 focus-visible:ring-primary font-mono text-sm px-4"
                                                     {...regAccount('username')}
                                                 />
                                             </div>
 
-                                            <div className="space-y-1.5">
-                                                <Label htmlFor="display_name" className="text-xs font-semibold text-foreground/90">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="display_name" className="text-sm font-semibold text-foreground/90">
                                                     Display Name
                                                 </Label>
                                                 <Input
                                                     id="display_name"
-                                                    className="h-11 rounded-xl bg-card border-border/80 focus-visible:ring-primary"
+                                                    className="h-12 rounded-xl bg-card border-border/80 focus-visible:ring-primary text-sm px-4"
                                                     {...regAccount('display_name')}
                                                 />
                                             </div>
                                         </div>
 
                                         {/* Bio */}
-                                        <div className="space-y-1.5">
-                                            <Label htmlFor="bio" className="text-xs font-semibold text-foreground/90">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="bio" className="text-sm font-semibold text-foreground/90">
                                                 Bio &amp; Artist Statement
                                             </Label>
                                             <Textarea
                                                 id="bio"
-                                                rows={4}
+                                                rows={5}
                                                 placeholder="Tell the community about your craft, aesthetic style, or background..."
-                                                className="rounded-xl bg-card border-border/80 focus-visible:ring-primary text-sm"
+                                                className="rounded-xl bg-card border-border/80 focus-visible:ring-primary text-sm p-4 leading-relaxed"
                                                 {...regAccount('bio')}
                                             />
                                         </div>
 
-                                        <Button type="submit" disabled={savingAccount} className="h-11 px-6 font-bold shadow-md cursor-pointer">
+                                        <Button type="submit" disabled={savingAccount} className="h-12 px-8 text-sm font-bold shadow-md cursor-pointer">
                                             {savingAccount ? 'Saving Changes...' : 'Save Account Info'}
                                         </Button>
                                     </form>
@@ -488,56 +488,56 @@ export const SettingsPage: React.FC = () => {
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -8 }}
-                            className="space-y-6"
+                            className="space-y-8"
                         >
                             {/* Change Password Card */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-base font-bold flex items-center gap-2">
-                                        <Lock className="h-4 w-4 text-primary" /> Password Authentication
+                            <Card className="shadow-sm">
+                                <CardHeader className="p-6 sm:p-8 pb-4">
+                                    <CardTitle className="text-lg lg:text-xl font-bold flex items-center gap-2.5">
+                                        <Lock className="h-5 w-5 text-primary" /> Password Authentication
                                     </CardTitle>
-                                    <CardDescription className="text-xs">
+                                    <CardDescription className="text-sm">
                                         Ensure your account is using a strong, unique password.
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent>
-                                    <form onSubmit={handlePassword(onPasswordSubmit)} className="space-y-4">
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                            <div className="space-y-1.5">
-                                                <Label htmlFor="current_password" className="text-xs font-semibold">Current Password</Label>
+                                <CardContent className="p-6 sm:p-8 pt-2 space-y-6">
+                                    <form onSubmit={handlePassword(onPasswordSubmit)} className="space-y-5">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="current_password" className="text-sm font-semibold">Current Password</Label>
                                                 <Input
                                                     id="current_password"
                                                     type="password"
                                                     placeholder="••••••••"
-                                                    className="h-11 rounded-xl bg-card border-border/80"
+                                                    className="h-12 rounded-xl bg-card border-border/80 px-4"
                                                     {...regPassword('current_password')}
                                                     required
                                                 />
                                             </div>
-                                            <div className="space-y-1.5">
-                                                <Label htmlFor="new_password" className="text-xs font-semibold">New Password (min. 8)</Label>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="new_password" className="text-sm font-semibold">New Password (min. 8)</Label>
                                                 <Input
                                                     id="new_password"
                                                     type="password"
                                                     placeholder="••••••••"
-                                                    className="h-11 rounded-xl bg-card border-border/80"
+                                                    className="h-12 rounded-xl bg-card border-border/80 px-4"
                                                     {...regPassword('password')}
                                                     required
                                                 />
                                             </div>
-                                            <div className="space-y-1.5">
-                                                <Label htmlFor="confirm_password" className="text-xs font-semibold">Confirm New Password</Label>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="confirm_password" className="text-sm font-semibold">Confirm New Password</Label>
                                                 <Input
                                                     id="confirm_password"
                                                     type="password"
                                                     placeholder="••••••••"
-                                                    className="h-11 rounded-xl bg-card border-border/80"
+                                                    className="h-12 rounded-xl bg-card border-border/80 px-4"
                                                     {...regPassword('password_confirmation')}
                                                     required
                                                 />
                                             </div>
                                         </div>
-                                        <Button type="submit" className="h-11 px-6 font-bold shadow-md cursor-pointer">
+                                        <Button type="submit" className="h-12 px-8 text-sm font-bold shadow-md cursor-pointer">
                                             Update Password
                                         </Button>
                                     </form>
@@ -545,14 +545,14 @@ export const SettingsPage: React.FC = () => {
                             </Card>
 
                             {/* 2FA Interactive Card */}
-                            <Card className={user?.two_factor_enabled ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-border/70 bg-card'}>
-                                <CardHeader>
+                            <Card className={`shadow-sm ${user?.two_factor_enabled ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-border/70 bg-card'}`}>
+                                <CardHeader className="p-6 sm:p-8 pb-4">
                                     <div className="flex items-center justify-between">
-                                        <CardTitle className="text-base font-bold flex items-center gap-2">
-                                            <ShieldCheck className={`h-4 w-4 ${user?.two_factor_enabled ? 'text-emerald-400' : 'text-primary'}`} />
+                                        <CardTitle className="text-lg lg:text-xl font-bold flex items-center gap-2.5">
+                                            <ShieldCheck className={`h-5 w-5 ${user?.two_factor_enabled ? 'text-emerald-400' : 'text-primary'}`} />
                                             Two-Factor Authentication (2FA TOTP)
                                         </CardTitle>
-                                        <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold border ${
+                                        <span className={`text-xs px-3 py-1 rounded-full font-bold border ${
                                             user?.two_factor_enabled
                                                 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
                                                 : 'bg-secondary text-muted-foreground border-border'
@@ -560,29 +560,27 @@ export const SettingsPage: React.FC = () => {
                                             {user?.two_factor_enabled ? 'ENABLED & ACTIVE' : 'DISABLED'}
                                         </span>
                                     </div>
-                                    <CardDescription className="text-xs">
+                                    <CardDescription className="text-sm mt-1">
                                         {user?.two_factor_enabled
                                             ? 'Your account is protected with a Time-based One-Time Password (TOTP) authenticator app.'
                                             : 'Add an extra layer of security to your account by requiring a 6-digit code from Google Authenticator, Authy, or Apple Passwords when signing in.'}
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent>
+                                <CardContent className="p-6 sm:p-8 pt-2">
                                     {user?.two_factor_enabled ? (
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-3.5">
                                             <Button
                                                 variant="outline"
-                                                size="sm"
                                                 onClick={() => setIs2FARecoveryOpen(true)}
-                                                className="text-xs font-semibold cursor-pointer"
+                                                className="h-11 px-5 text-xs font-semibold cursor-pointer"
                                             >
                                                 View Recovery Codes
                                             </Button>
                                             <Button
                                                 variant="ghost"
-                                                size="sm"
                                                 onClick={handleDisable2FA}
                                                 disabled={disabling2FA}
-                                                className="text-xs text-rose-400 hover:text-rose-500 hover:bg-rose-500/10 cursor-pointer"
+                                                className="h-11 px-5 text-xs text-rose-400 hover:text-rose-500 hover:bg-rose-500/10 cursor-pointer"
                                             >
                                                 {disabling2FA ? 'Disabling...' : 'Disable 2FA'}
                                             </Button>
@@ -590,9 +588,9 @@ export const SettingsPage: React.FC = () => {
                                     ) : (
                                         <Button
                                             onClick={() => setIs2FASetupOpen(true)}
-                                            className="h-11 px-6 text-xs font-bold shadow-md gap-2 cursor-pointer"
+                                            className="h-12 px-7 text-sm font-bold shadow-md gap-2 cursor-pointer"
                                         >
-                                            <ShieldCheck className="h-4 w-4" />
+                                            <ShieldCheck className="h-5 w-5" />
                                             Set Up Two-Factor Authentication
                                         </Button>
                                     )}
@@ -600,14 +598,14 @@ export const SettingsPage: React.FC = () => {
                             </Card>
 
                             {/* Active Sessions & Devices Card */}
-                            <Card>
-                                <CardHeader>
+                            <Card className="shadow-sm">
+                                <CardHeader className="p-6 sm:p-8 pb-4">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <CardTitle className="text-base font-bold flex items-center gap-2">
-                                                <Smartphone className="h-4 w-4 text-primary" /> Active Sessions &amp; Devices
+                                            <CardTitle className="text-lg lg:text-xl font-bold flex items-center gap-2.5">
+                                                <Smartphone className="h-5 w-5 text-primary" /> Active Sessions &amp; Devices
                                             </CardTitle>
-                                            <CardDescription className="text-xs mt-1">
+                                            <CardDescription className="text-sm mt-1">
                                                 Devices and browsers currently authenticated to your account.
                                             </CardDescription>
                                         </div>
@@ -616,45 +614,45 @@ export const SettingsPage: React.FC = () => {
                                             size="sm"
                                             onClick={fetchSessions}
                                             disabled={loadingSessions}
-                                            className="text-xs gap-1.5 cursor-pointer"
+                                            className="text-xs gap-1.5 h-10 px-4 cursor-pointer"
                                         >
                                             <RefreshCw className={`h-3.5 w-3.5 ${loadingSessions ? 'animate-spin' : ''}`} /> Refresh
                                         </Button>
                                     </div>
                                 </CardHeader>
-                                <CardContent className="space-y-4">
+                                <CardContent className="p-6 sm:p-8 pt-2 space-y-4">
                                     {sessions.length === 0 ? (
-                                        <p className="text-xs text-muted-foreground py-2">No active sessions tracked.</p>
+                                        <p className="text-sm text-muted-foreground py-3">No active sessions tracked.</p>
                                     ) : (
-                                        <div className="space-y-2.5">
+                                        <div className="space-y-3">
                                             {sessions.map((s) => {
                                                 const { browser, os, isMobile } = parseUserAgent(s.user_agent);
 
                                                 return (
                                                     <div
                                                         key={s.id}
-                                                        className={`p-3.5 rounded-xl border flex items-center justify-between transition-all ${
+                                                        className={`p-4 rounded-xl border flex items-center justify-between transition-all ${
                                                             s.is_current
                                                                 ? 'border-emerald-500/30 bg-emerald-500/5'
                                                                 : 'border-border/70 bg-card hover:bg-secondary/40'
                                                         }`}
                                                     >
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="h-9 w-9 rounded-lg bg-secondary flex items-center justify-center text-foreground">
-                                                                {isMobile ? <Smartphone className="h-4 w-4" /> : <Laptop className="h-4 w-4" />}
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="h-11 w-11 rounded-xl bg-secondary flex items-center justify-center text-foreground shrink-0">
+                                                                {isMobile ? <Smartphone className="h-5 w-5" /> : <Laptop className="h-5 w-5" />}
                                                             </div>
                                                             <div>
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="font-semibold text-xs text-foreground">
+                                                                <div className="flex items-center gap-2.5">
+                                                                    <span className="font-semibold text-sm text-foreground">
                                                                         {browser} on {os}
                                                                     </span>
                                                                     {s.is_current && (
-                                                                        <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/20 px-2 py-0.2 rounded-full">
+                                                                        <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/20 px-2.5 py-0.5 rounded-full">
                                                                             Current Device
                                                                         </span>
                                                                     )}
                                                                 </div>
-                                                                <p className="text-[11px] text-muted-foreground mt-0.5">
+                                                                <p className="text-xs text-muted-foreground mt-0.5">
                                                                     IP: <span className="font-mono">{s.ip_address || '127.0.0.1'}</span> • Last active: {s.last_activity}
                                                                 </p>
                                                             </div>
@@ -677,14 +675,14 @@ export const SettingsPage: React.FC = () => {
                                         </div>
                                     )}
 
-                                    <div className="pt-2 border-t border-border/60">
+                                    <div className="pt-3 border-t border-border/60">
                                         <Button
                                             variant="destructive"
                                             size="sm"
                                             onClick={handleLogoutAllOtherDevices}
-                                            className="text-xs gap-1.5 cursor-pointer"
+                                            className="h-10 px-4 text-xs font-bold gap-1.5 cursor-pointer"
                                         >
-                                            <LogOut className="h-3.5 w-3.5" /> Log Out All Other Devices
+                                            <LogOut className="h-4 w-4" /> Log Out All Other Devices
                                         </Button>
                                     </div>
                                 </CardContent>
@@ -699,19 +697,19 @@ export const SettingsPage: React.FC = () => {
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -8 }}
-                            className="space-y-6"
+                            className="space-y-8"
                         >
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-base font-bold flex items-center gap-2">
-                                        <Sun className="h-4 w-4 text-primary" /> Display Theme Mode
+                            <Card className="shadow-sm">
+                                <CardHeader className="p-6 sm:p-8 pb-4">
+                                    <CardTitle className="text-lg lg:text-xl font-bold flex items-center gap-2.5">
+                                        <Sun className="h-5 w-5 text-primary" /> Display Theme Mode
                                     </CardTitle>
-                                    <CardDescription className="text-xs">
+                                    <CardDescription className="text-sm">
                                         Choose between light, dark, or automatic system theme.
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <CardContent className="p-6 sm:p-8 pt-2">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                                         {[
                                             { key: 'light', label: 'Light Mode', desc: 'Clean, crisp white canvas', icon: Sun },
                                             { key: 'dark', label: 'Dark Mode', desc: 'Deep black for rich focus', icon: Moon },
@@ -724,18 +722,18 @@ export const SettingsPage: React.FC = () => {
                                                     key={mode.key}
                                                     type="button"
                                                     onClick={() => setTheme(mode.key as 'light' | 'dark' | 'system')}
-                                                    className={`flex flex-col items-start p-5 rounded-2xl border text-left transition-all cursor-pointer ${
+                                                    className={`flex flex-col items-start p-6 rounded-2xl border text-left transition-all cursor-pointer ${
                                                         isActive
                                                             ? 'border-primary bg-primary/10 text-foreground ring-2 ring-primary/40 shadow-xs'
                                                             : 'border-border hover:bg-secondary/60 text-muted-foreground'
                                                     }`}
                                                 >
-                                                    <div className="flex items-center justify-between w-full mb-3">
-                                                        <Icon className={`h-6 w-6 ${isActive ? 'text-primary' : ''}`} />
-                                                        {isActive && <Check className="h-4 w-4 text-primary" />}
+                                                    <div className="flex items-center justify-between w-full mb-4">
+                                                        <Icon className={`h-8 w-8 ${isActive ? 'text-primary' : ''}`} />
+                                                        {isActive && <Check className="h-5 w-5 text-primary" />}
                                                     </div>
-                                                    <span className="text-sm font-bold text-foreground">{mode.label}</span>
-                                                    <span className="text-[11px] text-muted-foreground mt-0.5">{mode.desc}</span>
+                                                    <span className="text-base font-bold text-foreground">{mode.label}</span>
+                                                    <span className="text-xs text-muted-foreground mt-1">{mode.desc}</span>
                                                 </button>
                                             );
                                         })}
@@ -743,17 +741,17 @@ export const SettingsPage: React.FC = () => {
                                 </CardContent>
                             </Card>
 
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-base font-bold flex items-center gap-2">
-                                        <Palette className="h-4 w-4 text-primary" /> Brand Accent Color
+                            <Card className="shadow-sm">
+                                <CardHeader className="p-6 sm:p-8 pb-4">
+                                    <CardTitle className="text-lg lg:text-xl font-bold flex items-center gap-2.5">
+                                        <Palette className="h-5 w-5 text-primary" /> Brand Accent Color
                                     </CardTitle>
-                                    <CardDescription className="text-xs">
+                                    <CardDescription className="text-sm">
                                         Select your preferred highlight color across buttons, pills, active borders, and badges.
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <CardContent className="p-6 sm:p-8 pt-2">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                                         {[
                                             { id: 'purple', label: 'Royal Purple', hex: '#A802F5', bg: 'bg-[#A802F5]', desc: 'Original energetic brand highlight' },
                                             { id: 'teal', label: 'Neon Teal', hex: '#02F5A8', bg: 'bg-[#02F5A8]', desc: 'High-contrast futuristic glow' },
@@ -765,18 +763,18 @@ export const SettingsPage: React.FC = () => {
                                                     key={c.id}
                                                     type="button"
                                                     onClick={() => setColorTheme(c.id as ColorTheme)}
-                                                    className={`flex flex-col items-start p-5 rounded-2xl border text-left transition-all cursor-pointer ${
+                                                    className={`flex flex-col items-start p-6 rounded-2xl border text-left transition-all cursor-pointer ${
                                                         isActive
                                                             ? 'border-primary bg-primary/10 text-foreground ring-2 ring-primary/40 shadow-xs'
                                                             : 'border-border hover:bg-secondary/60 text-muted-foreground'
                                                     }`}
                                                 >
-                                                    <div className="flex items-center justify-between w-full mb-3">
-                                                        <span className={`h-6 w-6 rounded-full ${c.bg} shadow-md ring-2 ring-border`} />
-                                                        {isActive && <Check className="h-4 w-4 text-primary" />}
+                                                    <div className="flex items-center justify-between w-full mb-4">
+                                                        <span className={`h-8 w-8 rounded-full ${c.bg} shadow-md ring-2 ring-border`} />
+                                                        {isActive && <Check className="h-5 w-5 text-primary" />}
                                                     </div>
-                                                    <span className="text-sm font-bold text-foreground">{c.label}</span>
-                                                    <span className="text-[11px] text-muted-foreground mt-0.5">{c.desc}</span>
+                                                    <span className="text-base font-bold text-foreground">{c.label}</span>
+                                                    <span className="text-xs text-muted-foreground mt-1">{c.desc}</span>
                                                 </button>
                                             );
                                         })}
@@ -793,49 +791,49 @@ export const SettingsPage: React.FC = () => {
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -8 }}
-                            className="space-y-6"
+                            className="space-y-8"
                         >
-                            <Card>
-                                <CardHeader>
+                            <Card className="shadow-sm">
+                                <CardHeader className="p-6 sm:p-8 pb-4">
                                     <div className="flex items-center justify-between">
-                                        <CardTitle className="text-base font-bold flex items-center gap-2">
-                                            <CreditCard className="h-4 w-4 text-primary" /> Artist Payout Account
+                                        <CardTitle className="text-lg lg:text-xl font-bold flex items-center gap-2.5">
+                                            <CreditCard className="h-5 w-5 text-primary" /> Artist Payout Account
                                         </CardTitle>
-                                        <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
-                                            <ShieldCheck className="h-3 w-3" /> AES-256 ENCRYPTED
+                                        <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/30">
+                                            <ShieldCheck className="h-3.5 w-3.5" /> AES-256 ENCRYPTED
                                         </span>
                                     </div>
-                                    <CardDescription className="text-xs">
+                                    <CardDescription className="text-sm">
                                         Configure the bank account or e-wallet where earnings from completed commissions will be disbursed via Midtrans Iris.
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent className="space-y-6">
+                                <CardContent className="p-6 sm:p-8 pt-2 space-y-6">
                                     {payoutAccount && (
-                                        <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-between">
-                                            <div className="space-y-1">
-                                                <div className="flex items-center gap-2">
-                                                    <Building2 className="h-4 w-4 text-emerald-400" />
-                                                    <span className="font-bold text-sm text-foreground">{payoutAccount.bank_name}</span>
-                                                    <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-mono font-bold">ACTIVE</span>
+                                        <div className="p-5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-between">
+                                            <div className="space-y-1.5">
+                                                <div className="flex items-center gap-2.5">
+                                                    <Building2 className="h-5 w-5 text-emerald-400" />
+                                                    <span className="font-bold text-base text-foreground">{payoutAccount.bank_name}</span>
+                                                    <span className="text-[11px] bg-emerald-500/20 text-emerald-400 px-2.5 py-0.5 rounded-full font-mono font-bold">ACTIVE</span>
                                                 </div>
-                                                <p className="text-xs text-muted-foreground">
+                                                <p className="text-sm text-muted-foreground">
                                                     Account: <span className="font-semibold text-foreground">{payoutAccount.bank_account_name}</span> ({payoutAccount.bank_account_number})
                                                 </p>
                                             </div>
-                                            <Button variant="ghost" size="sm" onClick={handleDeletePayout} disabled={savingPayout} className="text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 gap-1 text-xs cursor-pointer">
-                                                <Trash2 className="h-3.5 w-3.5" /> Remove
+                                            <Button variant="ghost" size="sm" onClick={handleDeletePayout} disabled={savingPayout} className="text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 gap-1.5 text-xs cursor-pointer">
+                                                <Trash2 className="h-4 w-4" /> Remove
                                             </Button>
                                         </div>
                                     )}
 
-                                    <form onSubmit={handleSavePayout} className="space-y-4">
+                                    <form onSubmit={handleSavePayout} className="space-y-5">
                                         <div className="space-y-2">
-                                            <Label htmlFor="bank_select" className="text-xs font-semibold">Bank or E-Wallet</Label>
+                                            <Label htmlFor="bank_select" className="text-sm font-semibold">Bank or E-Wallet</Label>
                                             <select
                                                 id="bank_select"
                                                 value={bankName}
                                                 onChange={(e) => setBankName(e.target.value)}
-                                                className="w-full h-11 px-3 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                                className="w-full h-12 px-4 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                                             >
                                                 <option value="BCA">BCA (Bank Central Asia)</option>
                                                 <option value="MANDIRI">Bank Mandiri</option>
@@ -849,33 +847,33 @@ export const SettingsPage: React.FC = () => {
                                             </select>
                                         </div>
 
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                             <div className="space-y-2">
-                                                <Label htmlFor="account_name" className="text-xs font-semibold">Account Holder Name</Label>
+                                                <Label htmlFor="account_name" className="text-sm font-semibold">Account Holder Name</Label>
                                                 <Input
                                                     id="account_name"
                                                     placeholder="e.g. Alex Rivera"
                                                     value={accountName}
                                                     onChange={(e) => setAccountName(e.target.value)}
-                                                    className="h-11 rounded-xl bg-card border-border/80"
+                                                    className="h-12 rounded-xl bg-card border-border/80 px-4"
                                                     required
                                                 />
                                             </div>
 
                                             <div className="space-y-2">
-                                                <Label htmlFor="account_number" className="text-xs font-semibold">Bank Account Number / E-Wallet Phone</Label>
+                                                <Label htmlFor="account_number" className="text-sm font-semibold">Bank Account Number / E-Wallet Phone</Label>
                                                 <Input
                                                     id="account_number"
                                                     placeholder="e.g. 1234567890"
                                                     value={accountNumber}
                                                     onChange={(e) => setAccountNumber(e.target.value.replace(/[^0-9]/g, ''))}
-                                                    className="h-11 rounded-xl bg-card border-border/80 font-mono"
+                                                    className="h-12 rounded-xl bg-card border-border/80 font-mono px-4"
                                                     required
                                                 />
                                             </div>
                                         </div>
 
-                                        <Button type="submit" disabled={savingPayout || loadingPayout} className="gap-2 font-bold shadow-md h-11 px-6 cursor-pointer">
+                                        <Button type="submit" disabled={savingPayout || loadingPayout} className="gap-2 font-bold shadow-md h-12 px-8 text-sm cursor-pointer">
                                             <CreditCard className="h-4 w-4" />
                                             {savingPayout ? 'Saving Payout Account...' : payoutAccount ? 'Update Payout Account' : 'Save Payout Account'}
                                         </Button>
@@ -892,18 +890,18 @@ export const SettingsPage: React.FC = () => {
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -8 }}
-                            className="space-y-6"
+                            className="space-y-8"
                         >
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-base font-bold flex items-center gap-2">
-                                        <Bell className="h-4 w-4 text-primary" /> Email Notification Preferences
+                            <Card className="shadow-sm">
+                                <CardHeader className="p-6 sm:p-8 pb-4">
+                                    <CardTitle className="text-lg lg:text-xl font-bold flex items-center gap-2.5">
+                                        <Bell className="h-5 w-5 text-primary" /> Email Notification Preferences
                                     </CardTitle>
-                                    <CardDescription className="text-xs">
+                                    <CardDescription className="text-sm">
                                         Control which transactional and social notifications trigger email dispatches.
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent className="space-y-3">
+                                <CardContent className="p-6 sm:p-8 pt-2 space-y-3.5">
                                     {[
                                         {
                                             id: 'orders',
@@ -940,17 +938,17 @@ export const SettingsPage: React.FC = () => {
                                                 item.set(!item.checked);
                                                 toast.success('Notification preference updated.');
                                             }}
-                                            className="flex items-center justify-between p-4 rounded-xl border border-border/70 hover:bg-secondary/40 transition-colors cursor-pointer"
+                                            className="flex items-center justify-between p-5 rounded-xl border border-border/70 hover:bg-secondary/40 transition-colors cursor-pointer"
                                         >
-                                            <div className="space-y-0.5 pr-4">
-                                                <p className="font-semibold text-xs text-foreground">{item.title}</p>
-                                                <p className="text-[11px] text-muted-foreground leading-relaxed">{item.desc}</p>
+                                            <div className="space-y-1 pr-4">
+                                                <p className="font-semibold text-sm text-foreground">{item.title}</p>
+                                                <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
                                             </div>
                                             <input
                                                 type="checkbox"
                                                 checked={item.checked}
                                                 onChange={() => {}}
-                                                className="h-4 w-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
+                                                className="h-5 w-5 rounded border-border text-primary focus:ring-primary cursor-pointer"
                                             />
                                         </div>
                                     ))}
@@ -966,30 +964,30 @@ export const SettingsPage: React.FC = () => {
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -8 }}
-                            className="space-y-6"
+                            className="space-y-8"
                         >
-                            <Card className="border-rose-500/30 bg-rose-500/5">
-                                <CardHeader>
-                                    <CardTitle className="text-base font-bold flex items-center gap-2 text-rose-400">
-                                        <AlertTriangle className="h-4 w-4 text-rose-400" /> Account Deletion &amp; Data Erasure
+                            <Card className="border-rose-500/30 bg-rose-500/5 shadow-sm">
+                                <CardHeader className="p-6 sm:p-8 pb-4">
+                                    <CardTitle className="text-lg lg:text-xl font-bold flex items-center gap-2.5 text-rose-400">
+                                        <AlertTriangle className="h-5 w-5 text-rose-400" /> Account Deletion &amp; Data Erasure
                                     </CardTitle>
-                                    <CardDescription className="text-xs text-muted-foreground leading-relaxed">
+                                    <CardDescription className="text-sm text-muted-foreground leading-relaxed">
                                         In compliance with Indonesian Personal Data Protection Law (UU No. 27/2022 tentang Pelindungan Data Pribadi - UU PDP), you have the right to request permanent erasure of your personal data and account records.
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent className="space-y-5">
-                                    <div className="p-4 rounded-xl border border-rose-500/20 bg-card/60 text-xs text-muted-foreground leading-relaxed space-y-2">
+                                <CardContent className="p-6 sm:p-8 pt-2 space-y-6">
+                                    <div className="p-5 rounded-xl border border-rose-500/20 bg-card/60 text-sm text-muted-foreground leading-relaxed space-y-2.5">
                                         <p className="font-semibold text-rose-400">Warning: This action is permanent and irreversible.</p>
-                                        <ul className="list-disc list-inside space-y-1 text-[11px]">
+                                        <ul className="list-disc list-inside space-y-1.5 text-xs">
                                             <li>All active browser sessions and auth tokens will be invalidated immediately.</li>
                                             <li>Your creator profile, posts, and personal data records will be purged.</li>
                                             <li>Active escrow commissions must be resolved before account closure.</li>
                                         </ul>
                                     </div>
 
-                                    <form onSubmit={handleDeleteAccount} className="space-y-4 max-w-md">
-                                        <div className="space-y-1.5">
-                                            <Label htmlFor="delete_password" className="text-xs font-semibold text-rose-400">
+                                    <form onSubmit={handleDeleteAccount} className="space-y-5 max-w-lg">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="delete_password" className="text-sm font-semibold text-rose-400">
                                                 Confirm Password to Delete Account
                                             </Label>
                                             <Input
@@ -998,7 +996,7 @@ export const SettingsPage: React.FC = () => {
                                                 placeholder="Enter your current password"
                                                 value={deletePassword}
                                                 onChange={(e) => setDeletePassword(e.target.value)}
-                                                className="h-11 rounded-xl bg-card border-rose-500/30 focus-visible:ring-rose-500"
+                                                className="h-12 rounded-xl bg-card border-rose-500/30 focus-visible:ring-rose-500 px-4"
                                                 required
                                             />
                                         </div>
@@ -1006,9 +1004,9 @@ export const SettingsPage: React.FC = () => {
                                             type="submit"
                                             variant="destructive"
                                             disabled={deletingAccount || !deletePassword}
-                                            className="font-bold shadow-md h-11 px-6 text-xs gap-1.5 cursor-pointer"
+                                            className="font-bold shadow-md h-12 px-8 text-sm gap-2 cursor-pointer"
                                         >
-                                            <Trash2 className="h-3.5 w-3.5" />
+                                            <Trash2 className="h-4 w-4" />
                                             {deletingAccount ? 'Deleting Account...' : 'Permanently Delete Account'}
                                         </Button>
                                     </form>
