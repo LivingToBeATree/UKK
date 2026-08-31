@@ -311,12 +311,25 @@ class CommissionLifecyclePayoutTest extends TestCase
             'retry_count' => 0,
         ]);
 
+        $mockIris = $this->createMock(\App\Services\API\V1\MidtransPayoutService::class);
+        $mockIris->method('createPayout')
+            ->willReturn([
+                'payouts' => [
+                    [
+                        'status' => 'queued',
+                        'reference_no' => 'PAYOUT-' . $this->commission->id,
+                    ]
+                ]
+            ]);
+
+        $this->app->instance(\App\Services\API\V1\MidtransPayoutService::class, $mockIris);
+
         $this->artisan('commissions:retry-failed-payouts')
             ->assertSuccessful();
 
         $fresh = $payout->fresh();
-        // After retry, payout should be dispatched (PROCESSING in simulation mode).
-        $this->assertContains($fresh->status, [PayoutStatus::PROCESSING, PayoutStatus::FAILED]);
+        // Strict assertion: retry successfully transitions to PROCESSING
+        $this->assertEquals(PayoutStatus::PROCESSING, $fresh->status);
         $this->assertEquals(1, $fresh->retry_count);
     }
 
@@ -602,6 +615,8 @@ class CommissionLifecyclePayoutTest extends TestCase
 
     public function test_stale_processing_payout_triggers_admin_alert(): void
     {
+        $admin = User::factory()->create(['role' => \App\Enum\UserRole::ADMIN]);
+
         $payout = CommissionPayout::create([
             'commission_id' => $this->createCommissionInWaitingState()->id,
             'artist_profile_id' => $this->artistProfile->id,
@@ -627,6 +642,7 @@ class CommissionLifecyclePayoutTest extends TestCase
 
         $adminNotification = \App\Models\Notification::where('type', \App\Enum\NotificationType::SYSTEM)
             ->where('notifiable_id', $payout->id)
+            ->where('user_id', $admin->id)
             ->first();
 
         $this->assertNotNull($adminNotification);

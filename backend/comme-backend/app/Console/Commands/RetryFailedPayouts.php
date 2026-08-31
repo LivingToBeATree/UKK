@@ -4,8 +4,10 @@ namespace App\Console\Commands;
 
 use App\Enum\NotificationType;
 use App\Enum\PayoutStatus;
+use App\Enum\UserRole;
 use App\Models\CommissionPayout;
 use App\Models\Notification;
+use App\Models\User;
 use App\Services\API\V1\PayoutService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -86,15 +88,25 @@ class RetryFailedPayouts extends Command
                         $permanentlyFailed++;
                         $this->error("  ✗ Payout #{$payout->id} has exhausted all {" . self::MAX_RETRIES . "} retries.");
 
-                        // Notify admins
-                        Notification::create([
-                            'user_id' => 1, // Admin user
-                            'type' => NotificationType::SYSTEM,
-                            'title' => 'Payout Permanently Failed',
-                            'message' => "Payout #{$payout->id} for Commission #{$payout->commission_id} has failed after " . self::MAX_RETRIES . " attempts. Manual intervention required. Reason: {$payout->failure_reason}",
-                            'notifiable_type' => CommissionPayout::class,
-                            'notifiable_id' => $payout->id,
-                        ]);
+                        // Notify admins/moderators dynamically
+                        $staffRecipients = User::whereIn('role', [UserRole::ADMIN, UserRole::MODERATOR])->get();
+                        if ($staffRecipients->isEmpty()) {
+                            $fallback = User::first();
+                            if ($fallback) {
+                                $staffRecipients = collect([$fallback]);
+                            }
+                        }
+
+                        foreach ($staffRecipients as $staff) {
+                            Notification::create([
+                                'user_id' => $staff->id,
+                                'type' => NotificationType::SYSTEM,
+                                'title' => 'Payout Permanently Failed',
+                                'message' => "Payout #{$payout->id} for Commission #{$payout->commission_id} has failed after " . self::MAX_RETRIES . " attempts. Manual intervention required. Reason: {$payout->failure_reason}",
+                                'notifiable_type' => CommissionPayout::class,
+                                'notifiable_id' => $payout->id,
+                            ]);
+                        }
                     }
                 } else {
                     $retried++;

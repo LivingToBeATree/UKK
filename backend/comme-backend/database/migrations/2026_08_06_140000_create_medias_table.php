@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('medias', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained('users')->cascadeOnDelete();
             $table->string('file_name');
             $table->string('file_path');
             $table->string('media_type');
