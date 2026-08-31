@@ -307,10 +307,10 @@ export const SettingsPage: React.FC = () => {
     const tabMeta = getTabMeta();
 
     return (
-        <div className="min-h-[calc(100vh-4rem)] flex flex-col md:flex-row bg-background text-foreground">
+        <div className="flex-1 min-h-screen flex flex-col md:flex-row bg-background text-foreground">
             
             {/* ── Left Sticky Settings Sidebar (Edge-to-Edge) ── */}
-            <aside className="w-full md:w-72 lg:w-80 shrink-0 border-r border-border/70 bg-card/30 flex flex-col justify-between min-h-[calc(100vh-4rem)] p-5 lg:p-6">
+            <aside className="w-full md:w-72 lg:w-80 shrink-0 border-r border-border/70 bg-card/30 flex flex-col justify-between min-h-screen p-5 lg:p-6 sticky top-0 md:h-screen overflow-y-auto">
                 <div className="space-y-6">
                     {/* User Identity Mini Card */}
                     <div className="p-4 rounded-2xl border border-border/80 bg-card/80 shadow-xs space-y-3">

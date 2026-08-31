@@ -45,7 +45,7 @@ function AppLayout() {
                 className="flex-1 flex flex-col min-w-0 overflow-x-hidden"
             >
                 <Navbar />
-                <main className="flex-1">
+                <main className="flex-1 flex flex-col min-h-screen">
                     <AppRoutes />
                 </main>
             </motion.div>
