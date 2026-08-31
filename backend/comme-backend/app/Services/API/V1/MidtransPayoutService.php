@@ -54,6 +54,7 @@ class MidtransPayoutService
                 ->withBasicAuth($this->apiKey, '')
                 ->withHeaders([
                     'Idempotency-Key' => $payout->reference,
+                    'X-Idempotency-Key' => $payout->reference,
                     'Content-Type' => 'application/json',
                     'Accept' => 'application/json',
                 ])

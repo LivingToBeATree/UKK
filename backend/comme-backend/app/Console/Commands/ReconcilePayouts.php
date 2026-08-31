@@ -67,16 +67,25 @@ class ReconcilePayouts extends Command
                     $failed++;
                     $this->error("✗ Payout #{$payout->id} FAILED per provider: {$providerStatus}");
                 } elseif ($providerStatus === 'not_found' || ($status['error_code'] ?? null) === 404) {
-                    // Payout was not found on Midtrans (e.g. initial request timed out before reaching Iris)
-                    // Mark as FAILED so the retry scheduler can safely re-dispatch with the deterministic reference key.
-                    $payout->update([
-                        'status' => PayoutStatus::FAILED,
-                        'failed_at' => now(),
-                        'failure_reason' => "Disbursement record not found on provider after network timeout. Queued for clean retry.",
-                        'raw_response' => $status,
-                    ]);
-                    $failed++;
-                    $this->warn("⚠ Payout #{$payout->id} not found on provider — transitioned to FAILED for retry.");
+                    // Check if the payout was created very recently (within the 30-minute queue propagation window).
+                    // Midtrans Iris queues payouts asynchronously, so an immediate 404 can be transient.
+                    $isWithinGraceWindow = $payout->requested_at && $payout->requested_at->copy()->addMinutes(30)->isFuture();
+
+                    if ($isWithinGraceWindow) {
+                        $stillProcessing++;
+                        $this->line("  Payout #{$payout->id} returned 404 within 30m grace window — waiting for provider ingestion queue.");
+                    } else {
+                        // Beyond 30 minutes with 404: confirmed that Iris never ingested the transaction.
+                        // Mark as FAILED so the retry scheduler can safely re-dispatch using the deterministic reference key.
+                        $payout->update([
+                            'status' => PayoutStatus::FAILED,
+                            'failed_at' => now(),
+                            'failure_reason' => "Disbursement record not found on provider after 30-minute propagation window. Queued for clean retry.",
+                            'raw_response' => $status,
+                        ]);
+                        $failed++;
+                        $this->warn("⚠ Payout #{$payout->id} not found after grace window — transitioned to FAILED for retry.");
+                    }
                 } else {
                     $stillProcessing++;
                     $this->line("  Payout #{$payout->id} still {$providerStatus} — skipping.");

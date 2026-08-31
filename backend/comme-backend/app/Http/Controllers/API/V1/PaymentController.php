@@ -160,6 +160,12 @@ class PaymentController extends Controller
             return ApiResponseHelper::errorResponse('Payout record not found.', Response::HTTP_NOT_FOUND);
         }
 
+        // Terminal protection: Once a payout is COMPLETED, it must never be downgraded by a delayed webhook.
+        if ($payout->status === \App\Enum\PayoutStatus::COMPLETED) {
+            Log::info("Iris webhook: Payout #{$payout->id} is already in terminal state COMPLETED — ignoring webhook update.");
+            return ApiResponseHelper::successResponse(message: 'Payout already in terminal state COMPLETED.');
+        }
+
         $status = strtolower($payload['status'] ?? '');
 
         if (in_array($status, ['completed', 'done', 'settled', 'success'])) {
