@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
-    Settings,
+    User,
     Lock,
     Smartphone,
     Palette,
@@ -15,7 +15,6 @@ import {
     ShieldCheck,
     Bell,
     AlertTriangle,
-    User,
     LogOut,
     CheckCircle2,
     RefreshCw,
@@ -23,6 +22,7 @@ import {
 import { useForm } from 'react-hook-form';
 import { userService } from '@/services/userService';
 import { payoutAccountApi } from '@/services/commissionService';
+import { twoFactorService } from '@/services/twoFactorService';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { useColorTheme, type ColorTheme } from '@/hooks/useColorTheme';
@@ -32,11 +32,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar } from '@/components/ui/avatar';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/sonner';
 import { TwoFactorSetupModal } from '@/components/auth/TwoFactorSetupModal';
 import { TwoFactorRecoveryModal } from '@/components/auth/TwoFactorRecoveryModal';
-import { twoFactorService } from '@/services/twoFactorService';
 import type { ArtistPayoutAccount } from '@/types';
 
 interface ActiveSession {
@@ -72,6 +70,7 @@ export const SettingsPage: React.FC = () => {
     const { user, refreshUser, logout } = useAuth();
     const { theme, setTheme } = useTheme();
     const { colorTheme, setColorTheme } = useColorTheme();
+    const [activeTab, setActiveTab] = useState<'account' | 'security' | 'appearance' | 'payouts' | 'notifications' | 'privacy'>('account');
     const [savingAccount, setSavingAccount] = useState(false);
 
     // Active Sessions State
@@ -120,7 +119,7 @@ export const SettingsPage: React.FC = () => {
             const data = await userService.getSessions();
             setSessions(data);
         } catch {
-            // Non-critical if sessions query fails
+            // Non-critical
         } finally {
             setLoadingSessions(false);
         }
@@ -274,617 +273,701 @@ export const SettingsPage: React.FC = () => {
         }
     };
 
+    const navItems = [
+        { id: 'account', label: 'Account Information', icon: User, desc: 'Administrative details & public handle' },
+        { id: 'security', label: 'Security & 2FA', icon: Lock, desc: 'Password, two-factor auth & devices' },
+        { id: 'appearance', label: 'Appearance & Theme', icon: Palette, desc: 'Display mode & accent highlight' },
+        ...(user?.artist_profile ? [
+            { id: 'payouts', label: 'Artist Payout Account', icon: CreditCard, desc: 'Bank & e-wallet disbursement' }
+        ] : []),
+        { id: 'notifications', label: 'Notifications', icon: Bell, desc: 'Email dispatch preferences' },
+        { id: 'privacy', label: 'Danger Zone', icon: AlertTriangle, desc: 'UU PDP Data erasure & account deletion', isDestructive: true },
+    ];
+
     return (
-        <div className="max-w-4xl mx-auto px-4 sm:px-8 py-10">
-            {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-2.5 text-foreground">
-                    <Settings className="h-7 w-7 text-primary" /> Settings &amp; Preferences
-                </h1>
-                <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
-                    Manage your administrative account identity, security, payout configuration, and display appearance.
-                </p>
-            </div>
-
-            <Tabs defaultValue="account" className="space-y-6">
-                <TabsList className={`grid ${user?.artist_profile ? 'grid-cols-6' : 'grid-cols-5'} w-full bg-secondary/80 p-1 rounded-xl`}>
-                    <TabsTrigger value="account" className="text-xs font-semibold">Account</TabsTrigger>
-                    <TabsTrigger value="security" className="text-xs font-semibold">Security</TabsTrigger>
-                    <TabsTrigger value="appearance" className="text-xs font-semibold">Appearance</TabsTrigger>
-                    {user?.artist_profile && <TabsTrigger value="payouts" className="text-xs font-semibold">Payouts</TabsTrigger>}
-                    <TabsTrigger value="notifications" className="text-xs font-semibold">Notifications</TabsTrigger>
-                    <TabsTrigger value="privacy" className="text-xs font-semibold text-rose-400">Danger Zone</TabsTrigger>
-                </TabsList>
-
-                {/* ── 1. Account Information Tab ── */}
-                <TabsContent value="account">
-                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-base font-bold flex items-center gap-2">
-                                    <User className="h-4 w-4 text-primary" /> Administrative Account Identity
-                                </CardTitle>
-                                <CardDescription className="text-xs">
-                                    Your administrative account details and public presentation.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                <div className="flex items-center gap-4 p-4 rounded-xl border border-border/80 bg-secondary/30">
-                                    <Avatar size="lg" fallback={user?.display_name || user?.username || '?'} src={user?.avatar_url} />
-                                    <div className="space-y-1">
-                                        <p className="font-bold text-base text-foreground">{user?.display_name || user?.username}</p>
-                                        <p className="text-xs text-muted-foreground">@{user?.username}</p>
-                                    </div>
+        <div className="min-h-[calc(100vh-4rem)] bg-background text-foreground py-8 px-4 sm:px-8 lg:px-12">
+            <div className="max-w-[1360px] mx-auto grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-start">
+                
+                {/* ── Left Sidebar Sub-Nav ── */}
+                <aside className="md:col-span-4 lg:col-span-3">
+                    <div className="sticky top-24 space-y-6">
+                        {/* User Identity Header Card */}
+                        <div className="p-4 rounded-2xl border border-border/80 bg-card/60 space-y-3">
+                            <div className="flex items-center gap-3">
+                                <Avatar size="md" fallback={user?.display_name || user?.username || '?'} src={user?.avatar_url} />
+                                <div className="overflow-hidden">
+                                    <p className="font-bold text-sm text-foreground truncate">{user?.display_name || user?.username}</p>
+                                    <p className="text-xs text-muted-foreground truncate">@{user?.username}</p>
                                 </div>
+                            </div>
+                            <div className="pt-2 border-t border-border/60 flex items-center justify-between text-[11px]">
+                                <span className="text-muted-foreground font-medium">Account Role:</span>
+                                <span className="font-bold uppercase tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                                    {user?.artist_profile ? 'Artist' : user?.role || 'User'}
+                                </span>
+                            </div>
+                        </div>
 
-                                <form onSubmit={handleAccount(onAccountSubmit)} className="space-y-4">
-                                    {/* Email with Verified Badge */}
-                                    <div className="space-y-1.5">
-                                        <div className="flex items-center justify-between">
-                                            <Label htmlFor="email" className="text-xs font-semibold text-foreground/90">
-                                                Registered Email Address
-                                            </Label>
-                                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                                                <CheckCircle2 className="h-3 w-3" /> Verified
-                                            </span>
+                        {/* Navigation Links */}
+                        <nav className="flex flex-col space-y-1.5">
+                            {navItems.map((item) => {
+                                const Icon = item.icon;
+                                const isActive = activeTab === item.id;
+                                return (
+                                    <button
+                                        key={item.id}
+                                        type="button"
+                                        onClick={() => setActiveTab(item.id as typeof activeTab)}
+                                        className={`w-full text-left transition-all py-3 px-3.5 rounded-xl flex items-center justify-between group cursor-pointer ${
+                                            isActive
+                                                ? item.isDestructive
+                                                    ? 'bg-rose-500/15 text-rose-400 font-bold ring-1 ring-rose-500/30 shadow-xs'
+                                                    : 'bg-primary/10 text-primary font-bold ring-1 ring-primary/20 shadow-xs'
+                                                : item.isDestructive
+                                                    ? 'text-rose-400/80 hover:text-rose-400 hover:bg-rose-500/10'
+                                                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <Icon className={`h-4 w-4 shrink-0 ${
+                                                isActive
+                                                    ? item.isDestructive ? 'text-rose-400' : 'text-primary'
+                                                    : item.isDestructive ? 'text-rose-400/80' : 'text-muted-foreground group-hover:text-foreground'
+                                            }`} />
+                                            <div>
+                                                <p className="text-xs font-semibold leading-tight">{item.label}</p>
+                                            </div>
                                         </div>
-                                        <Input
-                                            id="email"
-                                            value={user?.email || ''}
-                                            disabled
-                                            className="h-11 rounded-xl bg-muted/60 text-muted-foreground border-border/60 cursor-not-allowed font-mono text-xs"
-                                        />
-                                        <p className="text-[11px] text-muted-foreground">
-                                            Email changes require identity verification. Contact staff support if you need to update your email.
-                                        </p>
-                                    </div>
+                                        {isActive && (
+                                            <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${item.isDestructive ? 'bg-rose-400' : 'bg-primary'}`} />
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </nav>
+                    </div>
+                </aside>
 
-                                    {/* Username */}
-                                    <div className="space-y-1.5">
-                                        <Label htmlFor="username" className="text-xs font-semibold text-foreground/90">
-                                            Username <span className="text-muted-foreground font-normal">(@tag on the platform)</span>
-                                        </Label>
-                                        <Input
-                                            id="username"
-                                            className="h-11 rounded-xl bg-card border-border/80 focus-visible:ring-primary font-mono text-sm"
-                                            {...regAccount('username')}
-                                        />
-                                    </div>
-
-                                    {/* Display Name */}
-                                    <div className="space-y-1.5">
-                                        <Label htmlFor="display_name" className="text-xs font-semibold text-foreground/90">
-                                            Display Name
-                                        </Label>
-                                        <Input
-                                            id="display_name"
-                                            className="h-11 rounded-xl bg-card border-border/80 focus-visible:ring-primary"
-                                            {...regAccount('display_name')}
-                                        />
-                                    </div>
-
-                                    {/* Bio */}
-                                    <div className="space-y-1.5">
-                                        <Label htmlFor="bio" className="text-xs font-semibold text-foreground/90">
-                                            Bio &amp; Artist Statement
-                                        </Label>
-                                        <Textarea
-                                            id="bio"
-                                            rows={3}
-                                            className="rounded-xl bg-card border-border/80 focus-visible:ring-primary text-sm"
-                                            {...regAccount('bio')}
-                                        />
-                                    </div>
-
-                                    <Button type="submit" disabled={savingAccount} className="h-10 font-bold shadow-md">
-                                        {savingAccount ? 'Saving Changes...' : 'Save Account Info'}
-                                    </Button>
-                                </form>
-                            </CardContent>
-                        </Card>
-                    </motion.div>
-                </TabsContent>
-
-                {/* ── 2. Security & Known Devices Tab ── */}
-                <TabsContent value="security">
-                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                        {/* Change Password Card */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-base font-bold flex items-center gap-2">
-                                    <Lock className="h-4 w-4 text-primary" /> Change Password
-                                </CardTitle>
-                                <CardDescription className="text-xs">
-                                    Ensure your account is using a long, random password to stay secure.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <form onSubmit={handlePassword(onPasswordSubmit)} className="space-y-4 max-w-lg">
-                                    <div className="space-y-1.5">
-                                        <Label htmlFor="current_password" className="text-xs font-semibold">Current Password</Label>
-                                        <Input
-                                            id="current_password"
-                                            type="password"
-                                            placeholder="••••••••"
-                                            className="h-11 rounded-xl bg-card border-border/80"
-                                            {...regPassword('current_password')}
-                                            required
-                                        />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <Label htmlFor="new_password" className="text-xs font-semibold">New Password (min. 8 characters)</Label>
-                                        <Input
-                                            id="new_password"
-                                            type="password"
-                                            placeholder="••••••••"
-                                            className="h-11 rounded-xl bg-card border-border/80"
-                                            {...regPassword('password')}
-                                            required
-                                        />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <Label htmlFor="confirm_password" className="text-xs font-semibold">Confirm New Password</Label>
-                                        <Input
-                                            id="confirm_password"
-                                            type="password"
-                                            placeholder="••••••••"
-                                            className="h-11 rounded-xl bg-card border-border/80"
-                                            {...regPassword('password_confirmation')}
-                                            required
-                                        />
-                                    </div>
-                                    <Button type="submit" className="font-bold shadow-md">
-                                        Update Password
-                                    </Button>
-                                </form>
-                            </CardContent>
-                        </Card>
-
-                        {/* 2FA Status Card */}
-                        <Card className={user?.two_factor_enabled ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-border/70 bg-card'}>
-                            <CardHeader>
-                                <div className="flex items-center justify-between">
-                                    <CardTitle className="text-base font-bold flex items-center gap-2">
-                                        <ShieldCheck className={`h-4 w-4 ${user?.two_factor_enabled ? 'text-emerald-400' : 'text-primary'}`} />
-                                        Two-Factor Authentication (2FA)
-                                    </CardTitle>
-                                    <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold border ${
-                                        user?.two_factor_enabled
-                                            ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                                            : 'bg-secondary text-muted-foreground border-border'
-                                    }`}>
-                                        {user?.two_factor_enabled ? 'ENABLED & ACTIVE' : 'DISABLED'}
-                                    </span>
-                                </div>
-                                <CardDescription className="text-xs">
-                                    {user?.two_factor_enabled
-                                        ? 'Your account is protected with a Time-based One-Time Password (TOTP) authenticator app.'
-                                        : 'Add an extra layer of security to your account by requiring a 6-digit code from Google Authenticator, Authy, or 1Password when signing in.'}
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                {user?.two_factor_enabled ? (
-                                    <div className="flex items-center gap-3">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setIs2FARecoveryOpen(true)}
-                                            className="text-xs font-semibold"
-                                        >
-                                            View Recovery Codes
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={handleDisable2FA}
-                                            disabled={disabling2FA}
-                                            className="text-xs text-rose-400 hover:text-rose-500 hover:bg-rose-500/10 cursor-pointer"
-                                        >
-                                            {disabling2FA ? 'Disabling...' : 'Disable 2FA'}
-                                        </Button>
-                                    </div>
-                                ) : (
-                                    <Button
-                                        onClick={() => setIs2FASetupOpen(true)}
-                                        className="h-10 text-xs font-bold shadow-md gap-1.5 cursor-pointer"
-                                    >
-                                        <ShieldCheck className="h-4 w-4" />
-                                        Set Up Two-Factor Authentication
-                                    </Button>
-                                )}
-                            </CardContent>
-                        </Card>
-
-                        {/* Active Sessions & Devices Card */}
-                        <Card>
-                            <CardHeader>
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <CardTitle className="text-base font-bold flex items-center gap-2">
-                                            <Smartphone className="h-4 w-4 text-primary" /> Active Sessions &amp; Devices
+                {/* ── Right Content Area ── */}
+                <main className="md:col-span-8 lg:col-span-9">
+                    <AnimatePresence mode="wait">
+                        {/* ── 1. Account Information Tab ── */}
+                        {activeTab === 'account' && (
+                            <motion.div
+                                key="account"
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -8 }}
+                                className="space-y-6"
+                            >
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-lg font-bold flex items-center gap-2">
+                                            <User className="h-5 w-5 text-primary" /> Administrative Account Identity
                                         </CardTitle>
-                                        <CardDescription className="text-xs mt-1">
-                                            Devices and browsers currently authenticated to your account.
+                                        <CardDescription className="text-xs">
+                                            Manage your administrative account details and public presentation.
                                         </CardDescription>
-                                    </div>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={fetchSessions}
-                                        disabled={loadingSessions}
-                                        className="text-xs gap-1"
-                                    >
-                                        <RefreshCw className={`h-3 w-3 ${loadingSessions ? 'animate-spin' : ''}`} /> Refresh
-                                    </Button>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {sessions.length === 0 ? (
-                                    <p className="text-xs text-muted-foreground py-2">No active sessions tracked.</p>
-                                ) : (
-                                    <div className="space-y-2.5">
-                                        {sessions.map((s) => {
-                                            const { browser, os, isMobile } = parseUserAgent(s.user_agent);
-
-                                            return (
-                                                <div
-                                                    key={s.id}
-                                                    className={`p-3.5 rounded-xl border flex items-center justify-between transition-all ${
-                                                        s.is_current
-                                                            ? 'border-emerald-500/30 bg-emerald-500/5'
-                                                            : 'border-border/70 bg-card hover:bg-secondary/40'
-                                                    }`}
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="h-9 w-9 rounded-lg bg-secondary flex items-center justify-center text-foreground">
-                                                            {isMobile ? <Smartphone className="h-4 w-4" /> : <Laptop className="h-4 w-4" />}
-                                                        </div>
-                                                        <div>
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="font-semibold text-xs text-foreground">
-                                                                    {browser} on {os}
-                                                                </span>
-                                                                {s.is_current && (
-                                                                    <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/20 px-2 py-0.2 rounded-full">
-                                                                        Current Device
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                            <p className="text-[11px] text-muted-foreground mt-0.5">
-                                                                IP: <span className="font-mono">{s.ip_address || '127.0.0.1'}</span> • Last active: {s.last_activity}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-
-                                                    {!s.is_current && (
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => handleRevokeSession(s.id)}
-                                                            disabled={revokingId === s.id}
-                                                            className="text-xs text-rose-400 hover:text-rose-500 hover:bg-rose-500/10"
-                                                        >
-                                                            {revokingId === s.id ? 'Revoking...' : 'Revoke'}
-                                                        </Button>
-                                                    )}
+                                    </CardHeader>
+                                    <CardContent className="space-y-6">
+                                        <form onSubmit={handleAccount(onAccountSubmit)} className="space-y-4">
+                                            {/* Email with Verified Badge */}
+                                            <div className="space-y-1.5">
+                                                <div className="flex items-center justify-between">
+                                                    <Label htmlFor="email" className="text-xs font-semibold text-foreground/90">
+                                                        Registered Email Address
+                                                    </Label>
+                                                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                                                        <CheckCircle2 className="h-3 w-3" /> Verified
+                                                    </span>
                                                 </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-
-                                <div className="pt-2 border-t border-border/60">
-                                    <Button
-                                        variant="destructive"
-                                        size="sm"
-                                        onClick={handleLogoutAllOtherDevices}
-                                        className="text-xs gap-1.5"
-                                    >
-                                        <LogOut className="h-3.5 w-3.5" /> Log Out All Other Devices
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </motion.div>
-                </TabsContent>
-
-                {/* ── 3. Appearance & Theme Tab ── */}
-                <TabsContent value="appearance">
-                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-base font-bold flex items-center gap-2">
-                                    <Sun className="h-4 w-4 text-primary" /> Display Mode
-                                </CardTitle>
-                                <CardDescription className="text-xs">
-                                    Choose between light, dark, or automatic system theme.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-3 gap-3">
-                                    {[
-                                        { key: 'light', label: 'Light', icon: Sun },
-                                        { key: 'dark', label: 'Dark', icon: Moon },
-                                        { key: 'system', label: 'Auto System', icon: Laptop },
-                                    ].map((mode) => {
-                                        const Icon = mode.icon;
-                                        const isActive = theme === mode.key;
-                                        return (
-                                            <button
-                                                key={mode.key}
-                                                type="button"
-                                                onClick={() => setTheme(mode.key as 'light' | 'dark' | 'system')}
-                                                className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all cursor-pointer ${
-                                                    isActive
-                                                        ? 'border-primary bg-primary/10 text-foreground ring-2 ring-primary/40'
-                                                        : 'border-border hover:bg-secondary/60 text-muted-foreground'
-                                                }`}
-                                            >
-                                                <Icon className={`h-6 w-6 mb-2 ${isActive ? 'text-primary' : ''}`} />
-                                                <span className="text-xs font-semibold">{mode.label}</span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-base font-bold flex items-center gap-2">
-                                    <Palette className="h-4 w-4 text-primary" /> Accent Color Theme
-                                </CardTitle>
-                                <CardDescription className="text-xs">
-                                    Select your preferred primary brand highlight color across buttons, pills, and borders.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-3 gap-3">
-                                    {[
-                                        { id: 'purple', label: 'Royal Purple', hex: '#A802F5', bg: 'bg-[#A802F5]' },
-                                        { id: 'teal', label: 'Neon Teal', hex: '#02F5A8', bg: 'bg-[#02F5A8]' },
-                                        { id: 'orange', label: 'Solar Orange', hex: '#F5AA02', bg: 'bg-[#F5AA02]' },
-                                    ].map((c) => {
-                                        const isActive = colorTheme === c.id;
-                                        return (
-                                            <button
-                                                key={c.id}
-                                                type="button"
-                                                onClick={() => setColorTheme(c.id as ColorTheme)}
-                                                className={`flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer ${
-                                                    isActive
-                                                        ? 'border-primary bg-primary/10 text-foreground ring-2 ring-primary/40'
-                                                        : 'border-border hover:bg-secondary/60 text-muted-foreground'
-                                                }`}
-                                            >
-                                                <div className="flex items-center gap-2.5">
-                                                    <span className={`h-4 w-4 rounded-full ${c.bg} shadow-xs ring-1 ring-border`} />
-                                                    <span className="text-xs font-semibold">{c.label}</span>
-                                                </div>
-                                                {isActive && <Check className="h-4 w-4 text-primary" />}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </motion.div>
-                </TabsContent>
-
-                {/* ── 4. Payout Account Tab (Artist Only) ── */}
-                {user?.artist_profile && (
-                    <TabsContent value="payouts">
-                        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                            <Card>
-                                <CardHeader>
-                                    <div className="flex items-center justify-between">
-                                        <CardTitle className="text-base flex items-center gap-2">
-                                            <CreditCard className="h-4 w-4 text-primary" /> Artist Payout Account
-                                        </CardTitle>
-                                        <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
-                                            <ShieldCheck className="h-3 w-3" /> AES-256 ENCRYPTED
-                                        </span>
-                                    </div>
-                                    <CardDescription className="text-xs">
-                                        Configure the bank account or e-wallet where earnings from completed commissions will be disbursed via Midtrans Iris.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-6">
-                                    {payoutAccount && (
-                                        <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-between">
-                                            <div className="space-y-1">
-                                                <div className="flex items-center gap-2">
-                                                    <Building2 className="h-4 w-4 text-emerald-400" />
-                                                    <span className="font-bold text-sm text-foreground">{payoutAccount.bank_name}</span>
-                                                    <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-mono font-bold">ACTIVE</span>
-                                                </div>
-                                                <p className="text-xs text-muted-foreground">
-                                                    Account: <span className="font-semibold text-foreground">{payoutAccount.bank_account_name}</span> ({payoutAccount.bank_account_number})
+                                                <Input
+                                                    id="email"
+                                                    value={user?.email || ''}
+                                                    disabled
+                                                    className="h-11 rounded-xl bg-muted/60 text-muted-foreground border-border/60 cursor-not-allowed font-mono text-xs"
+                                                />
+                                                <p className="text-[11px] text-muted-foreground">
+                                                    Email changes require identity verification. Contact staff support if you need to update your email.
                                                 </p>
                                             </div>
-                                            <Button variant="ghost" size="sm" onClick={handleDeletePayout} disabled={savingPayout} className="text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 gap-1 text-xs">
-                                                <Trash2 className="h-3.5 w-3.5" /> Remove
+
+                                            {/* Username */}
+                                            <div className="space-y-1.5">
+                                                <Label htmlFor="username" className="text-xs font-semibold text-foreground/90">
+                                                    Username <span className="text-muted-foreground font-normal">(@tag on the platform)</span>
+                                                </Label>
+                                                <Input
+                                                    id="username"
+                                                    className="h-11 rounded-xl bg-card border-border/80 focus-visible:ring-primary font-mono text-sm"
+                                                    {...regAccount('username')}
+                                                />
+                                            </div>
+
+                                            {/* Display Name */}
+                                            <div className="space-y-1.5">
+                                                <Label htmlFor="display_name" className="text-xs font-semibold text-foreground/90">
+                                                    Display Name
+                                                </Label>
+                                                <Input
+                                                    id="display_name"
+                                                    className="h-11 rounded-xl bg-card border-border/80 focus-visible:ring-primary"
+                                                    {...regAccount('display_name')}
+                                                />
+                                            </div>
+
+                                            {/* Bio */}
+                                            <div className="space-y-1.5">
+                                                <Label htmlFor="bio" className="text-xs font-semibold text-foreground/90">
+                                                    Bio &amp; Artist Statement
+                                                </Label>
+                                                <Textarea
+                                                    id="bio"
+                                                    rows={3}
+                                                    className="rounded-xl bg-card border-border/80 focus-visible:ring-primary text-sm"
+                                                    {...regAccount('bio')}
+                                                />
+                                            </div>
+
+                                            <Button type="submit" disabled={savingAccount} className="h-10 font-bold shadow-md cursor-pointer">
+                                                {savingAccount ? 'Saving Changes...' : 'Save Account Info'}
+                                            </Button>
+                                        </form>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        )}
+
+                        {/* ── 2. Security & 2FA Tab ── */}
+                        {activeTab === 'security' && (
+                            <motion.div
+                                key="security"
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -8 }}
+                                className="space-y-6"
+                            >
+                                {/* Change Password Card */}
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-lg font-bold flex items-center gap-2">
+                                            <Lock className="h-5 w-5 text-primary" /> Change Password
+                                        </CardTitle>
+                                        <CardDescription className="text-xs">
+                                            Ensure your account is using a long, random password to stay secure.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <form onSubmit={handlePassword(onPasswordSubmit)} className="space-y-4 max-w-lg">
+                                            <div className="space-y-1.5">
+                                                <Label htmlFor="current_password" className="text-xs font-semibold">Current Password</Label>
+                                                <Input
+                                                    id="current_password"
+                                                    type="password"
+                                                    placeholder="••••••••"
+                                                    className="h-11 rounded-xl bg-card border-border/80"
+                                                    {...regPassword('current_password')}
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <Label htmlFor="new_password" className="text-xs font-semibold">New Password (min. 8 characters)</Label>
+                                                <Input
+                                                    id="new_password"
+                                                    type="password"
+                                                    placeholder="••••••••"
+                                                    className="h-11 rounded-xl bg-card border-border/80"
+                                                    {...regPassword('password')}
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <Label htmlFor="confirm_password" className="text-xs font-semibold">Confirm New Password</Label>
+                                                <Input
+                                                    id="confirm_password"
+                                                    type="password"
+                                                    placeholder="••••••••"
+                                                    className="h-11 rounded-xl bg-card border-border/80"
+                                                    {...regPassword('password_confirmation')}
+                                                    required
+                                                />
+                                            </div>
+                                            <Button type="submit" className="font-bold shadow-md cursor-pointer">
+                                                Update Password
+                                            </Button>
+                                        </form>
+                                    </CardContent>
+                                </Card>
+
+                                {/* 2FA Interactive Card */}
+                                <Card className={user?.two_factor_enabled ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-border/70 bg-card'}>
+                                    <CardHeader>
+                                        <div className="flex items-center justify-between">
+                                            <CardTitle className="text-lg font-bold flex items-center gap-2">
+                                                <ShieldCheck className={`h-5 w-5 ${user?.two_factor_enabled ? 'text-emerald-400' : 'text-primary'}`} />
+                                                Two-Factor Authentication (2FA)
+                                            </CardTitle>
+                                            <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold border ${
+                                                user?.two_factor_enabled
+                                                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                                    : 'bg-secondary text-muted-foreground border-border'
+                                            }`}>
+                                                {user?.two_factor_enabled ? 'ENABLED & ACTIVE' : 'DISABLED'}
+                                            </span>
+                                        </div>
+                                        <CardDescription className="text-xs">
+                                            {user?.two_factor_enabled
+                                                ? 'Your account is protected with a Time-based One-Time Password (TOTP) authenticator app.'
+                                                : 'Add an extra layer of security to your account by requiring a 6-digit code from Google Authenticator, Authy, or 1Password when signing in.'}
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {user?.two_factor_enabled ? (
+                                            <div className="flex items-center gap-3">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => setIs2FARecoveryOpen(true)}
+                                                    className="text-xs font-semibold cursor-pointer"
+                                                >
+                                                    View Recovery Codes
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={handleDisable2FA}
+                                                    disabled={disabling2FA}
+                                                    className="text-xs text-rose-400 hover:text-rose-500 hover:bg-rose-500/10 cursor-pointer"
+                                                >
+                                                    {disabling2FA ? 'Disabling...' : 'Disable 2FA'}
+                                                </Button>
+                                            </div>
+                                        ) : (
+                                            <Button
+                                                onClick={() => setIs2FASetupOpen(true)}
+                                                className="h-10 text-xs font-bold shadow-md gap-1.5 cursor-pointer"
+                                            >
+                                                <ShieldCheck className="h-4 w-4" />
+                                                Set Up Two-Factor Authentication
+                                            </Button>
+                                        )}
+                                    </CardContent>
+                                </Card>
+
+                                {/* Active Sessions & Devices Card */}
+                                <Card>
+                                    <CardHeader>
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <CardTitle className="text-lg font-bold flex items-center gap-2">
+                                                    <Smartphone className="h-5 w-5 text-primary" /> Active Sessions &amp; Devices
+                                                </CardTitle>
+                                                <CardDescription className="text-xs mt-1">
+                                                    Devices and browsers currently authenticated to your account.
+                                                </CardDescription>
+                                            </div>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={fetchSessions}
+                                                disabled={loadingSessions}
+                                                className="text-xs gap-1 cursor-pointer"
+                                            >
+                                                <RefreshCw className={`h-3 w-3 ${loadingSessions ? 'animate-spin' : ''}`} /> Refresh
                                             </Button>
                                         </div>
-                                    )}
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        {sessions.length === 0 ? (
+                                            <p className="text-xs text-muted-foreground py-2">No active sessions tracked.</p>
+                                        ) : (
+                                            <div className="space-y-2.5">
+                                                {sessions.map((s) => {
+                                                    const { browser, os, isMobile } = parseUserAgent(s.user_agent);
 
-                                    <form onSubmit={handleSavePayout} className="space-y-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="bank_select" className="text-xs font-semibold">Bank or E-Wallet</Label>
-                                            <select
-                                                id="bank_select"
-                                                value={bankName}
-                                                onChange={(e) => setBankName(e.target.value)}
-                                                className="w-full h-11 px-3 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                                    return (
+                                                        <div
+                                                            key={s.id}
+                                                            className={`p-3.5 rounded-xl border flex items-center justify-between transition-all ${
+                                                                s.is_current
+                                                                    ? 'border-emerald-500/30 bg-emerald-500/5'
+                                                                    : 'border-border/70 bg-card hover:bg-secondary/40'
+                                                            }`}
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="h-9 w-9 rounded-lg bg-secondary flex items-center justify-center text-foreground">
+                                                                    {isMobile ? <Smartphone className="h-4 w-4" /> : <Laptop className="h-4 w-4" />}
+                                                                </div>
+                                                                <div>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="font-semibold text-xs text-foreground">
+                                                                            {browser} on {os}
+                                                                        </span>
+                                                                        {s.is_current && (
+                                                                            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/20 px-2 py-0.2 rounded-full">
+                                                                                Current Device
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                                                                        IP: <span className="font-mono">{s.ip_address || '127.0.0.1'}</span> • Last active: {s.last_activity}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+
+                                                            {!s.is_current && (
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => handleRevokeSession(s.id)}
+                                                                    disabled={revokingId === s.id}
+                                                                    className="text-xs text-rose-400 hover:text-rose-500 hover:bg-rose-500/10 cursor-pointer"
+                                                                >
+                                                                    {revokingId === s.id ? 'Revoking...' : 'Revoke'}
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+
+                                        <div className="pt-2 border-t border-border/60">
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                onClick={handleLogoutAllOtherDevices}
+                                                className="text-xs gap-1.5 cursor-pointer"
                                             >
-                                                <option value="BCA">BCA (Bank Central Asia)</option>
-                                                <option value="MANDIRI">Bank Mandiri</option>
-                                                <option value="BNI">BNI (Bank Negara Indonesia)</option>
-                                                <option value="BRI">BRI (Bank Rakyat Indonesia)</option>
-                                                <option value="CIMB">CIMB Niaga</option>
-                                                <option value="PERMATA">Bank Permata</option>
-                                                <option value="GOPAY">GoPay E-Wallet</option>
-                                                <option value="OVO">OVO E-Wallet</option>
-                                                <option value="DANA">DANA E-Wallet</option>
-                                            </select>
+                                                <LogOut className="h-3.5 w-3.5" /> Log Out All Other Devices
+                                            </Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        )}
+
+                        {/* ── 3. Appearance & Theme Tab ── */}
+                        {activeTab === 'appearance' && (
+                            <motion.div
+                                key="appearance"
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -8 }}
+                                className="space-y-6"
+                            >
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-lg font-bold flex items-center gap-2">
+                                            <Sun className="h-5 w-5 text-primary" /> Display Mode
+                                        </CardTitle>
+                                        <CardDescription className="text-xs">
+                                            Choose between light, dark, or automatic system theme.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="grid grid-cols-3 gap-3">
+                                            {[
+                                                { key: 'light', label: 'Light', icon: Sun },
+                                                { key: 'dark', label: 'Dark', icon: Moon },
+                                                { key: 'system', label: 'Auto System', icon: Laptop },
+                                            ].map((mode) => {
+                                                const Icon = mode.icon;
+                                                const isActive = theme === mode.key;
+                                                return (
+                                                    <button
+                                                        key={mode.key}
+                                                        type="button"
+                                                        onClick={() => setTheme(mode.key as 'light' | 'dark' | 'system')}
+                                                        className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all cursor-pointer ${
+                                                            isActive
+                                                                ? 'border-primary bg-primary/10 text-foreground ring-2 ring-primary/40'
+                                                                : 'border-border hover:bg-secondary/60 text-muted-foreground'
+                                                        }`}
+                                                    >
+                                                        <Icon className={`h-6 w-6 mb-2 ${isActive ? 'text-primary' : ''}`} />
+                                                        <span className="text-xs font-semibold">{mode.label}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-lg font-bold flex items-center gap-2">
+                                            <Palette className="h-5 w-5 text-primary" /> Accent Color Theme
+                                        </CardTitle>
+                                        <CardDescription className="text-xs">
+                                            Select your preferred primary brand highlight color across buttons, pills, and borders.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="grid grid-cols-3 gap-3">
+                                            {[
+                                                { id: 'purple', label: 'Royal Purple', hex: '#A802F5', bg: 'bg-[#A802F5]' },
+                                                { id: 'teal', label: 'Neon Teal', hex: '#02F5A8', bg: 'bg-[#02F5A8]' },
+                                                { id: 'orange', label: 'Solar Orange', hex: '#F5AA02', bg: 'bg-[#F5AA02]' },
+                                            ].map((c) => {
+                                                const isActive = colorTheme === c.id;
+                                                return (
+                                                    <button
+                                                        key={c.id}
+                                                        type="button"
+                                                        onClick={() => setColorTheme(c.id as ColorTheme)}
+                                                        className={`flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer ${
+                                                            isActive
+                                                                ? 'border-primary bg-primary/10 text-foreground ring-2 ring-primary/40'
+                                                                : 'border-border hover:bg-secondary/60 text-muted-foreground'
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-center gap-2.5">
+                                                            <span className={`h-4 w-4 rounded-full ${c.bg} shadow-xs ring-1 ring-border`} />
+                                                            <span className="text-xs font-semibold">{c.label}</span>
+                                                        </div>
+                                                        {isActive && <Check className="h-4 w-4 text-primary" />}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        )}
+
+                        {/* ── 4. Payout Account Tab (Artist Only) ── */}
+                        {activeTab === 'payouts' && user?.artist_profile && (
+                            <motion.div
+                                key="payouts"
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -8 }}
+                                className="space-y-6"
+                            >
+                                <Card>
+                                    <CardHeader>
+                                        <div className="flex items-center justify-between">
+                                            <CardTitle className="text-lg font-bold flex items-center gap-2">
+                                                <CreditCard className="h-5 w-5 text-primary" /> Artist Payout Account
+                                            </CardTitle>
+                                            <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+                                                <ShieldCheck className="h-3 w-3" /> AES-256 ENCRYPTED
+                                            </span>
+                                        </div>
+                                        <CardDescription className="text-xs">
+                                            Configure the bank account or e-wallet where earnings from completed commissions will be disbursed via Midtrans Iris.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-6">
+                                        {payoutAccount && (
+                                            <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-between">
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <Building2 className="h-4 w-4 text-emerald-400" />
+                                                        <span className="font-bold text-sm text-foreground">{payoutAccount.bank_name}</span>
+                                                        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-mono font-bold">ACTIVE</span>
+                                                    </div>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Account: <span className="font-semibold text-foreground">{payoutAccount.bank_account_name}</span> ({payoutAccount.bank_account_number})
+                                                    </p>
+                                                </div>
+                                                <Button variant="ghost" size="sm" onClick={handleDeletePayout} disabled={savingPayout} className="text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 gap-1 text-xs cursor-pointer">
+                                                    <Trash2 className="h-3.5 w-3.5" /> Remove
+                                                </Button>
+                                            </div>
+                                        )}
+
+                                        <form onSubmit={handleSavePayout} className="space-y-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="bank_select" className="text-xs font-semibold">Bank or E-Wallet</Label>
+                                                <select
+                                                    id="bank_select"
+                                                    value={bankName}
+                                                    onChange={(e) => setBankName(e.target.value)}
+                                                    className="w-full h-11 px-3 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                                >
+                                                    <option value="BCA">BCA (Bank Central Asia)</option>
+                                                    <option value="MANDIRI">Bank Mandiri</option>
+                                                    <option value="BNI">BNI (Bank Negara Indonesia)</option>
+                                                    <option value="BRI">BRI (Bank Rakyat Indonesia)</option>
+                                                    <option value="CIMB">CIMB Niaga</option>
+                                                    <option value="PERMATA">Bank Permata</option>
+                                                    <option value="GOPAY">GoPay E-Wallet</option>
+                                                    <option value="OVO">OVO E-Wallet</option>
+                                                    <option value="DANA">DANA E-Wallet</option>
+                                                </select>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="account_name" className="text-xs font-semibold">Account Holder Name (as registered with bank)</Label>
+                                                <Input
+                                                    id="account_name"
+                                                    placeholder="e.g. Alex Rivera"
+                                                    value={accountName}
+                                                    onChange={(e) => setAccountName(e.target.value)}
+                                                    className="h-11 rounded-xl bg-card border-border/80"
+                                                    required
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="account_number" className="text-xs font-semibold">Bank Account Number / E-Wallet Phone</Label>
+                                                <Input
+                                                    id="account_number"
+                                                    placeholder="e.g. 1234567890"
+                                                    value={accountNumber}
+                                                    onChange={(e) => setAccountNumber(e.target.value.replace(/[^0-9]/g, ''))}
+                                                    className="h-11 rounded-xl bg-card border-border/80 font-mono"
+                                                    required
+                                                />
+                                                <p className="text-[11px] text-muted-foreground">Numbers only. Your account information is encrypted at rest using AES-256-CBC.</p>
+                                            </div>
+
+                                            <Button type="submit" disabled={savingPayout || loadingPayout} className="gap-2 font-bold shadow-md h-11 cursor-pointer">
+                                                <CreditCard className="h-4 w-4" />
+                                                {savingPayout ? 'Saving Payout Account...' : payoutAccount ? 'Update Payout Account' : 'Save Payout Account'}
+                                            </Button>
+                                        </form>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        )}
+
+                        {/* ── 5. Notification Preferences Tab ── */}
+                        {activeTab === 'notifications' && (
+                            <motion.div
+                                key="notifications"
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -8 }}
+                                className="space-y-6"
+                            >
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-lg font-bold flex items-center gap-2">
+                                            <Bell className="h-5 w-5 text-primary" /> Email Notification Preferences
+                                        </CardTitle>
+                                        <CardDescription className="text-xs">
+                                            Control which email dispatches you receive from the platform.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        {[
+                                            {
+                                                id: 'orders',
+                                                title: 'Commission Orders & Escrow Updates',
+                                                desc: 'Get notified when an escrow payment is secured, revised, or approved.',
+                                                checked: notifOrders,
+                                                set: setNotifOrders,
+                                            },
+                                            {
+                                                id: 'messages',
+                                                title: 'Direct Client & Artist Messages',
+                                                desc: 'Receive alerts when clients or artists reply in your order discussion threads.',
+                                                checked: notifMessages,
+                                                set: setNotifMessages,
+                                            },
+                                            {
+                                                id: 'comments',
+                                                title: 'Post Comments & Artwork Feedback',
+                                                desc: 'Alerts when members comment on artworks you have shared in the feed.',
+                                                checked: notifComments,
+                                                set: setNotifComments,
+                                            },
+                                            {
+                                                id: 'follows',
+                                                title: 'New Followers & Community Activity',
+                                                desc: 'Receive a summary when new collectors follow your creator studio.',
+                                                checked: notifFollows,
+                                                set: setNotifFollows,
+                                            },
+                                        ].map((item) => (
+                                            <div
+                                                key={item.id}
+                                                onClick={() => {
+                                                    item.set(!item.checked);
+                                                    toast.success('Notification preference saved.');
+                                                }}
+                                                className="flex items-center justify-between p-4 rounded-xl border border-border/70 hover:bg-secondary/40 transition-colors cursor-pointer"
+                                            >
+                                                <div className="space-y-0.5 pr-4">
+                                                    <p className="font-semibold text-xs text-foreground">{item.title}</p>
+                                                    <p className="text-[11px] text-muted-foreground leading-relaxed">{item.desc}</p>
+                                                </div>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={item.checked}
+                                                    onChange={() => {}}
+                                                    className="h-4 w-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
+                                                />
+                                            </div>
+                                        ))}
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        )}
+
+                        {/* ── 6. Danger Zone & UU PDP Privacy Tab ── */}
+                        {activeTab === 'privacy' && (
+                            <motion.div
+                                key="privacy"
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -8 }}
+                                className="space-y-6"
+                            >
+                                <Card className="border-rose-500/30 bg-rose-500/5">
+                                    <CardHeader>
+                                        <CardTitle className="text-lg font-bold flex items-center gap-2 text-rose-400">
+                                            <AlertTriangle className="h-5 w-5 text-rose-400" /> Account Deletion &amp; Data Erasure
+                                        </CardTitle>
+                                        <CardDescription className="text-xs text-muted-foreground leading-relaxed">
+                                            In compliance with Indonesian Personal Data Protection Law (UU No. 27/2022 tentang Pelindungan Data Pribadi - UU PDP), you have the right to request permanent erasure of your personal data and account records.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-5">
+                                        <div className="p-3.5 rounded-xl border border-rose-500/20 bg-card/60 text-xs text-muted-foreground leading-relaxed space-y-2">
+                                            <p className="font-semibold text-rose-400">Warning: This action is permanent and irreversible.</p>
+                                            <ul className="list-disc list-inside space-y-1 text-[11px]">
+                                                <li>All active browser sessions and auth tokens will be invalidated immediately.</li>
+                                                <li>Your creator profile, posts, and personal data records will be purged.</li>
+                                                <li>Active escrow commissions must be resolved before account closure.</li>
+                                            </ul>
                                         </div>
 
-                                        <div className="space-y-2">
-                                            <Label htmlFor="account_name" className="text-xs font-semibold">Account Holder Name (as registered with bank)</Label>
-                                            <Input
-                                                id="account_name"
-                                                placeholder="e.g. Alex Rivera"
-                                                value={accountName}
-                                                onChange={(e) => setAccountName(e.target.value)}
-                                                className="h-11 rounded-xl bg-card border-border/80"
-                                                required
-                                            />
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <Label htmlFor="account_number" className="text-xs font-semibold">Bank Account Number / E-Wallet Phone</Label>
-                                            <Input
-                                                id="account_number"
-                                                placeholder="e.g. 1234567890"
-                                                value={accountNumber}
-                                                onChange={(e) => setAccountNumber(e.target.value.replace(/[^0-9]/g, ''))}
-                                                className="h-11 rounded-xl bg-card border-border/80 font-mono"
-                                                required
-                                            />
-                                            <p className="text-[11px] text-muted-foreground">Numbers only. Your account information is encrypted at rest using AES-256-CBC.</p>
-                                        </div>
-
-                                        <Button type="submit" disabled={savingPayout || loadingPayout} className="gap-2 font-bold shadow-md h-11">
-                                            <CreditCard className="h-4 w-4" />
-                                            {savingPayout ? 'Saving Payout Account...' : payoutAccount ? 'Update Payout Account' : 'Save Payout Account'}
-                                        </Button>
-                                    </form>
-                                </CardContent>
-                            </Card>
-                        </motion.div>
-                    </TabsContent>
-                )}
-
-                {/* ── 5. Notification Preferences Tab ── */}
-                <TabsContent value="notifications">
-                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-base font-bold flex items-center gap-2">
-                                    <Bell className="h-4 w-4 text-primary" /> Email Notification Preferences
-                                </CardTitle>
-                                <CardDescription className="text-xs">
-                                    Control which email dispatches you receive from the platform.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {[
-                                    {
-                                        id: 'orders',
-                                        title: 'Commission Orders & Escrow Updates',
-                                        desc: 'Get notified when an escrow payment is secured, revised, or approved.',
-                                        checked: notifOrders,
-                                        set: setNotifOrders,
-                                    },
-                                    {
-                                        id: 'messages',
-                                        title: 'Direct Client & Artist Messages',
-                                        desc: 'Receive alerts when clients or artists reply in your order discussion threads.',
-                                        checked: notifMessages,
-                                        set: setNotifMessages,
-                                    },
-                                    {
-                                        id: 'comments',
-                                        title: 'Post Comments & Artwork Feedback',
-                                        desc: 'Alerts when members comment on artworks you have shared in the feed.',
-                                        checked: notifComments,
-                                        set: setNotifComments,
-                                    },
-                                    {
-                                        id: 'follows',
-                                        title: 'New Followers & Community Activity',
-                                        desc: 'Receive a summary when new collectors follow your creator studio.',
-                                        checked: notifFollows,
-                                        set: setNotifFollows,
-                                    },
-                                ].map((item) => (
-                                    <div
-                                        key={item.id}
-                                        onClick={() => {
-                                            item.set(!item.checked);
-                                            toast.success('Notification preference saved.');
-                                        }}
-                                        className="flex items-center justify-between p-4 rounded-xl border border-border/70 hover:bg-secondary/40 transition-colors cursor-pointer"
-                                    >
-                                        <div className="space-y-0.5 pr-4">
-                                            <p className="font-semibold text-xs text-foreground">{item.title}</p>
-                                            <p className="text-[11px] text-muted-foreground leading-relaxed">{item.desc}</p>
-                                        </div>
-                                        <input
-                                            type="checkbox"
-                                            checked={item.checked}
-                                            onChange={() => {}}
-                                            className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
-                                        />
-                                    </div>
-                                ))}
-                            </CardContent>
-                        </Card>
-                    </motion.div>
-                </TabsContent>
-
-                {/* ── 6. Danger Zone & UU PDP Privacy Tab ── */}
-                <TabsContent value="privacy">
-                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                        <Card className="border-rose-500/30 bg-rose-500/5">
-                            <CardHeader>
-                                <CardTitle className="text-base font-bold flex items-center gap-2 text-rose-400">
-                                    <AlertTriangle className="h-5 w-5 text-rose-400" /> Account Deletion &amp; Data Erasure
-                                </CardTitle>
-                                <CardDescription className="text-xs text-muted-foreground leading-relaxed">
-                                    In compliance with Indonesian Personal Data Protection Law (UU No. 27/2022 tentang Pelindungan Data Pribadi - UU PDP), you have the right to request permanent erasure of your personal data and account records.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-5">
-                                <div className="p-3.5 rounded-xl border border-rose-500/20 bg-card/60 text-xs text-muted-foreground leading-relaxed space-y-2">
-                                    <p className="font-semibold text-rose-400">Warning: This action is permanent and irreversible.</p>
-                                    <ul className="list-disc list-inside space-y-1 text-[11px]">
-                                        <li>All active browser sessions and auth tokens will be invalidated immediately.</li>
-                                        <li>Your creator profile, posts, and personal data records will be purged.</li>
-                                        <li>Active escrow commissions must be resolved before account closure.</li>
-                                    </ul>
-                                </div>
-
-                                <form onSubmit={handleDeleteAccount} className="space-y-4 max-w-md">
-                                    <div className="space-y-1.5">
-                                        <Label htmlFor="delete_password" className="text-xs font-semibold text-rose-400">
-                                            Confirm Password to Delete Account
-                                        </Label>
-                                        <Input
-                                            id="delete_password"
-                                            type="password"
-                                            placeholder="Enter your current password"
-                                            value={deletePassword}
-                                            onChange={(e) => setDeletePassword(e.target.value)}
-                                            className="h-11 rounded-xl bg-card border-rose-500/30 focus-visible:ring-rose-500"
-                                            required
-                                        />
-                                    </div>
-                                    <Button
-                                        type="submit"
-                                        variant="destructive"
-                                        disabled={deletingAccount || !deletePassword}
-                                        className="font-bold shadow-md h-11 text-xs gap-1.5"
-                                    >
-                                        <Trash2 className="h-3.5 w-3.5" />
-                                        {deletingAccount ? 'Deleting Account...' : 'Permanently Delete Account'}
-                                    </Button>
-                                </form>
-                            </CardContent>
-                        </Card>
-                    </motion.div>
-                </TabsContent>
-            </Tabs>
+                                        <form onSubmit={handleDeleteAccount} className="space-y-4 max-w-md">
+                                            <div className="space-y-1.5">
+                                                <Label htmlFor="delete_password" className="text-xs font-semibold text-rose-400">
+                                                    Confirm Password to Delete Account
+                                                </Label>
+                                                <Input
+                                                    id="delete_password"
+                                                    type="password"
+                                                    placeholder="Enter your current password"
+                                                    value={deletePassword}
+                                                    onChange={(e) => setDeletePassword(e.target.value)}
+                                                    className="h-11 rounded-xl bg-card border-rose-500/30 focus-visible:ring-rose-500"
+                                                    required
+                                                />
+                                            </div>
+                                            <Button
+                                                type="submit"
+                                                variant="destructive"
+                                                disabled={deletingAccount || !deletePassword}
+                                                className="font-bold shadow-md h-11 text-xs gap-1.5 cursor-pointer"
+                                            >
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                                {deletingAccount ? 'Deleting Account...' : 'Permanently Delete Account'}
+                                            </Button>
+                                        </form>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </main>
+            </div>
 
             {/* 2FA Setup Modal */}
             <TwoFactorSetupModal
