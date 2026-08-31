@@ -531,6 +531,58 @@ class CommissionLifecyclePayoutTest extends TestCase
         $this->assertEquals(PayoutStatus::COMPLETED, $payout->status, 'COMPLETED status must be immutable against delayed webhooks');
     }
 
+    public function test_iris_webhook_performs_challenge_verification_against_midtrans(): void
+    {
+        $payout = CommissionPayout::create([
+            'commission_id' => $this->createCommissionInWaitingState()->id,
+            'artist_profile_id' => $this->artistProfile->id,
+            'amount' => 500000,
+            'status' => PayoutStatus::PROCESSING,
+            'reference' => 'PAYOUT-6666',
+            'bank_name' => 'BCA',
+            'bank_account_name' => 'Artist One',
+            'bank_account_number' => '1234567890',
+            'requested_at' => now(),
+        ]);
+
+        // Scenario 1: Forged webhook claims 'completed', but Midtrans challenge returns 'processing'
+        $mockIris = $this->createMock(\App\Services\API\V1\MidtransPayoutService::class);
+        $mockIris->method('getPayoutStatus')
+            ->willReturn([
+                'status' => 'processing',
+                'reference_no' => 'PAYOUT-6666',
+            ]);
+
+        $this->app->instance(\App\Services\API\V1\MidtransPayoutService::class, $mockIris);
+
+        $this->postJson('/api/midtrans/iris-webhook', [
+            'reference_no' => 'PAYOUT-6666',
+            'status' => 'completed', // Forged/unverified claim
+        ])->assertOk();
+
+        $payout->refresh();
+        $this->assertEquals(PayoutStatus::PROCESSING, $payout->status, 'Unverified webhook claims must not alter payout state');
+
+        // Scenario 2: Verified webhook where Midtrans challenge confirms 'completed'
+        $mockIris2 = $this->createMock(\App\Services\API\V1\MidtransPayoutService::class);
+        $mockIris2->method('getPayoutStatus')
+            ->willReturn([
+                'status' => 'completed',
+                'reference_no' => 'PAYOUT-6666',
+            ]);
+
+        $this->app->instance(\App\Services\API\V1\MidtransPayoutService::class, $mockIris2);
+
+        $this->postJson('/api/midtrans/iris-webhook', [
+            'reference_no' => 'PAYOUT-6666',
+            'status' => 'completed',
+        ])->assertOk();
+
+        $payout->refresh();
+        $this->assertEquals(PayoutStatus::COMPLETED, $payout->status, 'Verified webhook must transition status to COMPLETED');
+        $this->assertNotNull($payout->completed_at);
+    }
+
     public function test_stale_processing_payout_triggers_admin_alert(): void
     {
         $payout = CommissionPayout::create([

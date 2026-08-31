@@ -11,6 +11,7 @@ use App\Models\Commission;
 use App\Models\CommissionPayment;
 use App\Models\Notification;
 use App\Services\API\V1\MidtransService;
+use App\Services\API\V1\MidtransPayoutService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -142,19 +143,19 @@ class PaymentController extends Controller
 
     /**
      * Public Midtrans Iris Payout callback.
+     * Implements challenge verification: queries Midtrans Iris directly to confirm
+     * the reported status before committing financial state changes.
      */
-    public function irisWebhook(Request $request): JsonResponse
+    public function irisWebhook(Request $request, MidtransPayoutService $midtransPayoutService): JsonResponse
     {
         $payload = $request->all();
-        $reference = $payload['reference_no'] ?? $payload['payout_id'] ?? null;
+        $reference = $payload['reference_no'] ?? null;
 
         if (!$reference) {
             return ApiResponseHelper::errorResponse('Missing reference_no.', Response::HTTP_BAD_REQUEST);
         }
 
-        $payout = \App\Models\CommissionPayout::where('reference', $reference)
-            ->orWhere('midtrans_payout_id', $reference)
-            ->first();
+        $payout = \App\Models\CommissionPayout::where('reference', $reference)->first();
 
         if (!$payout) {
             return ApiResponseHelper::errorResponse('Payout record not found.', Response::HTTP_NOT_FOUND);
@@ -166,23 +167,27 @@ class PaymentController extends Controller
             return ApiResponseHelper::successResponse(message: 'Payout already in terminal state COMPLETED.');
         }
 
-        $status = strtolower($payload['status'] ?? '');
+        // Challenge verification: Never trust webhook payload directly without querying Midtrans Iris source of truth.
+        $verified = $midtransPayoutService->getPayoutStatus($payout);
+        $providerStatus = strtolower($verified['status'] ?? 'unknown');
 
-        if (in_array($status, ['completed', 'done', 'settled', 'success'])) {
+        if (in_array($providerStatus, ['completed', 'done', 'settled', 'success'])) {
             $payout->update([
                 'status' => \App\Enum\PayoutStatus::COMPLETED,
                 'completed_at' => now(),
-                'raw_response' => $payload,
+                'raw_response' => $verified,
             ]);
-            Log::info("Iris webhook: Payout #{$payout->id} marked COMPLETED via webhook.");
-        } elseif (in_array($status, ['failed', 'rejected', 'denied'])) {
+            Log::info("Iris webhook: Payout #{$payout->id} verified and marked COMPLETED via Midtrans source-of-truth challenge.");
+        } elseif (in_array($providerStatus, ['failed', 'rejected', 'denied'])) {
             $payout->update([
                 'status' => \App\Enum\PayoutStatus::FAILED,
                 'failed_at' => now(),
-                'failure_reason' => "Provider webhook reported status: {$status}",
-                'raw_response' => $payload,
+                'failure_reason' => "Provider confirmed status: {$providerStatus}",
+                'raw_response' => $verified,
             ]);
-            Log::warning("Iris webhook: Payout #{$payout->id} marked FAILED via webhook.");
+            Log::warning("Iris webhook: Payout #{$payout->id} verified and marked FAILED via Midtrans source-of-truth challenge.");
+        } else {
+            Log::warning("Iris webhook: Payout #{$payout->id} received unverified status '{$providerStatus}' from provider — keeping in PROCESSING.");
         }
 
         return ApiResponseHelper::successResponse(message: 'Iris payout notification processed.');
