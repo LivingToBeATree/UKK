@@ -307,10 +307,10 @@ export const SettingsPage: React.FC = () => {
     const tabMeta = getTabMeta();
 
     return (
-        <div className="flex-1 min-h-screen flex flex-col md:flex-row bg-background text-foreground">
+        <div className="flex-1 h-screen overflow-hidden flex flex-col md:flex-row bg-background text-foreground">
             
-            {/* ── Left Sticky Settings Sidebar (Edge-to-Edge, Wider & More Prominent) ── */}
-            <aside className="w-full md:w-80 lg:w-88 shrink-0 border-r border-border/70 bg-card/30 flex flex-col justify-between min-h-screen p-6 lg:p-7 sticky top-0 md:h-screen overflow-y-auto">
+            {/* ── Left Fixed Settings Sidebar (Constant on Screen) ── */}
+            <aside className="w-full md:w-80 lg:w-88 shrink-0 border-r border-border/70 bg-card/30 flex flex-col justify-between h-full md:h-screen p-6 lg:p-7 overflow-y-auto select-none">
                 <div className="space-y-7">
                     {/* User Identity Card */}
                     <div className="p-4 sm:p-5 rounded-2xl border border-border/80 bg-card/90 shadow-sm space-y-3.5">
@@ -379,9 +379,10 @@ export const SettingsPage: React.FC = () => {
                 </div>
             </aside>
 
-            {/* ── Right Content Area (Comfortable, Generously Sized & Max-W-6xl) ── */}
-            <main className="flex-1 min-w-0 p-6 sm:p-10 lg:p-14 overflow-y-auto max-w-6xl">
-                {/* Active Section Header */}
+            {/* ── Right Content Area (Independently Scrollable) ── */}
+            <main className="flex-1 min-w-0 h-full md:h-screen p-6 sm:p-10 lg:p-14 overflow-y-auto">
+                <div className="max-w-6xl">
+                    {/* Active Section Header */}
                 <div className="mb-8 space-y-2 border-b border-border/60 pb-6">
                     <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground">
                         {tabMeta.title}
@@ -1015,6 +1016,7 @@ export const SettingsPage: React.FC = () => {
                         </motion.div>
                     )}
                 </AnimatePresence>
+                </div>
             </main>
 
             {/* 2FA Setup Modal */}
