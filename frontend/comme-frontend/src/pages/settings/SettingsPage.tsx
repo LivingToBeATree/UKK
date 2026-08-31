@@ -20,6 +20,7 @@ import {
     RefreshCw,
     Shield,
     Pipette,
+    Sparkles,
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { userService } from '@/services/userService';
@@ -765,20 +766,20 @@ export const SettingsPage: React.FC = () => {
                                         <Palette className="h-5 w-5 text-primary" /> Curated Brand Accent Palettes
                                     </CardTitle>
                                     <CardDescription className="text-sm">
-                                        Select from curated accent colors crafted for high contrast across buttons, active borders, and badges.
+                                        Select from distinct, non-overlapping accent palettes crafted for high contrast across buttons, active borders, and badges.
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="p-6 sm:p-8 pt-2">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                         {[
-                                            { id: 'purple', label: 'Royal Purple', hex: '#A802F5', bg: 'bg-[#A802F5]', desc: 'Original signature highlight' },
-                                            { id: 'teal', label: 'Neon Teal', hex: '#02F5A8', bg: 'bg-[#02F5A8]', desc: 'High-contrast futuristic glow' },
-                                            { id: 'orange', label: 'Solar Orange', hex: '#F5AA02', bg: 'bg-[#F5AA02]', desc: 'Warm creative amber energy' },
-                                            { id: 'blue', label: 'Electric Blue', hex: '#0284F5', bg: 'bg-[#0284F5]', desc: 'Vivid deep cobalt focus' },
-                                            { id: 'rose', label: 'Crimson Rose', hex: '#F5025A', bg: 'bg-[#F5025A]', desc: 'Radiant passionate ruby' },
-                                            { id: 'emerald', label: 'Emerald Jade', hex: '#10B981', bg: 'bg-[#10B981]', desc: 'Lush organic emerald tone' },
-                                            { id: 'magenta', label: 'Sunset Magenta', hex: '#EC4899', bg: 'bg-[#EC4899]', desc: 'Playful vivid hyper-pink' },
-                                            { id: 'gold', label: 'Cyber Gold', hex: '#EAB308', bg: 'bg-[#EAB308]', desc: 'Luxury high-visibility gold' },
+                                            { id: 'purple', label: 'Royal Violet', hex: '#A802F5', bg: 'bg-[#A802F5]', desc: 'Original signature highlight' },
+                                            { id: 'teal', label: 'Neon Teal', hex: '#02F5A8', bg: 'bg-[#02F5A8]', desc: 'Cyberpunk mint & cyan' },
+                                            { id: 'amber', label: 'Solar Amber', hex: '#F59E0B', bg: 'bg-[#F59E0B]', desc: 'Warm sunset amber energy' },
+                                            { id: 'blue', label: 'Electric Cobalt', hex: '#2563EB', bg: 'bg-[#2563EB]', desc: 'Deep vivid ultramarine blue' },
+                                            { id: 'crimson', label: 'Crimson Ruby', hex: '#E11D48', bg: 'bg-[#E11D48]', desc: 'Bold radiant ruby scarlet' },
+                                            { id: 'lilac', label: 'Dreamy Lilac', hex: '#B899FF', bg: 'bg-[#B899FF]', desc: 'Soft pastel neon lavender' },
+                                            { id: 'pink', label: 'Cyber Pink', hex: '#F43F5E', bg: 'bg-[#F43F5E]', desc: 'High-energy hyper pink' },
+                                            { id: 'prism', label: 'Prism Chroma', hex: '#A802F5', bg: 'bg-gradient-to-tr from-[#a802f5] via-[#0284f5] to-[#02f5a8]', desc: 'Dynamic animated chroma glow', isSpecial: true },
                                         ].map((c) => {
                                             const isActive = colorTheme === c.id;
                                             return (
@@ -794,7 +795,10 @@ export const SettingsPage: React.FC = () => {
                                                 >
                                                     <div className="flex items-center justify-between w-full mb-3">
                                                         <span className={`h-7 w-7 rounded-full ${c.bg} shadow-md ring-2 ring-border/80`} />
-                                                        {isActive && <Check className="h-4 w-4 text-primary" />}
+                                                        <div className="flex items-center gap-1.5">
+                                                            {c.isSpecial && <Sparkles className="h-4 w-4 text-amber-400 animate-pulse" />}
+                                                            {isActive && <Check className="h-4 w-4 text-primary" />}
+                                                        </div>
                                                     </div>
                                                     <span className="text-sm font-bold text-foreground">{c.label}</span>
                                                     <span className="text-xs text-muted-foreground mt-0.5">{c.desc}</span>
@@ -819,7 +823,7 @@ export const SettingsPage: React.FC = () => {
                                         )}
                                     </div>
                                     <CardDescription className="text-sm">
-                                        Choose any custom hex code or click the color swatch to open the interactive color wheel.
+                                        Choose any custom hex code, click the color swatch for the interactive color wheel, or pick from quick-palette inspiration dots.
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="p-6 sm:p-8 pt-2 space-y-6">
@@ -841,34 +845,51 @@ export const SettingsPage: React.FC = () => {
                                             />
                                         </div>
 
-                                        <div className="space-y-1.5 flex-1 min-w-0">
-                                            <Label htmlFor="custom_hex" className="text-xs font-semibold text-foreground/90">
-                                                Hex Color Code
-                                            </Label>
-                                            <div className="flex items-center gap-3">
-                                                <Input
-                                                    id="custom_hex"
-                                                    value={tempHex}
-                                                    onChange={(e) => handleCustomColorChange(e.target.value)}
-                                                    placeholder="#A802F5"
-                                                    className="h-12 w-44 rounded-xl font-mono text-sm uppercase px-4 bg-card border-border/80 font-bold"
-                                                    maxLength={7}
-                                                />
-                                                <Button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        if (/^#[0-9A-Fa-f]{6}$/.test(tempHex)) {
-                                                            setCustomColor(tempHex);
-                                                            setColorTheme('custom');
-                                                            toast.success(`Custom color ${tempHex.toUpperCase()} applied!`);
-                                                        } else {
-                                                            toast.error('Please enter a valid 6-digit hex code (e.g. #3B82F6)');
-                                                        }
-                                                    }}
-                                                    className="h-12 px-6 font-bold shadow-md text-xs cursor-pointer"
-                                                >
-                                                    Apply Custom Accent
-                                                </Button>
+                                        <div className="space-y-3 flex-1 min-w-0">
+                                            <div className="space-y-1.5">
+                                                <Label htmlFor="custom_hex" className="text-xs font-semibold text-foreground/90">
+                                                    Hex Color Code
+                                                </Label>
+                                                <div className="flex items-center gap-3">
+                                                    <Input
+                                                        id="custom_hex"
+                                                        value={tempHex}
+                                                        onChange={(e) => handleCustomColorChange(e.target.value)}
+                                                        placeholder="#A802F5"
+                                                        className="h-12 w-44 rounded-xl font-mono text-sm uppercase px-4 bg-card border-border/80 font-bold"
+                                                        maxLength={7}
+                                                    />
+                                                    <Button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (/^#[0-9A-Fa-f]{6}$/.test(tempHex)) {
+                                                                setCustomColor(tempHex);
+                                                                setColorTheme('custom');
+                                                                toast.success(`Custom color ${tempHex.toUpperCase()} applied!`);
+                                                            } else {
+                                                                toast.error('Please enter a valid 6-digit hex code (e.g. #B899FF)');
+                                                            }
+                                                        }}
+                                                        className="h-12 px-6 font-bold shadow-md text-xs cursor-pointer"
+                                                    >
+                                                        Apply Custom Accent
+                                                    </Button>
+                                                </div>
+                                            </div>
+
+                                            {/* Quick-Pick Swatch Palette */}
+                                            <div className="flex items-center gap-2 pt-1">
+                                                <span className="text-[11px] text-muted-foreground font-medium">Quick swatches:</span>
+                                                {['#B899FF', '#06B6D4', '#10B981', '#F59E0B', '#EC4899', '#6366F1', '#14B8A6', '#F97316'].map((swatch) => (
+                                                    <button
+                                                        key={swatch}
+                                                        type="button"
+                                                        onClick={() => handleCustomColorChange(swatch)}
+                                                        className="h-6 w-6 rounded-full border border-border/80 shadow-xs hover:scale-115 transition-transform cursor-pointer"
+                                                        style={{ backgroundColor: swatch }}
+                                                        title={swatch}
+                                                    />
+                                                ))}
                                             </div>
                                         </div>
                                     </div>

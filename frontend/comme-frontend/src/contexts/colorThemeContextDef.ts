@@ -3,12 +3,12 @@ import { createContext } from 'react';
 export type ColorTheme =
     | 'purple'
     | 'teal'
-    | 'orange'
+    | 'amber'
     | 'blue'
-    | 'rose'
-    | 'emerald'
-    | 'magenta'
-    | 'gold'
+    | 'crimson'
+    | 'lilac'
+    | 'pink'
+    | 'prism'
     | 'custom';
 
 export interface ColorThemeContextType {

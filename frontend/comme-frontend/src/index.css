@@ -58,40 +58,54 @@
   --ring: #02f5a8;
 }
 
-[data-color-theme="orange"] {
-  --primary: #f5aa02;
-  --primary-foreground: #2d1b01;
-  --ring: #f5aa02;
+[data-color-theme="amber"] {
+  --primary: #f59e0b;
+  --primary-foreground: #1f1300;
+  --ring: #f59e0b;
 }
 
 [data-color-theme="blue"] {
-  --primary: #0284f5;
+  --primary: #2563eb;
   --primary-foreground: #ffffff;
-  --ring: #0284f5;
+  --ring: #2563eb;
 }
 
-[data-color-theme="rose"] {
-  --primary: #f5025a;
+[data-color-theme="crimson"] {
+  --primary: #e11d48;
   --primary-foreground: #ffffff;
-  --ring: #f5025a;
+  --ring: #e11d48;
 }
 
-[data-color-theme="emerald"] {
-  --primary: #10b981;
-  --primary-foreground: #ffffff;
-  --ring: #10b981;
+[data-color-theme="lilac"] {
+  --primary: #b899ff;
+  --primary-foreground: #1e1035;
+  --ring: #b899ff;
 }
 
-[data-color-theme="magenta"] {
-  --primary: #ec4899;
+[data-color-theme="pink"] {
+  --primary: #f43f5e;
   --primary-foreground: #ffffff;
-  --ring: #ec4899;
+  --ring: #f43f5e;
 }
 
-[data-color-theme="gold"] {
-  --primary: #eab308;
-  --primary-foreground: #2d1b01;
-  --ring: #eab308;
+[data-color-theme="prism"] {
+  --primary: #a802f5;
+  --primary-foreground: #ffffff;
+  --ring: #02f5a8;
+}
+
+[data-color-theme="prism"] button.bg-primary,
+[data-color-theme="prism"] .bg-primary {
+  background: linear-gradient(135deg, #a802f5 0%, #0284f5 50%, #02f5a8 100%) !important;
+  background-size: 200% 200% !important;
+  animation: prismGradient 6s ease infinite !important;
+  color: #ffffff !important;
+}
+
+@keyframes prismGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 @theme {
