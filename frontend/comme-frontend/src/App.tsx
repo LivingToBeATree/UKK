@@ -32,7 +32,7 @@ function AppLayout() {
     }
 
     return (
-        <div className="min-h-screen bg-background text-foreground flex font-sans transition-colors duration-200">
+        <div className="min-h-screen bg-background text-foreground flex font-sans transition-colors duration-200 overflow-x-hidden">
             {/* Fixed Left Expandable Rail */}
             <SidebarRail />
 
@@ -41,7 +41,7 @@ function AppLayout() {
                 initial={false}
                 animate={{ paddingLeft: collapsed ? 68 : 260 }}
                 transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-                className="flex-1 flex flex-col min-w-0"
+                className="flex-1 flex flex-col min-w-0 overflow-x-hidden"
             >
                 <Navbar />
                 <main className="flex-1">
