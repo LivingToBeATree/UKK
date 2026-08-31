@@ -28,4 +28,27 @@ export const userService = {
         const res = await api.get<ApiResponse<User>>(`/users/${username}`);
         return res.data.data;
     },
+
+    getSessions: async () => {
+        const res = await api.get<ApiResponse<Array<{
+            id: string;
+            ip_address: string | null;
+            user_agent: string | null;
+            last_activity: string;
+            is_current: boolean;
+        }>>>('/profile/sessions');
+        return res.data.data;
+    },
+
+    revokeSession: async (sessionId: string) => {
+        const res = await api.delete<ApiResponse<{ message: string }>>(`/profile/sessions/${sessionId}`);
+        return res.data;
+    },
+
+    deleteAccount: async (password: string) => {
+        const res = await api.delete<ApiResponse<{ message: string }>>('/account', {
+            data: { password },
+        });
+        return res.data;
+    },
 };
