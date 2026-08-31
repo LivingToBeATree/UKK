@@ -30,6 +30,9 @@
     {{-- 9. Midtrans Payments & Webhooks --}}
     @include('partials.docs.payments')
 
-    {{-- 10. Moderation & Support Tickets --}}
+    {{-- 10. Media & Asset Storage --}}
+    @include('partials.docs.media')
+
+    {{-- 11. Moderation & Support Tickets --}}
     @include('partials.docs.moderation')
 @endsection

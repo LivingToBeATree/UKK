@@ -227,9 +227,23 @@ Authorization: Bearer <personal_access_token>
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
 | `POST` | `/api/commissions/{id}/payment-token` | Buyer | Generates Midtrans Snap checkout token |
-| `POST` | `/api/midtrans/webhook` | Webhook | Midtrans server callback signature handler |
+| `POST` | `/api/midtrans/webhook` | Webhook | Midtrans Snap payment callback signature handler |
+| `POST` | `/api/midtrans/iris-webhook` | Webhook | Midtrans Iris payout status challenge callback |
 
-### 8. Moderation & Support
+### 8. Payout Accounts & Disbursements
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `GET` | `/api/me/payout-account` | Artist | Retrieves artist bank transfer account (masked) |
+| `PUT` | `/api/me/payout-account` | Artist | Configures artist bank transfer account (encrypted at rest) |
+
+### 9. Media & Asset Storage
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `POST` | `/api/media` | Auth | Uploads multipart image/video asset (max 25MB) |
+| `GET` | `/api/media/{id}` | Public | Retrieves asset metadata and public URL |
+| `DELETE` | `/api/media/{id}` | Owner / Admin | Purges media file and record (MediaPolicy protected) |
+
+### 10. Moderation & Support
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
 | `POST` | `/api/reports` | Auth | Submits content report for staff review |
@@ -240,7 +254,7 @@ Authorization: Bearer <personal_access_token>
 
 ## Testing
 
-The backend includes a comprehensive automated test suite covering all authentication flows, artist onboarding, order transitions, messaging security, notifications, and rate limits:
+The backend includes a comprehensive automated test suite (80 test methods, 326 assertions) covering all authentication flows, artist onboarding, order transitions, messaging security, notifications, and rate limits:
 
 ```bash
 # Run all automated tests
@@ -253,6 +267,7 @@ php artisan test --coverage
 ### Test Coverage Highlights
 - **`CommissionLifecyclePayoutTest`**: End-to-end lifecycle, Midtrans escrow payouts, reconciliation, idempotent retry, bank encryption at rest.
 - **`MediaUploadTest`**: Multipart upload validation, MediaPolicy ownership authorization, public disk storage.
+- **`PortfolioFlowTest`**: Artist portfolio creation, starred toggles, exists validation, owner authorization.
 - **`RegistrationFlowTest`**: OTP dispatch, verification, rate limits, expired code purging.
 - **`AuthNotificationsTest`**: Unrecognized device alerts, password change confirmations.
 - **`ArtistApplicationFlowTest`**: Queue permissions, duplicate prevention, atomic profile activation.
