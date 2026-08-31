@@ -79,7 +79,7 @@
 | **Authentication** | Laravel Sanctum (Cookies & Bearer Tokens) |
 | **Payments** | Midtrans Snap & Notification Webhooks |
 | **Mailing** | Laravel Notifications with custom branded HTML templates |
-| **Testing** | PHPUnit / PEST (44 feature & unit test suites) |
+| **Testing** | PHPUnit (75+ automated test methods with 310+ assertions) |
 | **Deployment** | Docker / Google Cloud Run + Cloud SQL + VPC Connector |
 
 ---
@@ -89,7 +89,7 @@
 ### Prerequisites
 - **PHP** >= 8.2 with extensions: `pdo`, `pdo_pgsql`, `mbstring`, `openssl`, `bcmath`, `curl`
 - **Composer** >= 2.x
-- **PostgreSQL** >= 15.x
+- **PostgreSQL** >= 16.x
 - **Node.js** >= 18.x (for frontend/asset builds)
 
 ### 1. Clone & Install Dependencies
@@ -251,6 +251,8 @@ php artisan test --coverage
 ```
 
 ### Test Coverage Highlights
+- **`CommissionLifecyclePayoutTest`**: End-to-end lifecycle, Midtrans escrow payouts, reconciliation, idempotent retry, bank encryption at rest.
+- **`MediaUploadTest`**: Multipart upload validation, MediaPolicy ownership authorization, public disk storage.
 - **`RegistrationFlowTest`**: OTP dispatch, verification, rate limits, expired code purging.
 - **`AuthNotificationsTest`**: Unrecognized device alerts, password change confirmations.
 - **`ArtistApplicationFlowTest`**: Queue permissions, duplicate prevention, atomic profile activation.

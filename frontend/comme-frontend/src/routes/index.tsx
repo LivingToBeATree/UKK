@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { ProtectedRoute } from './protectedRoutes';
 import { GuestRoute } from './GuestRoute';
 
@@ -72,7 +72,12 @@ import { PlaygroundPage } from '@/pages/dev/Playground/PlaygroundPage';
 export { ProtectedRoute } from './protectedRoutes';
 export { GuestRoute } from './GuestRoute';
 
-function AppRoutes() {
+function OrderRedirect() {
+    const { id } = useParams<{ id: string }>();
+    return <Navigate to={`/commissions/${id || ''}`} replace />;
+}
+
+export function AppRoutes() {
     return (
         <Routes>
             {/* Public routes */}
@@ -116,7 +121,7 @@ function AppRoutes() {
                 <Route path="/commissions" element={<MyCommissionsPage />} />
                 <Route path="/commissions/:id" element={<CommissionDetailPage />} />
                 <Route path="/orders" element={<Navigate to="/commissions" replace />} />
-                <Route path="/orders/:id" element={<Navigate to="/commissions/:id" replace />} />
+                <Route path="/orders/:id" element={<OrderRedirect />} />
 
                 {/* User dashboard */}
                 <Route path="/settings" element={<SettingsPage />} />
