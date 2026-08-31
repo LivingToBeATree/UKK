@@ -4,7 +4,7 @@ A modern digital creator marketplace & commission platform frontend built with R
 
 ---
 
-## 🚀 Features
+## Features
 
 - **Public Marketplace & Feed**: Explore community artworks, filter creator portfolios, and view creator profiles.
 - **Commission Workflow**: Order commissions with customizable options, review milestones, request revisions, and manage lifecycle state transitions.
@@ -15,7 +15,7 @@ A modern digital creator marketplace & commission platform frontend built with R
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Framework**: React 19
 - **Build Tool**: Vite 8
@@ -26,7 +26,7 @@ A modern digital creator marketplace & commission platform frontend built with R
 
 ---
 
-## 💻 Getting Started
+## Getting Started
 
 ### 1. Install Dependencies
 ```bash
