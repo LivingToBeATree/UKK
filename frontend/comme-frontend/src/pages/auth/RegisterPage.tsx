@@ -13,10 +13,14 @@ import { toast } from '@/components/ui/sonner';
 import { AuthHeroBanner } from '@/components/auth/AuthHeroBanner';
 
 const registerSchema = z.object({
-    username: z.string().min(3, 'At least 3 characters'),
+    username: z
+        .string()
+        .min(3, 'Username must be at least 3 characters')
+        .max(30, 'Username must be at most 30 characters')
+        .regex(/^[a-zA-Z0-9_]+$/, 'Only letters, numbers, and underscores are allowed'),
     email: z.email('Please enter a valid email address'),
-    password: z.string().min(8, 'At least 8 characters'),
-    password_confirmation: z.string(),
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+    password_confirmation: z.string().min(1, 'Please confirm your password'),
 }).refine((data) => data.password === data.password_confirmation, {
     message: 'Passwords do not match',
     path: ['password_confirmation'],
@@ -78,7 +82,7 @@ export const RegisterPage: React.FC = () => {
                             </Label>
                             <Input
                                 id="username"
-                                placeholder="your_creator_tag"
+                                placeholder="alex_art"
                                 className="h-11 rounded-xl bg-card border-border/80 focus-visible:ring-primary"
                                 {...register('username')}
                             />
@@ -94,7 +98,7 @@ export const RegisterPage: React.FC = () => {
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="you@domain.com"
+                                placeholder="alex@example.com"
                                 className="h-11 rounded-xl bg-card border-border/80 focus-visible:ring-primary"
                                 {...register('email')}
                             />

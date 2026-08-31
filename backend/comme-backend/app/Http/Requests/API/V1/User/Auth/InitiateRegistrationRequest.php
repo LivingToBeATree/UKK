@@ -15,10 +15,15 @@ class InitiateRegistrationRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $merge = [];
         if ($this->has('email')) {
-            $this->merge([
-                'email' => mb_strtolower($this->email),
-            ]);
+            $merge['email'] = mb_strtolower($this->email);
+        }
+        if (!$this->has('display_name') && $this->has('username')) {
+            $merge['display_name'] = $this->username;
+        }
+        if (!empty($merge)) {
+            $this->merge($merge);
         }
     }
 

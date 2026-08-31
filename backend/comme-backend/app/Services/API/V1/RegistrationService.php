@@ -38,6 +38,25 @@ class RegistrationService
         Notification::route('mail', $email)->notify(new RegistrationCodeNotification($code, self::CODE_TTL_MINUTES));
     }
 
+    public function resend(string $email): bool
+    {
+        $pending = PendingRegistration::where('email', mb_strtolower($email))->first();
+        if (! $pending) {
+            return false;
+        }
+
+        $code = (string) random_int(100000, 999999);
+        $pending->update([
+            'code' => Hash::make($code),
+            'attempts' => 0,
+            'expires_at' => now()->addMinutes(self::CODE_TTL_MINUTES),
+        ]);
+
+        Notification::route('mail', $pending->email)->notify(new RegistrationCodeNotification($code, self::CODE_TTL_MINUTES));
+
+        return true;
+    }
+
     public function confirm(string $email, string $code): ?User
     {
         return DB::transaction(function () use ($email, $code): ?User {
