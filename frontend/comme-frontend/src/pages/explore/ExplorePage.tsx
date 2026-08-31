@@ -102,7 +102,7 @@ export const ExplorePage: React.FC = () => {
     };
 
     return (
-        <div className="max-w-[1440px] mx-auto px-6 sm:px-12 py-8">
+        <div className="w-full max-w-[1440px] mx-auto px-6 sm:px-12 py-8">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>

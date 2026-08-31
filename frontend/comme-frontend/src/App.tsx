@@ -42,10 +42,10 @@ function AppLayout() {
                 initial={false}
                 animate={{ paddingLeft: collapsed ? 68 : 260 }}
                 transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-                className="flex-1 flex flex-col min-w-0 overflow-x-hidden"
+                className="flex-1 flex flex-col min-w-0 w-full overflow-x-hidden"
             >
                 <Navbar />
-                <main className="flex-1 flex flex-col min-h-screen">
+                <main className="flex-1 flex flex-col min-h-screen w-full">
                     <AppRoutes />
                 </main>
             </motion.div>

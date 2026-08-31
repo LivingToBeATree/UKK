@@ -183,7 +183,7 @@ export const DevPanelPage: React.FC = () => {
     };
 
     return (
-        <div className="max-w-[1440px] mx-auto px-6 sm:px-12 py-10 space-y-8">
+        <div className="w-full max-w-[1440px] mx-auto px-6 sm:px-12 py-10 space-y-8">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-6">
                 <div className="space-y-1">

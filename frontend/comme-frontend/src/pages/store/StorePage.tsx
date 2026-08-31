@@ -73,7 +73,7 @@ export const StorePage: React.FC = () => {
     }, []);
 
     return (
-        <div className="max-w-[1440px] mx-auto px-6 sm:px-12 py-8">
+        <div className="w-full max-w-[1440px] mx-auto px-6 sm:px-12 py-8">
             {/* Header */}
             <div className="mb-8">
                 <h1 className="text-3xl font-bold">Commission Store</h1>
