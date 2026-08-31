@@ -2,13 +2,10 @@
 
 namespace App\Console\Commands;
 
-use App\Enum\NotificationType;
 use App\Enum\PayoutStatus;
-use App\Enum\UserRole;
 use App\Models\CommissionPayout;
-use App\Models\Notification;
-use App\Models\User;
 use App\Services\API\V1\MidtransPayoutService;
+use App\Services\API\V1\StaffNotificationService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -34,28 +31,11 @@ class ReconcilePayouts extends Command
                 if ($payout->requested_at && $payout->requested_at->copy()->addHours(24)->isPast()) {
                     Log::warning("Payout #{$payout->id} (Commission #{$payout->commission_id}) has been PROCESSING for > 24 hours.");
 
-                    $staffRecipients = User::whereIn('role', [UserRole::ADMIN, UserRole::MODERATOR])->get();
-                    if ($staffRecipients->isEmpty()) {
-                        $fallback = User::first();
-                        if ($fallback) {
-                            $staffRecipients = collect([$fallback]);
-                        }
-                    }
-
-                    foreach ($staffRecipients as $staff) {
-                        Notification::firstOrCreate(
-                            [
-                                'user_id' => $staff->id,
-                                'type' => NotificationType::SYSTEM,
-                                'notifiable_type' => CommissionPayout::class,
-                                'notifiable_id' => $payout->id,
-                            ],
-                            [
-                                'title' => 'Stale Payout In-Flight Alert',
-                                'message' => "Payout #{$payout->id} for Commission #{$payout->commission_id} has been in PROCESSING for over 24 hours without terminal confirmation. Please check Midtrans Iris dashboard.",
-                            ]
-                        );
-                    }
+                    StaffNotificationService::notifyStaff(
+                        title: 'Stale Payout In-Flight Alert',
+                        message: "Payout #{$payout->id} for Commission #{$payout->commission_id} has been in PROCESSING for over 24 hours without terminal confirmation. Please check Midtrans Iris dashboard.",
+                        notifiable: $payout
+                    );
                 }
 
                 $status = $midtransPayoutService->getPayoutStatus($payout);
