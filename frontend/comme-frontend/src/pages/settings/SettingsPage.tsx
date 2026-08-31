@@ -320,10 +320,10 @@ export const SettingsPage: React.FC = () => {
         <div className="flex-1 h-screen overflow-hidden flex flex-col md:flex-row bg-background text-foreground">
             
             {/* ── Left Fixed Settings Sidebar (Constant on Screen) ── */}
-            <aside className="w-full md:w-80 lg:w-88 shrink-0 border-r border-border/70 bg-card/30 flex flex-col justify-between h-full md:h-screen p-6 lg:p-7 overflow-y-auto select-none">
-                <div className="space-y-7">
+            <aside className="w-full md:w-80 lg:w-84 shrink-0 border-r border-border/70 bg-card/30 flex flex-col justify-between h-full md:h-screen p-5 lg:p-6 overflow-y-auto select-none">
+                <div className="space-y-5">
                     {/* User Identity Card */}
-                    <div className="p-4 sm:p-5 rounded-2xl border border-border/80 bg-card/90 shadow-sm space-y-3.5">
+                    <div className="p-4 rounded-2xl border border-border/80 bg-card/90 shadow-sm space-y-3">
                         <div className="flex items-center gap-3.5">
                             <Avatar size="lg" fallback={user?.display_name || user?.username || '?'} src={user?.avatar_url} />
                             <div className="overflow-hidden min-w-0">
@@ -340,12 +340,12 @@ export const SettingsPage: React.FC = () => {
                     </div>
 
                     {/* Section Label */}
-                    <div className="space-y-1.5">
-                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-2">
+                    <div className="space-y-1">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground px-2">
                             Preferences &amp; Security
                         </p>
                         {/* Navigation Links */}
-                        <nav className="flex flex-col space-y-1.5">
+                        <nav className="flex flex-col space-y-1">
                             {navItems.map((item) => {
                                 const Icon = item.icon;
                                 const isActive = activeTab === item.id;
@@ -354,7 +354,7 @@ export const SettingsPage: React.FC = () => {
                                         key={item.id}
                                         type="button"
                                         onClick={() => setActiveTab(item.id as typeof activeTab)}
-                                        className={`w-full text-left transition-all py-3.5 px-4 rounded-xl flex items-center justify-between group cursor-pointer ${
+                                        className={`w-full text-left transition-all py-2.5 px-3.5 rounded-xl flex items-center justify-between group cursor-pointer ${
                                             isActive
                                                 ? item.isDestructive
                                                     ? 'bg-rose-500/15 text-rose-400 font-bold ring-1 ring-rose-500/30 shadow-xs'
@@ -364,8 +364,8 @@ export const SettingsPage: React.FC = () => {
                                                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
                                         }`}
                                     >
-                                        <div className="flex items-center gap-3.5">
-                                            <Icon className={`h-5 w-5 shrink-0 ${
+                                        <div className="flex items-center gap-3">
+                                            <Icon className={`h-4.5 w-4.5 shrink-0 ${
                                                 isActive
                                                     ? item.isDestructive ? 'text-rose-400' : 'text-primary'
                                                     : item.isDestructive ? 'text-rose-400/80' : 'text-muted-foreground group-hover:text-foreground'
