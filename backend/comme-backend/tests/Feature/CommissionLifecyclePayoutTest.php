@@ -62,6 +62,22 @@ class CommissionLifecyclePayoutTest extends TestCase
         ]);
     }
 
+    private function createCommissionInWaitingState(): Commission
+    {
+        return Commission::create([
+            'commission_service_id' => $this->service->id,
+            'commission_option_id' => $this->option->id,
+            'artist_profile_id' => $this->artistProfile->id,
+            'user_id' => $this->buyerUser->id,
+            'status' => CommissionStatus::WAITING_FOR_CLIENT,
+            'description' => 'Cyberpunk character design',
+            'total_price' => 500000,
+            'deadline' => now()->addDays(14)->toDateString(),
+            'delivered_at' => now(),
+            'review_deadline' => now()->addDays(7),
+        ]);
+    }
+
     // ─── Existing lifecycle tests ─────────────────────────────────────
 
     public function test_artist_can_accept_and_decline_commission(): void
@@ -399,5 +415,129 @@ class CommissionLifecyclePayoutTest extends TestCase
             ->where('id', $account->id)
             ->first();
         $this->assertNotEquals('9876543210', $rawRow->bank_account_number);
+    }
+
+    public function test_production_environment_blocks_simulation_mode(): void
+    {
+        config(['app.env' => 'production']);
+        config(['midtrans.iris_api_key' => '']);
+
+        $this->actingAs($this->artistUser)
+            ->putJson('/api/me/payout-account', [
+                'bank_name' => 'BCA',
+                'bank_account_name' => 'Artist One',
+                'bank_account_number' => '1234567890',
+            ])
+            ->assertOk();
+
+        $commission = $this->createCommissionInWaitingState();
+
+        // In production without key, completing commission should not silently simulate payout.
+        $midtransService = new \App\Services\API\V1\MidtransPayoutService();
+        $payoutService = new \App\Services\API\V1\PayoutService($midtransService);
+        $completionService = new \App\Services\API\V1\CommissionCompletionService($payoutService);
+
+        $completionService->completeCommission($commission);
+
+        $payout = CommissionPayout::where('commission_id', $commission->id)->first();
+        $this->assertNotNull($payout);
+        $this->assertEquals(PayoutStatus::FAILED, $payout->status);
+        $this->assertStringContainsString('FATAL', $payout->failure_reason);
+
+        // Reset config
+        config(['app.env' => 'testing']);
+    }
+
+    public function test_ambiguous_network_timeout_leaves_payout_in_processing_for_reconciliation(): void
+    {
+        $this->actingAs($this->artistUser)
+            ->putJson('/api/me/payout-account', [
+                'bank_name' => 'BCA',
+                'bank_account_name' => 'Artist One',
+                'bank_account_number' => '1234567890',
+            ])
+            ->assertOk();
+
+        $commission = $this->createCommissionInWaitingState();
+
+        $mockIris = $this->createMock(\App\Services\API\V1\MidtransPayoutService::class);
+        $mockIris->method('createPayout')
+            ->willThrowException(new \Exception('cURL error 28: Operation timed out after 15000 milliseconds with 0 bytes received'));
+
+        $payoutService = new \App\Services\API\V1\PayoutService($mockIris);
+        $completionService = new \App\Services\API\V1\CommissionCompletionService($payoutService);
+
+        $completionService->completeCommission($commission);
+
+        $payout = CommissionPayout::where('commission_id', $commission->id)->first();
+        $this->assertNotNull($payout);
+        // Should remain in PROCESSING (not FAILED) so reconciliation can check status before any retry.
+        $this->assertEquals(PayoutStatus::PROCESSING, $payout->status);
+        $this->assertStringContainsString('Ambiguous network outcome', $payout->failure_reason);
+    }
+
+    public function test_reconciliation_handles_not_found_provider_disbursement_for_clean_retry(): void
+    {
+        $payout = CommissionPayout::create([
+            'commission_id' => $this->createCommissionInWaitingState()->id,
+            'artist_profile_id' => $this->artistProfile->id,
+            'amount' => 500000,
+            'status' => PayoutStatus::PROCESSING,
+            'reference' => 'PAYOUT-9999',
+            'bank_name' => 'BCA',
+            'bank_account_name' => 'Artist One',
+            'bank_account_number' => '1234567890',
+            'requested_at' => now(),
+        ]);
+
+        $mockIris = $this->createMock(\App\Services\API\V1\MidtransPayoutService::class);
+        $mockIris->method('getPayoutStatus')
+            ->willReturn([
+                'status' => 'not_found',
+                'error_code' => 404,
+            ]);
+
+        $this->app->instance(\App\Services\API\V1\MidtransPayoutService::class, $mockIris);
+
+        $this->artisan('commissions:reconcile-payouts')
+            ->assertSuccessful();
+
+        $payout->refresh();
+        // Provider 404 should transition to FAILED so retry scheduler can re-dispatch cleanly.
+        $this->assertEquals(PayoutStatus::FAILED, $payout->status);
+        $this->assertStringContainsString('not found on provider', $payout->failure_reason);
+    }
+
+    public function test_stale_processing_payout_triggers_admin_alert(): void
+    {
+        $payout = CommissionPayout::create([
+            'commission_id' => $this->createCommissionInWaitingState()->id,
+            'artist_profile_id' => $this->artistProfile->id,
+            'amount' => 500000,
+            'status' => PayoutStatus::PROCESSING,
+            'reference' => 'PAYOUT-8888',
+            'bank_name' => 'BCA',
+            'bank_account_name' => 'Artist One',
+            'bank_account_number' => '1234567890',
+            'requested_at' => now()->subHours(25), // 25 hours old
+        ]);
+
+        $mockIris = $this->createMock(\App\Services\API\V1\MidtransPayoutService::class);
+        $mockIris->method('getPayoutStatus')
+            ->willReturn([
+                'status' => 'processing',
+            ]);
+
+        $this->app->instance(\App\Services\API\V1\MidtransPayoutService::class, $mockIris);
+
+        $this->artisan('commissions:reconcile-payouts')
+            ->assertSuccessful();
+
+        $adminNotification = \App\Models\Notification::where('type', \App\Enum\NotificationType::SYSTEM)
+            ->where('notifiable_id', $payout->id)
+            ->first();
+
+        $this->assertNotNull($adminNotification);
+        $this->assertStringContainsString('Stale Payout In-Flight Alert', $adminNotification->title);
     }
 }

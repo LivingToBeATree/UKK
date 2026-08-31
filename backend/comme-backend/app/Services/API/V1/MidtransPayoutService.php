@@ -31,12 +31,13 @@ class MidtransPayoutService
         }
 
         if (empty($this->apiKey)) {
-            Log::info("Midtrans Iris API Key not configured. Payout #{$payout->id} recorded in simulation mode.", [
-                'reference' => $payout->reference,
-                'amount' => $payout->amount,
-                'bank' => $payout->bank_name,
-            ]);
+            if (app()->environment('production') || config('app.env') === 'production') {
+                throw new \RuntimeException(
+                    "FATAL: Midtrans Iris API Key is missing in production environment. Real payout cannot be processed or simulated."
+                );
+            }
 
+            // Sandbox simulation mode: return mock accepted payout
             return [
                 'payouts' => [
                     [
@@ -93,6 +94,12 @@ class MidtransPayoutService
     public function getPayoutStatus(CommissionPayout $payout): array
     {
         if (empty($this->apiKey)) {
+            if (app()->environment('production') || config('app.env') === 'production') {
+                throw new \RuntimeException(
+                    "FATAL: Midtrans Iris API Key is missing in production environment. Cannot reconcile payout status."
+                );
+            }
+
             // Simulation mode: report completed after 60 seconds.
             $isCompleted = $payout->requested_at && $payout->requested_at->copy()->addSeconds(60)->isPast();
 
@@ -106,7 +113,9 @@ class MidtransPayoutService
         try {
             $reference = $payout->midtrans_payout_id ?? $payout->reference;
 
-            $response = Http::withBasicAuth($this->apiKey, '')
+            $response = Http::timeout(10)
+                ->connectTimeout(5)
+                ->withBasicAuth($this->apiKey, '')
                 ->withHeaders([
                     'Accept' => 'application/json',
                 ])
@@ -114,6 +123,14 @@ class MidtransPayoutService
 
             if ($response->successful()) {
                 return $response->json();
+            }
+
+            if ($response->status() === 404) {
+                Log::info("Midtrans Iris returned 404 for Payout #{$payout->id} (reference: {$reference}) — not found on provider.");
+                return [
+                    'status' => 'not_found',
+                    'error_code' => 404,
+                ];
             }
 
             Log::warning("Midtrans Iris status check failed for Payout #{$payout->id}", [

@@ -48,13 +48,33 @@ class PayoutService
 
             return $payout;
         } catch (Exception $e) {
-            $payout->update([
-                'status' => PayoutStatus::FAILED,
-                'failed_at' => now(),
-                'failure_reason' => $e->getMessage(),
-            ]);
+            $errorMessage = $e->getMessage();
+            $isAmbiguousTimeout = str_contains(strtolower($errorMessage), 'timeout')
+                || str_contains(strtolower($errorMessage), 'timed out')
+                || str_contains(strtolower($errorMessage), 'connection')
+                || str_contains(strtolower($errorMessage), '504')
+                || str_contains(strtolower($errorMessage), '502')
+                || str_contains(strtolower($errorMessage), '503');
 
-            Log::error("Payout #{$payout->id} failed: " . $e->getMessage());
+            if ($isAmbiguousTimeout) {
+                // Ambiguous network outcome: Iris might have accepted the payout before connection severed.
+                // Leave status as PROCESSING with note so ReconcilePayouts checks provider status via reference.
+                $payout->update([
+                    'status' => PayoutStatus::PROCESSING,
+                    'failure_reason' => "Ambiguous network outcome: {$errorMessage}. Awaiting reconciliation.",
+                ]);
+
+                Log::warning("Payout #{$payout->id} encountered ambiguous network response — remaining in PROCESSING for reconciliation: " . $errorMessage);
+            } else {
+                // Definitive client-side failure (e.g. 400 Bad Request, 422 Invalid Beneficiary Account)
+                $payout->update([
+                    'status' => PayoutStatus::FAILED,
+                    'failed_at' => now(),
+                    'failure_reason' => $errorMessage,
+                ]);
+
+                Log::error("Payout #{$payout->id} definitively failed: " . $errorMessage);
+            }
 
             return $payout;
         }
