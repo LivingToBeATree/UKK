@@ -27,6 +27,7 @@ import {
     DropdownMenuSeparator,
 } from './ui/dropdown-menu';
 import { toast } from './ui/sonner';
+import { cn } from '@/lib/utils';
 
 /* ─── Reusable Sidebar Navigation Item ─── */
 interface NavItemProps {
@@ -307,8 +308,12 @@ export const SidebarRail: React.FC = () => {
                                 )}
                             </AnimatePresence>
                             <DropdownMenuContent
-                                align="start"
-                                className="w-56 bg-card border border-border shadow-xl rounded-xl ml-2"
+                                side={collapsed ? 'right' : 'top'}
+                                align={collapsed ? 'end' : 'start'}
+                                className={cn(
+                                    'w-56 bg-card/98 backdrop-blur-2xl border border-border shadow-2xl rounded-xl z-50',
+                                    collapsed ? 'ml-3' : 'mb-2 ml-1'
+                                )}
                             >
                                 <div className="px-3 py-2 border-b border-border mb-1">
                                     <p className="font-bold text-xs truncate text-foreground">

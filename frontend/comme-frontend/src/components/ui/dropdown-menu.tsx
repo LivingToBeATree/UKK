@@ -13,9 +13,15 @@ export interface DropdownMenuProps {
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
     children: React.ReactNode;
+    className?: string;
 }
 
-export const DropdownMenu: React.FC<DropdownMenuProps> = ({ open: controlledOpen, onOpenChange, children }) => {
+export const DropdownMenu: React.FC<DropdownMenuProps> = ({
+    open: controlledOpen,
+    onOpenChange,
+    className,
+    children,
+}) => {
     const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false);
     const containerRef = React.useRef<HTMLDivElement>(null);
 
@@ -54,7 +60,7 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({ open: controlledOpen
 
     return (
         <DropdownContext.Provider value={{ open, setOpen }}>
-            <div ref={containerRef} className="relative inline-block text-left">
+            <div ref={containerRef} className={cn('relative inline-block text-left', className)}>
                 {children}
             </div>
         </DropdownContext.Provider>
@@ -108,33 +114,74 @@ DropdownMenuTrigger.displayName = 'DropdownMenuTrigger';
 export interface DropdownMenuContentProps extends Omit<HTMLMotionProps<'div'>, 'children'> {
     children?: React.ReactNode;
     align?: 'start' | 'end' | 'center';
+    side?: 'top' | 'bottom' | 'left' | 'right';
 }
 
 export const DropdownMenuContent = React.forwardRef<
     HTMLDivElement,
     DropdownMenuContentProps
->(({ className, align = 'end', children, ...props }, ref) => {
+>(({ className, align = 'end', side = 'bottom', children, ...props }, ref) => {
     const context = React.useContext(DropdownContext);
     if (!context) throw new Error('DropdownMenuContent must be used within DropdownMenu');
 
-    const alignClasses = {
-        start: 'left-0 origin-top-left',
-        end: 'right-0 origin-top-right',
-        center: 'left-1/2 -translate-x-1/2 origin-top',
+    const positionClasses: Record<string, string> = {
+        'bottom-start': 'top-full left-0 mt-2 origin-top-left',
+        'bottom-end': 'top-full right-0 mt-2 origin-top-right',
+        'bottom-center': 'top-full left-1/2 -translate-x-1/2 mt-2 origin-top',
+
+        'top-start': 'bottom-full left-0 mb-2 origin-bottom-left',
+        'top-end': 'bottom-full right-0 mb-2 origin-bottom-right',
+        'top-center': 'bottom-full left-1/2 -translate-x-1/2 mb-2 origin-bottom',
+
+        'left-start': 'right-full top-0 mr-2 origin-top-right',
+        'left-end': 'right-full bottom-0 mr-2 origin-bottom-right',
+        'left-center': 'right-full top-1/2 -translate-y-1/2 mr-2 origin-right',
+
+        'right-start': 'left-full top-0 ml-2 origin-top-left',
+        'right-end': 'left-full bottom-0 ml-2 origin-bottom-left',
+        'right-center': 'left-full top-1/2 -translate-y-1/2 ml-2 origin-left',
     };
+
+    const posKey = `${side}-${align}`;
+    const chosenPos = positionClasses[posKey] || positionClasses['bottom-end'];
+
+    const motionVariants = {
+        bottom: {
+            initial: { opacity: 0, scale: 0.95, y: -6 },
+            animate: { opacity: 1, scale: 1, y: 0 },
+            exit: { opacity: 0, scale: 0.95, y: -6 },
+        },
+        top: {
+            initial: { opacity: 0, scale: 0.95, y: 6 },
+            animate: { opacity: 1, scale: 1, y: 0 },
+            exit: { opacity: 0, scale: 0.95, y: 6 },
+        },
+        left: {
+            initial: { opacity: 0, scale: 0.95, x: 6 },
+            animate: { opacity: 1, scale: 1, x: 0 },
+            exit: { opacity: 0, scale: 0.95, x: 6 },
+        },
+        right: {
+            initial: { opacity: 0, scale: 0.95, x: -6 },
+            animate: { opacity: 1, scale: 1, x: 0 },
+            exit: { opacity: 0, scale: 0.95, x: -6 },
+        },
+    };
+
+    const variant = motionVariants[side] || motionVariants.bottom;
 
     return (
         <AnimatePresence>
             {context.open && (
                 <motion.div
                     ref={ref}
-                    initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                    initial={variant.initial}
+                    animate={variant.animate}
+                    exit={variant.exit}
                     transition={{ duration: 0.15, ease: 'easeOut' }}
                     className={cn(
-                        'absolute z-50 mt-2 min-w-45 overflow-hidden rounded-xl border border-border bg-card p-1 text-card-foreground shadow-xl',
-                        alignClasses[align],
+                        'absolute z-50 min-w-45 overflow-hidden rounded-xl border border-border bg-card p-1 text-card-foreground shadow-2xl backdrop-blur-xl',
+                        chosenPos,
                         className
                     )}
                     {...props}
