@@ -19,13 +19,14 @@ return new class extends Migration
             $table->string('status')->default('pending');
             $table->string('reference')->unique();
             $table->string('midtrans_payout_id')->nullable()->index();
-            $table->string('bank_name');
-            $table->string('bank_account_name');
-            $table->string('bank_account_number');
+            $table->string('bank_name')->nullable();
+            $table->string('bank_account_name')->nullable();
+            $table->text('bank_account_number')->nullable();
             $table->timestamp('requested_at')->nullable();
             $table->timestamp('completed_at')->nullable();
             $table->timestamp('failed_at')->nullable();
             $table->text('failure_reason')->nullable();
+            $table->unsignedTinyInteger('retry_count')->default(0);
             $table->json('raw_response')->nullable();
             $table->timestamps();
 

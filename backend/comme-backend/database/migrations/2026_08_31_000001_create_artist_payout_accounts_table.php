@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('artist_profile_id')->constrained('artist_profiles')->cascadeOnDelete();
             $table->string('bank_name'); // e.g. BCA, MANDIRI, BNI, BRI, GOPAY, DANA
             $table->string('bank_account_name');
-            $table->string('bank_account_number');
+            $table->text('bank_account_number');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
