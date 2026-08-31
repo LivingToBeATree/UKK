@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { ArrowLeft, Star, ShoppingCart, Clock } from 'lucide-react';
 import { commissionServiceApi, commissionReviewApi, type CommissionReview } from '@/services/commissionService';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +14,7 @@ import type { CommissionService, CommissionOption } from '@/types';
 
 export const ServiceDetailPage: React.FC = () => {
     const { serviceId } = useParams<{ serviceId: string }>();
-    const { isAuthenticated } = useAuth();
+    const { requireAuth } = useAuthModal();
     const navigate = useNavigate();
     const [service, setService] = useState<CommissionService | null>(null);
     const [reviews, setReviews] = useState<CommissionReview[]>([]);
@@ -210,8 +210,10 @@ export const ServiceDetailPage: React.FC = () => {
                                 className="w-full"
                                 disabled={!selectedOption || service.status !== 'open'}
                                 onClick={() => {
-                                    if (!isAuthenticated) {
-                                        navigate('/login');
+                                    if (!requireAuth({
+                                        intent: 'commission',
+                                        redirectUrl: `/store/${serviceId}/order`,
+                                    })) {
                                         return;
                                     }
                                     navigate(`/store/${serviceId}/order`, {

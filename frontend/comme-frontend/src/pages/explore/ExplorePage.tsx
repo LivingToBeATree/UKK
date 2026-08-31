@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Heart, MessageSquare, Bookmark, Plus, ImageIcon } from 'lucide-react';
 import { postService } from '@/services/postService';
 import { useAuth } from '@/hooks/useAuth';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
@@ -13,6 +14,7 @@ import type { Post, PaginationMeta } from '@/types';
 
 export const ExplorePage: React.FC = () => {
     const { isAuthenticated } = useAuth();
+    const { requireAuth } = useAuthModal();
     const [posts, setPosts] = useState<Post[]>([]);
     const [meta, setMeta] = useState<PaginationMeta | null>(null);
     const [loading, setLoading] = useState(true);
@@ -53,6 +55,7 @@ export const ExplorePage: React.FC = () => {
     }, []);
 
     const handleLike = async (postId: number) => {
+        if (!requireAuth('like')) return;
         try {
             const res = await postService.toggleLike(postId);
             setPosts((prev) =>
@@ -66,6 +69,7 @@ export const ExplorePage: React.FC = () => {
     };
 
     const handleBookmark = async (postId: number) => {
+        if (!requireAuth('bookmark')) return;
         try {
             const res = await postService.toggleBookmark(postId);
             setPosts((prev) =>
@@ -86,12 +90,16 @@ export const ExplorePage: React.FC = () => {
                     <h1 className="text-2xl font-bold">Explore</h1>
                     <p className="text-sm text-muted-foreground">See what the community is creating</p>
                 </div>
-                {isAuthenticated && (
+                {isAuthenticated ? (
                     <Link to="/posts/create">
                         <Button>
                             <Plus className="h-4 w-4 mr-2" /> New Post
                         </Button>
                     </Link>
+                ) : (
+                    <Button onClick={() => requireAuth('generic')}>
+                        <Plus className="h-4 w-4 mr-2" /> New Post
+                    </Button>
                 )}
             </div>
 

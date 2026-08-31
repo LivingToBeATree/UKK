@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { Heart, Bookmark, ArrowLeft, Send } from 'lucide-react';
 import { postService } from '@/services/postService';
 import { useAuth } from '@/hooks/useAuth';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
@@ -15,6 +16,7 @@ import type { Post, PostComment } from '@/types';
 export const PostDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const { user } = useAuth();
+    const { requireAuth } = useAuthModal();
     const [post, setPost] = useState<Post | null>(null);
     const [comments, setComments] = useState<PostComment[]>([]);
     const [newComment, setNewComment] = useState('');
@@ -37,8 +39,35 @@ export const PostDetailPage: React.FC = () => {
         if (id) fetchPost();
     }, [id]);
 
+    const handleLike = async () => {
+        if (!post) return;
+        if (!requireAuth('like')) return;
+        try {
+            const res = await postService.toggleLike(post.id);
+            setPost({ ...post, is_liked: res.liked, likes_count: res.likes_count });
+        } catch {
+            toast.error('Failed to like post');
+        }
+    };
+
+    const handleBookmark = async () => {
+        if (!post) return;
+        if (!requireAuth('bookmark')) return;
+        try {
+            const res = await postService.toggleBookmark(post.id);
+            setPost({
+                ...post,
+                is_bookmarked: res.bookmarked,
+                bookmarks_count: res.bookmarked ? post.bookmarks_count + 1 : Math.max(0, post.bookmarks_count - 1),
+            });
+        } catch {
+            toast.error('Failed to bookmark post');
+        }
+    };
+
     const handleComment = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!requireAuth('comment')) return;
         if (!newComment.trim()) return;
         setSubmitting(true);
         try {
@@ -113,14 +142,29 @@ export const PostDetailPage: React.FC = () => {
                             </div>
                         )}
 
-                        {/* Stats */}
-                        <div className="flex items-center gap-4 pt-4 border-t border-border text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                                <Heart className="h-4 w-4" /> {post.likes_count} likes
-                            </span>
-                            <span className="flex items-center gap-1">
-                                <Bookmark className="h-4 w-4" /> {post.bookmarks_count} bookmarks
-                            </span>
+                        {/* Actions */}
+                        <div className="flex items-center gap-4 pt-4 border-t border-border">
+                            <button
+                                type="button"
+                                onClick={handleLike}
+                                className={`flex items-center gap-1.5 text-xs transition-colors cursor-pointer ${
+                                    post.is_liked ? 'text-rose-500 font-semibold' : 'text-muted-foreground hover:text-rose-500'
+                                }`}
+                            >
+                                <Heart className={`h-4 w-4 ${post.is_liked ? 'fill-current' : ''}`} />
+                                <span>{post.likes_count} likes</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={handleBookmark}
+                                className={`flex items-center gap-1.5 text-xs transition-colors ml-auto cursor-pointer ${
+                                    post.is_bookmarked ? 'text-amber-500 font-semibold' : 'text-muted-foreground hover:text-amber-500'
+                                }`}
+                            >
+                                <Bookmark className={`h-4 w-4 ${post.is_bookmarked ? 'fill-current' : ''}`} />
+                                <span>{post.bookmarks_count} bookmarks</span>
+                            </button>
                         </div>
                     </CardContent>
                 </Card>
@@ -153,7 +197,7 @@ export const PostDetailPage: React.FC = () => {
                     ))}
 
                     {/* Comment Input */}
-                    {user && (
+                    {user ? (
                         <form onSubmit={handleComment} className="flex gap-2">
                             <Input
                                 placeholder="Write a comment..."
@@ -165,6 +209,16 @@ export const PostDetailPage: React.FC = () => {
                                 <Send className="h-4 w-4" />
                             </Button>
                         </form>
+                    ) : (
+                        <div
+                            onClick={() => requireAuth('comment')}
+                            className="flex items-center justify-between p-3.5 rounded-xl border border-border/80 bg-secondary/40 hover:bg-secondary/70 transition-colors cursor-pointer text-xs text-muted-foreground"
+                        >
+                            <span>Sign in or register to join the discussion and comment...</span>
+                            <Button size="sm" variant="secondary" className="h-7 text-xs font-semibold">
+                                Comment
+                            </Button>
+                        </div>
                     )}
                 </div>
             </motion.div>

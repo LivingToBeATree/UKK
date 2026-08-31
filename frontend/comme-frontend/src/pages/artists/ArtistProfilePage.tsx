@@ -5,6 +5,7 @@ import { ArrowLeft, Star, ExternalLink, UserPlus, UserCheck } from 'lucide-react
 import { artistProfileApi, followApi, portfolioApi, type Portfolio } from '@/services/artistService';
 import { commissionServiceApi, commissionReviewApi, type CommissionReview } from '@/services/commissionService';
 import { useAuth } from '@/hooks/useAuth';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
@@ -17,6 +18,7 @@ import type { ArtistProfile, CommissionService } from '@/types';
 export const ArtistProfilePage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const { user: currentUser } = useAuth();
+    const { requireAuth } = useAuthModal();
     const [profile, setProfile] = useState<ArtistProfile | null>(null);
     const [services, setServices] = useState<CommissionService[]>([]);
     const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
@@ -50,6 +52,7 @@ export const ArtistProfilePage: React.FC = () => {
 
     const handleFollow = async () => {
         if (!profile?.user_id) return;
+        if (!requireAuth('follow')) return;
         try {
             const res = await followApi.toggle(profile.user_id);
             setFollowing(res.following);
