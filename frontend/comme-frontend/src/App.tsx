@@ -14,18 +14,12 @@ function AppLayout() {
     const { collapsed } = useSidebar();
     const location = useLocation();
 
-    // Full-screen layout for dedicated authentication & legal portal flows
+    // Full-screen layout for dedicated authentication flows only
     const isFullScreenRoute = [
         '/login',
         '/register',
         '/register/verify',
         '/forgot-password',
-        '/license',
-        '/terms',
-        '/privacy',
-        '/cookies',
-        '/api-terms',
-        '/escrow-terms',
     ].includes(location.pathname) || location.pathname.startsWith('/reset-password');
 
     if (isFullScreenRoute) {
