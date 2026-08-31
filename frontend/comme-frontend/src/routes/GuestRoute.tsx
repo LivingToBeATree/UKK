@@ -7,5 +7,5 @@ export const GuestRoute: React.FC = () => {
 
   if (isLoading) return null;
   
-  return !isAuthenticated ? <Outlet /> : <Navigate to='/' replace />;
+  return !isAuthenticated ? <Outlet /> : <Navigate to="/explore" replace />;
 };

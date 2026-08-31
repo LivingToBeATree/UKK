@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { motion, type Variants } from 'motion/react';
 import { ArrowRight, ArrowUpRight, Palette, ShieldCheck, Sparkles, Compass, Store, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -52,8 +52,14 @@ const gallery = [
 ];
 
 export const LandingPage: React.FC = () => {
-    const { isAuthenticated, user } = useAuth();
+    const { isAuthenticated, isLoading, user } = useAuth();
     const { requireAuth, openAuthModal } = useAuthModal();
+
+    if (isLoading) return null;
+
+    if (isAuthenticated) {
+        return <Navigate to="/explore" replace />;
+    }
 
     return (
         <div className="min-h-screen w-full bg-background text-foreground flex flex-col justify-between">
