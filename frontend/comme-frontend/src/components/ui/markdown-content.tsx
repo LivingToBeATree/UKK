@@ -2,6 +2,7 @@ import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkEmoji from 'remark-emoji';
+import { CustomVideoPlayer } from './CustomVideoPlayer';
 
 interface MarkdownContentProps {
     content: string;
@@ -113,18 +114,42 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({
                             {children}
                         </p>
                     ),
-                    img: ({ src, alt }) => (
-                        <img
-                            src={src}
-                            alt={alt || 'Image attachment'}
-                            className={`rounded-xl object-contain my-2 border border-border/80 shadow-xs bg-black/40 transition-all ${
-                                isComment
-                                    ? 'max-h-[160px] sm:max-h-[190px] max-w-[240px] sm:max-w-[280px]'
-                                    : 'max-h-[300px] sm:max-h-[360px] max-w-full'
-                            }`}
-                            loading="lazy"
-                        />
-                    ),
+                    img: ({ src, alt }) => {
+                        const isVideo =
+                            typeof src === 'string' &&
+                            (/\.(mp4|webm|mov|mkv|avi)$/i.test(src) ||
+                                src.includes('/media/stream/') ||
+                                (typeof alt === 'string' && /\.(mp4|webm|mov|mkv|avi)$/i.test(alt)));
+
+                        if (isVideo && src) {
+                            return (
+                                <div
+                                    className={`rounded-2xl overflow-hidden my-3 border border-border/80 bg-black shadow-md ${
+                                        isComment ? 'max-w-[340px] sm:max-w-[400px]' : 'max-w-xl'
+                                    }`}
+                                >
+                                    <CustomVideoPlayer
+                                        src={src}
+                                        autoPlay={false}
+                                        className="w-full aspect-video"
+                                    />
+                                </div>
+                            );
+                        }
+
+                        return (
+                            <img
+                                src={src}
+                                alt={alt || 'Image attachment'}
+                                className={`rounded-xl object-contain my-2 border border-border/80 shadow-xs bg-black/40 transition-all ${
+                                    isComment
+                                        ? 'max-h-[160px] sm:max-h-[190px] max-w-[240px] sm:max-w-[280px]'
+                                        : 'max-h-[300px] sm:max-h-[360px] max-w-full'
+                                }`}
+                                loading="lazy"
+                            />
+                        );
+                    },
                 }}
             >
                 {content}

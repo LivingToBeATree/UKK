@@ -36,6 +36,17 @@ class MediaController extends Controller
         $fileName = Str::uuid() . '.' . $extension;
         $path = $file->storeAs('uploads/' . date('Y/m'), $fileName, 'public');
 
+        // Automatically faststart MP4 videos so moov atom is at the front for instant streaming
+        if ($mediaType === MediaType::VIDEO && strtolower($extension) === 'mp4') {
+            $fullDiskPath = Storage::disk('public')->path($path);
+            $scriptPath = base_path('storage/mp4-faststart.cjs');
+            if (file_exists($scriptPath) && file_exists($fullDiskPath)) {
+                @exec('node ' . escapeshellarg($scriptPath) . ' ' . escapeshellarg($fullDiskPath) . ' 2>&1');
+                clearstatcache(true, $fullDiskPath);
+                $fileSize = filesize($fullDiskPath);
+            }
+        }
+
         $media = Media::create([
             'user_id' => $request->user()->id,
             'file_name' => $originalName,

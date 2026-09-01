@@ -50,6 +50,16 @@ class PostController extends Controller
                 $mime = $file->getClientMimeType();
                 $mediaType = str_starts_with($mime, 'video/') ? \App\Enum\MediaType::VIDEO : \App\Enum\MediaType::IMAGE;
 
+                // Auto faststart MP4 videos for instant streaming
+                if ($mediaType === \App\Enum\MediaType::VIDEO && strtolower($file->getClientOriginalExtension()) === 'mp4') {
+                    $fullDiskPath = \Illuminate\Support\Facades\Storage::disk('public')->path($path);
+                    $scriptPath = base_path('storage/mp4-faststart.cjs');
+                    if (file_exists($scriptPath) && file_exists($fullDiskPath)) {
+                        @exec('node ' . escapeshellarg($scriptPath) . ' ' . escapeshellarg($fullDiskPath) . ' 2>&1');
+                        clearstatcache(true, $fullDiskPath);
+                    }
+                }
+
                 \App\Models\PostMedia::create([
                     'post_id' => $post->id,
                     'file_name' => $file->getClientOriginalName(),
