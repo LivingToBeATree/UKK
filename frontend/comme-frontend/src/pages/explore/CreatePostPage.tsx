@@ -51,8 +51,6 @@ const POPULAR_TAGS = [
     '3DModel',
 ];
 
-const EMOJI_LIST = ['✨', '🎨', '🚀', '🔥', '💖', '🖌️', '🌸', '🌟', '⚡', '💭', '💎', '🎉'];
-
 const getPortfolioImage = (portfolio: Portfolio | null | undefined): string | undefined => {
     return portfolio?.media?.[0]?.url;
 };
@@ -512,18 +510,17 @@ export const CreatePostPage: React.FC = () => {
                                                 <div className="relative" ref={emojiPickerRef}>
                                                     <Button
                                                         type="button"
-                                                        variant={showEmojiPicker ? 'secondary' : 'ghost'}
+                                                        variant="ghost"
                                                         size="sm"
                                                         onClick={() => setShowEmojiPicker((prev) => !prev)}
-                                                        className={`h-8 px-2 text-xs font-semibold gap-1.5 cursor-pointer transition-all ${
+                                                        className={`h-8 w-8 p-0 cursor-pointer transition-colors ${
                                                             showEmojiPicker
-                                                                ? 'bg-primary/20 text-primary border border-primary/30'
+                                                                ? 'bg-secondary text-foreground'
                                                                 : 'text-muted-foreground hover:text-foreground'
                                                         }`}
-                                                        title="Open Full Emoji Library"
+                                                        title="Insert Emoji"
                                                     >
-                                                        <Smile className="h-4 w-4 text-amber-400" />
-                                                        <span className="text-[11px] font-bold">Emoji</span>
+                                                        <Smile className="h-4 w-4" />
                                                     </Button>
 
                                                     {/* Emoji Picker Popover */}
@@ -549,22 +546,6 @@ export const CreatePostPage: React.FC = () => {
                                                             </motion.div>
                                                         )}
                                                     </AnimatePresence>
-                                                </div>
-
-                                                {/* Quick Emoji Presets */}
-                                                <div className="h-4 w-px bg-border/80 mx-1" />
-                                                <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-none">
-                                                    {EMOJI_LIST.map((emoji) => (
-                                                        <button
-                                                            key={emoji}
-                                                            type="button"
-                                                            onClick={() => insertEmoji(emoji)}
-                                                            className="h-7 w-7 rounded-lg hover:bg-secondary flex items-center justify-center text-sm transition-transform hover:scale-120 cursor-pointer shrink-0"
-                                                            title={`Insert ${emoji}`}
-                                                        >
-                                                            {emoji}
-                                                        </button>
-                                                    ))}
                                                 </div>
                                             </div>
                                         )}
