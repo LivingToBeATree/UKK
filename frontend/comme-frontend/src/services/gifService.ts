@@ -15,7 +15,7 @@ export const getActiveKlipyKey = (): string => {
     return (
         import.meta.env.VITE_KLIPY_API_KEY ||
         localStorage.getItem(STORAGE_KLIPY_KEY) ||
-        ''
+        'ob3ckcnK9TWdtGPC7uLnp37Cruw267o87WBw7bR6W6IBSSxyiiQbrp1QsUdVmc72'
     );
 };
 
@@ -56,19 +56,37 @@ export const gifService = {
 
         const parsed: GifResult[] = rawItems
             .map((item: any) => {
-                const files = item.files || {};
-                const gifFile = files.gif || files.webp || files.mp4 || {};
-                const gifUrl = gifFile.url || item.url || '';
+                const file = item.file || item.files || {};
+
+                // High-quality GIF URL for insertion
+                const gifUrl =
+                    file.hd?.gif?.url ||
+                    file.md?.gif?.url ||
+                    file.sm?.gif?.url ||
+                    file.gif?.url ||
+                    item.url ||
+                    '';
 
                 if (!gifUrl) return null;
+
+                // Lightweight WebP/GIF thumbnail for fast modal rendering
+                const previewUrl =
+                    file.sm?.webp?.url ||
+                    file.sm?.gif?.url ||
+                    file.md?.webp?.url ||
+                    file.hd?.webp?.url ||
+                    gifUrl;
+
+                const width = file.hd?.gif?.width || file.md?.gif?.width || file.sm?.gif?.width || 320;
+                const height = file.hd?.gif?.height || file.md?.gif?.height || file.sm?.gif?.height || 240;
 
                 return {
                     id: String(item.id || Math.random()),
                     title: item.title || item.slug || query || 'GIF',
                     url: gifUrl,
-                    previewUrl: gifUrl,
-                    width: gifFile.width,
-                    height: gifFile.height,
+                    previewUrl,
+                    width,
+                    height,
                     source: 'klipy' as const,
                 };
             })
