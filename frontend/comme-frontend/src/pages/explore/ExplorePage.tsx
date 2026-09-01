@@ -291,9 +291,9 @@ export const ExplorePage: React.FC = () => {
                                                 <button
                                                     type="button"
                                                     onClick={(e) => handleBookmark(e, post.id)}
-                                                    className={`transition-transform active:scale-125 cursor-pointer p-0.5 ${
+                                                    className={`flex items-center gap-1 transition-transform active:scale-125 cursor-pointer ${
                                                         post.is_bookmarked
-                                                            ? 'text-blue-500'
+                                                            ? 'text-blue-500 font-bold'
                                                             : 'text-muted-foreground hover:text-blue-500'
                                                     }`}
                                                     aria-label="Bookmark"
@@ -303,6 +303,9 @@ export const ExplorePage: React.FC = () => {
                                                             post.is_bookmarked ? 'fill-blue-500 text-blue-500' : ''
                                                         }`}
                                                     />
+                                                    <span className="text-[11px]">
+                                                        {post.bookmarks_count || 0}
+                                                    </span>
                                                 </button>
                                             </div>
                                         </div>

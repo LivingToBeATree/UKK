@@ -50,6 +50,7 @@ class PostLikeController extends Controller
         }
 
         $likesCount = PostLike::where('post_id', $post->id)->count();
+        $post->update(['likes_count' => $likesCount]);
 
         return ApiResponseHelper::successResponse(
             [

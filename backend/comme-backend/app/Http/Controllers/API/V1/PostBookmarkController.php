@@ -36,6 +36,7 @@ class PostBookmarkController extends Controller
         }
 
         $bookmarksCount = PostBookmark::where('post_id', $post->id)->count();
+        $post->update(['bookmarks_count' => $bookmarksCount]);
 
         return ApiResponseHelper::successResponse(
             [

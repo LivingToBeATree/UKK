@@ -285,30 +285,13 @@ export const PostDetailPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2">
-                                {/* Visibility Badge */}
-                                <Badge variant="outline" className="text-xs font-semibold gap-1.5 px-3 py-1">
-                                    {post.visibility === 'public' && <Globe className="h-3 w-3 text-emerald-400" />}
-                                    {post.visibility === 'followers' && <Users className="h-3 w-3 text-primary" />}
-                                    {post.visibility === 'private' && <Lock className="h-3 w-3 text-amber-400" />}
-                                    <span className="capitalize">{post.visibility || 'Public'}</span>
-                                </Badge>
-
-                                {/* Delete Post (Author or Admin) */}
-                                {user && (user.id === post.user_id || user.id === post.user?.id || user.role === 'admin') && (
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setShowDeleteModal(true)}
-                                        className="h-8 px-2.5 rounded-lg text-xs font-bold text-rose-500 hover:text-rose-600 bg-rose-500/10 hover:bg-rose-500/20 cursor-pointer gap-1.5 border border-rose-500/30 shadow-xs"
-                                        title="Delete your post"
-                                    >
-                                        <Trash2 className="h-3.5 w-3.5" />
-                                        <span>Delete Post</span>
-                                    </Button>
-                                )}
-                            </div>
+                            {/* Visibility Badge */}
+                            <Badge variant="outline" className="text-xs font-semibold gap-1.5 px-3 py-1">
+                                {post.visibility === 'public' && <Globe className="h-3 w-3 text-emerald-400" />}
+                                {post.visibility === 'followers' && <Users className="h-3 w-3 text-primary" />}
+                                {post.visibility === 'private' && <Lock className="h-3 w-3 text-amber-400" />}
+                                <span className="capitalize">{post.visibility || 'Public'}</span>
+                            </Badge>
                         </div>
 
                         {/* Post Content */}
