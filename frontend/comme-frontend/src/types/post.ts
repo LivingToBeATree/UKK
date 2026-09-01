@@ -41,6 +41,7 @@ export interface PostComment {
   post_id: number;
   user_id: number;
   body: string;
+  content?: string;
   created_at: string;
   user?: User;
 }

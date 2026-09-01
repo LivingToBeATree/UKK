@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
     Heart,
@@ -15,6 +15,9 @@ import {
     Tag,
     Trash2,
     Clock,
+    Check,
+    AlertTriangle,
+    X,
 } from 'lucide-react';
 import { postService } from '@/services/postService';
 import { useAuth } from '@/hooks/useAuth';
@@ -50,6 +53,7 @@ function formatPostDate(dateStr?: string | null): string {
 
 export const PostDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
     const { user } = useAuth();
     const { requireAuth } = useAuthModal();
     const [post, setPost] = useState<Post | null>(null);
@@ -58,6 +62,9 @@ export const PostDetailPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null);
+    const [copied, setCopied] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [isDeletingPost, setIsDeletingPost] = useState(false);
 
     useEffect(() => {
         const fetchPost = async () => {
@@ -110,11 +117,39 @@ export const PostDetailPage: React.FC = () => {
 
     const handleShare = async () => {
         const url = window.location.href;
-        const copied = await copyToClipboard(url);
-        if (copied) {
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: post?.content?.slice(0, 40) || 'Comme Post',
+                    url,
+                });
+                return;
+            } catch {
+                // User cancelled or share failed, fallback to copy
+            }
+        }
+
+        const success = await copyToClipboard(url);
+        if (success) {
+            setCopied(true);
             toast.success('Post link copied to clipboard!');
+            setTimeout(() => setCopied(false), 2000);
         } else {
-            toast.error('Could not copy link');
+            window.prompt('Copy post URL to share:', url);
+        }
+    };
+
+    const handleDeletePost = async () => {
+        if (!post) return;
+        setIsDeletingPost(true);
+        try {
+            await postService.destroy(post.id);
+            toast.success('Post deleted successfully');
+            navigate('/explore');
+        } catch {
+            toast.error('Failed to delete post. Please try again.');
+            setIsDeletingPost(false);
+            setShowDeleteModal(false);
         }
     };
 
@@ -125,7 +160,7 @@ export const PostDetailPage: React.FC = () => {
         setSubmitting(true);
         try {
             const comment = await postService.createComment(Number(id), newComment);
-            setComments((prev) => [comment, ...prev]);
+            setComments((prev: PostComment[]) => [comment, ...prev]);
             setNewComment('');
             if (post) setPost({ ...post, comments_count: post.comments_count + 1 });
             toast.success('Comment posted!');
@@ -140,7 +175,7 @@ export const PostDetailPage: React.FC = () => {
         setDeletingCommentId(commentId);
         try {
             await postService.deleteComment(commentId);
-            setComments((prev) => prev.filter((c) => c.id !== commentId));
+            setComments((prev: PostComment[]) => prev.filter((c: PostComment) => c.id !== commentId));
             if (post) setPost({ ...post, comments_count: Math.max(0, post.comments_count - 1) });
             toast.success('Comment deleted');
         } catch {
@@ -250,13 +285,30 @@ export const PostDetailPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Visibility Badge */}
-                            <Badge variant="outline" className="text-xs font-semibold gap-1.5 px-3 py-1">
-                                {post.visibility === 'public' && <Globe className="h-3 w-3 text-emerald-400" />}
-                                {post.visibility === 'followers' && <Users className="h-3 w-3 text-primary" />}
-                                {post.visibility === 'private' && <Lock className="h-3 w-3 text-amber-400" />}
-                                <span className="capitalize">{post.visibility || 'Public'}</span>
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                                {/* Visibility Badge */}
+                                <Badge variant="outline" className="text-xs font-semibold gap-1.5 px-3 py-1">
+                                    {post.visibility === 'public' && <Globe className="h-3 w-3 text-emerald-400" />}
+                                    {post.visibility === 'followers' && <Users className="h-3 w-3 text-primary" />}
+                                    {post.visibility === 'private' && <Lock className="h-3 w-3 text-amber-400" />}
+                                    <span className="capitalize">{post.visibility || 'Public'}</span>
+                                </Badge>
+
+                                {/* Delete Post (Author or Admin) */}
+                                {user && (user.id === post.user_id || user.role === 'admin') && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setShowDeleteModal(true)}
+                                        className="h-8 px-2.5 rounded-lg text-xs font-bold text-rose-400 hover:text-rose-500 hover:bg-rose-500/10 cursor-pointer gap-1.5 border border-rose-500/20"
+                                        title="Delete your post"
+                                    >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                        <span className="hidden sm:inline">Delete</span>
+                                    </Button>
+                                )}
+                            </div>
                         </div>
 
                         {/* Post Content */}
@@ -319,15 +371,88 @@ export const PostDetailPage: React.FC = () => {
                                 variant="ghost"
                                 size="sm"
                                 onClick={handleShare}
-                                className="h-10 px-3.5 rounded-xl text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer gap-1.5"
+                                className={`h-10 px-3.5 rounded-xl text-xs font-semibold cursor-pointer gap-1.5 transition-all ${
+                                    copied
+                                        ? 'text-emerald-400 bg-emerald-500/10'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                }`}
                             >
-                                <Share2 className="h-4 w-4" />
-                                <span className="hidden sm:inline">Share</span>
+                                {copied ? (
+                                    <>
+                                        <Check className="h-4 w-4 text-emerald-400" />
+                                        <span className="text-emerald-400 font-bold">Copied!</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Share2 className="h-4 w-4" />
+                                        <span className="hidden sm:inline">Share</span>
+                                    </>
+                                )}
                             </Button>
                         </div>
                     </CardContent>
                 </Card>
             </motion.div>
+
+            {/* ── Delete Post Confirmation Modal Dialog ── */}
+            <AnimatePresence>
+                {showDeleteModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                            className="bg-card border border-border/80 w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-5"
+                        >
+                            <div className="flex items-center justify-between pb-3 border-b border-border/60">
+                                <div className="flex items-center gap-2.5 text-rose-400">
+                                    <div className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/20">
+                                        <AlertTriangle className="h-5 w-5" />
+                                    </div>
+                                    <h3 className="text-base font-bold text-foreground">Delete Community Post?</h3>
+                                </div>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setShowDeleteModal(false)}
+                                    className="h-8 w-8 rounded-full cursor-pointer"
+                                >
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </div>
+
+                            <div className="space-y-2 text-xs text-muted-foreground">
+                                <p className="leading-relaxed">
+                                    Are you sure you want to permanently delete this post? This will remove all artwork attachments, discussion comments, and saved likes.
+                                </p>
+                                <p className="font-semibold text-rose-400/90">
+                                    This action cannot be undone.
+                                </p>
+                            </div>
+
+                            <div className="pt-3 border-t border-border/60 flex items-center justify-end gap-2.5">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setShowDeleteModal(false)}
+                                    disabled={isDeletingPost}
+                                    className="h-10 px-4 text-xs font-semibold cursor-pointer"
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    variant="destructive"
+                                    onClick={handleDeletePost}
+                                    disabled={isDeletingPost}
+                                    className="h-10 px-5 text-xs font-bold gap-2 cursor-pointer shadow-md bg-rose-600 hover:bg-rose-700 text-white"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                    {isDeletingPost ? 'Deleting...' : 'Delete Post'}
+                                </Button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             {/* ── Comments Section ── */}
             <div className="space-y-6 pt-4">
@@ -402,7 +527,7 @@ export const PostDetailPage: React.FC = () => {
                                 </p>
                             </div>
                         ) : (
-                            comments.map((comment) => (
+                            comments.map((comment: PostComment) => (
                                 <motion.div
                                     key={comment.id}
                                     initial={{ opacity: 0, y: 8 }}
@@ -429,7 +554,7 @@ export const PostDetailPage: React.FC = () => {
                                                             {comment.user?.display_name || comment.user?.username}
                                                         </Link>
                                                         {comment.user_id === post.user_id && (
-                                                            <span className="text-[9px] font-bold text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20">
+                                                             <span className="text-[9px] font-bold text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20">
                                                                 Author
                                                             </span>
                                                         )}
@@ -438,7 +563,6 @@ export const PostDetailPage: React.FC = () => {
                                                         </span>
                                                     </div>
                                                     <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
-                                                        {/* @ts-expect-error backend alias */}
                                                         {comment.content || comment.body}
                                                     </p>
                                                 </div>
