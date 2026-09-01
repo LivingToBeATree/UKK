@@ -10,13 +10,17 @@ export interface GifResult {
 
 const STORAGE_KLIPY_KEY = 'comme_klipy_api_key';
 
-// Check environment variable or localStorage key
+// Check environment variable (.env) or localStorage key (never hardcoded in source)
 export const getActiveKlipyKey = (): string => {
-    return (
-        import.meta.env.VITE_KLIPY_API_KEY ||
-        localStorage.getItem(STORAGE_KLIPY_KEY) ||
-        'ob3ckcnK9TWdtGPC7uLnp37Cruw267o87WBw7bR6W6IBSSxyiiQbrp1QsUdVmc72'
-    );
+    const envKey = import.meta.env.VITE_KLIPY_API_KEY;
+    if (typeof envKey === 'string' && envKey.trim()) {
+        return envKey.trim();
+    }
+    const stored = localStorage.getItem(STORAGE_KLIPY_KEY);
+    if (typeof stored === 'string' && stored.trim()) {
+        return stored.trim();
+    }
+    return '';
 };
 
 export const setStoredKlipyKey = (key: string) => {
@@ -33,9 +37,10 @@ export const gifService = {
      */
     searchGifs: async (
         query: string,
-        page: number = 1
+        page: number = 1,
+        customKey?: string
     ): Promise<{ results: GifResult[]; hasNext: boolean; total?: number }> => {
-        const klipyKey = getActiveKlipyKey();
+        const klipyKey = (customKey || getActiveKlipyKey()).trim();
 
         if (!klipyKey) {
             return { results: [], hasNext: false };
@@ -48,7 +53,7 @@ export const gifService = {
 
         const res = await fetch(endpoint);
         if (!res.ok) {
-            throw new Error(`KLIPY API error: ${res.status} ${res.statusText}`);
+            throw new Error(`KLIPY API error (${res.status}): ${res.statusText}`);
         }
 
         const json = await res.json();

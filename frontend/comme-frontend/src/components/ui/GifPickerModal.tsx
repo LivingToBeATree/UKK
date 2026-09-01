@@ -34,9 +34,9 @@ interface GifPickerModalProps {
 const QUICK_TAGS = [
     { label: 'Trending', query: '', icon: Flame },
     { label: 'Anime', query: 'anime', icon: Tv },
-    { label: 'Art & Draw', query: 'digital art drawing', icon: Palette },
+    { label: 'Art & Draw', query: 'art drawing', icon: Palette },
     { label: 'Reactions', query: 'reaction meme', icon: Smile },
-    { label: 'Gaming', query: 'gaming gg', icon: Gamepad2 },
+    { label: 'Gaming', query: 'gaming', icon: Gamepad2 },
 ];
 
 export const GifPickerModal: React.FC<GifPickerModalProps> = ({
@@ -49,9 +49,9 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
     const [customUrlPreviewError, setCustomUrlPreviewError] = useState(false);
     const [activeTab, setActiveTab] = useState<'search' | 'url'>('search');
 
-    // KLIPY State
-    const [klipyKey, setKlipyKey] = useState(getActiveKlipyKey());
-    const [tempKeyInput, setTempKeyInput] = useState(getActiveKlipyKey());
+    // KLIPY Key State
+    const [klipyKey, setKlipyKey] = useState(() => getActiveKlipyKey());
+    const [tempKeyInput, setTempKeyInput] = useState(() => getActiveKlipyKey());
     const [showKeyConfig, setShowKeyConfig] = useState(false);
 
     // Results State
@@ -62,8 +62,9 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
     const searchTimerRef = useRef<number | null>(null);
 
     // Fetch live GIFs from KLIPY API
-    const fetchGifs = async (query: string) => {
-        if (!klipyKey) {
+    const fetchGifs = async (query: string, keyToUse?: string) => {
+        const activeKey = (keyToUse || klipyKey || getActiveKlipyKey()).trim();
+        if (!activeKey) {
             setGifs([]);
             return;
         }
@@ -72,7 +73,7 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
         setErrorMessage(null);
 
         try {
-            const { results } = await gifService.searchGifs(query, 1);
+            const { results } = await gifService.searchGifs(query, 1, activeKey);
             setGifs(results);
         } catch (err: any) {
             setErrorMessage(err.message || 'Failed to fetch GIFs from KLIPY');
@@ -82,30 +83,36 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
         }
     };
 
-    // Trigger search when query or key changes
+    // Trigger search on open or when query / key changes
     useEffect(() => {
         if (!isOpen) return;
+
+        const currentKey = getActiveKlipyKey();
+        setKlipyKey(currentKey);
+        setTempKeyInput(currentKey);
 
         if (searchTimerRef.current) {
             window.clearTimeout(searchTimerRef.current);
         }
 
         searchTimerRef.current = window.setTimeout(() => {
-            fetchGifs(searchQuery);
-        }, 300);
+            fetchGifs(searchQuery, currentKey);
+        }, 200);
 
         return () => {
             if (searchTimerRef.current) {
                 window.clearTimeout(searchTimerRef.current);
             }
         };
-    }, [searchQuery, klipyKey, isOpen]);
+    }, [searchQuery, isOpen]);
 
     const handleSaveKey = () => {
-        setStoredKlipyKey(tempKeyInput);
-        setKlipyKey(tempKeyInput.trim());
+        const trimmed = tempKeyInput.trim();
+        setStoredKlipyKey(trimmed);
+        setKlipyKey(trimmed || getActiveKlipyKey());
         setShowKeyConfig(false);
         setErrorMessage(null);
+        fetchGifs(searchQuery, trimmed || getActiveKlipyKey());
     };
 
     const handleSelect = (gif: { url: string; title: string }) => {
@@ -145,11 +152,11 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
                                     KLIPY GIF Search
                                 </h2>
                                 <span className="text-[10px] font-black text-purple-400 bg-purple-500/15 px-2 py-0.5 rounded-full border border-purple-500/30">
-                                    KLIPY API
+                                    LIVE
                                 </span>
                             </div>
                             <p className="text-xs text-muted-foreground">
-                                Search millions of animated GIFs and reactions powered by KLIPY.
+                                Search animated GIFs and reactions powered by KLIPY.
                             </p>
                         </div>
                     </div>
@@ -159,16 +166,14 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
                             type="button"
                             onClick={() => setShowKeyConfig((prev) => !prev)}
                             className={`h-8 px-2.5 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
-                                showKeyConfig || !klipyKey
+                                showKeyConfig
                                     ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30'
                                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
                             }`}
                             title="Configure KLIPY API Key"
                         >
                             <KeyRound className="h-3.5 w-3.5" />
-                            <span className="hidden sm:inline">
-                                {klipyKey ? 'KLIPY Key' : 'Connect Key'}
-                            </span>
+                            <span className="hidden sm:inline">KLIPY Key</span>
                         </button>
                         <button
                             type="button"
@@ -181,12 +186,12 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
                 </div>
 
                 {/* ── KLIPY API Key Configuration Banner / Drawer ── */}
-                {(showKeyConfig || !klipyKey) && (
+                {showKeyConfig && (
                     <div className="px-5 py-4 bg-purple-950/25 border-b border-purple-500/20 space-y-2.5">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs">
                             <span className="font-bold text-purple-200 flex items-center gap-1.5">
                                 <KeyRound className="h-3.5 w-3.5 text-purple-400" />
-                                {klipyKey ? 'Update KLIPY API Key' : 'Enter your KLIPY API Key to start searching'}
+                                Custom KLIPY API Key
                             </span>
                             <a
                                 href="https://partner.klipy.com"
@@ -194,16 +199,15 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
                                 rel="noreferrer"
                                 className="text-purple-400 hover:text-purple-300 underline font-semibold flex items-center gap-1 text-[11px]"
                             >
-                                Get free key at partner.klipy.com <ExternalLink className="h-3 w-3" />
+                                partner.klipy.com <ExternalLink className="h-3 w-3" />
                             </a>
                         </div>
                         <div className="flex gap-2">
                             <Input
                                 value={tempKeyInput}
                                 onChange={(e) => setTempKeyInput(e.target.value)}
-                                placeholder="e.g. your_klipy_app_key"
+                                placeholder="Paste your KLIPY App Key..."
                                 className="h-9 rounded-xl bg-card border-purple-500/40 text-xs font-mono"
-                                autoFocus={!klipyKey}
                             />
                             <Button
                                 type="button"
@@ -212,7 +216,7 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
                                 disabled={!tempKeyInput.trim()}
                                 className="h-9 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold cursor-pointer shrink-0"
                             >
-                                Save &amp; Search
+                                Save Key
                             </Button>
                         </div>
                     </div>
@@ -257,7 +261,7 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Search by anime, reaction, meme, mood, gaming, or art..."
                                 className="pl-10 h-11 rounded-2xl bg-secondary/40 border-border/80 text-sm font-medium focus-visible:ring-primary"
-                                disabled={!klipyKey}
+                                autoFocus
                             />
                             <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
                                 {loading && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
@@ -274,59 +278,37 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
                         </div>
 
                         {/* Quick Filter Tags */}
-                        {klipyKey && (
-                            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
-                                {QUICK_TAGS.map((tag) => {
-                                    const Icon = tag.icon;
-                                    const isActive = searchQuery === tag.query;
-                                    return (
-                                        <button
-                                            key={tag.label}
-                                            type="button"
-                                            onClick={() => setSearchQuery(tag.query)}
-                                            className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
-                                                isActive
-                                                    ? 'bg-purple-600 text-white shadow-xs'
-                                                    : 'bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary'
-                                            }`}
-                                        >
-                                            <Icon className="h-3 w-3" /> {tag.label}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        )}
+                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
+                            {QUICK_TAGS.map((tag) => {
+                                const Icon = tag.icon;
+                                const isActive = searchQuery === tag.query;
+                                return (
+                                    <button
+                                        key={tag.label}
+                                        type="button"
+                                        onClick={() => setSearchQuery(tag.query)}
+                                        className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
+                                            isActive
+                                                ? 'bg-purple-600 text-white shadow-xs'
+                                                : 'bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary'
+                                        }`}
+                                    >
+                                        <Icon className="h-3 w-3" /> {tag.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
 
                         {/* Error Notification */}
                         {errorMessage && (
                             <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2">
                                 <AlertCircle className="h-4 w-4 shrink-0" />
-                                <span>{errorMessage}. Please verify your KLIPY API key.</span>
+                                <span>{errorMessage}. Please verify your network or KLIPY API key.</span>
                             </div>
                         )}
 
-                        {/* Empty Key Notice */}
-                        {!klipyKey ? (
-                            <div className="py-10 text-center space-y-3 px-4">
-                                <div className="mx-auto w-12 h-12 rounded-2xl bg-purple-600/15 text-purple-400 flex items-center justify-center font-bold text-lg border border-purple-500/20 shadow-inner">
-                                    <KeyRound className="h-6 w-6" />
-                                </div>
-                                <h3 className="text-sm font-bold text-foreground">
-                                    KLIPY API Key Required
-                                </h3>
-                                <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
-                                    To search live GIFs across the web, connect your free API key from{' '}
-                                    <a
-                                        href="https://partner.klipy.com"
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="text-purple-400 underline font-semibold"
-                                    >
-                                        partner.klipy.com
-                                    </a>.
-                                </p>
-                            </div>
-                        ) : gifs.length > 0 ? (
+                        {/* GIFs Grid */}
+                        {gifs.length > 0 ? (
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
                                 {gifs.map((gif) => (
                                     <div
@@ -351,7 +333,7 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
                         ) : !loading ? (
                             <div className="py-12 text-center space-y-2">
                                 <p className="text-sm font-bold text-foreground">
-                                    No GIFs found for "{searchQuery}"
+                                    {searchQuery ? `No GIFs found for "${searchQuery}"` : 'Loading trending GIFs...'}
                                 </p>
                                 <p className="text-xs text-muted-foreground max-w-sm mx-auto">
                                     Try searching for other keywords like <em>anime, cat, dance, wow, gg</em>.
