@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import {
     Search,
@@ -11,237 +11,17 @@ import {
     Gamepad2,
     Palette,
     Check,
+    Loader2,
+    KeyRound,
 } from 'lucide-react';
 import { Button } from './button';
 import { Input } from './input';
-
-export interface GifItem {
-    id: string;
-    title: string;
-    url: string;
-    previewUrl: string;
-    category: 'anime' | 'art' | 'reaction' | 'gaming' | 'trending';
-    tags: string[];
-}
-
-// Rich, curated collection of animated GIFs
-const CURATED_GIFS: GifItem[] = [
-    // --- ANIME & MANGA ---
-    {
-        id: 'a1',
-        title: 'Anya Heh Smug',
-        url: 'https://media.giphy.com/media/FWAcpJsFT9mVRv0e7a/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/FWAcpJsFT9mVRv0e7a/giphy.gif',
-        category: 'anime',
-        tags: ['anime', 'anya', 'smug', 'heh', 'spy x family', 'cute', 'funny'],
-    },
-    {
-        id: 'a2',
-        title: 'Cat Vibe Jam',
-        url: 'https://media.giphy.com/media/jpbnoe3UIa8TU8LM13/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/jpbnoe3UIa8TU8LM13/giphy.gif',
-        category: 'anime',
-        tags: ['cat', 'jam', 'vibe', 'headnod', 'music', 'dance', 'cute'],
-    },
-    {
-        id: 'a3',
-        title: 'Chika Fujiwara Dance',
-        url: 'https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif',
-        category: 'anime',
-        tags: ['anime', 'chika', 'dance', 'kaguya', 'happy', 'cute', 'excited'],
-    },
-    {
-        id: 'a4',
-        title: 'Ghibli Aesthetic Cooking',
-        url: 'https://media.giphy.com/media/12zV7u6Bh0vHpu/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/12zV7u6Bh0vHpu/giphy.gif',
-        category: 'anime',
-        tags: ['ghibli', 'anime', 'cooking', 'aesthetic', 'cozy', 'food', 'relax'],
-    },
-    {
-        id: 'a5',
-        title: 'Lofi Girl Studying',
-        url: 'https://media.giphy.com/media/13HgwGsXF0aiGY/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/13HgwGsXF0aiGY/giphy.gif',
-        category: 'anime',
-        tags: ['lofi', 'study', 'relax', 'chill', 'drawing', 'desk', 'art', 'music'],
-    },
-    {
-        id: 'a6',
-        title: 'Sailor Moon Transformation',
-        url: 'https://media.giphy.com/media/26gBjmGEsrFQlj8g8/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/26gBjmGEsrFQlj8g8/giphy.gif',
-        category: 'anime',
-        tags: ['sailor moon', 'magic', 'sparkles', 'transformation', 'retro', '90s'],
-    },
-    {
-        id: 'a7',
-        title: 'Pikachu Excited',
-        url: 'https://media.giphy.com/media/6nWhy3ulBL7GSCvKw6/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/6nWhy3ulBL7GSCvKw6/giphy.gif',
-        category: 'anime',
-        tags: ['pikachu', 'pokemon', 'shocked', 'surprised', 'meme', 'face'],
-    },
-    {
-        id: 'a8',
-        title: 'Naruto Thumbs Up',
-        url: 'https://media.giphy.com/media/Do5GRTYRIhSFy/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/Do5GRTYRIhSFy/giphy.gif',
-        category: 'anime',
-        tags: ['naruto', 'thumbs up', 'approve', 'yes', 'cool', 'anime'],
-    },
-
-    // --- ART & CREATIVE ---
-    {
-        id: 'art1',
-        title: 'Digital Painting Canvas Loop',
-        url: 'https://media.giphy.com/media/L1R1tvI9svkIWwpVYr/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/L1R1tvI9svkIWwpVYr/giphy.gif',
-        category: 'art',
-        tags: ['art', 'digital art', 'painting', 'sketch', 'drawing', 'artist', 'creative'],
-    },
-    {
-        id: 'art2',
-        title: 'Pixel Art Cyberpunk City',
-        url: 'https://media.giphy.com/media/3oKIPnAiaMCws8nOsE/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/3oKIPnAiaMCws8nOsE/giphy.gif',
-        category: 'art',
-        tags: ['pixel art', 'cyberpunk', 'city', 'neon', 'rain', 'aesthetic', 'retro'],
-    },
-    {
-        id: 'art3',
-        title: 'Watercolor Flower Bloom',
-        url: 'https://media.giphy.com/media/l0HlFTxWpNs61q8g0/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/l0HlFTxWpNs61q8g0/giphy.gif',
-        category: 'art',
-        tags: ['watercolor', 'flower', 'bloom', 'paint', 'color', 'nature', 'aesthetic'],
-    },
-    {
-        id: 'art4',
-        title: 'Glitch Vaporwave Statue',
-        url: 'https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif',
-        category: 'art',
-        tags: ['glitch', 'vaporwave', 'statue', 'neon', 'art', 'trippy', 'aesthetic'],
-    },
-    {
-        id: 'art5',
-        title: 'Animated 3D Abstract Loop',
-        url: 'https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/giphy.gif',
-        category: 'art',
-        tags: ['3d', 'render', 'abstract', 'loop', 'satisfying', 'motion', 'design'],
-    },
-    {
-        id: 'art6',
-        title: 'Pencil Sketch Drawing',
-        url: 'https://media.giphy.com/media/26tn33aiTi1jkl6H6/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/26tn33aiTi1jkl6H6/giphy.gif',
-        category: 'art',
-        tags: ['sketch', 'pencil', 'drawing', 'lines', 'artist', 'doodle'],
-    },
-
-    // --- REACTIONS & MEMES ---
-    {
-        id: 'r1',
-        title: 'Mind Blown Galaxy',
-        url: 'https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif',
-        category: 'reaction',
-        tags: ['mind blown', 'shock', 'wow', 'galaxy', 'explosion', 'epic', 'meme'],
-    },
-    {
-        id: 'r2',
-        title: 'Leonardo DiCaprio Cheers',
-        url: 'https://media.giphy.com/media/GCLlQnV7dXY2KGmpRh/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/GCLlQnV7dXY2KGmpRh/giphy.gif',
-        category: 'reaction',
-        tags: ['cheers', 'gatsby', 'leonardo', 'toast', 'celebrate', 'congrats', 'champagne'],
-    },
-    {
-        id: 'r3',
-        title: 'Popcat Popping',
-        url: 'https://media.giphy.com/media/unQ3IJU2RG7DO/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/unQ3IJU2RG7DO/giphy.gif',
-        category: 'reaction',
-        tags: ['popcat', 'cat', 'meme', 'pop', 'funny', 'cute', 'loop'],
-    },
-    {
-        id: 'r4',
-        title: 'Denzel Washington Relief',
-        url: 'https://media.giphy.com/media/3oFzm7MaLnMdD1T6tG/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/3oFzm7MaLnMdD1T6tG/giphy.gif',
-        category: 'reaction',
-        tags: ['phew', 'relief', 'thank god', 'denzel', 'satisfied', 'calm'],
-    },
-    {
-        id: 'r5',
-        title: 'Fire Elmo Chaos',
-        url: 'https://media.giphy.com/media/yr7n0u3qzO9nG/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/yr7n0u3qzO9nG/giphy.gif',
-        category: 'reaction',
-        tags: ['fire', 'elmo', 'chaos', 'flames', 'crazy', 'burn', 'wild'],
-    },
-    {
-        id: 'r6',
-        title: 'Thumbs Up Dog in Fire (This is Fine)',
-        url: 'https://media.giphy.com/media/9M5jK4GXmD5o1irGrF/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/9M5jK4GXmD5o1irGrF/giphy.gif',
-        category: 'reaction',
-        tags: ['this is fine', 'dog', 'fire', 'okay', 'fine', 'stress', 'chill'],
-    },
-    {
-        id: 'r7',
-        title: 'Excited Kermit Flail',
-        url: 'https://media.giphy.com/media/dpqQNluWFaSpq/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/dpqQNluWFaSpq/giphy.gif',
-        category: 'reaction',
-        tags: ['kermit', 'excited', 'yay', 'hype', 'flail', 'happy', 'funny'],
-    },
-    {
-        id: 'r8',
-        title: 'Confused John Travolta',
-        url: 'https://media.giphy.com/media/g01ZnwAUvutuK8GIQn/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/g01ZnwAUvutuK8GIQn/giphy.gif',
-        category: 'reaction',
-        tags: ['confused', 'travolta', 'lost', 'where', 'pulp fiction', 'meme'],
-    },
-
-    // --- GAMING & FUN ---
-    {
-        id: 'g1',
-        title: 'Minecraft Diamond Rave',
-        url: 'https://media.giphy.com/media/vFKqnCdLPNOKc/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/vFKqnCdLPNOKc/giphy.gif',
-        category: 'gaming',
-        tags: ['minecraft', 'diamond', 'dance', 'gamer', 'gaming', 'disco'],
-    },
-    {
-        id: 'g2',
-        title: 'Victory Royale Dance',
-        url: 'https://media.giphy.com/media/artj92V8o75VPL7AeQ/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/artj92V8o75VPL7AeQ/giphy.gif',
-        category: 'gaming',
-        tags: ['victory', 'gaming', 'dance', 'win', 'gg', 'gamer'],
-    },
-    {
-        id: 'g3',
-        title: 'Retro Arcade Game Over',
-        url: 'https://media.giphy.com/media/26u4cqiYI30juCOGY/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/26u4cqiYI30juCOGY/giphy.gif',
-        category: 'gaming',
-        tags: ['arcade', 'game over', 'retro', '80s', '8bit', 'pixel'],
-    },
-    {
-        id: 'g4',
-        title: 'Zelda Chest Opening',
-        url: 'https://media.giphy.com/media/5wFS6a1PE62lKUWXyx/giphy.gif',
-        previewUrl: 'https://media.giphy.com/media/5wFS6a1PE62lKUWXyx/giphy.gif',
-        category: 'gaming',
-        tags: ['zelda', 'link', 'chest', 'item', 'treasure', 'nintendo'],
-    },
-];
+import {
+    gifService,
+    type GifResult,
+    getActiveKlipyKey,
+    setStoredKlipyKey,
+} from '@/services/gifService';
 
 interface GifPickerModalProps {
     isOpen: boolean;
@@ -260,19 +40,47 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
     const [customUrlPreviewError, setCustomUrlPreviewError] = useState(false);
     const [activeTab, setActiveTab] = useState<'search' | 'url'>('search');
 
-    // Filter GIFs based on search and category
-    const filteredGifs = useMemo(() => {
-        const query = searchQuery.toLowerCase().trim();
-        return CURATED_GIFS.filter((gif) => {
-            const matchesCategory = activeCategory === 'all' || gif.category === activeCategory;
-            const matchesQuery =
-                !query ||
-                gif.title.toLowerCase().includes(query) ||
-                gif.tags.some((tag) => tag.toLowerCase().includes(query));
+    // Live Search States
+    const [gifs, setGifs] = useState<GifResult[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [provider, setProvider] = useState<'klipy' | 'curated'>('curated');
 
-            return matchesCategory && matchesQuery;
-        });
-    }, [searchQuery, activeCategory]);
+    // KLIPY Settings
+    const [showKeyConfig, setShowKeyConfig] = useState(false);
+    const [klipyKeyInput, setKlipyKeyInput] = useState(getActiveKlipyKey());
+
+    const searchTimerRef = useRef<number | null>(null);
+
+    // Fetch GIFs whenever search query or category changes (with 250ms debounce)
+    useEffect(() => {
+        if (!isOpen) return;
+
+        if (searchTimerRef.current) {
+            window.clearTimeout(searchTimerRef.current);
+        }
+
+        searchTimerRef.current = window.setTimeout(async () => {
+            setLoading(true);
+            try {
+                const res = await gifService.searchGifs(searchQuery, activeCategory);
+                setGifs(res.results);
+                setProvider(res.provider);
+            } finally {
+                setLoading(false);
+            }
+        }, 250);
+
+        return () => {
+            if (searchTimerRef.current) {
+                window.clearTimeout(searchTimerRef.current);
+            }
+        };
+    }, [searchQuery, activeCategory, isOpen, klipyKeyInput]);
+
+    const handleSaveKey = () => {
+        setStoredKlipyKey(klipyKeyInput);
+        setShowKeyConfig(false);
+    };
 
     const handleSelect = (gif: { url: string; title: string }) => {
         onSelectGif(gif);
@@ -306,23 +114,89 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
                             GIF
                         </div>
                         <div>
-                            <h2 className="text-base font-extrabold text-foreground flex items-center gap-2">
-                                Search Online GIFs
-                            </h2>
+                            <div className="flex items-center gap-2">
+                                <h2 className="text-base font-extrabold text-foreground">
+                                    Search GIFs &amp; Reactions
+                                </h2>
+                                {provider === 'klipy' ? (
+                                    <span className="text-[10px] font-black text-purple-400 bg-purple-500/15 px-2 py-0.5 rounded-full border border-purple-500/30">
+                                        KLIPY LIVE
+                                    </span>
+                                ) : (
+                                    <span className="text-[10px] font-semibold text-muted-foreground bg-secondary px-2 py-0.5 rounded-full border border-border/60">
+                                        FAST CURATED
+                                    </span>
+                                )}
+                            </div>
                             <p className="text-xs text-muted-foreground">
-                                Find the perfect reaction or animated loop to bring your post to life.
+                                Find the perfect animated GIF to express your thoughts.
                             </p>
                         </div>
                     </div>
 
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="h-8 w-8 rounded-xl hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                    >
-                        <X className="h-4 w-4" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                        <button
+                            type="button"
+                            onClick={() => setShowKeyConfig((prev) => !prev)}
+                            className={`h-8 px-2.5 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                                showKeyConfig
+                                    ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30'
+                                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
+                            }`}
+                            title="Configure KLIPY API Key"
+                        >
+                            <KeyRound className="h-3.5 w-3.5" />
+                            <span className="hidden sm:inline">KLIPY Key</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="h-8 w-8 rounded-xl hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                        >
+                            <X className="h-4 w-4" />
+                        </button>
+                    </div>
                 </div>
+
+                {/* ── Optional KLIPY API Key Configuration Panel ── */}
+                {showKeyConfig && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="px-5 py-3.5 bg-purple-950/20 border-b border-purple-500/20 space-y-2"
+                    >
+                        <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold text-purple-300 flex items-center gap-1.5">
+                                <KeyRound className="h-3.5 w-3.5" /> Connect Live KLIPY API
+                            </span>
+                            <a
+                                href="https://klipy.com/developers"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-purple-400 hover:underline text-[11px]"
+                            >
+                                Get free key from klipy.com →
+                            </a>
+                        </div>
+                        <div className="flex gap-2">
+                            <Input
+                                value={klipyKeyInput}
+                                onChange={(e) => setKlipyKeyInput(e.target.value)}
+                                placeholder="Paste your KLIPY API Key here..."
+                                className="h-9 rounded-xl bg-card border-purple-500/30 text-xs font-mono"
+                            />
+                            <Button
+                                type="button"
+                                size="sm"
+                                onClick={handleSaveKey}
+                                className="h-9 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold cursor-pointer shrink-0"
+                            >
+                                Save Key
+                            </Button>
+                        </div>
+                    </motion.div>
+                )}
 
                 {/* ── Tab Switcher: Search vs Direct Link ── */}
                 <div className="px-5 pt-3 flex items-center gap-2 border-b border-border/60 pb-3">
@@ -365,15 +239,18 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
                                 className="pl-10 h-11 rounded-2xl bg-secondary/40 border-border/80 text-sm font-medium focus-visible:ring-primary"
                                 autoFocus
                             />
-                            {searchQuery && (
-                                <button
-                                    type="button"
-                                    onClick={() => setSearchQuery('')}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 cursor-pointer"
-                                >
-                                    <X className="h-3.5 w-3.5" />
-                                </button>
-                            )}
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                                {loading && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+                                {searchQuery && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setSearchQuery('')}
+                                        className="text-muted-foreground hover:text-foreground p-1 cursor-pointer"
+                                    >
+                                        <X className="h-3.5 w-3.5" />
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         {/* Category Chips */}
@@ -436,9 +313,9 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
                         </div>
 
                         {/* GIFs Grid */}
-                        {filteredGifs.length > 0 ? (
+                        {gifs.length > 0 ? (
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
-                                {filteredGifs.map((gif) => (
+                                {gifs.map((gif) => (
                                     <div
                                         key={gif.id}
                                         onClick={() => handleSelect(gif)}
@@ -458,14 +335,14 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
                                     </div>
                                 ))}
                             </div>
-                        ) : (
+                        ) : !loading ? (
                             <div className="py-12 text-center space-y-2">
                                 <p className="text-sm font-bold text-foreground">No GIFs found for "{searchQuery}"</p>
                                 <p className="text-xs text-muted-foreground max-w-sm mx-auto">
                                     Try searching for other keywords like <em>cat, anime, dance, wow, art</em>, or use the Direct GIF URL tab.
                                 </p>
                             </div>
-                        )}
+                        ) : null}
                     </div>
                 )}
 
@@ -496,7 +373,7 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
                                 </Button>
                             </div>
                             <p className="text-[11px] text-muted-foreground">
-                                Supports direct links from Giphy, Tenor, Imgur, Reddit, Discord, and any public URL ending in .gif, .webp, or .png.
+                                Supports direct links from Giphy, Tenor, Klipy, Imgur, Reddit, Discord, and any public URL ending in .gif, .webp, or .png.
                             </p>
                         </div>
 
@@ -524,7 +401,10 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
 
                 {/* ── Modal Footer ── */}
                 <div className="p-4 border-t border-border/80 bg-secondary/20 flex items-center justify-between text-xs text-muted-foreground">
-                    <span>💡 Click any GIF to instantly insert into your post</span>
+                    <span className="flex items-center gap-1.5">
+                        <Sparkles className="h-3.5 w-3.5 text-purple-400" />
+                        Click any GIF to instantly insert into post
+                    </span>
                     <Button
                         type="button"
                         variant="ghost"
