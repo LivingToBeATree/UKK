@@ -85,47 +85,81 @@ export const CreatePostPage: React.FC = () => {
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const emojiPickerRef = useRef<HTMLDivElement>(null);
+    const suggestionListRef = useRef<HTMLDivElement>(null);
 
-    // Check for inline emoji trigger like :he or :sad
+    // Auto-scroll highlighted suggestion into view
+    useEffect(() => {
+        if (suggestionListRef.current && emojiSuggestions.length > 0) {
+            const activeBtn = suggestionListRef.current.children[suggestionIndex] as HTMLElement;
+            if (activeBtn) {
+                activeBtn.scrollIntoView({ block: 'nearest' });
+            }
+        }
+    }, [suggestionIndex, emojiSuggestions]);
+
+    // Check for inline emoji trigger:
+    // - "::" alone triggers ALL emojis preview
+    // - ":query" or "::query" filters matching emojis
     const checkForEmojiTrigger = (text: string, cursorPos: number) => {
         const textBeforeCursor = text.substring(0, cursorPos);
-        const match = textBeforeCursor.match(/(?:^|\s):([a-zA-Z0-9_+-]{1,20})$/);
+        const match = textBeforeCursor.match(/(?:^|\s)(:{1,2})([a-zA-Z0-9_+-]{0,20})$/);
 
         if (match) {
-            const query = match[1].toLowerCase();
-            const startPos = cursorPos - match[1].length - 1; // start of :
+            const colonPrefix = match[1]; // ":" or "::"
+            const query = match[2].toLowerCase();
+            const startPos = cursorPos - colonPrefix.length - query.length; // start of : or ::
 
-            const results: { emoji: string; name: string; description: string }[] = [];
-            const seen = new Set<string>();
+            // Only trigger if user typed double colon "::" (which shows all), or if they typed at least 1 character after single ":"
+            if (colonPrefix === '::' || query.length >= 1) {
+                const results: { emoji: string; name: string; description: string; category?: string }[] = [];
+                const seen = new Set<string>();
 
-            for (const item of gemoji) {
-                const primaryName = item.names[0] || '';
-                const matchingName =
-                    item.names.find((n) => n.toLowerCase().startsWith(query)) ||
-                    item.names.find((n) => n.toLowerCase().includes(query));
-                const isTagMatch = item.tags.some(
-                    (t) => t.toLowerCase().startsWith(query) || t.toLowerCase().includes(query)
-                );
-                const isDescMatch = item.description.toLowerCase().includes(query);
+                for (const item of gemoji) {
+                    const primaryName = item.names[0] || '';
 
-                if (matchingName || isTagMatch || isDescMatch) {
-                    if (!seen.has(item.emoji)) {
-                        seen.add(item.emoji);
-                        results.push({
-                            emoji: item.emoji,
-                            name: matchingName || primaryName,
-                            description: item.description,
-                        });
+                    if (!query) {
+                        // "::" typed without search query -> Show all / popular emojis!
+                        if (!seen.has(item.emoji)) {
+                            seen.add(item.emoji);
+                            results.push({
+                                emoji: item.emoji,
+                                name: primaryName,
+                                description: item.description,
+                                category: item.category,
+                            });
+                        }
+                        if (results.length >= 80) break;
+                    } else {
+                        // Filter search query
+                        const matchingName =
+                            item.names.find((n) => n.toLowerCase().startsWith(query)) ||
+                            item.names.find((n) => n.toLowerCase().includes(query));
+                        const isTagMatch = item.tags.some(
+                            (t) => t.toLowerCase().startsWith(query) || t.toLowerCase().includes(query)
+                        );
+                        const isDescMatch = item.description.toLowerCase().includes(query);
+
+                        if (matchingName || isTagMatch || isDescMatch) {
+                            if (!seen.has(item.emoji)) {
+                                seen.add(item.emoji);
+                                results.push({
+                                    emoji: item.emoji,
+                                    name: matchingName || primaryName,
+                                    description: item.description,
+                                    category: item.category,
+                                });
+                            }
+                        }
+                        if (results.length >= 35) break;
                     }
                 }
-                if (results.length >= 6) break;
-            }
 
-            if (results.length > 0) {
-                setEmojiSuggestions(results);
-                setSuggestionIndex(0);
-                setEmojiMatchRange({ start: startPos, end: cursorPos, query });
-                return;
+                if (results.length > 0) {
+                    setEmojiSuggestions(results);
+                    setSuggestionIndex(0);
+                    setEmojiMatchRange({ start: startPos, end: cursorPos, query });
+                    return;
+                }
             }
         }
 
@@ -661,41 +695,50 @@ export const CreatePostPage: React.FC = () => {
                                                             initial={{ opacity: 0, y: 6, scale: 0.98 }}
                                                             animate={{ opacity: 1, y: 0, scale: 1 }}
                                                             exit={{ opacity: 0, y: 6, scale: 0.98 }}
-                                                            className="absolute left-3 bottom-full mb-2 z-40 w-72 rounded-2xl bg-popover/95 backdrop-blur-xl border border-border/90 p-1.5 shadow-2xl space-y-0.5"
+                                                            className="absolute left-3 bottom-full mb-2 z-40 w-80 rounded-2xl bg-popover/95 backdrop-blur-xl border border-border/90 p-1.5 shadow-2xl space-y-0.5"
                                                         >
                                                             <div className="px-2.5 py-1 text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center justify-between border-b border-border/40 mb-1">
                                                                 <span className="flex items-center gap-1.5">
                                                                     <Smile className="h-3 w-3 text-amber-400" />
-                                                                    Emoji Suggestions
+                                                                    {!emojiMatchRange?.query
+                                                                        ? 'All Emojis (Type to filter)'
+                                                                        : `Matching :${emojiMatchRange.query}`}
                                                                 </span>
-                                                                <span className="text-[9px] font-normal lowercase opacity-70">↑↓ / ↵ tab</span>
+                                                                <span className="text-[9px] font-normal lowercase opacity-70">
+                                                                    ↑↓ scroll • ↵ select
+                                                                </span>
                                                             </div>
-                                                            {emojiSuggestions.map((item, idx) => (
-                                                                <button
-                                                                    key={item.emoji + item.name}
-                                                                    type="button"
-                                                                    onClick={() => applyEmojiSuggestion(item)}
-                                                                    className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs transition-colors cursor-pointer text-left ${
-                                                                        idx === suggestionIndex
-                                                                            ? 'bg-primary text-primary-foreground font-bold shadow-xs'
-                                                                            : 'text-foreground hover:bg-secondary'
-                                                                    }`}
-                                                                >
-                                                                    <div className="flex items-center gap-2.5 min-w-0">
-                                                                        <span className="text-lg leading-none shrink-0">{item.emoji}</span>
-                                                                        <span className="truncate">:{item.name}:</span>
-                                                                    </div>
-                                                                    <span
-                                                                        className={`text-[10px] truncate max-w-[95px] ${
+                                                            <div
+                                                                ref={suggestionListRef}
+                                                                className="max-h-56 overflow-y-auto space-y-0.5 pr-1 scrollbar-thin"
+                                                            >
+                                                                {emojiSuggestions.map((item, idx) => (
+                                                                    <button
+                                                                        key={item.emoji + item.name}
+                                                                        type="button"
+                                                                        onClick={() => applyEmojiSuggestion(item)}
+                                                                        className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs transition-colors cursor-pointer text-left ${
                                                                             idx === suggestionIndex
-                                                                                ? 'text-primary-foreground/80'
-                                                                                : 'text-muted-foreground'
+                                                                                ? 'bg-primary text-primary-foreground font-bold shadow-xs'
+                                                                                : 'text-foreground hover:bg-secondary'
                                                                         }`}
                                                                     >
-                                                                        {item.description}
-                                                                    </span>
-                                                                </button>
-                                                            ))}
+                                                                        <div className="flex items-center gap-2.5 min-w-0">
+                                                                            <span className="text-lg leading-none shrink-0">{item.emoji}</span>
+                                                                            <span className="truncate">:{item.name}:</span>
+                                                                        </div>
+                                                                        <span
+                                                                            className={`text-[10px] truncate max-w-[105px] ${
+                                                                                idx === suggestionIndex
+                                                                                    ? 'text-primary-foreground/80'
+                                                                                    : 'text-muted-foreground'
+                                                                            }`}
+                                                                        >
+                                                                            {item.description}
+                                                                        </span>
+                                                                    </button>
+                                                                ))}
+                                                            </div>
                                                         </motion.div>
                                                     )}
                                                 </AnimatePresence>
