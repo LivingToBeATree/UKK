@@ -27,44 +27,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select } from '@/components/ui/select';
 import { toast } from '@/components/ui/sonner';
 
-const SEEDED_PERSONAS = [
-    {
-        role: 'Admin',
-        name: 'Comme Administrator',
-        email: 'admin@comme.test',
-        username: 'admin',
-        icon: Shield,
-        badgeVariant: 'gold' as const,
-        description: 'Super-admin with full access to moderation, reports, and system settings.',
-    },
-    {
-        role: 'Moderator',
-        name: 'Comme Moderator',
-        email: 'moderator@comme.test',
-        username: 'moderator',
-        icon: Shield,
-        badgeVariant: 'secondary' as const,
-        description: 'Staff member managing artist applications and support tickets.',
-    },
-    {
-        role: 'Artist',
-        name: 'Sakura Art',
-        email: 'artist@comme.test',
-        username: 'sakura_art',
-        icon: Palette,
-        badgeVariant: 'purple' as const,
-        description: 'Verified digital creator with listed services, portfolio, and active commission slots.',
-    },
-    {
-        role: 'Buyer',
-        name: 'Art Lover',
-        email: 'client@comme.test',
-        username: 'art_lover',
-        icon: ShoppingBag,
-        badgeVariant: 'teal' as const,
-        description: 'Regular client placing commissions, submitting briefs, and reviewing artists.',
-    },
-];
 
 export const DevPanelPage: React.FC = () => {
     const { user, isAuthenticated, login, logout, refreshUser } = useAuth();
@@ -313,19 +275,42 @@ export const DevPanelPage: React.FC = () => {
                     </TabsTrigger>
                 </TabsList>
 
-                {/* TAB 1: Personas & Fast Role Switcher */}
+                {/* TAB 1: Real Database Accounts & Fast Role Switcher */}
                 <TabsContent value="personas" className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {SEEDED_PERSONAS.map((persona) => {
-                            const Icon = persona.icon;
-                            const isActive = user?.email === persona.email;
-                            const isPending = switchingUser === persona.email;
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+                                <Database className="h-4 w-4 text-primary" /> Active Database Accounts ({dbUsers.length})
+                            </h2>
+                            <p className="text-xs text-muted-foreground">
+                                Instant 1-click login exception into any registered user in the local database.
+                            </p>
+                        </div>
+                        <Button size="xs" variant="outline" onClick={fetchDbUsers} className="cursor-pointer">
+                            <RefreshCw className="h-3 w-3 mr-1" /> Refresh Accounts
+                        </Button>
+                    </div>
+
+                    {/* Database Users Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {dbUsers.map((dbUser) => {
+                            const isCurrent = user?.id === dbUser.id || user?.email === dbUser.email;
+                            const isPending = switchingUser === String(dbUser.id) || switchingUser === dbUser.email;
+                            const isArtistUser = dbUser.has_artist_profile || dbUser.role === 'artist' || dbUser.email === 'artist@comme.test';
+                            const isAdmin = dbUser.role === 'admin';
+                            const isMod = dbUser.role === 'moderator';
+
+                            const Icon = isAdmin || isMod ? Shield : isArtistUser ? Palette : ShoppingBag;
+                            const badgeRole = isAdmin ? 'Admin' : isMod ? 'Moderator' : isArtistUser ? 'Artist' : 'Buyer';
+                            const badgeVariant = isAdmin ? 'gold' : isMod ? 'secondary' : isArtistUser ? 'purple' : 'teal';
 
                             return (
                                 <Card
-                                    key={persona.email}
+                                    key={dbUser.id}
                                     className={`relative overflow-hidden transition-all ${
-                                        isActive ? 'border-primary ring-1 ring-primary/40 bg-primary/5' : 'hover:border-border'
+                                        isCurrent
+                                            ? 'border-primary ring-1 ring-primary/40 bg-primary/5'
+                                            : 'hover:border-border'
                                     }`}
                                 >
                                     <CardContent className="p-5 space-y-3">
@@ -333,34 +318,31 @@ export const DevPanelPage: React.FC = () => {
                                             <div className="p-2 rounded-lg bg-secondary text-foreground">
                                                 <Icon className="h-4 w-4" />
                                             </div>
-                                            <Badge variant={persona.badgeVariant} className="text-[10px]">
-                                                {persona.role}
+                                            <Badge variant={badgeVariant as any} className="text-[10px]">
+                                                {badgeRole}
                                             </Badge>
                                         </div>
 
                                         <div>
-                                            <h3 className="font-bold text-sm text-foreground">{persona.name}</h3>
-                                            <p className="text-xs text-muted-foreground font-mono truncate">{persona.email}</p>
+                                            <h3 className="font-bold text-sm text-foreground truncate">
+                                                {dbUser.display_name || dbUser.username}
+                                            </h3>
+                                            <p className="text-xs text-muted-foreground font-mono truncate">
+                                                @{dbUser.username}
+                                            </p>
+                                            <p className="text-[11px] text-muted-foreground/80 truncate">
+                                                {dbUser.email}
+                                            </p>
                                         </div>
-
-                                        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
-                                            {persona.description}
-                                        </p>
 
                                         <Button
                                             size="sm"
-                                            className="w-full text-xs font-semibold"
-                                            variant={isActive ? 'outline' : 'default'}
-                                            disabled={isActive || isPending}
-                                            onClick={() =>
-                                                handleSwitchPersona(persona.email, {
-                                                    role: persona.role.toLowerCase(),
-                                                    name: persona.name,
-                                                    username: persona.username,
-                                                })
-                                            }
+                                            className="w-full text-xs font-semibold cursor-pointer"
+                                            variant={isCurrent ? 'outline' : 'default'}
+                                            disabled={isCurrent || isPending}
+                                            onClick={() => handleSwitchPersona(dbUser.id)}
                                         >
-                                            {isActive ? 'Current Session' : isPending ? 'Switching...' : `Switch to ${persona.role}`}
+                                            {isCurrent ? 'Current Session' : isPending ? 'Switching...' : `Switch to ${badgeRole}`}
                                         </Button>
                                     </CardContent>
                                 </Card>
@@ -368,70 +350,6 @@ export const DevPanelPage: React.FC = () => {
                         })}
                     </div>
 
-                    {/* All Registered Database Accounts (1-Click Switch) */}
-                    {dbUsers.length > 0 && (
-                        <Card className="border-border/80">
-                            <CardHeader className="pb-3">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <CardTitle className="text-base font-bold flex items-center gap-2">
-                                            <Database className="h-4 w-4 text-primary" /> Active Database Accounts ({dbUsers.length})
-                                        </CardTitle>
-                                        <CardDescription className="text-xs">
-                                            Instant 1-click login exception into any registered user in the local database.
-                                        </CardDescription>
-                                    </div>
-                                    <Button size="xs" variant="outline" onClick={fetchDbUsers}>
-                                        <RefreshCw className="h-3 w-3 mr-1" /> Refresh Users
-                                    </Button>
-                                </div>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                                    {dbUsers.map((dbUser) => {
-                                        const isCurrent = user?.id === dbUser.id;
-                                        const isPending = switchingUser === String(dbUser.id) || switchingUser === dbUser.email;
-
-                                        return (
-                                            <div
-                                                key={dbUser.id}
-                                                className={`p-3.5 rounded-xl border flex flex-col justify-between gap-3 bg-secondary/30 transition-all ${
-                                                    isCurrent ? 'border-primary bg-primary/10 ring-1 ring-primary/30' : 'border-border/70 hover:border-border'
-                                                }`}
-                                            >
-                                                <div className="space-y-1 min-w-0">
-                                                    <div className="flex items-center justify-between gap-1">
-                                                        <span className="text-xs font-bold text-foreground truncate">
-                                                            {dbUser.display_name || dbUser.username}
-                                                        </span>
-                                                        <Badge variant={dbUser.role === 'admin' ? 'gold' : dbUser.role === 'moderator' ? 'secondary' : 'default'} className="text-[9px] uppercase px-1.5 py-0">
-                                                            {dbUser.role}
-                                                        </Badge>
-                                                    </div>
-                                                    <p className="text-[11px] text-muted-foreground font-mono truncate">
-                                                        @{dbUser.username}
-                                                    </p>
-                                                    <p className="text-[10px] text-muted-foreground truncate">
-                                                        {dbUser.email}
-                                                    </p>
-                                                </div>
-
-                                                <Button
-                                                    size="xs"
-                                                    variant={isCurrent ? 'outline' : 'default'}
-                                                    disabled={isCurrent || isPending}
-                                                    onClick={() => handleSwitchPersona(dbUser.id)}
-                                                    className="w-full text-xs font-semibold"
-                                                >
-                                                    {isCurrent ? 'Active Account' : isPending ? 'Switching...' : 'Switch User'}
-                                                </Button>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
 
                     {/* Custom Login Form */}
                     <Card>
