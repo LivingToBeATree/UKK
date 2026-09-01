@@ -99,24 +99,46 @@ export const CreatePostPage: React.FC = () => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const emojiPickerRef = useRef<HTMLDivElement>(null);
 
-    // Select online GIF handler
-    const handleSelectGif = (gif: { url: string; title: string }) => {
-        if (textareaRef.current) {
-            const textarea = textareaRef.current;
-            const start = textarea.selectionStart || content.length;
-            const end = textarea.selectionEnd || content.length;
-            const gifMarkdown = `\n\n![${gif.title || 'GIF'}](${gif.url})\n\n`;
-            const newContent = content.substring(0, start) + gifMarkdown + content.substring(end);
-            setContent(newContent);
-            setEditorTab('write');
-            setTimeout(() => {
-                textarea.focus();
-                textarea.setSelectionRange(start + gifMarkdown.length, start + gifMarkdown.length);
-            }, 50);
-        } else {
-            setContent((prev) => `${prev}\n\n![${gif.title || 'GIF'}](${gif.url})\n\n`);
+    // Select online GIF handler: Attach directly into post media attachments
+    const handleSelectGif = async (gif: { url: string; title: string }) => {
+        if (mediaFiles.length >= 8) {
+            toast.error('Maximum 8 media files per post');
+            return;
         }
-        toast.success('Animated GIF inserted into your post!');
+
+        const toastId = toast.loading('Attaching animated GIF...');
+        try {
+            const response = await fetch(gif.url);
+            const blob = await response.blob();
+            const cleanName = (gif.title || 'klipy-gif')
+                .toLowerCase()
+                .replace(/[^a-z0-9_-]/g, '-')
+                .replace(/-+/g, '-')
+                .slice(0, 32) + '.gif';
+
+            const file = new File([blob], cleanName, { type: 'image/gif' });
+            const localUrl = URL.createObjectURL(file);
+            const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+
+            setMediaFiles((prev) => [...prev, file]);
+            setMediaPreviews((prev) => [
+                ...prev,
+                {
+                    id: Math.random().toString(36).substring(2, 9),
+                    file,
+                    url: localUrl,
+                    isGif: true,
+                    size: `${sizeMb} MB`,
+                    name: gif.title || 'KLIPY GIF',
+                },
+            ]);
+
+            toast.dismiss(toastId);
+            toast.success(`Attached "${gif.title || 'GIF'}" to post media!`);
+        } catch {
+            toast.dismiss(toastId);
+            toast.error('Failed to attach GIF from server');
+        }
     };
 
     // Media & GIF file handler
