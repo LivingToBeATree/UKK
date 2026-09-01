@@ -9,6 +9,13 @@ class PortfolioResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $thumbnail = null;
+        if ($this->relationLoaded('media') && $this->media && $this->media->isNotEmpty()) {
+            $thumbnail = $this->media->firstWhere('is_thumbnail', true) ?? $this->media->first();
+        } elseif ($this->relationLoaded('thumbnailMedia') && $this->thumbnailMedia) {
+            $thumbnail = $this->thumbnailMedia;
+        }
+
         return [
             'id' => $this->id,
             'title' => $this->title,
@@ -18,7 +25,7 @@ class PortfolioResource extends JsonResource
             'starred' => $this->starred,
 
             'artist_profile' => new ArtistProfileResource($this->whenLoaded('artistProfile')),
-            'thumbnail_media' => new MediaResource($this->whenLoaded('thumbnailMedia')),
+            'thumbnail_media' => $thumbnail ? new MediaResource($thumbnail) : null,
             'media' => MediaResource::collection($this->whenLoaded('media')),
             'tags' => TagResource::collection($this->whenLoaded('tags')),
         ];
