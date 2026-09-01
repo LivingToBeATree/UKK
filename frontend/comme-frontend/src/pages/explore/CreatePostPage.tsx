@@ -35,6 +35,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
 import { toast } from '@/components/ui/sonner';
+import { MarkdownContent } from '@/components/ui/markdown-content';
 import type { PostVisibility } from '@/types/post';
 
 const POPULAR_TAGS = [
@@ -60,6 +61,7 @@ export const CreatePostPage: React.FC = () => {
 
     // Form States
     const [content, setContent] = useState('');
+    const [editorTab, setEditorTab] = useState<'write' | 'preview'>('write');
     const [visibility, setVisibility] = useState<PostVisibility>('public');
     const [commentable, setCommentable] = useState(true);
     const [selectedPortfolioId, setSelectedPortfolioId] = useState<number | null>(null);
@@ -94,24 +96,35 @@ export const CreatePostPage: React.FC = () => {
         }
     }, [user]);
 
-    // Insert formatting helper
-    const insertFormatting = (prefix: string, suffix: string = '') => {
+    // Enhanced formatting helper with smart selection wrapping
+    const insertFormatting = (prefix: string, suffix: string = '', defaultPlaceholder: string = 'text') => {
         if (!textareaRef.current) return;
         const textarea = textareaRef.current;
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
         const selectedText = content.substring(start, end);
-        const replacement = `${prefix}${selectedText || 'text'}${suffix}`;
+
+        let replacement = '';
+        let newCursorStart = start;
+        let newCursorEnd = end;
+
+        if (selectedText) {
+            replacement = `${prefix}${selectedText}${suffix}`;
+            newCursorStart = start + prefix.length;
+            newCursorEnd = start + prefix.length + selectedText.length;
+        } else {
+            replacement = `${prefix}${defaultPlaceholder}${suffix}`;
+            newCursorStart = start + prefix.length;
+            newCursorEnd = start + prefix.length + defaultPlaceholder.length;
+        }
 
         const newContent = content.substring(0, start) + replacement + content.substring(end);
         setContent(newContent);
+        setEditorTab('write');
 
         setTimeout(() => {
             textarea.focus();
-            textarea.setSelectionRange(
-                start + prefix.length,
-                start + prefix.length + (selectedText ? selectedText.length : 4)
-            );
+            textarea.setSelectionRange(newCursorStart, newCursorEnd);
         }, 0);
     };
 
@@ -263,9 +276,9 @@ export const CreatePostPage: React.FC = () => {
                                 </div>
                             ) : (
                                 <div className="p-8 bg-gradient-to-br from-primary/15 via-accent/10 to-secondary min-h-[220px] flex flex-col justify-between">
-                                    <p className="text-base font-medium leading-relaxed text-foreground italic">
-                                        "{content || 'Your post content will appear here...'}"
-                                    </p>
+                                    <div className="text-base font-medium leading-relaxed text-foreground">
+                                        <MarkdownContent content={content || '*Your post content will appear here...*'} />
+                                    </div>
                                     <div className="pt-6 flex items-center gap-3">
                                         <Avatar
                                             size="md"
@@ -304,9 +317,9 @@ export const CreatePostPage: React.FC = () => {
                                     </div>
 
                                     {content && (
-                                        <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
-                                            {content}
-                                        </p>
+                                        <div className="pt-1">
+                                            <MarkdownContent content={content} />
+                                        </div>
                                     )}
 
                                     {tags.length > 0 && (
@@ -377,103 +390,152 @@ export const CreatePostPage: React.FC = () => {
                                         </Badge>
                                     </div>
 
-                                    {/* Formatting Toolbar */}
-                                    <div className="flex flex-wrap items-center gap-1.5 p-2 rounded-xl bg-secondary/50 border border-border/60">
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => insertFormatting('**', '**')}
-                                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
-                                            title="Bold (**text**)"
-                                        >
-                                            <Bold className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => insertFormatting('*', '*')}
-                                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
-                                            title="Italic (*text*)"
-                                        >
-                                            <Italic className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => insertFormatting('[', '](https://)')}
-                                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
-                                            title="Insert Link"
-                                        >
-                                            <Link2 className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => insertFormatting('`', '`')}
-                                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
-                                            title="Code (`code`)"
-                                        >
-                                            <Code className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => insertFormatting('> ')}
-                                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
-                                            title="Quote (> quote)"
-                                        >
-                                            <Quote className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => insertFormatting('- ')}
-                                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
-                                            title="Bullet List (- item)"
-                                        >
-                                            <List className="h-4 w-4" />
-                                        </Button>
-
-                                        {/* Emojis Palette */}
-                                        <div className="h-4 w-px bg-border/80 mx-1.5" />
-                                        <div className="flex items-center gap-1 overflow-x-auto">
-                                            {EMOJI_LIST.map((emoji) => (
+                                    {/* Editor Toolbar & Write/Preview Tabs */}
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between gap-2">
+                                            {/* Write / Preview Tab Switcher */}
+                                            <div className="flex items-center bg-secondary/80 p-1 rounded-xl border border-border/70">
                                                 <button
-                                                    key={emoji}
                                                     type="button"
-                                                    onClick={() => insertEmoji(emoji)}
-                                                    className="h-7 w-7 rounded-lg hover:bg-secondary flex items-center justify-center text-sm transition-transform hover:scale-115 cursor-pointer"
-                                                    title={`Insert ${emoji}`}
+                                                    onClick={() => setEditorTab('write')}
+                                                    className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                                                        editorTab === 'write'
+                                                            ? 'bg-card text-foreground shadow-xs'
+                                                            : 'text-muted-foreground hover:text-foreground'
+                                                    }`}
                                                 >
-                                                    {emoji}
+                                                    Write
                                                 </button>
-                                            ))}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setEditorTab('preview')}
+                                                    className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                                                        editorTab === 'preview'
+                                                            ? 'bg-card text-primary shadow-xs'
+                                                            : 'text-muted-foreground hover:text-foreground'
+                                                    }`}
+                                                >
+                                                    <Eye className="h-3 w-3" /> Preview
+                                                </button>
+                                            </div>
+
+                                            <span className="text-[11px] text-muted-foreground hidden sm:inline">
+                                                Markdown &amp; GFM Supported
+                                            </span>
                                         </div>
+
+                                        {/* Formatting Toolbar */}
+                                        {editorTab === 'write' && (
+                                            <div className="flex flex-wrap items-center gap-1.5 p-2 rounded-xl bg-secondary/50 border border-border/60">
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => insertFormatting('**', '**', 'bold text')}
+                                                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
+                                                    title="Bold (**text**)"
+                                                >
+                                                    <Bold className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => insertFormatting('*', '*', 'italic text')}
+                                                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
+                                                    title="Italic (*text*)"
+                                                >
+                                                    <Italic className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => insertFormatting('[', '](https://example.com)', 'link text')}
+                                                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
+                                                    title="Insert Link"
+                                                >
+                                                    <Link2 className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => insertFormatting('`', '`', 'code')}
+                                                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
+                                                    title="Code (`code`)"
+                                                >
+                                                    <Code className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => insertFormatting('> ', '', 'quote text')}
+                                                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
+                                                    title="Quote (> quote)"
+                                                >
+                                                    <Quote className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => insertFormatting('- ', '', 'list item')}
+                                                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
+                                                    title="Bullet List (- item)"
+                                                >
+                                                    <List className="h-4 w-4" />
+                                                </Button>
+
+                                                {/* Emojis Palette */}
+                                                <div className="h-4 w-px bg-border/80 mx-1.5" />
+                                                <div className="flex items-center gap-1 overflow-x-auto">
+                                                    {EMOJI_LIST.map((emoji) => (
+                                                        <button
+                                                            key={emoji}
+                                                            type="button"
+                                                            onClick={() => insertEmoji(emoji)}
+                                                            className="h-7 w-7 rounded-lg hover:bg-secondary flex items-center justify-center text-sm transition-transform hover:scale-115 cursor-pointer"
+                                                            title={`Insert ${emoji}`}
+                                                        >
+                                                            {emoji}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
-                                    {/* Main Textarea */}
+                                    {/* Main Textarea or Inline Preview */}
                                     <div className="space-y-2">
                                         <Label htmlFor="post_content" className="sr-only">
                                             Post Content
                                         </Label>
-                                        <Textarea
-                                            id="post_content"
-                                            ref={textareaRef}
-                                            placeholder="Share your artwork progress, process breakdown, commission updates, or stories..."
-                                            value={content}
-                                            onChange={(e) => setContent(e.target.value.slice(0, maxChars))}
-                                            rows={8}
-                                            className="resize-y min-h-[200px] text-base leading-relaxed p-4 rounded-2xl bg-card border-border/80 focus-visible:ring-primary font-medium"
-                                            required
-                                        />
+                                        {editorTab === 'write' ? (
+                                            <Textarea
+                                                id="post_content"
+                                                ref={textareaRef}
+                                                placeholder="Share your artwork progress, process breakdown, commission updates, or stories... (Markdown supported!)"
+                                                value={content}
+                                                onChange={(e) => setContent(e.target.value.slice(0, maxChars))}
+                                                rows={8}
+                                                className="resize-y min-h-[220px] text-base leading-relaxed p-4 rounded-2xl bg-card border-border/80 focus-visible:ring-primary font-medium"
+                                                required
+                                            />
+                                        ) : (
+                                            <div className="min-h-[220px] p-5 rounded-2xl border border-border/80 bg-secondary/20 overflow-y-auto">
+                                                {content ? (
+                                                    <MarkdownContent content={content} />
+                                                ) : (
+                                                    <p className="text-sm text-muted-foreground italic">
+                                                        Nothing to preview yet. Switch to Write to start typing...
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
                                         <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
-                                            <span>Markdown formatting is supported</span>
+                                            <span>Format with Bold (**), Italic (*), Quote (&gt;), Lists (-)</span>
                                             <span className={charCount > 1800 ? 'text-amber-400 font-bold' : ''}>
                                                 {charCount} / {maxChars}
                                             </span>

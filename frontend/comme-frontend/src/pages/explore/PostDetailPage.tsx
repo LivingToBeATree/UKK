@@ -26,6 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/sonner';
 import { copyToClipboard } from '@/lib/clipboard';
+import { MarkdownContent } from '@/components/ui/markdown-content';
 import type { Post, PostComment } from '@/types';
 
 function formatPostDate(dateStr?: string | null): string {
@@ -45,48 +46,6 @@ function formatPostDate(dateStr?: string | null): string {
         day: 'numeric',
         year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined,
     });
-}
-
-// Simple markdown formatter renderer for post text content
-function renderFormattedContent(text: string) {
-    if (!text) return null;
-    const lines = text.split('\n');
-
-    return (
-        <div className="space-y-3 text-base leading-relaxed text-foreground/95">
-            {lines.map((line, idx) => {
-                const trimmed = line.trim();
-                // Blockquote
-                if (trimmed.startsWith('>')) {
-                    return (
-                        <blockquote
-                            key={idx}
-                            className="border-l-4 border-primary pl-4 py-1.5 my-2 text-foreground/90 italic bg-primary/5 rounded-r-xl"
-                        >
-                            {trimmed.replace(/^>\s*/, '')}
-                        </blockquote>
-                    );
-                }
-                // Bullet List
-                if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-                    return (
-                        <li key={idx} className="ml-4 list-disc text-foreground/90">
-                            {trimmed.substring(2)}
-                        </li>
-                    );
-                }
-                // Regular paragraph
-                if (trimmed === '') {
-                    return <div key={idx} className="h-2" />;
-                }
-                return (
-                    <p key={idx} className="whitespace-pre-wrap">
-                        {line}
-                    </p>
-                );
-            })}
-        </div>
-    );
 }
 
 export const PostDetailPage: React.FC = () => {
@@ -296,7 +255,7 @@ export const PostDetailPage: React.FC = () => {
 
                         {/* Post Content */}
                         <div className="pt-2">
-                            {renderFormattedContent(post.content)}
+                            <MarkdownContent content={post.content} />
                         </div>
 
                         {/* Tags */}
