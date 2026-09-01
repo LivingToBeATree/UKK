@@ -26,6 +26,7 @@ import {
     Smile,
 } from 'lucide-react';
 import EmojiPicker, { Theme as EmojiTheme, type EmojiClickData } from 'emoji-picker-react';
+import { gemoji } from 'gemoji';
 import { postService } from '@/services/postService';
 import { portfolioApi, type Portfolio } from '@/services/artistService';
 import { useAuth } from '@/hooks/useAuth';
@@ -70,8 +71,12 @@ export const CreatePostPage: React.FC = () => {
     const [tagInput, setTagInput] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [previewMode, setPreviewMode] = useState(false);
-
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+    // Inline Emoji Autocomplete (e.g. :he -> preview hello / heart)
+    const [emojiSuggestions, setEmojiSuggestions] = useState<{ emoji: string; name: string; description: string }[]>([]);
+    const [suggestionIndex, setSuggestionIndex] = useState(0);
+    const [emojiMatchRange, setEmojiMatchRange] = useState<{ start: number; end: number; query: string } | null>(null);
 
     // Artist Portfolios for Attachment
     const [artistPortfolios, setArtistPortfolios] = useState<Portfolio[]>([]);
@@ -80,6 +85,97 @@ export const CreatePostPage: React.FC = () => {
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const emojiPickerRef = useRef<HTMLDivElement>(null);
+
+    // Check for inline emoji trigger like :he or :sad
+    const checkForEmojiTrigger = (text: string, cursorPos: number) => {
+        const textBeforeCursor = text.substring(0, cursorPos);
+        const match = textBeforeCursor.match(/(?:^|\s):([a-zA-Z0-9_+-]{1,20})$/);
+
+        if (match) {
+            const query = match[1].toLowerCase();
+            const startPos = cursorPos - match[1].length - 1; // start of :
+
+            const results: { emoji: string; name: string; description: string }[] = [];
+            const seen = new Set<string>();
+
+            for (const item of gemoji) {
+                const primaryName = item.names[0] || '';
+                const matchingName =
+                    item.names.find((n) => n.toLowerCase().startsWith(query)) ||
+                    item.names.find((n) => n.toLowerCase().includes(query));
+                const isTagMatch = item.tags.some(
+                    (t) => t.toLowerCase().startsWith(query) || t.toLowerCase().includes(query)
+                );
+                const isDescMatch = item.description.toLowerCase().includes(query);
+
+                if (matchingName || isTagMatch || isDescMatch) {
+                    if (!seen.has(item.emoji)) {
+                        seen.add(item.emoji);
+                        results.push({
+                            emoji: item.emoji,
+                            name: matchingName || primaryName,
+                            description: item.description,
+                        });
+                    }
+                }
+                if (results.length >= 6) break;
+            }
+
+            if (results.length > 0) {
+                setEmojiSuggestions(results);
+                setSuggestionIndex(0);
+                setEmojiMatchRange({ start: startPos, end: cursorPos, query });
+                return;
+            }
+        }
+
+        setEmojiSuggestions([]);
+        setEmojiMatchRange(null);
+    };
+
+    const applyEmojiSuggestion = (selectedEmoji: { emoji: string; name: string }) => {
+        if (!emojiMatchRange || !textareaRef.current) return;
+        const { start, end } = emojiMatchRange;
+        const text = content;
+        const newText = text.substring(0, start) + selectedEmoji.emoji + ' ' + text.substring(end);
+        setContent(newText);
+        setEmojiSuggestions([]);
+        setEmojiMatchRange(null);
+
+        setTimeout(() => {
+            if (textareaRef.current) {
+                const newCursor = start + selectedEmoji.emoji.length + 1;
+                textareaRef.current.focus();
+                textareaRef.current.setSelectionRange(newCursor, newCursor);
+            }
+        }, 0);
+    };
+
+    const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (emojiSuggestions.length > 0) {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setSuggestionIndex((prev) => (prev + 1) % emojiSuggestions.length);
+                return;
+            }
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setSuggestionIndex((prev) => (prev - 1 + emojiSuggestions.length) % emojiSuggestions.length);
+                return;
+            }
+            if (e.key === 'Enter' || e.key === 'Tab') {
+                e.preventDefault();
+                applyEmojiSuggestion(emojiSuggestions[suggestionIndex]);
+                return;
+            }
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                setEmojiSuggestions([]);
+                setEmojiMatchRange(null);
+                return;
+            }
+        }
+    };
 
     // Close emoji picker on click outside
     useEffect(() => {
@@ -552,21 +648,84 @@ export const CreatePostPage: React.FC = () => {
                                     </div>
 
                                     {/* Main Textarea or Inline Preview */}
-                                    <div className="space-y-2">
+                                    <div className="space-y-2 relative">
                                         <Label htmlFor="post_content" className="sr-only">
                                             Post Content
                                         </Label>
                                         {editorTab === 'write' ? (
-                                            <Textarea
-                                                id="post_content"
-                                                ref={textareaRef}
-                                                placeholder="Share your artwork progress, process breakdown, commission updates, or stories... (Markdown supported!)"
-                                                value={content}
-                                                onChange={(e) => setContent(e.target.value.slice(0, maxChars))}
-                                                rows={8}
-                                                className="resize-y min-h-[220px] text-base leading-relaxed p-4 rounded-2xl bg-card border-border/80 focus-visible:ring-primary font-medium"
-                                                required
-                                            />
+                                            <div className="relative">
+                                                {/* Inline Emoji Suggestions Popup (Discord/Slack style) */}
+                                                <AnimatePresence>
+                                                    {emojiSuggestions.length > 0 && (
+                                                        <motion.div
+                                                            initial={{ opacity: 0, y: 6, scale: 0.98 }}
+                                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                            exit={{ opacity: 0, y: 6, scale: 0.98 }}
+                                                            className="absolute left-3 bottom-full mb-2 z-40 w-72 rounded-2xl bg-popover/95 backdrop-blur-xl border border-border/90 p-1.5 shadow-2xl space-y-0.5"
+                                                        >
+                                                            <div className="px-2.5 py-1 text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center justify-between border-b border-border/40 mb-1">
+                                                                <span className="flex items-center gap-1.5">
+                                                                    <Smile className="h-3 w-3 text-amber-400" />
+                                                                    Emoji Suggestions
+                                                                </span>
+                                                                <span className="text-[9px] font-normal lowercase opacity-70">↑↓ / ↵ tab</span>
+                                                            </div>
+                                                            {emojiSuggestions.map((item, idx) => (
+                                                                <button
+                                                                    key={item.emoji + item.name}
+                                                                    type="button"
+                                                                    onClick={() => applyEmojiSuggestion(item)}
+                                                                    className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs transition-colors cursor-pointer text-left ${
+                                                                        idx === suggestionIndex
+                                                                            ? 'bg-primary text-primary-foreground font-bold shadow-xs'
+                                                                            : 'text-foreground hover:bg-secondary'
+                                                                    }`}
+                                                                >
+                                                                    <div className="flex items-center gap-2.5 min-w-0">
+                                                                        <span className="text-lg leading-none shrink-0">{item.emoji}</span>
+                                                                        <span className="truncate">:{item.name}:</span>
+                                                                    </div>
+                                                                    <span
+                                                                        className={`text-[10px] truncate max-w-[95px] ${
+                                                                            idx === suggestionIndex
+                                                                                ? 'text-primary-foreground/80'
+                                                                                : 'text-muted-foreground'
+                                                                        }`}
+                                                                    >
+                                                                        {item.description}
+                                                                    </span>
+                                                                </button>
+                                                            ))}
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+
+                                                <Textarea
+                                                    id="post_content"
+                                                    ref={textareaRef}
+                                                    placeholder="Share your artwork progress, process breakdown, commission updates, or stories... (Type :he, :sad, :fire for emoji preview, Markdown supported!)"
+                                                    value={content}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value.slice(0, maxChars);
+                                                        setContent(val);
+                                                        checkForEmojiTrigger(val, e.target.selectionStart || 0);
+                                                    }}
+                                                    onClick={(e) => {
+                                                        const target = e.target as HTMLTextAreaElement;
+                                                        checkForEmojiTrigger(target.value, target.selectionStart || 0);
+                                                    }}
+                                                    onKeyUp={(e) => {
+                                                        if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Backspace'].includes(e.key) && emojiSuggestions.length === 0) {
+                                                            const target = e.target as HTMLTextAreaElement;
+                                                            checkForEmojiTrigger(target.value, target.selectionStart || 0);
+                                                        }
+                                                    }}
+                                                    onKeyDown={handleTextareaKeyDown}
+                                                    rows={8}
+                                                    className="resize-y min-h-[220px] text-base leading-relaxed p-4 rounded-2xl bg-card border-border/80 focus-visible:ring-primary font-medium"
+                                                    required
+                                                />
+                                            </div>
                                         ) : (
                                             <div className="min-h-[220px] p-5 rounded-2xl border border-border/80 bg-secondary/20 overflow-y-auto">
                                                 {content ? (
