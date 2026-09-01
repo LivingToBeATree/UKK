@@ -65,7 +65,7 @@ class PortfolioController extends Controller
                     }
                 }
 
-                $portfolioMedia = PortfolioMedia::create([
+                PortfolioMedia::create([
                     'portfolio_id' => $portfolio->id,
                     'file_name' => $file->getClientOriginalName(),
                     'file_path' => $path,
@@ -76,10 +76,6 @@ class PortfolioController extends Controller
                     'alt_text' => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
                     'is_thumbnail' => $index === 0,
                 ]);
-
-                if ($index === 0) {
-                    $portfolio->update(['thumbnail_media_id' => $portfolioMedia->id]);
-                }
             }
         }
 
@@ -118,7 +114,7 @@ class PortfolioController extends Controller
                 $mime = $file->getClientMimeType();
                 $mediaType = str_starts_with($mime, 'video/') ? \App\Enum\MediaType::VIDEO : \App\Enum\MediaType::IMAGE;
 
-                $portfolioMedia = PortfolioMedia::create([
+                PortfolioMedia::create([
                     'portfolio_id' => $portfolio->id,
                     'file_name' => $file->getClientOriginalName(),
                     'file_path' => $path,
@@ -127,12 +123,8 @@ class PortfolioController extends Controller
                     'mime_type' => $mime,
                     'sort_order' => $portfolio->media()->count() + $index,
                     'alt_text' => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
-                    'is_thumbnail' => !$portfolio->thumbnail_media_id,
+                    'is_thumbnail' => $portfolio->media()->where('is_thumbnail', true)->doesntExist() && $index === 0,
                 ]);
-
-                if (!$portfolio->thumbnail_media_id) {
-                    $portfolio->update(['thumbnail_media_id' => $portfolioMedia->id]);
-                }
             }
         }
 
