@@ -1226,15 +1226,15 @@ export const CreatePostPage: React.FC = () => {
                                         </div>
                                     ) : (
                                         <div className="p-4 rounded-xl border border-border/60 bg-secondary/30 text-xs text-muted-foreground space-y-2">
-                                            <p className="font-semibold text-foreground">Text-Only Community Post</p>
+                                            <p className="font-semibold text-foreground">Community Post</p>
                                             <p className="leading-relaxed">
-                                                You are publishing as a community creator. Your post will appear as a styled announcement card on the Artwork Feed.
+                                                You are publishing as a community creator. You can attach photos, GIFs, or videos directly using the toolbar above!
                                             </p>
                                             <Link
                                                 to="/apply-artist"
                                                 className="inline-flex items-center gap-1 text-primary font-bold hover:underline pt-1"
                                             >
-                                                Become an Artist to attach artwork →
+                                                Become an Artist to feature portfolio pieces →
                                             </Link>
                                         </div>
                                     )}

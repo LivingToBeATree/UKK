@@ -28,8 +28,9 @@ class UserResource extends JsonResource
             // profile, no matter where this resource gets nested.
             'email' => $this->when($isSelf, $this->email),
             'two_factor_enabled' => $this->when($isSelf, $this->hasTwoFactorEnabled()),
-
-            'artist_profile' => new ArtistProfileResource($this->whenLoaded('artistProfile')),
+            'artist_profile' => $this->relationLoaded('artistProfile')
+                ? ($this->artistProfile ? new ArtistProfileResource($this->artistProfile) : null)
+                : ($this->artistProfile ? new ArtistProfileResource($this->artistProfile) : null),
         ];
     }
 }
