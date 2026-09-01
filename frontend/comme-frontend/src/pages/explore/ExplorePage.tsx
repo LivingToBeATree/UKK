@@ -253,15 +253,18 @@ export const ExplorePage: React.FC = () => {
         }
     };
 
-    const isPostArtwork = (p: Post) =>
-        Boolean(
-            (p.media && p.media.length > 0) ||
-            p.portfolio_id ||
-            p.portfolio?.id ||
-            (p.portfolio as any)?.thumbnail_media?.url ||
-            p.portfolio?.cover_image_url ||
-            (p.portfolio?.media && p.portfolio.media.length > 0)
+    const isPostArtwork = (p: Post) => {
+        // Exclusively for verified Artists: attached portfolio piece or post with media by an artist
+        if (p.portfolio_id || p.portfolio?.id || (p.portfolio as any)?.thumbnail_media?.url) {
+            return true;
+        }
+        const isArtist = Boolean(
+            p.user?.artist_profile ||
+            (p.user as any)?.artistProfile ||
+            (p.user as any)?.artist_profile_id
         );
+        return isArtist && Boolean(p.media && p.media.length > 0);
+    };
 
     const filteredPosts = posts.filter((post) => {
         const isArt = isPostArtwork(post);
@@ -517,12 +520,44 @@ export const ExplorePage: React.FC = () => {
                                                 </div>
 
                                                 {/* Markdown Content */}
-                                                <div className="py-1">
-                                                    <MarkdownContent
-                                                        content={post.content}
-                                                        className="text-xs line-clamp-5 leading-relaxed text-foreground/90"
-                                                    />
-                                                </div>
+                                                {post.content && (
+                                                    <div className="py-0.5">
+                                                        <MarkdownContent
+                                                            content={post.content}
+                                                            className="text-xs line-clamp-4 leading-relaxed text-foreground/90"
+                                                        />
+                                                    </div>
+                                                )}
+
+                                                {/* Discussion Attached Media (If uploaded by user) */}
+                                                {post.media && post.media.length > 0 && (
+                                                    <div className="rounded-xl overflow-hidden bg-black/40 border border-border/60 max-h-[240px] flex items-center justify-center relative my-1">
+                                                        {post.media[0].media_type === 'video' ||
+                                                        (typeof post.media[0].url === 'string' &&
+                                                            /\.(mp4|webm|mov|mkv)$/i.test(post.media[0].url)) ? (
+                                                            <video
+                                                                src={post.media[0].url}
+                                                                className="w-full h-auto max-h-[240px] object-cover"
+                                                                muted
+                                                                autoPlay
+                                                                loop
+                                                                playsInline
+                                                            />
+                                                        ) : (
+                                                            <img
+                                                                src={post.media[0].url}
+                                                                alt="attachment"
+                                                                className="w-full h-auto max-h-[240px] object-cover"
+                                                                loading="lazy"
+                                                            />
+                                                        )}
+                                                        {post.media.length > 1 && (
+                                                            <span className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-md text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-xs">
+                                                                +{post.media.length - 1} more
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
 
                                                 {/* Action Buttons Row */}
                                                 <div className="flex items-center justify-between pt-2 border-t border-border/40 text-xs">
