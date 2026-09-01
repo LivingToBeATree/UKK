@@ -11,6 +11,7 @@ import {
     Image as ImageIcon,
     FileText,
     Palette,
+    Video,
 } from 'lucide-react';
 import { postService } from '@/services/postService';
 import { useAuth } from '@/hooks/useAuth';
@@ -281,6 +282,11 @@ export const ExplorePage: React.FC = () => {
                                 post.portfolio?.cover_image_url ||
                                 post.portfolio?.media?.[0]?.url;
 
+                            const isVideo =
+                                post.media?.[0]?.media_type === 'video' ||
+                                post.media?.[0]?.mime_type?.includes('video') ||
+                                (typeof mediaUrl === 'string' && /\.(mp4|webm|mov|mkv)$/i.test(mediaUrl));
+
                             return (
                                 <motion.div
                                     key={post.id}
@@ -294,22 +300,48 @@ export const ExplorePage: React.FC = () => {
                                         to={`/posts/${post.id}`}
                                         className="group relative block rounded-2xl overflow-hidden bg-card border border-border/80 hover:border-primary/50 shadow-xs hover:shadow-lg transition-all duration-300 cursor-pointer"
                                     >
-                                        {/* 1. Content Body or Artwork Image */}
+                                        {/* 1. Content Body or Artwork Image / Video */}
                                         {mediaUrl ? (
-                                            <div className="relative w-full overflow-hidden bg-muted">
-                                                <img
-                                                    src={mediaUrl}
-                                                    alt={post.content || 'Artwork'}
-                                                    className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-                                                    loading="lazy"
-                                                />
-                                                {post.media && post.media.length > 1 && (
-                                                    <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-bold flex items-center gap-1 shadow-md">
-                                                        <Layers className="h-3 w-3" />
-                                                        <span>+{post.media.length - 1}</span>
+                                            isVideo ? (
+                                                <div className="relative w-full overflow-hidden bg-black aspect-video flex items-center justify-center">
+                                                    <video
+                                                        src={mediaUrl}
+                                                        muted
+                                                        loop
+                                                        playsInline
+                                                        onMouseEnter={(e) => e.currentTarget.play()}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.pause();
+                                                            e.currentTarget.currentTime = 0;
+                                                        }}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                    <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full bg-blue-600/90 text-white text-[10px] font-black flex items-center gap-1 shadow-md">
+                                                        <Video className="h-3 w-3" /> VIDEO
                                                     </div>
-                                                )}
-                                            </div>
+                                                    {post.media && post.media.length > 1 && (
+                                                        <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-bold flex items-center gap-1 shadow-md">
+                                                            <Layers className="h-3 w-3" />
+                                                            <span>+{post.media.length - 1}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <div className="relative w-full overflow-hidden bg-muted">
+                                                    <img
+                                                        src={mediaUrl}
+                                                        alt={post.content || 'Artwork'}
+                                                        className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                                                        loading="lazy"
+                                                    />
+                                                    {post.media && post.media.length > 1 && (
+                                                        <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-bold flex items-center gap-1 shadow-md">
+                                                            <Layers className="h-3 w-3" />
+                                                            <span>+{post.media.length - 1}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )
                                         ) : (
                                             <div className="p-5 bg-gradient-to-br from-primary/5 via-card to-secondary/30 min-h-[120px]">
                                                 <MarkdownContent content={post.content} className="text-sm line-clamp-6" />

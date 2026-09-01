@@ -18,6 +18,7 @@ import {
     Check,
     AlertTriangle,
     X,
+    Video,
 } from 'lucide-react';
 import { postService } from '@/services/postService';
 import { useAuth } from '@/hooks/useAuth';
@@ -219,6 +220,11 @@ export const PostDetailPage: React.FC = () => {
         post.portfolio?.cover_image_url ||
         post.portfolio?.media?.[0]?.url;
 
+    const isSingleVideo =
+        post.media?.[0]?.media_type === 'video' ||
+        post.media?.[0]?.mime_type?.includes('video') ||
+        (typeof attachedArtworkUrl === 'string' && /\.(mp4|webm|mov|mkv)$/i.test(attachedArtworkUrl));
+
     return (
         <div className="w-full max-w-4xl lg:max-w-5xl mx-auto px-4 sm:px-8 py-8 space-y-8">
             {/* Navigation Breadcrumb */}
@@ -243,39 +249,77 @@ export const PostDetailPage: React.FC = () => {
                                 ? 'grid-cols-3 max-h-[420px]'
                                 : 'grid-cols-2 sm:grid-cols-4'
                         }`}>
-                            {post.media.map((m, idx) => (
-                                <div
-                                    key={m.id || idx}
-                                    className="relative rounded-2xl overflow-hidden aspect-square bg-muted/40 group border border-white/10"
-                                >
-                                    <img
-                                        src={m.url}
-                                        alt={m.file_name || 'Post media'}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
-                                        onClick={() => window.open(m.url, '_blank')}
-                                    />
-                                    {m.mime_type?.includes('gif') && (
-                                        <span className="absolute top-2 left-2 bg-purple-600/90 text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow">
-                                            GIF
-                                        </span>
-                                    )}
-                                </div>
-                            ))}
+                            {post.media.map((m, idx) => {
+                                const isItemVideo =
+                                    m.media_type === 'video' ||
+                                    m.mime_type?.includes('video') ||
+                                    /\.(mp4|webm|mov|mkv)$/i.test(m.url);
+
+                                return (
+                                    <div
+                                        key={m.id || idx}
+                                        className="relative rounded-2xl overflow-hidden aspect-square bg-muted/40 group border border-white/10 flex items-center justify-center"
+                                    >
+                                        {isItemVideo ? (
+                                            <video
+                                                src={m.url}
+                                                controls
+                                                loop
+                                                playsInline
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <img
+                                                src={m.url}
+                                                alt={m.file_name || 'Post media'}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
+                                                onClick={() => window.open(m.url, '_blank')}
+                                            />
+                                        )}
+                                        {isItemVideo ? (
+                                            <span className="absolute top-2 left-2 bg-blue-600/90 text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow flex items-center gap-1">
+                                                <Video className="h-3 w-3" /> VIDEO
+                                            </span>
+                                        ) : m.mime_type?.includes('gif') ? (
+                                            <span className="absolute top-2 left-2 bg-purple-600/90 text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow">
+                                                GIF
+                                            </span>
+                                        ) : null}
+                                    </div>
+                                );
+                            })}
                         </div>
                     ) : attachedArtworkUrl ? (
-                        <div className="relative w-full max-h-[640px] bg-black/90 overflow-hidden flex items-center justify-center">
-                            <img
-                                src={attachedArtworkUrl}
-                                alt={post.content || 'Attached artwork'}
-                                className="w-full h-auto max-h-[640px] object-contain"
-                            />
-                            {post.portfolio && (
-                                <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-black/65 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5 shadow-md">
-                                    <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-                                    <span>Attached Portfolio Artwork</span>
+                        isSingleVideo ? (
+                            <div className="relative w-full max-h-[640px] bg-black overflow-hidden flex items-center justify-center p-2">
+                                <video
+                                    src={attachedArtworkUrl}
+                                    controls
+                                    autoPlay
+                                    loop
+                                    playsInline
+                                    className="w-full h-auto max-h-[600px] object-contain rounded-2xl"
+                                />
+                                <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-blue-600/80 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5 shadow-md">
+                                    <Video className="h-3.5 w-3.5" />
+                                    <span>Video Attachment</span>
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        ) : (
+                            <div className="relative w-full max-h-[640px] bg-black/90 overflow-hidden flex items-center justify-center">
+                                <img
+                                    src={attachedArtworkUrl}
+                                    alt={post.content || 'Attached artwork'}
+                                    className="w-full h-auto max-h-[640px] object-contain"
+                                />
+                                {post.portfolio && (
+                                    <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-black/65 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5 shadow-md">
+                                        <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+                                        <span>Attached Portfolio Artwork</span>
+                                    </div>
+                                )}
+                            </div>
+                        )
                     ) : null}
 
                     <CardContent className="p-6 sm:p-8 space-y-6">

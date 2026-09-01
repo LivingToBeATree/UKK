@@ -18,12 +18,12 @@ class StorePostRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'content' => ['required', 'string'],
+            'content' => ['nullable', 'string'],
             'portfolio_id' => ['nullable', 'exists:portfolios,id'],
             'visibility' => ['sometimes', new Enum(PostVisibilityType::class)],
             'commentable' => ['sometimes', 'boolean'],
             'media' => ['sometimes', 'array'],
-            'media.*' => ['file', 'mimes:jpeg,png,jpg,webp,gif,mp4,mov', 'max:25600'],
+            'media.*' => ['file', 'mimes:jpeg,png,jpg,webp,gif,mp4,mov,webm,mkv,avi', 'max:102400'],
             'tags' => ['sometimes'],
         ];
     }

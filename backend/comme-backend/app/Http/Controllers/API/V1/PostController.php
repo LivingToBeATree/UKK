@@ -34,7 +34,7 @@ class PostController extends Controller
     public function store(StorePostRequest $request): JsonResponse
     {
         $post = Post::create([
-            'content' => $request->content,
+            'content' => $request->content ?? '',
             'portfolio_id' => $request->portfolio_id,
             'visibility' => $request->visibility ?? \App\Enum\PostVisibilityType::PUBLIC,
             'commentable' => $request->boolean('commentable', true),

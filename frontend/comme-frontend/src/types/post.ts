@@ -7,6 +7,7 @@ export interface MediaItem {
   url: string;
   file_name?: string;
   mime_type?: string;
+  media_type?: string;
   size?: number;
 }
 

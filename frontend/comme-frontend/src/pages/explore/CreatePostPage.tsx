@@ -25,6 +25,7 @@ import {
     ImageIcon,
     Smile,
     Plus,
+    Video,
 } from 'lucide-react';
 import EmojiPicker, { Theme as EmojiTheme, type EmojiClickData } from 'emoji-picker-react';
 import {
@@ -79,9 +80,9 @@ export const CreatePostPage: React.FC = () => {
     const [previewMode, setPreviewMode] = useState(false);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
-    // Direct Media & GIF Uploads
+    // Direct Media (Images, GIFs & Videos) Uploads
     const [mediaFiles, setMediaFiles] = useState<File[]>([]);
-    const [mediaPreviews, setMediaPreviews] = useState<{ id: string; file: File; url: string; isGif: boolean; size: string; name: string }[]>([]);
+    const [mediaPreviews, setMediaPreviews] = useState<{ id: string; file: File; url: string; isGif: boolean; isVideo: boolean; size: string; name: string }[]>([]);
     const [isDragging, setIsDragging] = useState(false);
     const [showGifModal, setShowGifModal] = useState(false);
     const mediaFileInputRef = useRef<HTMLInputElement>(null);
@@ -128,6 +129,7 @@ export const CreatePostPage: React.FC = () => {
                     file,
                     url: localUrl,
                     isGif: true,
+                    isVideo: false,
                     size: `${sizeMb} MB`,
                     name: gif.title || 'KLIPY GIF',
                 },
@@ -141,18 +143,23 @@ export const CreatePostPage: React.FC = () => {
         }
     };
 
-    // Media & GIF file handler
+    // Media & Video file handler
     const handleFiles = (files: FileList | File[]) => {
         const validFiles: File[] = [];
-        const newPreviews: { id: string; file: File; url: string; isGif: boolean; size: string; name: string }[] = [];
+        const newPreviews: { id: string; file: File; url: string; isGif: boolean; isVideo: boolean; size: string; name: string }[] = [];
 
         Array.from(files).forEach((file) => {
             if (mediaFiles.length + validFiles.length >= 8) {
                 toast.error('Maximum 8 media files per post');
                 return;
             }
-            if (file.size > 25 * 1024 * 1024) {
-                toast.error(`File ${file.name} is too large (max 25MB)`);
+
+            const isVideo = file.type.startsWith('video/') || /\.(mp4|webm|mov|mkv|avi)$/i.test(file.name);
+            const isGif = file.type === 'image/gif' || /\.gif$/i.test(file.name);
+            const maxAllowedSize = isVideo ? 100 * 1024 * 1024 : 25 * 1024 * 1024;
+
+            if (file.size > maxAllowedSize) {
+                toast.error(`File ${file.name} is too large (max ${isVideo ? '100MB' : '25MB'})`);
                 return;
             }
             if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
@@ -162,13 +169,13 @@ export const CreatePostPage: React.FC = () => {
 
             validFiles.push(file);
             const url = URL.createObjectURL(file);
-            const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
             const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
             newPreviews.push({
                 id: Math.random().toString(36).substring(2, 9),
                 file,
                 url,
                 isGif,
+                isVideo,
                 size: `${sizeMb} MB`,
                 name: file.name,
             });
@@ -901,14 +908,14 @@ export const CreatePostPage: React.FC = () => {
                                     <div className="space-y-3 pt-2">
                                         <div className="flex items-center justify-between">
                                             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                                                <ImagePlus className="h-3.5 w-3.5 text-primary" /> Attached Images &amp; GIFs ({mediaPreviews.length}/8)
+                                                <ImagePlus className="h-3.5 w-3.5 text-primary" /> Attached Media ({mediaPreviews.length}/8)
                                             </Label>
                                             <button
                                                 type="button"
                                                 onClick={() => mediaFileInputRef.current?.click()}
                                                 className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1 cursor-pointer"
                                             >
-                                                <Plus className="h-3 w-3" /> Upload Images/GIFs
+                                                <Plus className="h-3 w-3" /> Upload Media
                                             </button>
                                         </div>
 
@@ -920,15 +927,30 @@ export const CreatePostPage: React.FC = () => {
                                                         key={item.id}
                                                         className="relative group rounded-2xl overflow-hidden border border-border/80 bg-secondary/30 aspect-square flex items-center justify-center shadow-xs"
                                                     >
-                                                        <img
-                                                            src={item.url}
-                                                            alt={item.name}
-                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                                        />
+                                                        {item.isVideo ? (
+                                                            <video
+                                                                src={item.url}
+                                                                muted
+                                                                autoPlay
+                                                                loop
+                                                                playsInline
+                                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                            />
+                                                        ) : (
+                                                            <img
+                                                                src={item.url}
+                                                                alt={item.name}
+                                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                            />
+                                                        )}
 
-                                                        {/* Badge: GIF or IMG */}
+                                                        {/* Badge: VIDEO, GIF or IMG */}
                                                         <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md text-[10px] font-black tracking-wider uppercase backdrop-blur-md shadow-xs flex items-center gap-1">
-                                                            {item.isGif ? (
+                                                            {item.isVideo ? (
+                                                                <span className="bg-blue-600 text-white px-1.5 py-0.5 rounded flex items-center gap-1">
+                                                                    <Video className="h-3 w-3" /> VIDEO
+                                                                </span>
+                                                            ) : item.isGif ? (
                                                                 <span className="bg-purple-600 text-white px-1.5 py-0.5 rounded">GIF</span>
                                                             ) : (
                                                                 <span className="bg-black/70 text-white px-1.5 py-0.5 rounded">IMG</span>
@@ -939,8 +961,8 @@ export const CreatePostPage: React.FC = () => {
                                                         <button
                                                             type="button"
                                                             onClick={() => handleRemoveMedia(idx)}
-                                                            className="absolute top-2 right-2 h-7 w-7 rounded-xl bg-black/75 hover:bg-rose-600 text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 cursor-pointer shadow-md"
-                                                            title="Remove image"
+                                                            className="absolute top-2 right-2 h-7 w-7 rounded-xl bg-black/75 hover:bg-rose-600 text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 cursor-pointer shadow-md z-10"
+                                                            title="Remove media"
                                                         >
                                                             <Trash2 className="h-3.5 w-3.5" />
                                                         </button>
@@ -977,11 +999,11 @@ export const CreatePostPage: React.FC = () => {
                                             >
                                                 <div className="flex items-center gap-2 text-xs font-semibold">
                                                     <ImagePlus className="h-4 w-4 text-primary" />
-                                                    <span className="text-foreground font-bold">Drop images or animated GIFs here</span>
+                                                    <span className="text-foreground font-bold">Drop images, animated GIFs, or videos here</span>
                                                     <span>or click to upload</span>
                                                 </div>
                                                 <span className="text-[11px] text-muted-foreground">
-                                                    Supports PNG, JPG, WebP, GIF up to 25MB each (Max 8 files)
+                                                    Supports PNG, JPG, WebP, GIF, MP4, WebM up to 100MB (Max 8 files)
                                                 </span>
                                             </div>
                                         )}
