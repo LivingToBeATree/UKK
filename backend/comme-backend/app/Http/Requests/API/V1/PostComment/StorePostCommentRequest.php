@@ -18,6 +18,13 @@ class StorePostCommentRequest extends FormRequest
         return $this->user()->can('create', PostComment::class);
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('body') && ! $this->has('content')) {
+            $this->merge(['content' => $this->input('body')]);
+        }
+    }
+
     public function rules(): array
     {
         return [

@@ -54,6 +54,7 @@ class PostLikeController extends Controller
         return ApiResponseHelper::successResponse(
             [
                 'is_liked' => $isLiked,
+                'liked' => $isLiked,
                 'likes_count' => $likesCount,
             ],
             $message

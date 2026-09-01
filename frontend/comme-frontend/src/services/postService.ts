@@ -38,14 +38,24 @@ export const postService = {
 
     // Toggle like
     toggleLike: async (postId: number) => {
-        const res = await api.post<ApiResponse<{ liked: boolean; likes_count: number }>>(`/posts/${postId}/like`);
-        return res.data.data;
+        const res = await api.post<ApiResponse<{ liked?: boolean; is_liked?: boolean; likes_count: number }>>(`/posts/${postId}/like`);
+        const data = res.data.data;
+        return {
+            liked: data.liked ?? data.is_liked ?? false,
+            is_liked: data.is_liked ?? data.liked ?? false,
+            likes_count: data.likes_count,
+        };
     },
 
     // Toggle bookmark
     toggleBookmark: async (postId: number) => {
-        const res = await api.post<ApiResponse<{ bookmarked: boolean }>>(`/posts/${postId}/bookmark`);
-        return res.data.data;
+        const res = await api.post<ApiResponse<{ bookmarked?: boolean; is_bookmarked?: boolean; bookmarks_count: number }>>(`/posts/${postId}/bookmark`);
+        const data = res.data.data;
+        return {
+            bookmarked: data.bookmarked ?? data.is_bookmarked ?? false,
+            is_bookmarked: data.is_bookmarked ?? data.bookmarked ?? false,
+            bookmarks_count: data.bookmarks_count,
+        };
     },
 
     // Get user's bookmarked posts
@@ -62,7 +72,10 @@ export const postService = {
 
     // Create comment
     createComment: async (postId: number, body: string) => {
-        const res = await api.post<ApiResponse<PostComment>>(`/posts/${postId}/comments`, { body });
+        const res = await api.post<ApiResponse<PostComment>>(`/posts/${postId}/comments`, {
+            content: body,
+            body: body,
+        });
         return res.data.data;
     },
 

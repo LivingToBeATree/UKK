@@ -9,6 +9,8 @@ class PostResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $user = $request->user();
+
         return [
             'id' => $this->id,
             'content' => $this->content,
@@ -17,6 +19,8 @@ class PostResource extends JsonResource
             'likes_count' => $this->likes_count,
             'comments_count' => $this->comments_count,
             'bookmarks_count' => $this->bookmarks_count,
+            'is_liked' => $user ? $this->likes()->where('user_id', $user->id)->exists() : false,
+            'is_bookmarked' => $user ? $this->bookmarks()->where('user_id', $user->id)->exists() : false,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
 

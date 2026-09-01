@@ -40,6 +40,7 @@ class PostBookmarkController extends Controller
         return ApiResponseHelper::successResponse(
             [
                 'is_bookmarked' => $isBookmarked,
+                'bookmarked' => $isBookmarked,
                 'bookmarks_count' => $bookmarksCount,
             ],
             $message

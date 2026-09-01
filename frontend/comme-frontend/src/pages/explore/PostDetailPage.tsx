@@ -80,7 +80,12 @@ export const PostDetailPage: React.FC = () => {
         if (!requireAuth('like')) return;
         try {
             const res = await postService.toggleLike(post.id);
-            setPost({ ...post, is_liked: res.liked, likes_count: res.likes_count });
+            const isLiked = res.is_liked ?? res.liked ?? false;
+            setPost({
+                ...post,
+                is_liked: isLiked,
+                likes_count: res.likes_count ?? (isLiked ? post.likes_count + 1 : Math.max(0, post.likes_count - 1)),
+            });
         } catch {
             toast.error('Failed to like post');
         }
@@ -91,12 +96,13 @@ export const PostDetailPage: React.FC = () => {
         if (!requireAuth('bookmark')) return;
         try {
             const res = await postService.toggleBookmark(post.id);
+            const isBookmarked = res.is_bookmarked ?? res.bookmarked ?? false;
             setPost({
                 ...post,
-                is_bookmarked: res.bookmarked,
-                bookmarks_count: res.bookmarked ? post.bookmarks_count + 1 : Math.max(0, post.bookmarks_count - 1),
+                is_bookmarked: isBookmarked,
+                bookmarks_count: res.bookmarks_count ?? (isBookmarked ? post.bookmarks_count + 1 : Math.max(0, post.bookmarks_count - 1)),
             });
-            toast.success(res.bookmarked ? 'Saved to bookmarks' : 'Removed from bookmarks');
+            toast.success(isBookmarked ? 'Saved to bookmarks' : 'Removed from bookmarks');
         } catch {
             toast.error('Failed to bookmark post');
         }
@@ -279,27 +285,31 @@ export const PostDetailPage: React.FC = () => {
                             <div className="flex items-center gap-4">
                                 <Button
                                     type="button"
-                                    variant={post.is_liked ? 'default' : 'outline'}
+                                    variant="outline"
                                     size="sm"
                                     onClick={handleLike}
                                     className={`h-10 px-4 rounded-xl font-bold text-xs gap-2 cursor-pointer transition-all ${
-                                        post.is_liked ? 'bg-rose-500 hover:bg-rose-600 text-white' : ''
+                                        post.is_liked
+                                            ? 'bg-rose-500/15 border-rose-500/40 text-rose-500 ring-1 ring-rose-500/30 hover:bg-rose-500/25'
+                                            : 'text-muted-foreground hover:text-foreground'
                                     }`}
                                 >
-                                    <Heart className={`h-4 w-4 ${post.is_liked ? 'fill-current' : ''}`} />
+                                    <Heart className={`h-4 w-4 ${post.is_liked ? 'fill-rose-500 text-rose-500' : ''}`} />
                                     <span>{post.likes_count} {post.likes_count === 1 ? 'Like' : 'Likes'}</span>
                                 </Button>
 
                                 <Button
                                     type="button"
-                                    variant={post.is_bookmarked ? 'default' : 'outline'}
+                                    variant="outline"
                                     size="sm"
                                     onClick={handleBookmark}
                                     className={`h-10 px-4 rounded-xl font-bold text-xs gap-2 cursor-pointer transition-all ${
-                                        post.is_bookmarked ? 'bg-blue-500 hover:bg-blue-600 text-white' : ''
+                                        post.is_bookmarked
+                                            ? 'bg-blue-500/15 border-blue-500/40 text-blue-500 ring-1 ring-blue-500/30 hover:bg-blue-500/25'
+                                            : 'text-muted-foreground hover:text-foreground'
                                     }`}
                                 >
-                                    <Bookmark className={`h-4 w-4 ${post.is_bookmarked ? 'fill-current' : ''}`} />
+                                    <Bookmark className={`h-4 w-4 ${post.is_bookmarked ? 'fill-blue-500 text-blue-500' : ''}`} />
                                     <span>{post.bookmarks_count} {post.bookmarks_count === 1 ? 'Saved' : 'Saves'}</span>
                                 </Button>
                             </div>
