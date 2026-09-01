@@ -19,6 +19,8 @@ import {
     AlertTriangle,
     X,
     Video,
+    ChevronLeft,
+    ChevronRight,
 } from 'lucide-react';
 import { postService } from '@/services/postService';
 import { useAuth } from '@/hooks/useAuth';
@@ -51,6 +53,215 @@ function formatPostDate(dateStr?: string | null): string {
         year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined,
     });
 }
+
+// ── Horizontal Scrollable Media Gallery Component ──
+const ScrollableMediaGallery: React.FC<{
+    mediaList: NonNullable<Post['media']>;
+    attachedPortfolio?: Post['portfolio'];
+}> = ({ mediaList, attachedPortfolio }) => {
+    const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+    const [canScrollLeft, setCanScrollLeft] = useState(false);
+    const [canScrollRight, setCanScrollRight] = useState(mediaList.length > 1);
+    const [activeIndex, setActiveIndex] = useState(0);
+
+    const checkScroll = () => {
+        if (!scrollContainerRef.current) return;
+        const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+        setCanScrollLeft(scrollLeft > 10);
+        setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+
+        const itemWidth = scrollContainerRef.current.firstElementChild?.clientWidth || clientWidth;
+        const current = Math.round(scrollLeft / (itemWidth + 16));
+        setActiveIndex(Math.min(Math.max(0, current), mediaList.length - 1));
+    };
+
+    useEffect(() => {
+        checkScroll();
+        const container = scrollContainerRef.current;
+        if (container) {
+            container.addEventListener('scroll', checkScroll, { passive: true });
+            window.addEventListener('resize', checkScroll);
+        }
+        return () => {
+            if (container) container.removeEventListener('scroll', checkScroll);
+            window.removeEventListener('resize', checkScroll);
+        };
+    }, [mediaList.length]);
+
+    const scroll = (direction: 'left' | 'right') => {
+        if (!scrollContainerRef.current) return;
+        const container = scrollContainerRef.current;
+        const scrollAmount = container.clientWidth * 0.85;
+        container.scrollBy({
+            left: direction === 'left' ? -scrollAmount : scrollAmount,
+            behavior: 'smooth',
+        });
+    };
+
+    const scrollToItem = (index: number) => {
+        if (!scrollContainerRef.current) return;
+        const container = scrollContainerRef.current;
+        const children = container.children;
+        if (children[index]) {
+            (children[index] as HTMLElement).scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+                inline: 'center',
+            });
+        }
+    };
+
+    if (mediaList.length === 1) {
+        const m = mediaList[0];
+        const isItemVideo =
+            m.media_type === 'video' ||
+            m.mime_type?.includes('video') ||
+            (typeof m.url === 'string' && /\.(mp4|webm|mov|mkv)$/i.test(m.url));
+
+        return (
+            <div className="relative w-full max-h-[640px] bg-black/95 overflow-hidden flex items-center justify-center p-2">
+                {isItemVideo ? (
+                    <video
+                        src={m.url}
+                        controls
+                        autoPlay
+                        loop
+                        playsInline
+                        className="w-full h-auto max-h-[600px] object-contain rounded-2xl"
+                    />
+                ) : (
+                    <img
+                        src={m.url}
+                        alt={m.file_name || 'Attached media'}
+                        className="w-full h-auto max-h-[640px] object-contain rounded-2xl cursor-zoom-in"
+                        onClick={() => window.open(m.url, '_blank')}
+                    />
+                )}
+                <div className="absolute top-4 left-4 flex items-center gap-2">
+                    {isItemVideo ? (
+                        <span className="px-3 py-1 rounded-full bg-blue-600/85 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5 shadow-md">
+                            <Video className="h-3.5 w-3.5" /> Video Attachment
+                        </span>
+                    ) : m.mime_type?.includes('gif') ? (
+                        <span className="px-3 py-1 rounded-full bg-purple-600/85 backdrop-blur-md text-white text-xs font-black shadow-md">
+                            GIF Attachment
+                        </span>
+                    ) : attachedPortfolio ? (
+                        <span className="px-3 py-1 rounded-full bg-black/65 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5 shadow-md">
+                            <Sparkles className="h-3.5 w-3.5 text-amber-400" /> Attached Portfolio Piece
+                        </span>
+                    ) : null}
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="relative bg-black/95 group/gallery select-none overflow-hidden">
+            {/* Scroll Track Container */}
+            <div
+                ref={scrollContainerRef}
+                className="flex gap-4 overflow-x-auto snap-x snap-mandatory py-4 px-4 sm:px-6 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent scroll-smooth"
+                style={{ scrollbarWidth: 'thin' }}
+            >
+                {mediaList.map((m, idx) => {
+                    const isItemVideo =
+                        m.media_type === 'video' ||
+                        m.mime_type?.includes('video') ||
+                        (typeof m.url === 'string' && /\.(mp4|webm|mov|mkv)$/i.test(m.url));
+                    const isItemGif =
+                        m.mime_type?.includes('gif') ||
+                        (typeof m.url === 'string' && /\.gif$/i.test(m.url));
+
+                    return (
+                        <div
+                            key={m.id || idx}
+                            className="relative shrink-0 snap-center rounded-2xl overflow-hidden bg-black border border-white/10 shadow-2xl flex items-center justify-center w-[85%] sm:w-[70%] md:w-[60%] max-w-[620px] aspect-video sm:aspect-16/10 transition-transform duration-300"
+                        >
+                            {isItemVideo ? (
+                                <video
+                                    src={m.url}
+                                    controls
+                                    playsInline
+                                    className="w-full h-full max-h-[500px] object-contain bg-black"
+                                />
+                            ) : (
+                                <img
+                                    src={m.url}
+                                    alt={m.file_name || `Media ${idx + 1}`}
+                                    className="w-full h-full object-contain cursor-zoom-in bg-black"
+                                    onClick={() => window.open(m.url, '_blank')}
+                                    loading="lazy"
+                                />
+                            )}
+
+                            {/* Badge Left */}
+                            <div className="absolute top-3 left-3 flex items-center gap-1.5 pointer-events-none z-10">
+                                {isItemVideo ? (
+                                    <span className="bg-blue-600/90 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-md backdrop-blur-md flex items-center gap-1">
+                                        <Video className="h-3 w-3" /> VIDEO
+                                    </span>
+                                ) : isItemGif ? (
+                                    <span className="bg-purple-600/90 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-md backdrop-blur-md">
+                                        GIF
+                                    </span>
+                                ) : null}
+                            </div>
+
+                            {/* Item Count Badge Right */}
+                            <div className="absolute top-3 right-3 px-2.5 py-0.5 rounded-full bg-black/65 backdrop-blur-md text-white text-[11px] font-bold shadow-md z-10 pointer-events-none">
+                                {idx + 1} / {mediaList.length}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Left Nav Arrow */}
+            {canScrollLeft && (
+                <button
+                    type="button"
+                    onClick={() => scroll('left')}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-black/70 hover:bg-black/90 text-white border border-white/20 flex items-center justify-center shadow-2xl backdrop-blur-md transition-all cursor-pointer z-20 hover:scale-105"
+                    title="Scroll left"
+                >
+                    <ChevronLeft className="h-5 w-5" />
+                </button>
+            )}
+
+            {/* Right Nav Arrow */}
+            {canScrollRight && (
+                <button
+                    type="button"
+                    onClick={() => scroll('right')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-black/70 hover:bg-black/90 text-white border border-white/20 flex items-center justify-center shadow-2xl backdrop-blur-md transition-all cursor-pointer z-20 hover:scale-105"
+                    title="Scroll right"
+                >
+                    <ChevronRight className="h-5 w-5" />
+                </button>
+            )}
+
+            {/* Bottom Progress Navigation Dots */}
+            {mediaList.length > 1 && (
+                <div className="flex items-center justify-center gap-1.5 py-2.5 bg-black/60 backdrop-blur-xs border-t border-white/5">
+                    {mediaList.map((_, idx) => (
+                        <button
+                            key={idx}
+                            type="button"
+                            onClick={() => scrollToItem(idx)}
+                            className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                                idx === activeIndex
+                                    ? 'w-6 bg-white shadow-sm'
+                                    : 'w-1.5 bg-white/40 hover:bg-white/70'
+                            }`}
+                            title={`Jump to media ${idx + 1}`}
+                        />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
 
 export const PostDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -240,86 +451,21 @@ export const PostDetailPage: React.FC = () => {
             {/* ── Main Post Card ── */}
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                 <Card className="rounded-3xl border border-border/80 bg-card overflow-hidden shadow-lg">
-                    {/* Attached Multi-Media Gallery or Single Hero Media */}
-                    {post.media && post.media.length > 1 ? (
-                        <div className={`grid gap-2 bg-black/90 p-3 ${
-                            post.media.length === 2
-                                ? 'grid-cols-2 max-h-[500px]'
-                                : post.media.length === 3
-                                ? 'grid-cols-3 max-h-[420px]'
-                                : 'grid-cols-2 sm:grid-cols-4'
-                        }`}>
-                            {post.media.map((m, idx) => {
-                                const isItemVideo =
-                                    m.media_type === 'video' ||
-                                    m.mime_type?.includes('video') ||
-                                    /\.(mp4|webm|mov|mkv)$/i.test(m.url);
-
-                                return (
-                                    <div
-                                        key={m.id || idx}
-                                        className="relative rounded-2xl overflow-hidden aspect-square bg-muted/40 group border border-white/10 flex items-center justify-center"
-                                    >
-                                        {isItemVideo ? (
-                                            <video
-                                                src={m.url}
-                                                controls
-                                                loop
-                                                playsInline
-                                                className="w-full h-full object-cover"
-                                            />
-                                        ) : (
-                                            <img
-                                                src={m.url}
-                                                alt={m.file_name || 'Post media'}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
-                                                onClick={() => window.open(m.url, '_blank')}
-                                            />
-                                        )}
-                                        {isItemVideo ? (
-                                            <span className="absolute top-2 left-2 bg-blue-600/90 text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow flex items-center gap-1">
-                                                <Video className="h-3 w-3" /> VIDEO
-                                            </span>
-                                        ) : m.mime_type?.includes('gif') ? (
-                                            <span className="absolute top-2 left-2 bg-purple-600/90 text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow">
-                                                GIF
-                                            </span>
-                                        ) : null}
-                                    </div>
-                                );
-                            })}
-                        </div>
+                    {/* Attached Multi-Media Scrollable Gallery or Hero Media */}
+                    {post.media && post.media.length > 0 ? (
+                        <ScrollableMediaGallery mediaList={post.media} attachedPortfolio={post.portfolio} />
                     ) : attachedArtworkUrl ? (
-                        isSingleVideo ? (
-                            <div className="relative w-full max-h-[640px] bg-black overflow-hidden flex items-center justify-center p-2">
-                                <video
-                                    src={attachedArtworkUrl}
-                                    controls
-                                    autoPlay
-                                    loop
-                                    playsInline
-                                    className="w-full h-auto max-h-[600px] object-contain rounded-2xl"
-                                />
-                                <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-blue-600/80 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5 shadow-md">
-                                    <Video className="h-3.5 w-3.5" />
-                                    <span>Video Attachment</span>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="relative w-full max-h-[640px] bg-black/90 overflow-hidden flex items-center justify-center">
-                                <img
-                                    src={attachedArtworkUrl}
-                                    alt={post.content || 'Attached artwork'}
-                                    className="w-full h-auto max-h-[640px] object-contain"
-                                />
-                                {post.portfolio && (
-                                    <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-black/65 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5 shadow-md">
-                                        <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-                                        <span>Attached Portfolio Artwork</span>
-                                    </div>
-                                )}
-                            </div>
-                        )
+                        <ScrollableMediaGallery
+                            mediaList={[
+                                {
+                                    id: 0,
+                                    url: attachedArtworkUrl,
+                                    file_name: post.portfolio?.title || 'Attached Artwork',
+                                    media_type: isSingleVideo ? 'video' : 'image',
+                                },
+                            ]}
+                            attachedPortfolio={post.portfolio}
+                        />
                     ) : null}
 
                     <CardContent className="p-6 sm:p-8 space-y-6">
