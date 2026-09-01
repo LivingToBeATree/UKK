@@ -777,7 +777,8 @@ export const PostDetailPage: React.FC = () => {
                                                     <div className="pt-1">
                                                         <MarkdownContent
                                                             content={comment.content || comment.body || ''}
-                                                            className="text-sm text-foreground/90 leading-relaxed"
+                                                            variant="comment"
+                                                            className="text-foreground/90 leading-relaxed"
                                                         />
                                                     </div>
                                                 </div>

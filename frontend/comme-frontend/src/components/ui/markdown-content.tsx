@@ -6,10 +6,19 @@ import remarkEmoji from 'remark-emoji';
 interface MarkdownContentProps {
     content: string;
     className?: string;
+    variant?: 'default' | 'comment';
+    compact?: boolean;
 }
 
-export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content, className = '' }) => {
+export const MarkdownContent: React.FC<MarkdownContentProps> = ({
+    content,
+    className = '',
+    variant = 'default',
+    compact = false,
+}) => {
     if (!content) return null;
+
+    const isComment = variant === 'comment' || compact;
 
     return (
         <div className={`markdown-body text-foreground leading-relaxed break-words ${className}`}>
@@ -17,7 +26,11 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content, class
                 remarkPlugins={[remarkGfm, [remarkEmoji, { accessible: true, emoticon: true }]]}
                 components={{
                     blockquote: ({ children }) => (
-                        <blockquote className="border-l-4 border-primary pl-4 py-2 my-3 text-foreground/90 italic bg-primary/5 rounded-r-xl">
+                        <blockquote
+                            className={`border-l-4 border-primary pl-3.5 py-1.5 my-2 text-foreground/90 italic bg-primary/5 rounded-r-xl ${
+                                isComment ? 'text-xs' : 'text-sm'
+                            }`}
+                        >
                             {children}
                         </blockquote>
                     ),
@@ -44,7 +57,11 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content, class
                         );
                     },
                     pre: ({ children }) => (
-                        <pre className="p-4 rounded-2xl bg-secondary/60 border border-border/80 overflow-x-auto text-xs font-mono my-3 shadow-inner">
+                        <pre
+                            className={`rounded-2xl bg-secondary/60 border border-border/80 overflow-x-auto font-mono my-2 shadow-inner ${
+                                isComment ? 'p-3 text-[11px]' : 'p-4 text-xs'
+                            }`}
+                        >
                             {children}
                         </pre>
                     ),
@@ -59,34 +76,52 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content, class
                         </a>
                     ),
                     h1: ({ children }) => (
-                        <h1 className="text-xl sm:text-2xl font-black text-foreground mt-4 mb-2">
+                        <h1
+                            className={`font-black text-foreground mt-3 mb-1.5 ${
+                                isComment ? 'text-base sm:text-lg' : 'text-xl sm:text-2xl mt-4 mb-2'
+                            }`}
+                        >
                             {children}
                         </h1>
                     ),
                     h2: ({ children }) => (
-                        <h2 className="text-lg sm:text-xl font-extrabold text-foreground mt-3 mb-1.5">
+                        <h2
+                            className={`font-extrabold text-foreground mt-2.5 mb-1 ${
+                                isComment ? 'text-sm sm:text-base' : 'text-lg sm:text-xl mt-3 mb-1.5'
+                            }`}
+                        >
                             {children}
                         </h2>
                     ),
                     h3: ({ children }) => (
-                        <h3 className="text-base font-bold text-foreground mt-2 mb-1">
+                        <h3
+                            className={`font-bold text-foreground mt-2 mb-1 ${
+                                isComment ? 'text-xs sm:text-sm' : 'text-base'
+                            }`}
+                        >
                             {children}
                         </h3>
                     ),
                     ul: ({ children }) => (
-                        <ul className="list-disc ml-5 space-y-1 my-2 text-foreground/90">{children}</ul>
+                        <ul className="list-disc ml-5 space-y-1 my-1.5 text-foreground/90">{children}</ul>
                     ),
                     ol: ({ children }) => (
-                        <ol className="list-decimal ml-5 space-y-1 my-2 text-foreground/90">{children}</ol>
+                        <ol className="list-decimal ml-5 space-y-1 my-1.5 text-foreground/90">{children}</ol>
                     ),
                     p: ({ children }) => (
-                        <p className="text-sm sm:text-base leading-relaxed my-2">{children}</p>
+                        <p className={`leading-relaxed my-1.5 ${isComment ? 'text-xs sm:text-sm' : 'text-sm sm:text-base'}`}>
+                            {children}
+                        </p>
                     ),
                     img: ({ src, alt }) => (
                         <img
                             src={src}
                             alt={alt || 'Image attachment'}
-                            className="max-h-[360px] max-w-full rounded-2xl object-contain my-3 border border-border/80 shadow-md bg-black/40"
+                            className={`rounded-xl object-contain my-2 border border-border/80 shadow-xs bg-black/40 transition-all ${
+                                isComment
+                                    ? 'max-h-[160px] sm:max-h-[190px] max-w-[240px] sm:max-w-[280px]'
+                                    : 'max-h-[300px] sm:max-h-[360px] max-w-full'
+                            }`}
                             loading="lazy"
                         />
                     ),

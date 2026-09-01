@@ -621,7 +621,7 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
                             /* Live Preview Tab */
                             <div className="min-h-[110px] p-4 rounded-xl bg-secondary/20 border border-border/80 space-y-3">
                                 {content.trim() ? (
-                                    <MarkdownContent content={content} />
+                                    <MarkdownContent content={content} variant="comment" />
                                 ) : (
                                     <p className="text-xs text-muted-foreground italic">
                                         Your markdown comment preview will appear here...
