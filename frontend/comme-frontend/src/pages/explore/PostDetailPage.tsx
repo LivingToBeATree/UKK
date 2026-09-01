@@ -460,15 +460,23 @@ export const PostDetailPage: React.FC = () => {
         );
     }
 
-    const attachedArtworkUrl =
-        (post.media && post.media[0] ? post.media[0].url : null) ||
-        post.portfolio?.cover_image_url ||
-        post.portfolio?.media?.[0]?.url;
-
-    const isSingleVideo =
-        post.media?.[0]?.media_type === 'video' ||
-        post.media?.[0]?.mime_type?.includes('video') ||
-        (typeof attachedArtworkUrl === 'string' && /\.(mp4|webm|mov|mkv)$/i.test(attachedArtworkUrl));
+    const attachedMediaList: NonNullable<Post['media']> =
+        post.media && post.media.length > 0
+            ? post.media
+            : post.portfolio?.media && post.portfolio.media.length > 0
+            ? (post.portfolio.media as any)
+            : (post.portfolio as any)?.thumbnail_media
+            ? [(post.portfolio as any).thumbnail_media]
+            : post.portfolio?.cover_image_url
+            ? [
+                  {
+                      id: 0,
+                      url: post.portfolio.cover_image_url,
+                      file_name: post.portfolio?.title || 'Artwork',
+                      media_type: 'image',
+                  },
+              ]
+            : [];
 
     return (
         <div className="w-full max-w-4xl lg:max-w-5xl mx-auto px-4 sm:px-8 py-8 space-y-8">
@@ -486,21 +494,9 @@ export const PostDetailPage: React.FC = () => {
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                 <Card className="rounded-3xl border border-border/80 bg-card overflow-hidden shadow-lg">
                     {/* Attached Multi-Media Scrollable Gallery or Hero Media */}
-                    {post.media && post.media.length > 0 ? (
-                        <ScrollableMediaGallery mediaList={post.media} attachedPortfolio={post.portfolio} />
-                    ) : attachedArtworkUrl ? (
-                        <ScrollableMediaGallery
-                            mediaList={[
-                                {
-                                    id: 0,
-                                    url: attachedArtworkUrl,
-                                    file_name: post.portfolio?.title || 'Attached Artwork',
-                                    media_type: isSingleVideo ? 'video' : 'image',
-                                },
-                            ]}
-                            attachedPortfolio={post.portfolio}
-                        />
-                    ) : null}
+                    {attachedMediaList.length > 0 && (
+                        <ScrollableMediaGallery mediaList={attachedMediaList} attachedPortfolio={post.portfolio} />
+                    )}
 
                     <CardContent className="p-6 sm:p-8 space-y-6">
                         {/* Author Header */}
