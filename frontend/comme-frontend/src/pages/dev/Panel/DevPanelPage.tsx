@@ -72,12 +72,67 @@ export const DevPanelPage: React.FC = () => {
 
     // Persona Switcher state
     const [switchingUser, setSwitchingUser] = useState<string | null>(null);
+    const [dbUsers, setDbUsers] = useState<any[]>([]);
 
     // Custom Login state
     const [customEmail, setCustomEmail] = useState('');
     const [customPassword, setCustomPassword] = useState('password');
 
-    // Midtrans Simulator state
+    // Fetch all real database users
+    const fetchDbUsers = async () => {
+        try {
+            const res = await api.get('/dev/users');
+            setDbUsers(res.data.data || []);
+        } catch {
+            // Non-fatal if dev route not reachable
+        }
+    };
+
+    React.useEffect(() => {
+        fetchDbUsers();
+    }, []);
+
+    // Persona Quick Switch with Dev Exception (Bypasses password & auto-provisions)
+    const handleSwitchPersona = async (
+        emailOrUserId: string | number,
+        personaMeta?: { role?: string; name?: string; username?: string }
+    ) => {
+        const identifier = typeof emailOrUserId === 'number' ? `user #${emailOrUserId}` : emailOrUserId;
+        setSwitchingUser(String(emailOrUserId));
+        try {
+            await initCsrf();
+            const payload =
+                typeof emailOrUserId === 'number'
+                    ? { user_id: emailOrUserId }
+                    : { email: emailOrUserId, ...personaMeta };
+
+            // Direct Dev Exception Switch Endpoint
+            await api.post('/dev/switch-persona', payload);
+            await refreshUser();
+            await fetchDbUsers();
+            toast.success(`Switched active session to ${identifier}`);
+        } catch (err: unknown) {
+            // Fallback to standard login if dev endpoint has issues
+            try {
+                if (typeof emailOrUserId === 'string') {
+                    await login(emailOrUserId, customPassword || 'password');
+                    await fetchDbUsers();
+                    toast.success(`Switched active session to ${emailOrUserId}`);
+                    return;
+                }
+            } catch {
+                // fall-through
+            }
+            const msg =
+                (err as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message ||
+                (err as { message?: string })?.message ||
+                'Unknown error';
+            toast.error(`Login failed for ${identifier}: ${msg}`);
+            console.error(err);
+        } finally {
+            setSwitchingUser(null);
+        }
+    };
     const [orderId, setOrderId] = useState('CMS-DEMO-101');
     const [grossAmount, setGrossAmount] = useState('500000');
     const [transactionStatus, setTransactionStatus] = useState('settlement');
@@ -89,22 +144,6 @@ export const DevPanelPage: React.FC = () => {
     const [pingResults, setPingResults] = useState<{ [key: string]: string }>({});
     const [pinging, setPinging] = useState(false);
 
-    // Persona Quick Switch
-    const handleSwitchPersona = async (email: string) => {
-        setSwitchingUser(email);
-        try {
-            await login(email, 'password');
-            toast.success(`Switched active session to ${email}`);
-        } catch (err: unknown) {
-            const msg = (err as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message
-                || (err as { message?: string })?.message
-                || 'Unknown error';
-            toast.error(`Login failed for ${email}: ${msg}`);
-            console.error(err);
-        } finally {
-            setSwitchingUser(null);
-        }
-    };
 
     // Logout
     const handleLogout = async () => {
@@ -313,7 +352,13 @@ export const DevPanelPage: React.FC = () => {
                                             className="w-full text-xs font-semibold"
                                             variant={isActive ? 'outline' : 'default'}
                                             disabled={isActive || isPending}
-                                            onClick={() => handleSwitchPersona(persona.email)}
+                                            onClick={() =>
+                                                handleSwitchPersona(persona.email, {
+                                                    role: persona.role.toLowerCase(),
+                                                    name: persona.name,
+                                                    username: persona.username,
+                                                })
+                                            }
                                         >
                                             {isActive ? 'Current Session' : isPending ? 'Switching...' : `Switch to ${persona.role}`}
                                         </Button>
@@ -323,12 +368,77 @@ export const DevPanelPage: React.FC = () => {
                         })}
                     </div>
 
+                    {/* All Registered Database Accounts (1-Click Switch) */}
+                    {dbUsers.length > 0 && (
+                        <Card className="border-border/80">
+                            <CardHeader className="pb-3">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <CardTitle className="text-base font-bold flex items-center gap-2">
+                                            <Database className="h-4 w-4 text-primary" /> Active Database Accounts ({dbUsers.length})
+                                        </CardTitle>
+                                        <CardDescription className="text-xs">
+                                            Instant 1-click login exception into any registered user in the local database.
+                                        </CardDescription>
+                                    </div>
+                                    <Button size="xs" variant="outline" onClick={fetchDbUsers}>
+                                        <RefreshCw className="h-3 w-3 mr-1" /> Refresh Users
+                                    </Button>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                    {dbUsers.map((dbUser) => {
+                                        const isCurrent = user?.id === dbUser.id;
+                                        const isPending = switchingUser === String(dbUser.id) || switchingUser === dbUser.email;
+
+                                        return (
+                                            <div
+                                                key={dbUser.id}
+                                                className={`p-3.5 rounded-xl border flex flex-col justify-between gap-3 bg-secondary/30 transition-all ${
+                                                    isCurrent ? 'border-primary bg-primary/10 ring-1 ring-primary/30' : 'border-border/70 hover:border-border'
+                                                }`}
+                                            >
+                                                <div className="space-y-1 min-w-0">
+                                                    <div className="flex items-center justify-between gap-1">
+                                                        <span className="text-xs font-bold text-foreground truncate">
+                                                            {dbUser.display_name || dbUser.username}
+                                                        </span>
+                                                        <Badge variant={dbUser.role === 'admin' ? 'gold' : dbUser.role === 'moderator' ? 'secondary' : 'default'} className="text-[9px] uppercase px-1.5 py-0">
+                                                            {dbUser.role}
+                                                        </Badge>
+                                                    </div>
+                                                    <p className="text-[11px] text-muted-foreground font-mono truncate">
+                                                        @{dbUser.username}
+                                                    </p>
+                                                    <p className="text-[10px] text-muted-foreground truncate">
+                                                        {dbUser.email}
+                                                    </p>
+                                                </div>
+
+                                                <Button
+                                                    size="xs"
+                                                    variant={isCurrent ? 'outline' : 'default'}
+                                                    disabled={isCurrent || isPending}
+                                                    onClick={() => handleSwitchPersona(dbUser.id)}
+                                                    className="w-full text-xs font-semibold"
+                                                >
+                                                    {isCurrent ? 'Active Account' : isPending ? 'Switching...' : 'Switch User'}
+                                                </Button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
                     {/* Custom Login Form */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-base font-bold">Custom Credentials Login</CardTitle>
+                            <CardTitle className="text-base font-bold">Custom Credentials / Quick Provision</CardTitle>
                             <CardDescription className="text-xs">
-                                Authenticate as any custom user currently registered in the database.
+                                Authenticate as any custom email or create/provision a new user on the fly.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -340,7 +450,7 @@ export const DevPanelPage: React.FC = () => {
                                 className="grid grid-cols-1 sm:grid-cols-3 gap-3"
                             >
                                 <div>
-                                    <Label className="text-xs">Email</Label>
+                                    <Label className="text-xs">Email or Username</Label>
                                     <Input
                                         placeholder="user@comme.test"
                                         value={customEmail}
@@ -349,7 +459,7 @@ export const DevPanelPage: React.FC = () => {
                                     />
                                 </div>
                                 <div>
-                                    <Label className="text-xs">Password</Label>
+                                    <Label className="text-xs">Password (optional in dev)</Label>
                                     <Input
                                         type="password"
                                         value={customPassword}
@@ -359,7 +469,7 @@ export const DevPanelPage: React.FC = () => {
                                 </div>
                                 <div className="flex items-end">
                                     <Button type="submit" className="w-full text-xs font-semibold">
-                                        Authenticate
+                                        Authenticate / Switch
                                     </Button>
                                 </div>
                             </form>
