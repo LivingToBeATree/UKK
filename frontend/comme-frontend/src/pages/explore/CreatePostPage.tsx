@@ -44,6 +44,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
 import { toast } from '@/components/ui/sonner';
 import { MarkdownContent } from '@/components/ui/markdown-content';
+import { GifPickerModal } from '@/components/ui/GifPickerModal';
 import type { PostVisibility } from '@/types/post';
 
 const POPULAR_TAGS = [
@@ -82,6 +83,7 @@ export const CreatePostPage: React.FC = () => {
     const [mediaFiles, setMediaFiles] = useState<File[]>([]);
     const [mediaPreviews, setMediaPreviews] = useState<{ id: string; file: File; url: string; isGif: boolean; size: string; name: string }[]>([]);
     const [isDragging, setIsDragging] = useState(false);
+    const [showGifModal, setShowGifModal] = useState(false);
     const mediaFileInputRef = useRef<HTMLInputElement>(null);
 
     // Inline Emoji Autocomplete (e.g. :he -> preview hello / heart)
@@ -96,6 +98,26 @@ export const CreatePostPage: React.FC = () => {
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const emojiPickerRef = useRef<HTMLDivElement>(null);
+
+    // Select online GIF handler
+    const handleSelectGif = (gif: { url: string; title: string }) => {
+        if (textareaRef.current) {
+            const textarea = textareaRef.current;
+            const start = textarea.selectionStart || content.length;
+            const end = textarea.selectionEnd || content.length;
+            const gifMarkdown = `\n\n![${gif.title || 'GIF'}](${gif.url})\n\n`;
+            const newContent = content.substring(0, start) + gifMarkdown + content.substring(end);
+            setContent(newContent);
+            setEditorTab('write');
+            setTimeout(() => {
+                textarea.focus();
+                textarea.setSelectionRange(start + gifMarkdown.length, start + gifMarkdown.length);
+            }, 50);
+        } else {
+            setContent((prev) => `${prev}\n\n![${gif.title || 'GIF'}](${gif.url})\n\n`);
+        }
+        toast.success('Animated GIF inserted into your post!');
+    };
 
     // Media & GIF file handler
     const handleFiles = (files: FileList | File[]) => {
@@ -674,9 +696,21 @@ export const CreatePostPage: React.FC = () => {
                                                     size="sm"
                                                     onClick={() => mediaFileInputRef.current?.click()}
                                                     className="h-8 w-8 p-0 cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
-                                                    title="Attach Images & GIFs"
+                                                    title="Attach Images & GIFs from Device"
                                                 >
                                                     <ImagePlus className="h-4 w-4 text-emerald-400" />
+                                                </Button>
+
+                                                {/* Online GIF Search Button */}
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => setShowGifModal(true)}
+                                                    className="h-8 px-2 py-0 cursor-pointer font-black text-[11px] text-purple-400 hover:text-purple-300 hover:bg-purple-500/15 rounded-lg border border-purple-500/30 transition-colors"
+                                                    title="Search Online GIFs & Reactions"
+                                                >
+                                                    GIF
                                                 </Button>
 
                                                 {/* Hidden Media File Input */}
@@ -1292,6 +1326,13 @@ export const CreatePostPage: React.FC = () => {
                     </div>
                 )}
             </AnimatePresence>
+
+            {/* ── Online GIF Search Modal ── */}
+            <GifPickerModal
+                isOpen={showGifModal}
+                onClose={() => setShowGifModal(false)}
+                onSelectGif={handleSelectGif}
+            />
         </div>
     );
 };
