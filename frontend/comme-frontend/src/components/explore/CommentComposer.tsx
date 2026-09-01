@@ -89,12 +89,46 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Select online GIF handler
-    const handleSelectGif = (gif: { url: string; title: string }) => {
-        // Insert markdown image directly for instant reactivity
-        const gifMarkdown = `\n\n![${gif.title || 'GIF'}](${gif.url})\n\n`;
-        setContent((prev) => prev.trim() + gifMarkdown);
-        toast.success(`Attached "${gif.title || 'GIF'}" to comment!`);
+    // Select online GIF handler: Attach directly into comment media attachments
+    const handleSelectGif = async (gif: { url: string; title: string }) => {
+        if (attachedMedia.length >= 4) {
+            toast.error('Maximum 4 media files per comment');
+            return;
+        }
+
+        const toastId = toast.loading('Attaching animated GIF...');
+        try {
+            const response = await fetch(gif.url);
+            const blob = await response.blob();
+            const cleanName = (gif.title || 'klipy-gif')
+                .toLowerCase()
+                .replace(/[^a-z0-9_-]/g, '-')
+                .replace(/-+/g, '-')
+                .slice(0, 32) + '.gif';
+
+            const file = new File([blob], cleanName, { type: 'image/gif' });
+            const localUrl = URL.createObjectURL(file);
+            const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+
+            setAttachedMedia((prev) => [
+                ...prev,
+                {
+                    id: Math.random().toString(36).substring(2, 9),
+                    file,
+                    url: localUrl,
+                    isGif: true,
+                    isVideo: false,
+                    size: `${sizeMb} MB`,
+                    name: gif.title || 'KLIPY GIF',
+                },
+            ]);
+
+            toast.dismiss(toastId);
+            toast.success(`Attached "${gif.title || 'GIF'}" to comment media!`);
+        } catch {
+            toast.dismiss(toastId);
+            toast.error('Failed to attach GIF from server');
+        }
     };
 
     // File attachments handler
@@ -639,11 +673,11 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
                                     <ImageIcon className="h-3.5 w-3.5 text-primary" /> Attached Media ({attachedMedia.length}/4)
                                 </span>
                             </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                            <div className="flex flex-wrap items-center gap-2.5">
                                 {attachedMedia.map((m, idx) => (
                                     <div
                                         key={m.id}
-                                        className="relative rounded-xl overflow-hidden bg-black/50 border border-border/80 aspect-video group/thumb flex items-center justify-center"
+                                        className="relative w-24 h-16 sm:w-28 sm:h-20 rounded-xl overflow-hidden bg-black/60 border border-border/80 group/thumb flex items-center justify-center shrink-0 shadow-xs"
                                     >
                                         {m.isVideo ? (
                                             <video src={m.url} className="w-full h-full object-cover" />
@@ -652,17 +686,17 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
                                         )}
 
                                         {/* Format Badge */}
-                                        <div className="absolute top-1.5 left-1.5">
+                                        <div className="absolute top-1 left-1">
                                             {m.isVideo ? (
-                                                <span className="bg-blue-600/90 text-white text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-sm">
-                                                    <Video className="h-2.5 w-2.5" /> VID
+                                                <span className="bg-blue-600/90 text-white text-[8px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-sm">
+                                                    <Video className="h-2 w-2" /> VID
                                                 </span>
                                             ) : m.isGif ? (
-                                                <span className="bg-purple-600/90 text-white text-[9px] font-black px-1.5 py-0.5 rounded shadow-sm">
+                                                <span className="bg-purple-600/90 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm">
                                                     GIF
                                                 </span>
                                             ) : (
-                                                <span className="bg-black/60 backdrop-blur-md text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+                                                <span className="bg-black/70 backdrop-blur-md text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm">
                                                     IMG
                                                 </span>
                                             )}
@@ -672,10 +706,10 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
                                         <button
                                             type="button"
                                             onClick={() => handleRemoveMedia(idx)}
-                                            className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-black/75 hover:bg-rose-600 text-white flex items-center justify-center transition-colors cursor-pointer shadow-md"
+                                            className="absolute top-1 right-1 h-5 w-5 rounded-full bg-black/80 hover:bg-rose-600 text-white flex items-center justify-center transition-colors cursor-pointer shadow-md"
                                             title="Remove media"
                                         >
-                                            <X className="h-3.5 w-3.5" />
+                                            <X className="h-3 w-3" />
                                         </button>
                                     </div>
                                 ))}

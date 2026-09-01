@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
 import {
     Search,
@@ -132,13 +133,14 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
 
     if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+    return createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <div className="fixed inset-0" onClick={onClose} />
             <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                className="relative w-full max-w-2xl bg-card border border-border/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+                className="relative w-full max-w-xl bg-card border border-border/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[82vh] z-10"
             >
                 {/* ── Modal Header ── */}
                 <div className="p-5 border-b border-border/80 flex items-center justify-between">
@@ -413,6 +415,7 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
                     </Button>
                 </div>
             </motion.div>
-        </div>
+        </div>,
+        document.body
     );
 };
