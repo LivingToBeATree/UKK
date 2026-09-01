@@ -5,7 +5,6 @@ import {
     Heart,
     Bookmark,
     ArrowLeft,
-    Send,
     MessageSquare,
     Share2,
     Sparkles,
@@ -36,6 +35,7 @@ import { copyToClipboard } from '@/lib/clipboard';
 import { MarkdownContent } from '@/components/ui/markdown-content';
 import { MediaLightboxModal } from '@/components/ui/MediaLightboxModal';
 import { CustomVideoPlayer } from '@/components/ui/CustomVideoPlayer';
+import { CommentComposer } from '@/components/explore/CommentComposer';
 import type { Post, PostComment } from '@/types';
 
 function formatPostDate(dateStr?: string | null): string {
@@ -324,9 +324,7 @@ export const PostDetailPage: React.FC = () => {
     const { requireAuth } = useAuthModal();
     const [post, setPost] = useState<Post | null>(null);
     const [comments, setComments] = useState<PostComment[]>([]);
-    const [newComment, setNewComment] = useState('');
     const [loading, setLoading] = useState(true);
-    const [submitting, setSubmitting] = useState(false);
     const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null);
     const [copied, setCopied] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -416,24 +414,6 @@ export const PostDetailPage: React.FC = () => {
             toast.error('Failed to delete post. Please try again.');
             setIsDeletingPost(false);
             setShowDeleteModal(false);
-        }
-    };
-
-    const handleComment = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!requireAuth('comment')) return;
-        if (!newComment.trim()) return;
-        setSubmitting(true);
-        try {
-            const comment = await postService.createComment(Number(id), newComment);
-            setComments((prev: PostComment[]) => [comment, ...prev]);
-            setNewComment('');
-            if (post) setPost({ ...post, comments_count: post.comments_count + 1 });
-            toast.success('Comment posted!');
-        } catch {
-            toast.error('Failed to post comment');
-        } finally {
-            setSubmitting(false);
         }
     };
 
@@ -739,51 +719,13 @@ export const PostDetailPage: React.FC = () => {
 
                 {/* Comment Composer Input */}
                 {post.commentable && (
-                    <Card className="rounded-2xl border border-border/80 bg-card shadow-sm">
-                        <CardContent className="p-5">
-                            {user ? (
-                                <form onSubmit={handleComment} className="space-y-3">
-                                    <div className="flex items-start gap-3">
-                                        <Avatar
-                                            size="sm"
-                                            fallback={user.display_name || user.username || '?'}
-                                            src={user.avatar_url}
-                                            className="mt-1"
-                                        />
-                                        <div className="flex-1 space-y-2">
-                                            <textarea
-                                                placeholder="Write a supportive comment, feedback, or inquiry..."
-                                                value={newComment}
-                                                onChange={(e) => setNewComment(e.target.value)}
-                                                rows={3}
-                                                className="w-full resize-none rounded-xl p-3.5 text-sm bg-secondary/40 border border-border/80 focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
-                                            />
-                                            <div className="flex justify-end">
-                                                <Button
-                                                    type="submit"
-                                                    disabled={submitting || !newComment.trim()}
-                                                    className="h-10 px-5 rounded-xl font-bold text-xs gap-2 shadow-md cursor-pointer"
-                                                >
-                                                    <Send className="h-3.5 w-3.5" />
-                                                    {submitting ? 'Posting...' : 'Post Comment'}
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </form>
-                            ) : (
-                                <div
-                                    onClick={() => requireAuth('comment')}
-                                    className="flex items-center justify-between p-4 rounded-xl border border-dashed border-border hover:border-primary/60 bg-secondary/20 hover:bg-secondary/40 transition-colors cursor-pointer text-xs text-muted-foreground"
-                                >
-                                    <span>Sign in or register to leave a comment on this post...</span>
-                                    <Button size="sm" className="h-8 font-bold text-xs">
-                                        Sign In
-                                    </Button>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+                    <CommentComposer
+                        postId={Number(id)}
+                        onCommentAdded={(newComment) => {
+                            setComments((prev: PostComment[]) => [newComment, ...prev]);
+                            if (post) setPost({ ...post, comments_count: post.comments_count + 1 });
+                        }}
+                    />
                 )}
 
                 {/* Comments List */}
@@ -832,9 +774,12 @@ export const PostDetailPage: React.FC = () => {
                                                             {formatPostDate(comment.created_at)}
                                                         </span>
                                                     </div>
-                                                    <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
-                                                        {comment.content || comment.body}
-                                                    </p>
+                                                    <div className="pt-1">
+                                                        <MarkdownContent
+                                                            content={comment.content || comment.body || ''}
+                                                            className="text-sm text-foreground/90 leading-relaxed"
+                                                        />
+                                                    </div>
                                                 </div>
                                             </div>
 

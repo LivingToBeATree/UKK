@@ -82,6 +82,14 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content, class
                     p: ({ children }) => (
                         <p className="text-sm sm:text-base leading-relaxed my-2">{children}</p>
                     ),
+                    img: ({ src, alt }) => (
+                        <img
+                            src={src}
+                            alt={alt || 'Image attachment'}
+                            className="max-h-[360px] max-w-full rounded-2xl object-contain my-3 border border-border/80 shadow-md bg-black/40"
+                            loading="lazy"
+                        />
+                    ),
                 }}
             >
                 {content}
