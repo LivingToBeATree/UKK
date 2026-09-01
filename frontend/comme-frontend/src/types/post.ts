@@ -26,6 +26,14 @@ export interface Post {
   updated_at: string;
   user?: User;
   media?: MediaItem[];
+  portfolio?: {
+    id: number;
+    title: string;
+    description?: string | null;
+    cover_image_url?: string;
+    media?: { id: number; url: string }[];
+  } | null;
+  tags?: { id: number; name: string }[];
 }
 
 export interface PostComment {

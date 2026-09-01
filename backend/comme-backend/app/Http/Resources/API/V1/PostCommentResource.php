@@ -12,7 +12,10 @@ class PostCommentResource extends JsonResource
         return [
             'id' => $this->id,
             'content' => $this->content,
+            'body' => $this->content,
             'parent_comment_id' => $this->parent_comment_id,
+            'created_at' => $this->created_at?->toISOString(),
+            'updated_at' => $this->updated_at?->toISOString(),
 
             'user' => new UserResource($this->whenLoaded('user')),
             // A comment's own replies are the same resource, recursively —

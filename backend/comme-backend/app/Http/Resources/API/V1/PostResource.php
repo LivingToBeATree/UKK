@@ -17,6 +17,8 @@ class PostResource extends JsonResource
             'likes_count' => $this->likes_count,
             'comments_count' => $this->comments_count,
             'bookmarks_count' => $this->bookmarks_count,
+            'created_at' => $this->created_at?->toISOString(),
+            'updated_at' => $this->updated_at?->toISOString(),
 
             'user' => new UserResource($this->whenLoaded('user')),
             'portfolio' => new PortfolioResource($this->whenLoaded('portfolio')),
