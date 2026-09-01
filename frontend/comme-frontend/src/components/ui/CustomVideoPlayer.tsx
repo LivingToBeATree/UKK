@@ -166,6 +166,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
     const handleTimelinePointerDown = (e: React.MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
         isDraggingRef.current = true;
+        isSeekingRef.current = true;
         setIsDragging(true);
         const newTime = getTimeFromEvent(e);
         setCurrentTime(newTime);
@@ -174,6 +175,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
         }
 
         const handlePointerMove = (moveEvent: MouseEvent) => {
+            isSeekingRef.current = true;
             const moveTime = getTimeFromEvent(moveEvent);
             setCurrentTime(moveTime);
             if (videoRef.current) {
@@ -184,6 +186,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
         const handlePointerUp = () => {
             isDraggingRef.current = false;
             setIsDragging(false);
+            // NOTE: isSeekingRef stays true until the video's onSeeked event fires
             window.removeEventListener('mousemove', handlePointerMove);
             window.removeEventListener('mouseup', handlePointerUp);
             resetControlsTimeout();
@@ -284,7 +287,10 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
                 onDurationChange={syncDuration}
                 onLoadedMetadata={handleLoadedMetadata}
                 onSeeked={() => {
-                    // Seek completed — allow handleTimeUpdate to resume
+                    // Seek completed — sync state to actual position, then unlock
+                    if (videoRef.current) {
+                        setCurrentTime(videoRef.current.currentTime);
+                    }
                     isSeekingRef.current = false;
                 }}
                 onWaiting={() => setIsBuffering(true)}
