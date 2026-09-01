@@ -1,5 +1,15 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, Repeat, RotateCcw } from 'lucide-react';
+import {
+    Play,
+    Pause,
+    Volume2,
+    VolumeX,
+    Maximize,
+    Minimize,
+    Repeat,
+    RotateCcw,
+    RotateCw,
+} from 'lucide-react';
 
 interface CustomVideoPlayerProps {
     src: string;
@@ -20,6 +30,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
+    const timelineRef = useRef<HTMLDivElement>(null);
 
     const [isPlaying, setIsPlaying] = useState(autoPlay);
     const [currentTime, setCurrentTime] = useState(0);
@@ -31,6 +42,11 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
     const [showControls, setShowControls] = useState(true);
     const [isBuffering, setIsBuffering] = useState(false);
 
+    // Scrubber dragging & hover preview
+    const [isDragging, setIsDragging] = useState(false);
+    const [hoverTime, setHoverTime] = useState<number | null>(null);
+    const [hoverX, setHoverX] = useState<number>(0);
+
     const controlsTimeoutRef = useRef<number | null>(null);
 
     // Auto-hide controls after inactivity
@@ -39,12 +55,12 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
         if (controlsTimeoutRef.current) {
             window.clearTimeout(controlsTimeoutRef.current);
         }
-        if (isPlaying) {
+        if (isPlaying && !isDragging) {
             controlsTimeoutRef.current = window.setTimeout(() => {
                 setShowControls(false);
-            }, 2500);
+            }, 2800);
         }
-    }, [isPlaying]);
+    }, [isPlaying, isDragging]);
 
     useEffect(() => {
         return () => {
@@ -65,7 +81,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
         if (e) e.stopPropagation();
         if (!videoRef.current) return;
         if (videoRef.current.paused) {
-            videoRef.current.play();
+            videoRef.current.play().catch(() => {});
             setIsPlaying(true);
         } else {
             videoRef.current.pause();
@@ -96,16 +112,22 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
     };
 
     const handleTimeUpdate = () => {
-        if (!videoRef.current) return;
+        if (!videoRef.current || isDragging) return;
         setCurrentTime(videoRef.current.currentTime);
     };
 
-    const handleLoadedMetadata = () => {
+    const syncDuration = () => {
         if (!videoRef.current) return;
-        setDuration(videoRef.current.duration);
-        if (autoPlay) {
+        const dur = videoRef.current.duration;
+        if (!isNaN(dur) && isFinite(dur) && dur > 0) {
+            setDuration(dur);
+        }
+    };
+
+    const handleLoadedMetadata = () => {
+        syncDuration();
+        if (autoPlay && videoRef.current) {
             videoRef.current.play().catch(() => {
-                // Autoplay blocked without user gesture; fallback to muted autoplay
                 if (videoRef.current) {
                     videoRef.current.muted = true;
                     setIsMuted(true);
@@ -115,14 +137,62 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
         }
     };
 
-    const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-        e.stopPropagation();
-        const time = parseFloat(e.target.value);
-        setCurrentTime(time);
-        if (videoRef.current) {
-            videoRef.current.currentTime = time;
-        }
+    // Fast forward / Rewind by delta seconds
+    const seekRelative = (seconds: number, e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
+        if (!videoRef.current) return;
+        const dur = duration || videoRef.current.duration || 0;
+        const newTime = Math.max(0, Math.min(videoRef.current.currentTime + seconds, dur));
+        videoRef.current.currentTime = newTime;
+        setCurrentTime(newTime);
         resetControlsTimeout();
+    };
+
+    // Calculate time from pointer event on timeline
+    const getTimeFromEvent = (e: MouseEvent | React.MouseEvent): number => {
+        if (!timelineRef.current || !videoRef.current) return 0;
+        const rect = timelineRef.current.getBoundingClientRect();
+        const offsetX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+        const percentage = offsetX / rect.width;
+        const dur = duration || videoRef.current.duration || 0;
+        return percentage * dur;
+    };
+
+    const handleTimelinePointerDown = (e: React.MouseEvent<HTMLDivElement>) => {
+        e.stopPropagation();
+        setIsDragging(true);
+        const newTime = getTimeFromEvent(e);
+        setCurrentTime(newTime);
+        if (videoRef.current) {
+            videoRef.current.currentTime = newTime;
+        }
+
+        const handlePointerMove = (moveEvent: MouseEvent) => {
+            const moveTime = getTimeFromEvent(moveEvent);
+            setCurrentTime(moveTime);
+            if (videoRef.current) {
+                videoRef.current.currentTime = moveTime;
+            }
+        };
+
+        const handlePointerUp = () => {
+            setIsDragging(false);
+            window.removeEventListener('mousemove', handlePointerMove);
+            window.removeEventListener('mouseup', handlePointerUp);
+            resetControlsTimeout();
+        };
+
+        window.addEventListener('mousemove', handlePointerMove);
+        window.addEventListener('mouseup', handlePointerUp);
+    };
+
+    const handleTimelineHover = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!timelineRef.current) return;
+        const rect = timelineRef.current.getBoundingClientRect();
+        const offsetX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+        setHoverX(offsetX);
+        const dur = duration || videoRef.current?.duration || 0;
+        setHoverTime((offsetX / rect.width) * dur);
     };
 
     const toggleFullscreen = async (e?: React.MouseEvent) => {
@@ -154,22 +224,48 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
     };
 
     const formatTime = (secs: number) => {
-        if (isNaN(secs)) return '0:00';
+        if (isNaN(secs) || !isFinite(secs) || secs < 0) return '0:00';
         const m = Math.floor(secs / 60);
         const s = Math.floor(secs % 60);
         return `${m}:${s < 10 ? '0' : ''}${s}`;
     };
 
+    // Keyboard controls when hovering/focusing the container
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === ' ' || e.key === 'k') {
+            e.preventDefault();
+            togglePlay();
+        } else if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            e.stopPropagation();
+            seekRelative(-5);
+        } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            e.stopPropagation();
+            seekRelative(5);
+        } else if (e.key === 'f') {
+            e.preventDefault();
+            toggleFullscreen();
+        } else if (e.key === 'm') {
+            e.preventDefault();
+            toggleMute();
+        }
+    };
+
+    const progressPercentage = duration > 0 ? Math.min(100, Math.max(0, (currentTime / duration) * 100)) : 0;
+
     return (
         <div
             ref={containerRef}
-            className={`relative flex items-center justify-center bg-black overflow-hidden select-none group/video ${className}`}
+            tabIndex={0}
+            className={`relative flex items-center justify-center bg-black overflow-hidden select-none outline-none group/video ${className}`}
             onMouseMove={resetControlsTimeout}
             onMouseEnter={() => setShowControls(true)}
             onMouseLeave={() => {
-                if (isPlaying) setShowControls(false);
+                if (isPlaying && !isDragging) setShowControls(false);
             }}
             onClick={togglePlay}
+            onKeyDown={handleKeyDown}
         >
             <video
                 ref={videoRef}
@@ -178,6 +274,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
                 loop={isLooping}
                 playsInline
                 onTimeUpdate={handleTimeUpdate}
+                onDurationChange={syncDuration}
                 onLoadedMetadata={handleLoadedMetadata}
                 onWaiting={() => setIsBuffering(true)}
                 onPlaying={() => {
@@ -188,7 +285,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
                 className={`w-full h-full object-contain ${videoClassName}`}
             />
 
-            {/* Big Center Play Ripple Button when Paused */}
+            {/* Center Play Button on Pause */}
             {!isPlaying && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none z-10">
                     <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-black/75 hover:bg-black/90 text-white flex items-center justify-center shadow-2xl backdrop-blur-md border border-white/20 transform transition-transform duration-200 hover:scale-110">
@@ -197,41 +294,56 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
                 </div>
             )}
 
-            {/* Loading / Buffering Spinner */}
+            {/* Buffering Indicator */}
             {isBuffering && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40 pointer-events-none z-10">
                     <div className="h-12 w-12 rounded-full border-4 border-white/20 border-t-white animate-spin" />
                 </div>
             )}
 
-            {/* ── Custom Glassmorphic Controls Bar ── */}
+            {/* ── Custom Control Bar ── */}
             <div
-                className={`absolute bottom-0 inset-x-0 p-3 sm:p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex flex-col gap-2 z-20 transition-opacity duration-300 ${
-                    showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                className={`absolute bottom-0 inset-x-0 p-3 sm:p-4 bg-gradient-to-t from-black/95 via-black/70 to-transparent flex flex-col gap-2.5 z-30 transition-opacity duration-300 ${
+                    showControls || !isPlaying || isDragging ? 'opacity-100' : 'opacity-0 pointer-events-none'
                 }`}
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Timeline Scrubber */}
-                <div className="flex items-center gap-2 group/timeline">
-                    <input
-                        type="range"
-                        min={0}
-                        max={duration || 100}
-                        step={0.1}
-                        value={currentTime}
-                        onChange={handleSeek}
-                        className="w-full h-1.5 bg-white/25 rounded-lg appearance-none cursor-pointer accent-primary hover:h-2.5 transition-all"
-                        style={{
-                            background: `linear-gradient(to right, #a855f7 ${
-                                duration ? (currentTime / duration) * 100 : 0
-                            }%, rgba(255,255,255,0.2) 0%)`,
-                        }}
+                {/* ── Timeline Track & Scrubber ── */}
+                <div
+                    ref={timelineRef}
+                    className="relative w-full h-4 flex items-center cursor-pointer group/timeline py-1"
+                    onMouseDown={handleTimelinePointerDown}
+                    onMouseMove={handleTimelineHover}
+                    onMouseLeave={() => setHoverTime(null)}
+                >
+                    {/* Background Track */}
+                    <div className="w-full h-1.5 group-hover/timeline:h-2.5 bg-white/25 rounded-full overflow-hidden transition-all duration-150">
+                        <div
+                            className="h-full bg-gradient-to-r from-primary to-purple-400 rounded-full transition-all"
+                            style={{ width: `${progressPercentage}%` }}
+                        />
+                    </div>
+
+                    {/* Scrubber Thumb */}
+                    <div
+                        className="absolute h-3.5 w-3.5 rounded-full bg-white shadow-lg border border-primary scale-0 group-hover/timeline:scale-100 transition-transform -translate-x-1/2 pointer-events-none"
+                        style={{ left: `${progressPercentage}%` }}
                     />
+
+                    {/* Hover Timestamp Tooltip */}
+                    {hoverTime !== null && (
+                        <div
+                            className="absolute -top-7 -translate-x-1/2 px-2 py-0.5 rounded bg-black/90 text-white text-[10px] font-mono font-bold pointer-events-none shadow border border-white/10"
+                            style={{ left: `${hoverX}px` }}
+                        >
+                            {formatTime(hoverTime)}
+                        </div>
+                    )}
                 </div>
 
-                {/* Control Action Buttons */}
+                {/* ── Action Buttons Row ── */}
                 <div className="flex items-center justify-between gap-2 text-white">
-                    <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
                         {/* Play/Pause */}
                         <button
                             type="button"
@@ -246,21 +358,30 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
                             )}
                         </button>
 
-                        {/* Replay / Restart */}
+                        {/* Rewind 5s */}
                         <button
                             type="button"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                if (videoRef.current) videoRef.current.currentTime = 0;
-                            }}
-                            className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors cursor-pointer hidden sm:flex"
-                            title="Restart"
+                            onClick={(e) => seekRelative(-5, e)}
+                            className="h-8 px-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                            title="Rewind 5s (Left Arrow)"
                         >
                             <RotateCcw className="h-3.5 w-3.5" />
+                            <span className="text-[10px] font-mono hidden sm:inline">5s</span>
                         </button>
 
-                        {/* Volume Control */}
-                        <div className="flex items-center gap-1.5 group/vol">
+                        {/* Forward 5s */}
+                        <button
+                            type="button"
+                            onClick={(e) => seekRelative(5, e)}
+                            className="h-8 px-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                            title="Forward 5s (Right Arrow)"
+                        >
+                            <RotateCw className="h-3.5 w-3.5" />
+                            <span className="text-[10px] font-mono hidden sm:inline">5s</span>
+                        </button>
+
+                        {/* Volume Controls */}
+                        <div className="flex items-center gap-1.5 ml-1">
                             <button
                                 type="button"
                                 onClick={toggleMute}
@@ -280,7 +401,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
                                 step={0.05}
                                 value={isMuted ? 0 : volume}
                                 onChange={handleVolumeChange}
-                                className="w-16 sm:w-20 h-1 bg-white/30 rounded appearance-none cursor-pointer accent-white hidden sm:block"
+                                className="w-16 sm:w-20 h-1 bg-white/30 rounded appearance-none cursor-pointer accent-primary hidden sm:block"
                             />
                         </div>
 
@@ -290,13 +411,13 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
                         </span>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
                         {/* Loop Toggle */}
                         <button
                             type="button"
                             onClick={toggleLoop}
                             className={`h-8 w-8 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
-                                isLooping ? 'bg-primary/80 text-white' : 'bg-white/10 hover:bg-white/20 text-white/70'
+                                isLooping ? 'bg-primary text-white' : 'bg-white/10 hover:bg-white/20 text-white/70'
                             }`}
                             title={isLooping ? 'Looping enabled' : 'Looping disabled'}
                         >
