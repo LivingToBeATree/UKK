@@ -1,5 +1,39 @@
 import { api } from './api';
-import type { ApiResponse, ArtistProfile, ArtistApplication } from '@/types';
+import type { ApiResponse, ArtistProfile, ArtistApplication, ArtistPayoutAccount, CommissionReview } from '@/types';
+
+// Artist Payout Account (Iris / Bank)
+export const artistPayoutApi = {
+    get: async () => {
+        const res = await api.get<ApiResponse<ArtistPayoutAccount | null>>('/me/payout-account');
+        return res.data.data;
+    },
+
+    update: async (payload: { bank_name: string; bank_account_name: string; bank_account_number: string }) => {
+        const res = await api.put<ApiResponse<ArtistPayoutAccount>>('/me/payout-account', payload);
+        return res.data.data;
+    },
+
+    destroy: async () => {
+        await api.delete('/me/payout-account');
+    },
+};
+
+// Artist Reviews
+export const artistReviewApi = {
+    listByArtist: async (artistProfileId: number, page = 1) => {
+        const res = await api.get<ApiResponse<CommissionReview[]>>(`/artist-profiles/${artistProfileId}/reviews`, {
+            params: { page },
+        });
+        return res.data;
+    },
+
+    reply: async (reviewId: number, artist_reply: string) => {
+        const res = await api.patch<ApiResponse<CommissionReview>>(`/reviews/${reviewId}/reply`, {
+            artist_reply,
+        });
+        return res.data.data;
+    },
+};
 
 // Artist profiles
 export const artistProfileApi = {

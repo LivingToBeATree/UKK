@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard,
     Palette,
@@ -23,6 +24,7 @@ import {
 import { useSidebar } from '@/hooks/useSidebar';
 import { Avatar } from './ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
+import { commissionOrderApi } from '@/services/commissionService';
 
 export interface AppSidebarProps {
     activeTab?: string;
@@ -30,27 +32,99 @@ export interface AppSidebarProps {
 }
 
 export const AppSidebar: React.FC<AppSidebarProps> = ({
-    activeTab = 'overview',
+    activeTab,
     onTabChange,
 }) => {
     const { user } = useAuth();
     const { collapsed } = useSidebar();
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    const [activeOrdersCount, setActiveOrdersCount] = useState<number | undefined>(undefined);
+
+    useEffect(() => {
+        const fetchBadgeCounts = async () => {
+            try {
+                const res = await commissionOrderApi.list(1);
+                const active = (res.data || []).filter((o: any) =>
+                    ['pending', 'accepted', 'in_progress', 'revision'].includes(o.status)
+                );
+                if (active.length > 0) {
+                    setActiveOrdersCount(active.length);
+                }
+            } catch {
+                // Ignore silent failure
+            }
+        };
+
+        fetchBadgeCounts();
+    }, [location.pathname]);
 
     const studioMenu = [
-        { id: 'overview', label: 'Studio Overview', icon: LayoutDashboard },
-        { id: 'portfolio', label: 'Portfolio Works', icon: Palette },
-        { id: 'services', label: 'Commission Tiers', icon: Sparkles },
-        { id: 'orders', label: 'Order Queue', icon: Layers, badge: 3 },
+        {
+            id: 'overview',
+            label: 'Studio Overview',
+            icon: LayoutDashboard,
+            path: '/dashboard',
+            isActive: location.pathname === '/dashboard',
+        },
+        {
+            id: 'portfolio',
+            label: 'Portfolio Works',
+            icon: Palette,
+            path: '/dashboard/portfolio',
+            isActive: location.pathname.startsWith('/dashboard/portfolio'),
+        },
+        {
+            id: 'services',
+            label: 'Commission Tiers',
+            icon: Sparkles,
+            path: '/dashboard/services',
+            isActive: location.pathname.startsWith('/dashboard/services'),
+        },
+        {
+            id: 'orders',
+            label: 'Order Queue',
+            icon: Layers,
+            path: '/dashboard/commissions',
+            badge: activeOrdersCount,
+            isActive: location.pathname.startsWith('/dashboard/commissions'),
+        },
     ];
 
     const commsMenu = [
-        { id: 'messages', label: 'Client Inquiries', icon: MessageSquare, badge: 2 },
-        { id: 'reviews', label: 'Reviews & Ratings', icon: Star },
+        {
+            id: 'messages',
+            label: 'Client Inquiries',
+            icon: MessageSquare,
+            path: '/dashboard/inquiries',
+            badge: activeOrdersCount,
+            isActive: location.pathname.startsWith('/dashboard/inquiries') || location.pathname.startsWith('/dashboard/messages'),
+        },
+        {
+            id: 'reviews',
+            label: 'Reviews & Ratings',
+            icon: Star,
+            path: '/dashboard/reviews',
+            isActive: location.pathname.startsWith('/dashboard/reviews'),
+        },
     ];
 
     const financeMenu = [
-        { id: 'payouts', label: 'Earnings & Escrow', icon: Wallet },
-        { id: 'settings', label: 'Studio Settings', icon: Settings },
+        {
+            id: 'payouts',
+            label: 'Earnings & Escrow',
+            icon: Wallet,
+            path: '/dashboard/earnings',
+            isActive: location.pathname.startsWith('/dashboard/earnings') || location.pathname.startsWith('/dashboard/payouts'),
+        },
+        {
+            id: 'settings',
+            label: 'Studio Settings',
+            icon: Settings,
+            path: '/dashboard/settings',
+            isActive: location.pathname.startsWith('/dashboard/settings'),
+        },
     ];
 
     return (
@@ -87,9 +161,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                             <SidebarMenuButton
                                 key={item.id}
                                 icon={item.icon}
-                                isActive={activeTab === item.id}
+                                isActive={onTabChange && activeTab !== undefined ? activeTab === item.id : item.isActive}
                                 badge={item.badge}
-                                onClick={() => onTabChange?.(item.id)}
+                                onClick={() => (onTabChange ? onTabChange(item.id) : navigate(item.path))}
                             >
                                 {item.label}
                             </SidebarMenuButton>
@@ -105,9 +179,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                             <SidebarMenuButton
                                 key={item.id}
                                 icon={item.icon}
-                                isActive={activeTab === item.id}
+                                isActive={onTabChange && activeTab !== undefined ? activeTab === item.id : item.isActive}
                                 badge={item.badge}
-                                onClick={() => onTabChange?.(item.id)}
+                                onClick={() => (onTabChange ? onTabChange(item.id) : navigate(item.path))}
                             >
                                 {item.label}
                             </SidebarMenuButton>
@@ -123,8 +197,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                             <SidebarMenuButton
                                 key={item.id}
                                 icon={item.icon}
-                                isActive={activeTab === item.id}
-                                onClick={() => onTabChange?.(item.id)}
+                                isActive={onTabChange && activeTab !== undefined ? activeTab === item.id : item.isActive}
+                                onClick={() => (onTabChange ? onTabChange(item.id) : navigate(item.path))}
                             >
                                 {item.label}
                             </SidebarMenuButton>

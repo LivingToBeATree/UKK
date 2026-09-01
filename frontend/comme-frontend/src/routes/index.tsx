@@ -55,6 +55,10 @@ import { CreateServicePage } from '@/pages/dashboard/CreateServicePage';
 import { ManagePortfolioPage } from '@/pages/dashboard/ManagePortfolioPage';
 import { ManagePostsPage } from '@/pages/dashboard/ManagePostsPage';
 import { ArtistCommissionsPage } from '@/pages/dashboard/ArtistCommissionsPage';
+import { ArtistInquiriesPage } from '@/pages/dashboard/ArtistInquiriesPage';
+import { ArtistReviewsPage } from '@/pages/dashboard/ArtistReviewsPage';
+import { ArtistEarningsPage } from '@/pages/dashboard/ArtistEarningsPage';
+import { ArtistStudioSettingsPage } from '@/pages/dashboard/ArtistStudioSettingsPage';
 
 // Admin Panel
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
@@ -142,6 +146,12 @@ export function AppRoutes() {
                         <Route path="portfolio" element={<ManagePortfolioPage />} />
                         <Route path="posts" element={<ManagePostsPage />} />
                         <Route path="commissions" element={<ArtistCommissionsPage />} />
+                        <Route path="inquiries" element={<ArtistInquiriesPage />} />
+                        <Route path="messages" element={<Navigate to="/dashboard/inquiries" replace />} />
+                        <Route path="reviews" element={<ArtistReviewsPage />} />
+                        <Route path="earnings" element={<ArtistEarningsPage />} />
+                        <Route path="payouts" element={<Navigate to="/dashboard/earnings" replace />} />
+                        <Route path="settings" element={<ArtistStudioSettingsPage />} />
                     </Route>
                     <Route path="/dashboard/artist" element={<Navigate to="/dashboard" replace />} />
                 </Route>
