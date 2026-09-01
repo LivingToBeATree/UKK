@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkEmoji from 'remark-emoji';
 
 interface MarkdownContentProps {
     content: string;
@@ -13,7 +14,7 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content, class
     return (
         <div className={`markdown-body text-foreground leading-relaxed break-words ${className}`}>
             <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
+                remarkPlugins={[remarkGfm, [remarkEmoji, { accessible: true, emoticon: true }]]}
                 components={{
                     blockquote: ({ children }) => (
                         <blockquote className="border-l-4 border-primary pl-4 py-2 my-3 text-foreground/90 italic bg-primary/5 rounded-r-xl">
