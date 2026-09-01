@@ -44,6 +44,8 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
 
     // Scrubber dragging & hover preview
     const [isDragging, setIsDragging] = useState(false);
+    const isDraggingRef = useRef(false); // synchronous guard — React state is async!
+    const isSeekingRef = useRef(false);  // guards seekRelative from timeupdate race
     const [hoverTime, setHoverTime] = useState<number | null>(null);
     const [hoverX, setHoverX] = useState<number>(0);
 
@@ -112,7 +114,9 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
     };
 
     const handleTimeUpdate = () => {
-        if (!videoRef.current || isDragging) return;
+        if (!videoRef.current) return;
+        // Skip if we're actively dragging or mid-seek — the ref is synchronous
+        if (isDraggingRef.current || isSeekingRef.current) return;
         setCurrentTime(videoRef.current.currentTime);
     };
 
@@ -141,6 +145,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
     const seekRelative = (seconds: number, e?: React.MouseEvent) => {
         if (e) e.stopPropagation();
         if (!videoRef.current) return;
+        isSeekingRef.current = true;
         const dur = duration || videoRef.current.duration || 0;
         const newTime = Math.max(0, Math.min(videoRef.current.currentTime + seconds, dur));
         videoRef.current.currentTime = newTime;
@@ -160,6 +165,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
 
     const handleTimelinePointerDown = (e: React.MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
+        isDraggingRef.current = true;
         setIsDragging(true);
         const newTime = getTimeFromEvent(e);
         setCurrentTime(newTime);
@@ -176,6 +182,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
         };
 
         const handlePointerUp = () => {
+            isDraggingRef.current = false;
             setIsDragging(false);
             window.removeEventListener('mousemove', handlePointerMove);
             window.removeEventListener('mouseup', handlePointerUp);
@@ -276,6 +283,10 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
                 onTimeUpdate={handleTimeUpdate}
                 onDurationChange={syncDuration}
                 onLoadedMetadata={handleLoadedMetadata}
+                onSeeked={() => {
+                    // Seek completed — allow handleTimeUpdate to resume
+                    isSeekingRef.current = false;
+                }}
                 onWaiting={() => setIsBuffering(true)}
                 onPlaying={() => {
                     setIsBuffering(false);
