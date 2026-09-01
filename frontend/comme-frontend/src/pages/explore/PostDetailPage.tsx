@@ -21,6 +21,7 @@ import {
     Video,
     ChevronLeft,
     ChevronRight,
+    Maximize2,
 } from 'lucide-react';
 import { postService } from '@/services/postService';
 import { useAuth } from '@/hooks/useAuth';
@@ -163,6 +164,17 @@ const ScrollableMediaGallery: React.FC<{
                             </span>
                         ) : null}
                     </div>
+
+                    {/* Explicit Expand into Lightbox Button */}
+                    <button
+                        type="button"
+                        onClick={() => handleOpenLightbox(0)}
+                        className="absolute top-4 right-4 h-8 px-3 rounded-full bg-black/75 hover:bg-black/95 text-white text-xs font-semibold flex items-center gap-1.5 shadow-lg backdrop-blur-md border border-white/20 transition-all cursor-pointer hover:scale-105 z-20"
+                        title="Expand into fullscreen lightbox"
+                    >
+                        <Maximize2 className="h-3.5 w-3.5" />
+                        <span>Expand</span>
+                    </button>
                 </div>
 
                 <MediaLightboxModal
@@ -232,6 +244,20 @@ const ScrollableMediaGallery: React.FC<{
                                 <div className="absolute top-3 right-3 px-2.5 py-0.5 rounded-full bg-black/65 backdrop-blur-md text-white text-[11px] font-bold shadow-md z-10 pointer-events-none">
                                     {idx + 1} / {mediaList.length}
                                 </div>
+
+                                {/* Floating Expand Button */}
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleOpenLightbox(idx);
+                                    }}
+                                    className="absolute top-3 right-14 sm:right-16 h-6 px-2 sm:px-2.5 rounded-full bg-black/75 hover:bg-black/95 text-white text-[10px] sm:text-[11px] font-semibold flex items-center gap-1 shadow-md backdrop-blur-md border border-white/20 transition-all cursor-pointer hover:scale-105 z-20"
+                                    title="Expand into fullscreen lightbox"
+                                >
+                                    <Maximize2 className="h-3 w-3" />
+                                    <span className="hidden sm:inline">Expand</span>
+                                </button>
                             </div>
                         );
                     })}
