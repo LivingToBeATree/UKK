@@ -41,6 +41,133 @@ function formatPostDate(dateStr?: string | null): string {
     });
 }
 
+// ── Auto-Rotating Card Media Component (5-second loop) ──
+const PostCardMedia: React.FC<{ post: Post }> = ({ post }) => {
+    const mediaList =
+        post.media && post.media.length > 0
+            ? post.media
+            : post.portfolio?.media && post.portfolio.media.length > 0
+            ? post.portfolio.media.map((m) => ({
+                  id: m.id,
+                  url: m.url,
+                  media_type: 'image',
+                  mime_type: 'image/jpeg',
+              }))
+            : post.portfolio?.cover_image_url
+            ? [
+                  {
+                      id: 0,
+                      url: post.portfolio.cover_image_url,
+                      media_type: 'image',
+                      mime_type: 'image/jpeg',
+                  },
+              ]
+            : [];
+
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    // Auto rotate every 5 seconds (5000ms) and loop back to the first media (is_thumbnail)
+    useEffect(() => {
+        if (mediaList.length <= 1) return;
+
+        const interval = window.setInterval(() => {
+            setCurrentIndex((prev) => (prev + 1) % mediaList.length);
+        }, 5000);
+
+        return () => window.clearInterval(interval);
+    }, [mediaList.length]);
+
+    if (mediaList.length === 0) return null;
+
+    const currentMedia = mediaList[currentIndex] || mediaList[0];
+    const isVideo =
+        currentMedia.media_type === 'video' ||
+        currentMedia.mime_type?.includes('video') ||
+        (typeof currentMedia.url === 'string' && /\.(mp4|webm|mov|mkv)$/i.test(currentMedia.url));
+    const isGif =
+        currentMedia.mime_type?.includes('gif') ||
+        (typeof currentMedia.url === 'string' && /\.gif$/i.test(currentMedia.url));
+
+    return (
+        <div className="relative w-full overflow-hidden bg-black/90 aspect-video flex items-center justify-center select-none group/media">
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={currentMedia.url + currentIndex}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="w-full h-full flex items-center justify-center"
+                >
+                    {isVideo ? (
+                        <video
+                            src={currentMedia.url}
+                            muted
+                            autoPlay
+                            loop
+                            playsInline
+                            className="w-full h-full object-cover"
+                        />
+                    ) : (
+                        <img
+                            src={currentMedia.url}
+                            alt={post.content || 'Post media'}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                            loading="lazy"
+                        />
+                    )}
+                </motion.div>
+            </AnimatePresence>
+
+            {/* Badges: Left (VIDEO / GIF), Right (Stack Counter / Slide Progress) */}
+            <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 z-10 pointer-events-none">
+                {isVideo ? (
+                    <span className="px-2 py-0.5 rounded-full bg-blue-600/90 text-white text-[10px] font-black flex items-center gap-1 shadow-md backdrop-blur-md">
+                        <Video className="h-3 w-3" /> VIDEO
+                    </span>
+                ) : isGif ? (
+                    <span className="px-2 py-0.5 rounded-full bg-purple-600/90 text-white text-[10px] font-black flex items-center gap-1 shadow-md backdrop-blur-md">
+                        GIF
+                    </span>
+                ) : null}
+            </div>
+
+            {/* Multiple media indicators & rotation dots */}
+            {mediaList.length > 1 && (
+                <>
+                    {/* Top right indicator badge: e.g. 2/3 */}
+                    <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-black/65 backdrop-blur-md text-white text-[10px] font-bold flex items-center gap-1 shadow-md z-10 pointer-events-none">
+                        <Layers className="h-3 w-3 text-purple-400" />
+                        <span>
+                            {currentIndex + 1}/{mediaList.length}
+                        </span>
+                    </div>
+
+                    {/* Bottom Progress Bars / Dots */}
+                    <div className="absolute bottom-2 inset-x-0 flex items-center justify-center gap-1.5 z-10 px-4">
+                        {mediaList.map((_, idx) => (
+                            <div
+                                key={idx}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setCurrentIndex(idx);
+                                }}
+                                className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                                    idx === currentIndex
+                                        ? 'w-5 bg-white shadow-sm'
+                                        : 'w-1.5 bg-white/40 hover:bg-white/70'
+                                }`}
+                                title={`Media ${idx + 1} of ${mediaList.length}`}
+                            />
+                        ))}
+                    </div>
+                </>
+            )}
+        </div>
+    );
+};
+
 export const ExplorePage: React.FC = () => {
     const { isAuthenticated } = useAuth();
     const { requireAuth } = useAuthModal();
@@ -281,15 +408,10 @@ export const ExplorePage: React.FC = () => {
                 <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 [column-fill:_balance]">
                     <AnimatePresence>
                         {filteredPosts.map((post) => {
-                            const mediaUrl =
-                                (post.media && post.media[0] ? post.media[0].url : null) ||
-                                post.portfolio?.cover_image_url ||
-                                post.portfolio?.media?.[0]?.url;
-
-                            const isVideo =
-                                post.media?.[0]?.media_type === 'video' ||
-                                post.media?.[0]?.mime_type?.includes('video') ||
-                                (typeof mediaUrl === 'string' && /\.(mp4|webm|mov|mkv)$/i.test(mediaUrl));
+                            const hasMedia =
+                                (post.media && post.media.length > 0) ||
+                                Boolean(post.portfolio?.cover_image_url) ||
+                                (post.portfolio?.media && post.portfolio.media.length > 0);
 
                             return (
                                 <motion.div
@@ -304,48 +426,9 @@ export const ExplorePage: React.FC = () => {
                                         to={`/posts/${post.id}`}
                                         className="group relative block rounded-2xl overflow-hidden bg-card border border-border/80 hover:border-primary/50 shadow-xs hover:shadow-lg transition-all duration-300 cursor-pointer"
                                     >
-                                        {/* 1. Content Body or Artwork Image / Video */}
-                                        {mediaUrl ? (
-                                            isVideo ? (
-                                                <div className="relative w-full overflow-hidden bg-black aspect-video flex items-center justify-center">
-                                                    <video
-                                                        src={mediaUrl}
-                                                        muted
-                                                        loop
-                                                        playsInline
-                                                        onMouseEnter={(e) => e.currentTarget.play()}
-                                                        onMouseLeave={(e) => {
-                                                            e.currentTarget.pause();
-                                                            e.currentTarget.currentTime = 0;
-                                                        }}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                    <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full bg-blue-600/90 text-white text-[10px] font-black flex items-center gap-1 shadow-md">
-                                                        <Video className="h-3 w-3" /> VIDEO
-                                                    </div>
-                                                    {post.media && post.media.length > 1 && (
-                                                        <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-bold flex items-center gap-1 shadow-md">
-                                                            <Layers className="h-3 w-3" />
-                                                            <span>+{post.media.length - 1}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                <div className="relative w-full overflow-hidden bg-muted">
-                                                    <img
-                                                        src={mediaUrl}
-                                                        alt={post.content || 'Artwork'}
-                                                        className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-                                                        loading="lazy"
-                                                    />
-                                                    {post.media && post.media.length > 1 && (
-                                                        <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-bold flex items-center gap-1 shadow-md">
-                                                            <Layers className="h-3 w-3" />
-                                                            <span>+{post.media.length - 1}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )
+                                        {/* 1. Content Body or Rotating Artwork / Media */}
+                                        {hasMedia ? (
+                                            <PostCardMedia post={post} />
                                         ) : (
                                             <div className="p-5 bg-gradient-to-br from-primary/5 via-card to-secondary/30 min-h-[120px]">
                                                 <MarkdownContent content={post.content} className="text-sm line-clamp-6" />
