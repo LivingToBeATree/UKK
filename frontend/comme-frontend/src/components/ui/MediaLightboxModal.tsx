@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, ChevronLeft, ChevronRight, Video, ExternalLink } from 'lucide-react';
+import { CustomVideoPlayer } from '@/components/ui/CustomVideoPlayer';
 import type { MediaItem } from '@/types/post';
 
 interface MediaLightboxModalProps {
@@ -169,19 +170,18 @@ export const MediaLightboxModal: React.FC<MediaLightboxModalProps> = ({
                         className="flex items-center justify-center max-w-full max-h-full"
                     >
                         {isVideo ? (
-                            <video
+                            <CustomVideoPlayer
                                 src={currentMedia.url}
-                                controls
                                 autoPlay
                                 loop
-                                playsInline
-                                className="max-w-[90vw] max-h-[78vh] rounded-2xl shadow-2xl object-contain bg-black border border-white/10"
+                                className="max-w-[90vw] max-h-[calc(100vh-190px)] rounded-2xl shadow-2xl border border-white/10"
+                                videoClassName="max-h-[calc(100vh-190px)]"
                             />
                         ) : (
                             <img
                                 src={currentMedia.url}
                                 alt={currentMedia.file_name || 'Preview media'}
-                                className="max-w-[90vw] max-h-[78vh] rounded-2xl shadow-2xl object-contain"
+                                className="max-w-[90vw] max-h-[calc(100vh-190px)] rounded-2xl shadow-2xl object-contain"
                             />
                         )}
                     </motion.div>

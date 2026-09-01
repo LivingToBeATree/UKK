@@ -35,6 +35,7 @@ import { toast } from '@/components/ui/sonner';
 import { copyToClipboard } from '@/lib/clipboard';
 import { MarkdownContent } from '@/components/ui/markdown-content';
 import { MediaLightboxModal } from '@/components/ui/MediaLightboxModal';
+import { CustomVideoPlayer } from '@/components/ui/CustomVideoPlayer';
 import type { Post, PostComment } from '@/types';
 
 function formatPostDate(dateStr?: string | null): string {
@@ -133,13 +134,11 @@ const ScrollableMediaGallery: React.FC<{
             <>
                 <div className="relative w-full max-h-[640px] bg-black/95 overflow-hidden flex items-center justify-center p-2 group">
                     {isItemVideo ? (
-                        <video
+                        <CustomVideoPlayer
                             src={m.url}
-                            controls
-                            autoPlay
+                            autoPlay={false}
                             loop
-                            playsInline
-                            className="w-full h-auto max-h-[600px] object-contain rounded-2xl"
+                            className="w-full h-auto max-h-[600px] rounded-2xl"
                         />
                     ) : (
                         <img
@@ -211,11 +210,11 @@ const ScrollableMediaGallery: React.FC<{
                                 className="relative shrink-0 snap-center rounded-2xl overflow-hidden bg-black border border-white/10 shadow-2xl flex items-center justify-center w-[85%] sm:w-[70%] md:w-[60%] max-w-[620px] aspect-video sm:aspect-16/10 transition-transform duration-300 group/card"
                             >
                                 {isItemVideo ? (
-                                    <video
+                                    <CustomVideoPlayer
                                         src={m.url}
-                                        controls
-                                        playsInline
-                                        className="w-full h-full max-h-[500px] object-contain bg-black"
+                                        autoPlay={false}
+                                        loop
+                                        className="w-full h-full max-h-[500px]"
                                     />
                                 ) : (
                                     <img
