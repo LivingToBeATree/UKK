@@ -23,7 +23,9 @@ import {
     Tag,
     X,
     ImageIcon,
+    Smile,
 } from 'lucide-react';
+import EmojiPicker, { Theme as EmojiTheme, type EmojiClickData } from 'emoji-picker-react';
 import { postService } from '@/services/postService';
 import { portfolioApi, type Portfolio } from '@/services/artistService';
 import { useAuth } from '@/hooks/useAuth';
@@ -71,12 +73,30 @@ export const CreatePostPage: React.FC = () => {
     const [submitting, setSubmitting] = useState(false);
     const [previewMode, setPreviewMode] = useState(false);
 
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
     // Artist Portfolios for Attachment
     const [artistPortfolios, setArtistPortfolios] = useState<Portfolio[]>([]);
     const [loadingPortfolios, setLoadingPortfolios] = useState(false);
     const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false);
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const emojiPickerRef = useRef<HTMLDivElement>(null);
+
+    // Close emoji picker on click outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target as Node)) {
+                setShowEmojiPicker(false);
+            }
+        };
+        if (showEmojiPicker) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showEmojiPicker]);
 
     // Fetch user's portfolio pieces if artist
     useEffect(() => {
@@ -488,15 +508,58 @@ export const CreatePostPage: React.FC = () => {
                                                     <List className="h-4 w-4" />
                                                 </Button>
 
-                                                {/* Emojis Palette */}
-                                                <div className="h-4 w-px bg-border/80 mx-1.5" />
-                                                <div className="flex items-center gap-1 overflow-x-auto">
+                                                {/* Emoji Picker Button beside markdowns */}
+                                                <div className="relative" ref={emojiPickerRef}>
+                                                    <Button
+                                                        type="button"
+                                                        variant={showEmojiPicker ? 'secondary' : 'ghost'}
+                                                        size="sm"
+                                                        onClick={() => setShowEmojiPicker((prev) => !prev)}
+                                                        className={`h-8 px-2 text-xs font-semibold gap-1.5 cursor-pointer transition-all ${
+                                                            showEmojiPicker
+                                                                ? 'bg-primary/20 text-primary border border-primary/30'
+                                                                : 'text-muted-foreground hover:text-foreground'
+                                                        }`}
+                                                        title="Open Full Emoji Library"
+                                                    >
+                                                        <Smile className="h-4 w-4 text-amber-400" />
+                                                        <span className="text-[11px] font-bold">Emoji</span>
+                                                    </Button>
+
+                                                    {/* Emoji Picker Popover */}
+                                                    <AnimatePresence>
+                                                        {showEmojiPicker && (
+                                                            <motion.div
+                                                                initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                                                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                                exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                                                                className="absolute left-0 top-full mt-2 z-50 shadow-2xl rounded-2xl overflow-hidden border border-border/80"
+                                                            >
+                                                                <EmojiPicker
+                                                                    theme={EmojiTheme.DARK}
+                                                                    onEmojiClick={(emojiData: EmojiClickData) => {
+                                                                        insertEmoji(emojiData.emoji);
+                                                                        setShowEmojiPicker(false);
+                                                                    }}
+                                                                    lazyLoadEmojis={true}
+                                                                    searchPlaceHolder="Search emojis..."
+                                                                    width={320}
+                                                                    height={380}
+                                                                />
+                                                            </motion.div>
+                                                        )}
+                                                    </AnimatePresence>
+                                                </div>
+
+                                                {/* Quick Emoji Presets */}
+                                                <div className="h-4 w-px bg-border/80 mx-1" />
+                                                <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-none">
                                                     {EMOJI_LIST.map((emoji) => (
                                                         <button
                                                             key={emoji}
                                                             type="button"
                                                             onClick={() => insertEmoji(emoji)}
-                                                            className="h-7 w-7 rounded-lg hover:bg-secondary flex items-center justify-center text-sm transition-transform hover:scale-115 cursor-pointer"
+                                                            className="h-7 w-7 rounded-lg hover:bg-secondary flex items-center justify-center text-sm transition-transform hover:scale-120 cursor-pointer shrink-0"
                                                             title={`Insert ${emoji}`}
                                                         >
                                                             {emoji}

@@ -188,10 +188,10 @@ export const SidebarRail: React.FC = () => {
                     </AnimatePresence>
                 </div>
 
-                {/* 1. Artwork Feed */}
+                {/* 1. Explore */}
                 <NavItem
                     icon={Compass}
-                    label="Artwork Feed"
+                    label="Explore"
                     path="/explore"
                     isActive={location.pathname === '/explore' || location.pathname.startsWith('/posts')}
                     collapsed={collapsed}

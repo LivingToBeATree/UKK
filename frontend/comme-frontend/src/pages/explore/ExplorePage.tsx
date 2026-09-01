@@ -9,6 +9,8 @@ import {
     Layers,
     Sparkles,
     Image as ImageIcon,
+    FileText,
+    Palette,
 } from 'lucide-react';
 import { postService } from '@/services/postService';
 import { useAuth } from '@/hooks/useAuth';
@@ -45,6 +47,7 @@ export const ExplorePage: React.FC = () => {
     const [meta, setMeta] = useState<PaginationMeta | null>(null);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
+    const [activeCategory, setActiveCategory] = useState<'all' | 'posts' | 'artwork'>('all');
 
     const loadMore = async () => {
         const nextPage = page + 1;
@@ -69,7 +72,7 @@ export const ExplorePage: React.FC = () => {
                     setMeta(res.meta ?? null);
                 }
             } catch {
-                if (isMounted) toast.error('Failed to load artwork feed');
+                if (isMounted) toast.error('Failed to load explore feed');
             } finally {
                 if (isMounted) setLoading(false);
             }
@@ -125,16 +128,44 @@ export const ExplorePage: React.FC = () => {
         }
     };
 
+    const filteredPosts = posts.filter((post) => {
+        const hasMedia =
+            (post.media && post.media.length > 0) ||
+            Boolean(post.portfolio?.cover_image_url) ||
+            Boolean(post.portfolio?.media && post.portfolio.media.length > 0);
+
+        if (activeCategory === 'posts') return !hasMedia;
+        if (activeCategory === 'artwork') return hasMedia;
+        return true;
+    });
+
+    const postsOnlyCount = posts.filter(
+        (p) =>
+            !(
+                (p.media && p.media.length > 0) ||
+                p.portfolio?.cover_image_url ||
+                (p.portfolio?.media && p.portfolio.media.length > 0)
+            )
+    ).length;
+
+    const artworkOnlyCount = posts.filter((p) =>
+        Boolean(
+            (p.media && p.media.length > 0) ||
+                p.portfolio?.cover_image_url ||
+                (p.portfolio?.media && p.portfolio.media.length > 0)
+        )
+    ).length;
+
     return (
-        <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-6">
                 <div>
                     <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-                        Artwork Feed
+                        Explore
                     </h1>
                     <p className="text-sm text-muted-foreground mt-1">
-                        Explore creative processes, illustrations, concept art, sketches, and commission announcements.
+                        Discover community posts, illustrations, concept art, sketches, and creator discussions.
                     </p>
                 </div>
                 {isAuthenticated ? (
@@ -148,6 +179,57 @@ export const ExplorePage: React.FC = () => {
                         <Plus className="h-4 w-4 mr-2" /> Create Post
                     </Button>
                 )}
+            </div>
+
+            {/* Category Filter Tabs */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                <button
+                    type="button"
+                    onClick={() => setActiveCategory('all')}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                        activeCategory === 'all'
+                            ? 'bg-primary text-primary-foreground shadow-sm'
+                            : 'bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary border border-border/60'
+                    }`}
+                >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    All
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-background/20 font-semibold">
+                        {posts.length}
+                    </span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => setActiveCategory('posts')}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                        activeCategory === 'posts'
+                            ? 'bg-primary text-primary-foreground shadow-sm'
+                            : 'bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary border border-border/60'
+                    }`}
+                >
+                    <FileText className="h-3.5 w-3.5" />
+                    Posts
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-background/20 font-semibold">
+                        {postsOnlyCount}
+                    </span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => setActiveCategory('artwork')}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                        activeCategory === 'artwork'
+                            ? 'bg-primary text-primary-foreground shadow-sm'
+                            : 'bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary border border-border/60'
+                    }`}
+                >
+                    <Palette className="h-3.5 w-3.5" />
+                    Artwork
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-background/20 font-semibold">
+                        {artworkOnlyCount}
+                    </span>
+                </button>
             </div>
 
             {/* Content Feed */}
@@ -193,7 +275,7 @@ export const ExplorePage: React.FC = () => {
                 /* Masonry Artwork Grid */
                 <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 [column-fill:_balance]">
                     <AnimatePresence>
-                        {posts.map((post) => {
+                        {filteredPosts.map((post) => {
                             const mediaUrl =
                                 (post.media && post.media[0] ? post.media[0].url : null) ||
                                 post.portfolio?.cover_image_url ||

@@ -137,7 +137,7 @@ export const InfoFlyout: React.FC<{ collapsed: boolean }> = ({ collapsed }) => {
                                     <li>
                                         <Link to="/explore" onClick={() => setIsOpen(false)} className="hover:text-foreground transition-colors flex items-center gap-1.5 py-0.5">
                                             <Compass className="h-3 w-3 text-muted-foreground" />
-                                            <span>Artwork Feed</span>
+                                            <span>Explore</span>
                                         </Link>
                                     </li>
                                     <li>
