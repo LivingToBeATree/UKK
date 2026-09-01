@@ -1,7 +1,11 @@
 <?php
 
 use App\Http\Controllers\API\V1\MediaController;
+use App\Http\Controllers\API\V1\MediaStreamController;
 use Illuminate\Support\Facades\Route;
+
+// Public media stream with HTTP 206 Byte-Range support for video seeking
+Route::get('media/stream/{path}', [MediaStreamController::class, 'stream'])->where('path', '.*');
 
 Route::get('media/{media}', [MediaController::class, 'show']);
 
