@@ -295,17 +295,17 @@ export const PostDetailPage: React.FC = () => {
                                 </Badge>
 
                                 {/* Delete Post (Author or Admin) */}
-                                {user && (user.id === post.user_id || user.role === 'admin') && (
+                                {user && (user.id === post.user_id || user.id === post.user?.id || user.role === 'admin') && (
                                     <Button
                                         type="button"
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => setShowDeleteModal(true)}
-                                        className="h-8 px-2.5 rounded-lg text-xs font-bold text-rose-400 hover:text-rose-500 hover:bg-rose-500/10 cursor-pointer gap-1.5 border border-rose-500/20"
+                                        className="h-8 px-2.5 rounded-lg text-xs font-bold text-rose-500 hover:text-rose-600 bg-rose-500/10 hover:bg-rose-500/20 cursor-pointer gap-1.5 border border-rose-500/30 shadow-xs"
                                         title="Delete your post"
                                     >
                                         <Trash2 className="h-3.5 w-3.5" />
-                                        <span className="hidden sm:inline">Delete</span>
+                                        <span>Delete Post</span>
                                     </Button>
                                 )}
                             </div>
@@ -366,29 +366,45 @@ export const PostDetailPage: React.FC = () => {
                                 </Button>
                             </div>
 
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={handleShare}
-                                className={`h-10 px-3.5 rounded-xl text-xs font-semibold cursor-pointer gap-1.5 transition-all ${
-                                    copied
-                                        ? 'text-emerald-400 bg-emerald-500/10'
-                                        : 'text-muted-foreground hover:text-foreground'
-                                }`}
-                            >
-                                {copied ? (
-                                    <>
-                                        <Check className="h-4 w-4 text-emerald-400" />
-                                        <span className="text-emerald-400 font-bold">Copied!</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Share2 className="h-4 w-4" />
-                                        <span className="hidden sm:inline">Share</span>
-                                    </>
+                            <div className="flex items-center gap-2">
+                                {user && (user.id === post.user_id || user.id === post.user?.id || user.role === 'admin') && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setShowDeleteModal(true)}
+                                        className="h-10 px-3 rounded-xl text-xs font-bold text-rose-500 hover:text-rose-600 bg-rose-500/10 hover:bg-rose-500/20 cursor-pointer gap-1.5 border border-rose-500/30"
+                                        title="Delete your post"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                        <span className="hidden sm:inline">Delete</span>
+                                    </Button>
                                 )}
-                            </Button>
+
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={handleShare}
+                                    className={`h-10 px-3.5 rounded-xl text-xs font-semibold cursor-pointer gap-1.5 transition-all ${
+                                        copied
+                                            ? 'text-emerald-400 bg-emerald-500/10'
+                                            : 'text-muted-foreground hover:text-foreground'
+                                    }`}
+                                >
+                                    {copied ? (
+                                        <>
+                                            <Check className="h-4 w-4 text-emerald-400" />
+                                            <span className="text-emerald-400 font-bold">Copied!</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Share2 className="h-4 w-4" />
+                                            <span className="hidden sm:inline">Share</span>
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
