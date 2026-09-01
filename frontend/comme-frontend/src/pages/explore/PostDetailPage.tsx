@@ -138,8 +138,7 @@ const ScrollableMediaGallery: React.FC<{
                             autoPlay
                             loop
                             playsInline
-                            className="w-full h-auto max-h-[600px] object-contain rounded-2xl cursor-pointer"
-                            onClick={() => handleOpenLightbox(0)}
+                            className="w-full h-auto max-h-[600px] object-contain rounded-2xl"
                         />
                     ) : (
                         <img
