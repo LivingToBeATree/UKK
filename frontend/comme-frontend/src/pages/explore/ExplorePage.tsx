@@ -130,20 +130,23 @@ export const ExplorePage: React.FC = () => {
     };
 
     const filteredPosts = posts.filter((post) => {
-        const hasMedia =
-            (post.media && post.media.length > 0) ||
-            Boolean(post.portfolio?.cover_image_url) ||
-            Boolean(post.portfolio?.media && post.portfolio.media.length > 0);
+        const isArtworkPost = Boolean(
+            post.portfolio_id ||
+            post.portfolio?.id ||
+            post.portfolio?.cover_image_url ||
+            (post.portfolio?.media && post.portfolio.media.length > 0)
+        );
 
-        if (activeCategory === 'posts') return !hasMedia;
-        if (activeCategory === 'artwork') return hasMedia;
+        if (activeCategory === 'posts') return !isArtworkPost;
+        if (activeCategory === 'artwork') return isArtworkPost;
         return true;
     });
 
     const postsOnlyCount = posts.filter(
         (p) =>
-            !(
-                (p.media && p.media.length > 0) ||
+            !Boolean(
+                p.portfolio_id ||
+                p.portfolio?.id ||
                 p.portfolio?.cover_image_url ||
                 (p.portfolio?.media && p.portfolio.media.length > 0)
             )
@@ -151,9 +154,10 @@ export const ExplorePage: React.FC = () => {
 
     const artworkOnlyCount = posts.filter((p) =>
         Boolean(
-            (p.media && p.media.length > 0) ||
-                p.portfolio?.cover_image_url ||
-                (p.portfolio?.media && p.portfolio.media.length > 0)
+            p.portfolio_id ||
+            p.portfolio?.id ||
+            p.portfolio?.cover_image_url ||
+            (p.portfolio?.media && p.portfolio.media.length > 0)
         )
     ).length;
 

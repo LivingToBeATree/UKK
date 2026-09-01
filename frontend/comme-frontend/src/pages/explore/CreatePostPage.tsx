@@ -737,10 +737,6 @@ export const CreatePostPage: React.FC = () => {
                                                     <Eye className="h-3 w-3" /> Preview
                                                 </button>
                                             </div>
-
-                                            <span className="text-[11px] text-muted-foreground hidden sm:inline">
-                                                Markdown &amp; GFM Supported
-                                            </span>
                                         </div>
 
                                         {/* Formatting Toolbar */}
@@ -814,9 +810,9 @@ export const CreatePostPage: React.FC = () => {
                                                     size="sm"
                                                     onClick={() => mediaFileInputRef.current?.click()}
                                                     className="h-8 w-8 p-0 cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
-                                                    title="Attach Images & GIFs from Device"
+                                                    title="Attach Images, GIFs & Videos"
                                                 >
-                                                    <ImagePlus className="h-4 w-4 text-emerald-400" />
+                                                    <ImagePlus className="h-4 w-4" />
                                                 </Button>
 
                                                 {/* Online GIF Search Button */}
@@ -825,7 +821,7 @@ export const CreatePostPage: React.FC = () => {
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => setShowGifModal(true)}
-                                                    className="h-8 px-2 py-0 cursor-pointer font-black text-[11px] text-purple-400 hover:text-purple-300 hover:bg-purple-500/15 rounded-lg border border-purple-500/30 transition-colors"
+                                                    className="h-8 px-2 py-0 cursor-pointer font-bold text-xs text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors"
                                                     title="Search Online GIFs & Reactions"
                                                 >
                                                     GIF
@@ -942,7 +938,7 @@ export const CreatePostPage: React.FC = () => {
                                                 <Textarea
                                                     id="post_content"
                                                     ref={textareaRef}
-                                                    placeholder="Share your artwork progress, process breakdown, commission updates, or stories... (Type :he, :sad, :fire for emoji preview, Markdown supported!)"
+                                                    placeholder="Share your artwork progress, process breakdown, commission updates, or stories..."
                                                     value={content}
                                                     onChange={(e) => {
                                                         const raw = e.target.value.slice(0, maxChars);
