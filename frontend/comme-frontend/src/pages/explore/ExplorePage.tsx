@@ -17,7 +17,26 @@ import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/sonner';
+import { MarkdownContent } from '@/components/ui/markdown-content';
 import type { Post, PaginationMeta } from '@/types';
+
+function formatPostDate(dateStr?: string | null): string {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '';
+
+    const now = Date.now();
+    const diffSecs = Math.floor((now - date.getTime()) / 1000);
+    if (diffSecs < 60) return 'Just now';
+    if (diffSecs < 3600) return `${Math.floor(diffSecs / 60)}m ago`;
+    if (diffSecs < 86400) return `${Math.floor(diffSecs / 3600)}h ago`;
+    if (diffSecs < 604800) return `${Math.floor(diffSecs / 86400)}d ago`;
+
+    return date.toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+    });
+}
 
 export const ExplorePage: React.FC = () => {
     const { isAuthenticated } = useAuth();
@@ -65,11 +84,14 @@ export const ExplorePage: React.FC = () => {
         e.preventDefault();
         e.stopPropagation();
         if (!requireAuth('like')) return;
+
         try {
             const res = await postService.toggleLike(postId);
             setPosts((prev) =>
                 prev.map((p) =>
-                    p.id === postId ? { ...p, is_liked: res.liked, likes_count: res.likes_count } : p
+                    p.id === postId
+                        ? { ...p, is_liked: res.liked, likes_count: res.likes_count }
+                        : p
                 )
             );
         } catch {
@@ -81,6 +103,7 @@ export const ExplorePage: React.FC = () => {
         e.preventDefault();
         e.stopPropagation();
         if (!requireAuth('bookmark')) return;
+
         try {
             const res = await postService.toggleBookmark(postId);
             setPosts((prev) =>
@@ -96,57 +119,52 @@ export const ExplorePage: React.FC = () => {
                         : p
                 )
             );
+            toast.success(res.bookmarked ? 'Saved to bookmarks' : 'Removed from bookmarks');
         } catch {
-            toast.error('Failed to bookmark');
+            toast.error('Failed to bookmark post');
         }
     };
 
     return (
-        <div className="w-full max-w-[1440px] mx-auto px-6 sm:px-12 py-8">
+        <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-6">
                 <div>
-                    <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
+                    <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
                         Artwork Feed
                     </h1>
-                    <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
-                        Discover original illustrations, character designs, and creative artwork from independent creators
+                    <p className="text-sm text-muted-foreground mt-1">
+                        Explore creative processes, illustrations, concept art, sketches, and commission announcements.
                     </p>
                 </div>
-
-                <div className="flex items-center gap-3">
-                    {isAuthenticated ? (
-                        <Link to="/posts/create">
-                            <Button className="font-semibold shadow-md">
-                                <Plus className="h-4 w-4 mr-2" /> Share Artwork
-                            </Button>
-                        </Link>
-                    ) : (
-                        <Button
-                            onClick={() => requireAuth('generic')}
-                            className="font-semibold shadow-md"
-                        >
-                            <Plus className="h-4 w-4 mr-2" /> Share Artwork
+                {isAuthenticated ? (
+                    <Link to="/posts/create">
+                        <Button className="font-bold shadow-sm">
+                            <Plus className="h-4 w-4 mr-2" /> Create Post
                         </Button>
-                    )}
-                </div>
+                    </Link>
+                ) : (
+                    <Button onClick={() => requireAuth('generic')} className="font-bold shadow-sm">
+                        <Plus className="h-4 w-4 mr-2" /> Create Post
+                    </Button>
+                )}
             </div>
 
-            {/* Masonry Feed Container */}
+            {/* Content Feed */}
             {loading && posts.length === 0 ? (
-                /* Loading Skeletons */
-                <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 [column-fill:_balance]">
-                    {[280, 360, 240, 420, 310, 260, 390, 300].map((height, i) => (
+                <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4">
+                    {Array.from({ length: 8 }).map((_, i) => (
                         <div key={i} className="break-inside-avoid mb-4">
                             <Skeleton
-                                style={{ height: `${height}px` }}
-                                className="w-full rounded-2xl"
+                                className={`w-full rounded-2xl ${
+                                    i % 2 === 0 ? 'h-64' : 'h-80'
+                                }`}
                             />
                         </div>
                     ))}
                 </div>
             ) : posts.length === 0 ? (
-                /* Rich Empty State */
+                /* Empty state */
                 <div className="rounded-3xl border border-border/80 bg-card/60 p-12 text-center max-w-2xl mx-auto my-12 space-y-6">
                     <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shadow-inner">
                         <ImageIcon className="h-8 w-8" />
@@ -169,9 +187,6 @@ export const ExplorePage: React.FC = () => {
                                 <Sparkles className="h-4 w-4 mr-2" /> Create First Post
                             </Button>
                         )}
-                        <Link to="/store">
-                            <Button variant="outline">Browse Store</Button>
-                        </Link>
                     </div>
                 </div>
             ) : (
@@ -179,7 +194,10 @@ export const ExplorePage: React.FC = () => {
                 <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 [column-fill:_balance]">
                     <AnimatePresence>
                         {posts.map((post) => {
-                            const mediaUrl = post.media && post.media[0] ? post.media[0].url : null;
+                            const mediaUrl =
+                                (post.media && post.media[0] ? post.media[0].url : null) ||
+                                post.portfolio?.cover_image_url ||
+                                post.portfolio?.media?.[0]?.url;
 
                             return (
                                 <motion.div
@@ -192,15 +210,15 @@ export const ExplorePage: React.FC = () => {
                                 >
                                     <Link
                                         to={`/posts/${post.id}`}
-                                        className="group relative block rounded-2xl overflow-hidden bg-card border border-border/70 hover:border-primary/50 shadow-xs hover:shadow-xl transition-all duration-300 cursor-pointer"
+                                        className="group relative block rounded-2xl overflow-hidden bg-card border border-border/80 hover:border-primary/50 shadow-xs hover:shadow-lg transition-all duration-300 cursor-pointer"
                                     >
-                                        {/* Image Display or Text-Only Creative Canvas */}
+                                        {/* 1. Content Body or Artwork Image */}
                                         {mediaUrl ? (
                                             <div className="relative w-full overflow-hidden bg-muted">
                                                 <img
                                                     src={mediaUrl}
                                                     alt={post.content || 'Artwork'}
-                                                    className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                                                    className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-[1.02]"
                                                     loading="lazy"
                                                 />
                                                 {post.media && post.media.length > 1 && (
@@ -211,61 +229,50 @@ export const ExplorePage: React.FC = () => {
                                                 )}
                                             </div>
                                         ) : (
-                                            <div className="p-6 bg-gradient-to-br from-primary/15 via-accent/10 to-secondary min-h-[180px] flex flex-col justify-between">
-                                                <p className="text-sm font-medium leading-relaxed text-foreground line-clamp-4 italic">
-                                                    "{post.content}"
-                                                </p>
-                                                <div className="pt-4 flex items-center gap-2">
+                                            <div className="p-5 bg-gradient-to-br from-primary/5 via-card to-secondary/30 min-h-[120px]">
+                                                <MarkdownContent content={post.content} className="text-sm line-clamp-6" />
+                                            </div>
+                                        )}
+
+                                        {/* 2. Below the line: Uploader info & Actions */}
+                                        <div className="p-3.5 border-t border-border/70 bg-card/95 space-y-2.5">
+                                            {/* Uploader Row */}
+                                            <div className="flex items-center justify-between gap-2 min-w-0">
+                                                <div className="flex items-center gap-2 min-w-0">
                                                     <Avatar
                                                         size="sm"
                                                         fallback={post.user?.display_name || post.user?.username || '?'}
                                                         src={post.user?.avatar_url}
+                                                        className="h-6 w-6 shrink-0 ring-1 ring-border"
                                                     />
-                                                    <span className="text-xs font-semibold text-foreground/80">
+                                                    <span className="text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors">
                                                         {post.user?.display_name || post.user?.username}
                                                     </span>
                                                 </div>
-                                            </div>
-                                        )}
-
-                                        {/* Bottom Editorial Hover/Persistent Overlay */}
-                                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-3.5 pt-8 opacity-95 group-hover:opacity-100 transition-opacity flex flex-col justify-end text-white">
-                                            {/* Author Info & Post Snippet */}
-                                            <div className="flex items-center gap-2 mb-1.5">
-                                                <Avatar
-                                                    size="sm"
-                                                    fallback={post.user?.display_name || post.user?.username || '?'}
-                                                    src={post.user?.avatar_url}
-                                                    className="border border-white/30 shrink-0 h-6 w-6"
-                                                />
-                                                <span className="text-xs font-bold text-white truncate drop-shadow-sm">
-                                                    {post.user?.display_name || post.user?.username}
-                                                </span>
+                                                {post.created_at && (
+                                                    <span className="text-[10px] text-muted-foreground shrink-0">
+                                                        {formatPostDate(post.created_at)}
+                                                    </span>
+                                                )}
                                             </div>
 
-                                            {post.content && (
-                                                <p className="text-[11px] text-white/85 line-clamp-2 leading-tight mb-2 font-normal drop-shadow-xs">
-                                                    {post.content}
-                                                </p>
-                                            )}
-
-                                            {/* Interactive Stats & Actions Strip */}
-                                            <div className="flex items-center justify-between pt-1.5 border-t border-white/20 text-xs">
+                                            {/* Action Buttons Row */}
+                                            <div className="flex items-center justify-between pt-1 border-t border-border/40 text-xs">
                                                 <div className="flex items-center gap-3">
-                                                    {/* Like Button */}
+                                                    {/* Like Button (Hearts go RED when liked) */}
                                                     <button
                                                         type="button"
                                                         onClick={(e) => handleLike(e, post.id)}
                                                         className={`flex items-center gap-1 transition-transform active:scale-125 cursor-pointer ${
                                                             post.is_liked
-                                                                ? 'text-rose-400 font-bold'
-                                                                : 'text-white/80 hover:text-rose-400'
+                                                                ? 'text-rose-500 font-bold'
+                                                                : 'text-muted-foreground hover:text-rose-500'
                                                         }`}
                                                         aria-label="Like"
                                                     >
                                                         <Heart
                                                             className={`h-3.5 w-3.5 ${
-                                                                post.is_liked ? 'fill-current' : ''
+                                                                post.is_liked ? 'fill-rose-500 text-rose-500' : ''
                                                             }`}
                                                         />
                                                         <span className="text-[11px]">
@@ -274,26 +281,26 @@ export const ExplorePage: React.FC = () => {
                                                     </button>
 
                                                     {/* Comments Count */}
-                                                    <span className="flex items-center gap-1 text-white/80 text-[11px]">
+                                                    <span className="flex items-center gap-1 text-muted-foreground text-[11px]">
                                                         <MessageSquare className="h-3.5 w-3.5" />
                                                         <span>{post.comments_count || 0}</span>
                                                     </span>
                                                 </div>
 
-                                                {/* Bookmark Button */}
+                                                {/* Bookmark Button (Bookmarks go BLUE when bookmarked) */}
                                                 <button
                                                     type="button"
                                                     onClick={(e) => handleBookmark(e, post.id)}
                                                     className={`transition-transform active:scale-125 cursor-pointer p-0.5 ${
                                                         post.is_bookmarked
-                                                            ? 'text-amber-400'
-                                                            : 'text-white/80 hover:text-amber-400'
+                                                            ? 'text-blue-500'
+                                                            : 'text-muted-foreground hover:text-blue-500'
                                                     }`}
                                                     aria-label="Bookmark"
                                                 >
                                                     <Bookmark
                                                         className={`h-3.5 w-3.5 ${
-                                                            post.is_bookmarked ? 'fill-current' : ''
+                                                            post.is_bookmarked ? 'fill-blue-500 text-blue-500' : ''
                                                         }`}
                                                     />
                                                 </button>

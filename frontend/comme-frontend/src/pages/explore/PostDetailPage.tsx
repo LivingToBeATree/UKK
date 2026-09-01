@@ -296,7 +296,7 @@ export const PostDetailPage: React.FC = () => {
                                     size="sm"
                                     onClick={handleBookmark}
                                     className={`h-10 px-4 rounded-xl font-bold text-xs gap-2 cursor-pointer transition-all ${
-                                        post.is_bookmarked ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''
+                                        post.is_bookmarked ? 'bg-blue-500 hover:bg-blue-600 text-white' : ''
                                     }`}
                                 >
                                     <Bookmark className={`h-4 w-4 ${post.is_bookmarked ? 'fill-current' : ''}`} />
