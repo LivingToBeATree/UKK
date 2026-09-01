@@ -20,7 +20,9 @@ class PostController extends Controller
     {
         Gate::authorize('viewAny', Post::class);
 
-        $posts = Post::with(['user', 'portfolio'])->paginate(20);
+        $posts = Post::with(['user', 'portfolio', 'media', 'tags'])
+            ->latest()
+            ->paginate(20);
 
         return ApiResponseHelper::paginatedResponse(
             PostResource::collection($posts),

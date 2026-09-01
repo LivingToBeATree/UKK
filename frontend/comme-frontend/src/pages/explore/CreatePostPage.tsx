@@ -26,6 +26,7 @@ import {
     Smile,
     Plus,
     Video,
+    Layers,
 } from 'lucide-react';
 import EmojiPicker, { Theme as EmojiTheme, type EmojiClickData } from 'emoji-picker-react';
 import {
@@ -492,16 +493,141 @@ export const CreatePostPage: React.FC = () => {
 
                         {/* Mock Masonry Card */}
                         <div className="rounded-3xl overflow-hidden bg-card border border-border/80 shadow-2xl">
-                            {getPortfolioImage(selectedPortfolio) ? (
-                                <div className="relative w-full aspect-video overflow-hidden bg-muted">
-                                    <img
-                                        src={getPortfolioImage(selectedPortfolio)}
-                                        alt={selectedPortfolio?.title || 'Attached Artwork'}
-                                        className="w-full h-full object-cover"
-                                    />
-                                    <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5">
-                                        <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-                                        <span>Attached Portfolio Piece</span>
+                            {mediaPreviews.length > 0 ? (
+                                /* Attached Uploaded Media Preview */
+                                <div className="space-y-0">
+                                    {mediaPreviews[0].isVideo ? (
+                                        <div className="relative w-full aspect-video overflow-hidden bg-black flex items-center justify-center">
+                                            <video
+                                                src={mediaPreviews[0].url}
+                                                muted
+                                                autoPlay
+                                                loop
+                                                playsInline
+                                                className="w-full h-full object-cover"
+                                            />
+                                            <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-blue-600/90 text-white text-xs font-bold flex items-center gap-1.5 shadow-md">
+                                                <Video className="h-3.5 w-3.5" />
+                                                <span>Video Attachment</span>
+                                            </div>
+                                            {mediaPreviews.length > 1 && (
+                                                <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1 shadow-md">
+                                                    <Layers className="h-3.5 w-3.5" />
+                                                    <span>+{mediaPreviews.length - 1} more</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="relative w-full aspect-video overflow-hidden bg-muted">
+                                            <img
+                                                src={mediaPreviews[0].url}
+                                                alt={mediaPreviews[0].name}
+                                                className="w-full h-full object-cover"
+                                            />
+                                            <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5 shadow-md">
+                                                {mediaPreviews[0].isGif ? (
+                                                    <>
+                                                        <span className="bg-purple-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded">GIF</span>
+                                                        <span>Attached GIF</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <ImageIcon className="h-3.5 w-3.5 text-emerald-400" />
+                                                        <span>Attached Image</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                            {mediaPreviews.length > 1 && (
+                                                <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1 shadow-md">
+                                                    <Layers className="h-3.5 w-3.5" />
+                                                    <span>+{mediaPreviews.length - 1} more</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Author & Content Info */}
+                                    <div className="p-6 space-y-4">
+                                        <div className="flex items-center gap-3">
+                                            <Avatar
+                                                size="md"
+                                                fallback={user?.display_name || user?.username || '?'}
+                                                src={user?.avatar_url}
+                                            />
+                                            <div>
+                                                <p className="text-sm font-bold text-foreground">
+                                                    {user?.display_name || user?.username}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    @{user?.username} • Just now
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {content && (
+                                            <div className="pt-1">
+                                                <MarkdownContent content={content} />
+                                            </div>
+                                        )}
+
+                                        {tags.length > 0 && (
+                                            <div className="flex flex-wrap gap-1.5 pt-2">
+                                                {tags.map((t) => (
+                                                    <Badge key={t} variant="secondary" className="text-xs font-semibold">
+                                                        #{t}
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ) : getPortfolioImage(selectedPortfolio) ? (
+                                <div className="space-y-0">
+                                    <div className="relative w-full aspect-video overflow-hidden bg-muted">
+                                        <img
+                                            src={getPortfolioImage(selectedPortfolio)}
+                                            alt={selectedPortfolio?.title || 'Attached Artwork'}
+                                            className="w-full h-full object-cover"
+                                        />
+                                        <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5 shadow-md">
+                                            <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+                                            <span>Attached Portfolio Piece</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Card Details when artwork is attached */}
+                                    <div className="p-6 space-y-4">
+                                        <div className="flex items-center gap-3">
+                                            <Avatar
+                                                size="md"
+                                                fallback={user?.display_name || user?.username || '?'}
+                                                src={user?.avatar_url}
+                                            />
+                                            <div>
+                                                <p className="text-sm font-bold text-foreground">
+                                                    {user?.display_name || user?.username}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    @{user?.username} • Just now
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {content && (
+                                            <div className="pt-1">
+                                                <MarkdownContent content={content} />
+                                            </div>
+                                        )}
+
+                                        {tags.length > 0 && (
+                                            <div className="flex flex-wrap gap-1.5 pt-2">
+                                                {tags.map((t) => (
+                                                    <Badge key={t} variant="secondary" className="text-xs font-semibold">
+                                                        #{t}
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             ) : (
@@ -524,43 +650,6 @@ export const CreatePostPage: React.FC = () => {
                                             </p>
                                         </div>
                                     </div>
-                                </div>
-                            )}
-
-                            {/* Card Details when artwork is attached */}
-                            {getPortfolioImage(selectedPortfolio) && (
-                                <div className="p-6 space-y-4">
-                                    <div className="flex items-center gap-3">
-                                        <Avatar
-                                            size="md"
-                                            fallback={user?.display_name || user?.username || '?'}
-                                            src={user?.avatar_url}
-                                        />
-                                        <div>
-                                            <p className="text-sm font-bold text-foreground">
-                                                {user?.display_name || user?.username}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                @{user?.username} • Just now
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    {content && (
-                                        <div className="pt-1">
-                                            <MarkdownContent content={content} />
-                                        </div>
-                                    )}
-
-                                    {tags.length > 0 && (
-                                        <div className="flex flex-wrap gap-1.5 pt-2">
-                                            {tags.map((t) => (
-                                                <Badge key={t} variant="secondary" className="text-xs font-semibold">
-                                                    #{t}
-                                                </Badge>
-                                            ))}
-                                        </div>
-                                    )}
                                 </div>
                             )}
                         </div>
