@@ -22,10 +22,9 @@ class StorePostRequest extends FormRequest
             'portfolio_id' => ['nullable', 'exists:portfolios,id'],
             'visibility' => ['sometimes', new Enum(PostVisibilityType::class)],
             'commentable' => ['sometimes', 'boolean'],
-
-            // likes_count / comments_count / bookmarks_count are absent —
-            // those move only through the like/comment/bookmark actions
-            // themselves, never set directly on the post.
+            'media' => ['sometimes', 'array'],
+            'media.*' => ['file', 'mimes:jpeg,png,jpg,webp,gif,mp4,mov', 'max:25600'],
+            'tags' => ['sometimes'],
         ];
     }
 

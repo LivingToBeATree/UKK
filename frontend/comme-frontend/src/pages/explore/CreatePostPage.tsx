@@ -24,6 +24,7 @@ import {
     X,
     ImageIcon,
     Smile,
+    Plus,
 } from 'lucide-react';
 import EmojiPicker, { Theme as EmojiTheme, type EmojiClickData } from 'emoji-picker-react';
 import {
@@ -77,6 +78,12 @@ export const CreatePostPage: React.FC = () => {
     const [previewMode, setPreviewMode] = useState(false);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
+    // Direct Media & GIF Uploads
+    const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+    const [mediaPreviews, setMediaPreviews] = useState<{ id: string; file: File; url: string; isGif: boolean; size: string; name: string }[]>([]);
+    const [isDragging, setIsDragging] = useState(false);
+    const mediaFileInputRef = useRef<HTMLInputElement>(null);
+
     // Inline Emoji Autocomplete (e.g. :he -> preview hello / heart)
     const [emojiSuggestions, setEmojiSuggestions] = useState<EmojiSuggestion[]>([]);
     const [suggestionIndex, setSuggestionIndex] = useState(0);
@@ -89,6 +96,80 @@ export const CreatePostPage: React.FC = () => {
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const emojiPickerRef = useRef<HTMLDivElement>(null);
+
+    // Media & GIF file handler
+    const handleFiles = (files: FileList | File[]) => {
+        const validFiles: File[] = [];
+        const newPreviews: { id: string; file: File; url: string; isGif: boolean; size: string; name: string }[] = [];
+
+        Array.from(files).forEach((file) => {
+            if (mediaFiles.length + validFiles.length >= 8) {
+                toast.error('Maximum 8 media files per post');
+                return;
+            }
+            if (file.size > 25 * 1024 * 1024) {
+                toast.error(`File ${file.name} is too large (max 25MB)`);
+                return;
+            }
+            if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+                toast.error(`File ${file.name} is not a supported image/GIF/video format`);
+                return;
+            }
+
+            validFiles.push(file);
+            const url = URL.createObjectURL(file);
+            const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
+            const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+            newPreviews.push({
+                id: Math.random().toString(36).substring(2, 9),
+                file,
+                url,
+                isGif,
+                size: `${sizeMb} MB`,
+                name: file.name,
+            });
+        });
+
+        if (validFiles.length > 0) {
+            setMediaFiles((prev) => [...prev, ...validFiles]);
+            setMediaPreviews((prev) => [...prev, ...newPreviews]);
+            toast.success(`Attached ${validFiles.length} media file(s)`);
+        }
+    };
+
+    const handleRemoveMedia = (index: number) => {
+        URL.revokeObjectURL(mediaPreviews[index].url);
+        setMediaFiles((prev) => prev.filter((_, i) => i !== index));
+        setMediaPreviews((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            handleFiles(e.target.files);
+            e.target.value = '';
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleFiles(e.dataTransfer.files);
+        }
+    };
 
     // Check for inline emoji trigger like :he or :sad
     const checkForEmojiTrigger = (text: string, cursorPos: number) => {
@@ -255,8 +336,8 @@ export const CreatePostPage: React.FC = () => {
     // Submit Post
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!content.trim()) {
-            toast.error('Please write some content for your post');
+        if (!content.trim() && mediaFiles.length === 0) {
+            toast.error('Please write some content or attach an image/GIF for your post');
             return;
         }
 
@@ -271,12 +352,17 @@ export const CreatePostPage: React.FC = () => {
                 formData.append('portfolio_id', String(selectedPortfolioId));
             }
 
+            // Append Direct Uploaded Media (Images, GIFs, Videos)
+            mediaFiles.forEach((file) => {
+                formData.append('media[]', file);
+            });
+
             tags.forEach((tag, idx) => {
                 formData.append(`tags[${idx}]`, tag);
             });
 
             await postService.create(formData);
-            toast.success('Post published to Artwork Feed!');
+            toast.success('Post published to Explore!');
             navigate('/explore');
         } catch {
             toast.error('Failed to create post. Please try again.');
@@ -581,6 +667,28 @@ export const CreatePostPage: React.FC = () => {
                                                     <List className="h-4 w-4" />
                                                 </Button>
 
+                                                {/* Attach Image / GIF File Button */}
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => mediaFileInputRef.current?.click()}
+                                                    className="h-8 w-8 p-0 cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
+                                                    title="Attach Images & GIFs"
+                                                >
+                                                    <ImagePlus className="h-4 w-4 text-emerald-400" />
+                                                </Button>
+
+                                                {/* Hidden Media File Input */}
+                                                <input
+                                                    type="file"
+                                                    ref={mediaFileInputRef}
+                                                    onChange={handleFileInputChange}
+                                                    multiple
+                                                    accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,video/mp4"
+                                                    className="hidden"
+                                                />
+
                                                 {/* Emoji Picker Button beside markdowns */}
                                                 <div className="relative" ref={emojiPickerRef}>
                                                     <Button
@@ -711,7 +819,7 @@ export const CreatePostPage: React.FC = () => {
                                                     onKeyDown={handleTextareaKeyDown}
                                                     rows={8}
                                                     className="resize-y min-h-[220px] text-base leading-relaxed p-4 rounded-2xl bg-card border-border/80 focus-visible:ring-primary font-medium"
-                                                    required
+                                                    required={mediaFiles.length === 0}
                                                 />
                                             </div>
                                         ) : (
@@ -731,6 +839,96 @@ export const CreatePostPage: React.FC = () => {
                                                 {charCount} / {maxChars}
                                             </span>
                                         </div>
+                                    </div>
+
+                                    {/* ── Direct Images & GIFs Upload Zone / Preview Grid ── */}
+                                    <div className="space-y-3 pt-2">
+                                        <div className="flex items-center justify-between">
+                                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                                                <ImagePlus className="h-3.5 w-3.5 text-primary" /> Attached Images &amp; GIFs ({mediaPreviews.length}/8)
+                                            </Label>
+                                            <button
+                                                type="button"
+                                                onClick={() => mediaFileInputRef.current?.click()}
+                                                className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1 cursor-pointer"
+                                            >
+                                                <Plus className="h-3 w-3" /> Upload Images/GIFs
+                                            </button>
+                                        </div>
+
+                                        {/* Previews Grid or Dropzone */}
+                                        {mediaPreviews.length > 0 ? (
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                                {mediaPreviews.map((item, idx) => (
+                                                    <div
+                                                        key={item.id}
+                                                        className="relative group rounded-2xl overflow-hidden border border-border/80 bg-secondary/30 aspect-square flex items-center justify-center shadow-xs"
+                                                    >
+                                                        <img
+                                                            src={item.url}
+                                                            alt={item.name}
+                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                        />
+
+                                                        {/* Badge: GIF or IMG */}
+                                                        <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md text-[10px] font-black tracking-wider uppercase backdrop-blur-md shadow-xs flex items-center gap-1">
+                                                            {item.isGif ? (
+                                                                <span className="bg-purple-600 text-white px-1.5 py-0.5 rounded">GIF</span>
+                                                            ) : (
+                                                                <span className="bg-black/70 text-white px-1.5 py-0.5 rounded">IMG</span>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Delete button */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveMedia(idx)}
+                                                            className="absolute top-2 right-2 h-7 w-7 rounded-xl bg-black/75 hover:bg-rose-600 text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 cursor-pointer shadow-md"
+                                                            title="Remove image"
+                                                        >
+                                                            <Trash2 className="h-3.5 w-3.5" />
+                                                        </button>
+
+                                                        {/* File Size */}
+                                                        <div className="absolute bottom-0 inset-x-0 p-1.5 bg-gradient-to-t from-black/80 to-transparent text-white text-[10px] truncate px-2 font-medium">
+                                                            {item.size}
+                                                        </div>
+                                                    </div>
+                                                ))}
+
+                                                {mediaPreviews.length < 8 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => mediaFileInputRef.current?.click()}
+                                                        className="rounded-2xl border-2 border-dashed border-border/80 hover:border-primary/60 bg-secondary/10 hover:bg-secondary/30 aspect-square flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:text-primary transition-all cursor-pointer"
+                                                    >
+                                                        <ImagePlus className="h-5 w-5" />
+                                                        <span className="text-[11px] font-bold">Add More</span>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div
+                                                onClick={() => mediaFileInputRef.current?.click()}
+                                                onDragOver={handleDragOver}
+                                                onDragLeave={handleDragLeave}
+                                                onDrop={handleDrop}
+                                                className={`border-2 border-dashed rounded-2xl p-4 sm:p-5 text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
+                                                    isDragging
+                                                        ? 'border-primary bg-primary/10 text-primary scale-[1.01]'
+                                                        : 'border-border/70 hover:border-primary/50 bg-secondary/20 hover:bg-secondary/40 text-muted-foreground'
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-2 text-xs font-semibold">
+                                                    <ImagePlus className="h-4 w-4 text-primary" />
+                                                    <span className="text-foreground font-bold">Drop images or animated GIFs here</span>
+                                                    <span>or click to upload</span>
+                                                </div>
+                                                <span className="text-[11px] text-muted-foreground">
+                                                    Supports PNG, JPG, WebP, GIF up to 25MB each (Max 8 files)
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Tag Selector */}

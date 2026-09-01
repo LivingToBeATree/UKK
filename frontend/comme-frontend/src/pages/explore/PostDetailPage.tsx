@@ -207,7 +207,7 @@ export const PostDetailPage: React.FC = () => {
                 </p>
                 <Link to="/explore">
                     <Button variant="outline" className="mt-2 font-semibold">
-                        <ArrowLeft className="h-4 w-4 mr-2" /> Back to Artwork Feed
+                        <ArrowLeft className="h-4 w-4 mr-2" /> Back to Explore
                     </Button>
                 </Link>
             </div>
@@ -227,15 +227,42 @@ export const PostDetailPage: React.FC = () => {
                     to="/explore"
                     className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 >
-                    <ArrowLeft className="h-3.5 w-3.5" /> Back to Artwork Feed
+                    <ArrowLeft className="h-3.5 w-3.5" /> Back to Explore
                 </Link>
             </div>
 
             {/* ── Main Post Card ── */}
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                 <Card className="rounded-3xl border border-border/80 bg-card overflow-hidden shadow-lg">
-                    {/* Attached Artwork / Hero Media */}
-                    {attachedArtworkUrl && (
+                    {/* Attached Multi-Media Gallery or Single Hero Media */}
+                    {post.media && post.media.length > 1 ? (
+                        <div className={`grid gap-2 bg-black/90 p-3 ${
+                            post.media.length === 2
+                                ? 'grid-cols-2 max-h-[500px]'
+                                : post.media.length === 3
+                                ? 'grid-cols-3 max-h-[420px]'
+                                : 'grid-cols-2 sm:grid-cols-4'
+                        }`}>
+                            {post.media.map((m, idx) => (
+                                <div
+                                    key={m.id || idx}
+                                    className="relative rounded-2xl overflow-hidden aspect-square bg-muted/40 group border border-white/10"
+                                >
+                                    <img
+                                        src={m.url}
+                                        alt={m.file_name || 'Post media'}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
+                                        onClick={() => window.open(m.url, '_blank')}
+                                    />
+                                    {m.mime_type?.includes('gif') && (
+                                        <span className="absolute top-2 left-2 bg-purple-600/90 text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow">
+                                            GIF
+                                        </span>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    ) : attachedArtworkUrl ? (
                         <div className="relative w-full max-h-[640px] bg-black/90 overflow-hidden flex items-center justify-center">
                             <img
                                 src={attachedArtworkUrl}
@@ -249,7 +276,7 @@ export const PostDetailPage: React.FC = () => {
                                 </div>
                             )}
                         </div>
-                    )}
+                    ) : null}
 
                     <CardContent className="p-6 sm:p-8 space-y-6">
                         {/* Author Header */}
