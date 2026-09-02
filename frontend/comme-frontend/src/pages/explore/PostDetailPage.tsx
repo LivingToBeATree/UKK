@@ -778,6 +778,7 @@ export const PostDetailPage: React.FC = () => {
     const [copied, setCopied] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [isDeletingPost, setIsDeletingPost] = useState(false);
+    const [heroLightboxOpen, setHeroLightboxOpen] = useState(false);
 
     useEffect(() => {
         const fetchPost = async () => {
@@ -965,8 +966,6 @@ export const PostDetailPage: React.FC = () => {
               ...(post.media || []),
           ]
         : (isArtwork && post.media && post.media.length > 1 ? post.media.slice(1) : (isArtwork ? [] : post.media || []));
-
-    const [heroLightboxOpen, setHeroLightboxOpen] = useState(false);
 
     return (
         <div className="w-full max-w-4xl lg:max-w-5xl mx-auto px-4 sm:px-8 py-8 space-y-8">
