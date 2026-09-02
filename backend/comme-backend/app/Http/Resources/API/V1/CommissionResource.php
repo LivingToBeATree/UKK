@@ -11,16 +11,19 @@ class CommissionResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'status' => $this->status?->value,
+            'commission_service_id' => $this->commission_service_id,
+            'commission_option_id' => $this->commission_option_id,
+            'artist_profile_id' => $this->artist_profile_id,
+            'user_id' => $this->user_id,
+            'status' => $this->status?->value ?? $this->status,
             'description' => $this->description,
-            'deadline' => $this->deadline,
+            'deadline' => $this->deadline instanceof \DateTimeInterface ? $this->deadline->toISOString() : ($this->deadline ? (string) $this->deadline : null),
             'delivered_at' => $this->delivered_at?->toISOString(),
             'review_deadline' => $this->review_deadline?->toISOString(),
             'completed_at' => $this->completed_at?->toISOString(),
-            // Laravel's decimal cast returns a string ("150.00"), not a
-            // number — (float) here so the frontend gets a real number
-            // it can do math on directly, not something it has to parseFloat() itself.
             'total_price' => (float) $this->total_price,
+            'created_at' => $this->created_at?->toISOString(),
+            'updated_at' => $this->updated_at?->toISOString(),
 
             'commission_service' => new CommissionServiceResource($this->whenLoaded('commissionService')),
             'commission_option' => new CommissionOptionResource($this->whenLoaded('commissionOption')),
@@ -28,11 +31,12 @@ class CommissionResource extends JsonResource
             'user' => new UserResource($this->whenLoaded('user')),
             'review' => new CommissionReviewResource($this->whenLoaded('review')),
             'messages' => CommissionMessageResource::collection($this->whenLoaded('messages')),
+            'addons_selections' => $this->whenLoaded('addonsSelections'),
             'payout' => $this->whenLoaded('payout', function () {
                 return [
                     'id' => $this->payout->id,
                     'amount' => (float) $this->payout->amount,
-                    'status' => $this->payout->status?->value,
+                    'status' => $this->payout->status?->value ?? $this->payout->status,
                     'reference' => $this->payout->reference,
                     'bank_name' => $this->payout->bank_name,
                     'bank_account_name' => $this->payout->bank_account_name,

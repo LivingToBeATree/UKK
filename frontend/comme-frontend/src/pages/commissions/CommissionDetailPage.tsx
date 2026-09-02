@@ -18,7 +18,7 @@ import {
 import { commissionOrderApi, commissionReviewApi } from '@/services/commissionService';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { formatPrice } from '@/utils/format';
+import { formatPrice, formatDateSafe, formatDateTimeSafe } from '@/utils/format';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -332,8 +332,11 @@ export const CommissionDetailPage: React.FC = () => {
         <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
             {/* Header Navigation */}
             <div className="flex items-center justify-between">
-                <Link to="/commissions" className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground">
-                    <ArrowLeft className="h-4 w-4" /> Back to My Commissions
+                <Link
+                    to={isArtistUser ? "/dashboard/commissions" : "/commissions"}
+                    className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    <ArrowLeft className="h-4 w-4" /> {isArtistUser ? "Back to Studio Order Queue" : "Back to My Commissions"}
                 </Link>
                 <Badge variant={commission.status === 'completed' ? 'teal' : commission.status === 'in_progress' ? 'purple' : 'gold'}>
                     Status: {commission.status.replace('_', ' ').toUpperCase()}
@@ -351,8 +354,18 @@ export const CommissionDetailPage: React.FC = () => {
                                     {commission.commission_service?.name || `Commission Order #${commission.id}`}
                                 </h1>
                                 <p className="text-xs text-muted-foreground mt-0.5">
-                                    Tier Option: <span className="font-semibold text-foreground">{commission.commission_option?.title || 'Custom Service'}</span>
+                                    Package: <span className="font-semibold text-foreground">{commission.commission_option?.title || 'Standard Service'}</span>
                                 </p>
+                                {commission.addons_selections && commission.addons_selections.length > 0 && (
+                                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                                        <span className="text-[10px] text-muted-foreground font-semibold uppercase">Add-ons:</span>
+                                        {commission.addons_selections.map((addon) => (
+                                            <Badge key={addon.id} variant="secondary" className="text-[10px] bg-secondary/80 text-foreground">
+                                                +{addon.title} ({formatPrice(addon.price)})
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                             <div className="text-left sm:text-right">
                                 <span className="text-[11px] text-muted-foreground block font-mono uppercase">Total Agreed Price</span>
@@ -377,8 +390,8 @@ export const CommissionDetailPage: React.FC = () => {
                                 <Avatar size="md" fallback={commission.user?.display_name || commission.user?.username || 'Client'} src={commission.user?.avatar_url} />
                                 <div>
                                     <span className="text-[10px] text-muted-foreground uppercase font-mono font-bold block">Client / Commissioner</span>
-                                    <span className="font-bold text-foreground">{commission.user?.display_name || commission.user?.username}</span>
-                                    <span className="text-[11px] text-muted-foreground block">@{commission.user?.username}</span>
+                                    <span className="font-bold text-foreground">{commission.user?.display_name || commission.user?.username || 'Client'}</span>
+                                    <span className="text-[11px] text-muted-foreground block">@{commission.user?.username || 'client'}</span>
                                 </div>
                             </div>
                         </div>
@@ -389,16 +402,14 @@ export const CommissionDetailPage: React.FC = () => {
                                 <p className="text-muted-foreground flex items-center gap-1">
                                     <Calendar className="h-3.5 w-3.5 text-primary" /> Created
                                 </p>
-                                <p className="font-bold mt-1">{new Date(commission.created_at).toLocaleDateString('en-US', { dateStyle: 'medium' })}</p>
+                                <p className="font-bold mt-1">{formatDateSafe(commission.created_at)}</p>
                             </div>
                             <div>
                                 <p className="text-muted-foreground flex items-center gap-1">
                                     <Clock className="h-3.5 w-3.5 text-amber-400" /> Deadline
                                 </p>
                                 <p className="font-bold mt-1">
-                                    {commission.deadline
-                                        ? new Date(commission.deadline).toLocaleDateString('en-US', { dateStyle: 'medium' })
-                                        : 'Flexible'}
+                                    {formatDateSafe(commission.deadline, { dateStyle: 'medium' }, 'Flexible')}
                                 </p>
                             </div>
                             <div>
@@ -435,8 +446,8 @@ export const CommissionDetailPage: React.FC = () => {
                                 </p>
                                 <p className="text-muted-foreground leading-relaxed">
                                     {isBuyer
-                                        ? `The artist has delivered their work. Please inspect the deliverables. If everything looks good, confirm to release payment. If changes are needed, you can request a revision. If no action is taken, funds will automatically release on ${commission.review_deadline ? new Date(commission.review_deadline).toLocaleDateString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '7 days'}.`
-                                        : `You marked this work as delivered. The client has until ${commission.review_deadline ? new Date(commission.review_deadline).toLocaleDateString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '7 days'} to review or request a revision, after which your payout will automatically be released.`}
+                                        ? `The artist has delivered their work. Please inspect the deliverables. If everything looks good, confirm to release payment. If changes are needed, you can request a revision. If no action is taken, funds will automatically release on ${formatDateTimeSafe(commission.review_deadline, '7 days')}.`
+                                        : `You marked this work as delivered. The client has until ${formatDateTimeSafe(commission.review_deadline, '7 days')} to review or request a revision, after which your payout will automatically be released.`}
                                 </p>
                             </div>
                         )}
@@ -749,7 +760,7 @@ export const CommissionDetailPage: React.FC = () => {
                                             }`}>
                                                 {msg.message}
                                                 <p className={`text-[10px] mt-1 font-mono ${isMe ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
-                                                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    {formatDateSafe(msg.created_at, { hour: '2-digit', minute: '2-digit' }, 'Just now')}
                                                 </p>
                                             </div>
                                         </div>

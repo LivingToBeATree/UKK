@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/sonner';
-import { formatPrice } from '@/utils/format';
+import { formatPrice, formatDateSafe } from '@/utils/format';
 import type { ArtistPayoutAccount, CommissionOrder } from '@/types';
 
 const POPULAR_BANKS = [
@@ -357,7 +357,7 @@ export const ArtistEarningsPage: React.FC = () => {
                                                 </span>
                                             </div>
                                             <p className="text-xs text-muted-foreground">
-                                                Client: <span className="text-foreground font-medium">@{order.user?.username || 'client'}</span> • {new Date(order.created_at).toLocaleDateString()}
+                                                Client: <span className="text-foreground font-medium">@{order.user?.username || 'client'}</span> • {formatDateSafe(order.created_at)}
                                             </p>
                                         </div>
 

@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/sonner';
+import { formatDateSafe } from '@/utils/format';
 import type { Post } from '@/types';
 
 export const BookmarksPage: React.FC = () => {
@@ -57,7 +58,7 @@ export const BookmarksPage: React.FC = () => {
                                                 <Avatar size="sm" fallback={post.user?.display_name || '?'} src={post.user?.avatar_url} />
                                                 <div>
                                                     <p className="font-semibold text-sm">{post.user?.display_name || post.user?.username}</p>
-                                                    <p className="text-[11px] text-muted-foreground">{new Date(post.created_at).toLocaleDateString()}</p>
+                                                    <p className="text-[11px] text-muted-foreground">{formatDateSafe(post.created_at)}</p>
                                                 </div>
                                             </div>
                                             <p className="text-sm line-clamp-3">{post.content}</p>

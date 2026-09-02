@@ -104,6 +104,14 @@ export interface ArtistPayoutAccount {
   updated_at: string;
 }
 
+export interface CommissionAddonSelection {
+  id: number;
+  commission_id: number;
+  commission_addon_id?: number | null;
+  title: string;
+  price: number;
+}
+
 export interface CommissionOrder {
   id: number;
   commission_service_id: number;
@@ -127,6 +135,7 @@ export interface CommissionOrder {
   review?: CommissionReview | null;
   payments?: CommissionPayment[];
   payout?: CommissionPayout | null;
+  addons_selections?: CommissionAddonSelection[];
 }
 
 export interface CommissionMessage {

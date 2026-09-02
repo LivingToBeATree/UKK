@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/sonner';
-import { formatPrice } from '@/utils/format';
+import { formatPrice, formatDateSafe } from '@/utils/format';
 import type { CommissionOrder } from '@/types';
 
 export const ArtistInquiriesPage: React.FC = () => {
@@ -172,7 +172,7 @@ export const ArtistInquiriesPage: React.FC = () => {
                                             <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
                                                 <span className="flex items-center gap-1">
                                                     <Clock className="h-3 w-3" />
-                                                    {new Date(order.created_at).toLocaleDateString()}
+                                                    {formatDateSafe(order.created_at)}
                                                 </span>
                                                 <span>•</span>
                                                 <span className="font-semibold text-purple-400">

@@ -30,7 +30,8 @@ class CommissionController extends Controller
 
         $commissions = Commission::where('user_id', $userId)
             ->orWhereHas('artistProfile', fn ($query) => $query->where('user_id', $userId))
-            ->with(['commissionService', 'artistProfile', 'user'])
+            ->with(['commissionService', 'commissionOption.addons', 'artistProfile.user', 'user'])
+            ->latest()
             ->paginate(20);
 
         return ApiResponseHelper::paginatedResponse(
@@ -100,7 +101,8 @@ class CommissionController extends Controller
         Gate::authorize('view', $commission);
 
         return ApiResponseHelper::successResponse(
-            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review'])
+            new CommissionResource(
+                $commission->load(['commissionService', 'commissionOption.addons', 'artistProfile.user', 'user', 'messages.user', 'review', 'addonsSelections', 'payout'])
             ),
             'Commission retrieved successfully.',
         );
@@ -114,7 +116,9 @@ class CommissionController extends Controller
         $commission->update($request->validated());
 
         return ApiResponseHelper::successResponse(
-            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review'])),
+            new CommissionResource(
+                $commission->load(['commissionService', 'commissionOption.addons', 'artistProfile.user', 'user', 'messages.user', 'review', 'addonsSelections', 'payout'])
+            ),
             'Commission updated successfully.'
         );
     }

@@ -21,7 +21,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatPrice } from '@/utils/format';
+import { formatPrice, formatDateSafe } from '@/utils/format';
 import type { CommissionOrder } from '@/types';
 
 export const DashboardHomePage: React.FC = () => {
@@ -257,7 +257,7 @@ export const DashboardHomePage: React.FC = () => {
                                             </span>
                                         </div>
                                         <p className="text-xs text-muted-foreground">
-                                            Client: <span className="text-foreground font-medium">@{order.user?.username || 'client'}</span> • {new Date(order.created_at).toLocaleDateString()}
+                                            Client: <span className="text-foreground font-medium">@{order.user?.username || 'client'}</span> • {formatDateSafe(order.created_at)}
                                         </p>
                                     </div>
 

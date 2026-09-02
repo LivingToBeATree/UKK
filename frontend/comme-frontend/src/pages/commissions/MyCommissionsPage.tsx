@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/sonner';
-import { formatPrice } from '@/utils/format';
+import { formatPrice, formatDateSafe } from '@/utils/format';
 import type { CommissionOrder, PaginationMeta } from '@/types';
 
 const statusColors: Record<string, string> = {
@@ -126,7 +126,7 @@ export const MyCommissionsPage: React.FC = () => {
                                             <p className="text-xs text-muted-foreground truncate">{commission.description}</p>
                                             <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
                                                 <Clock className="h-3 w-3" />
-                                                {new Date(commission.created_at).toLocaleDateString()}
+                                                {formatDateSafe(commission.created_at)}
                                             </p>
                                         </div>
                                         <p className="font-bold text-primary shrink-0">{formatPrice(commission.total_price)}</p>
