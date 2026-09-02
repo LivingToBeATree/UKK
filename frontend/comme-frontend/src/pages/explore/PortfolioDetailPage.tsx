@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import {
     ArrowLeft,
     Star,
     Calendar,
-    Sparkles,
     Eye,
     Maximize2,
     ChevronLeft,
@@ -13,6 +12,7 @@ import {
     Video,
     Tag,
     Palette,
+    Film,
 } from 'lucide-react';
 import { portfolioApi } from '@/services/artistService';
 import { Avatar } from '@/components/ui/avatar';
@@ -37,12 +37,249 @@ const formatDate = (dateStr?: string) => {
     }
 };
 
+const isVideoMedia = (m: any) =>
+    m?.media_type === 'video' ||
+    m?.mime_type?.includes('video') ||
+    (typeof m?.url === 'string' && /\.(mp4|webm|mov|mkv)$/i.test(m.url));
+
+const isGifMedia = (m: any) =>
+    m?.mime_type?.includes('gif') ||
+    (typeof m?.url === 'string' && /\.gif$/i.test(m.url));
+
+// ── Horizontal Scrollable Process Media Gallery (Exact Post Media Format) ──
+interface ProcessGalleryProps {
+    mediaList: any[];
+    onOpenLightbox: (index: number) => void;
+}
+
+const ProcessMediaGallery: React.FC<ProcessGalleryProps> = ({ mediaList, onOpenLightbox }) => {
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const [canScrollLeft, setCanScrollLeft] = useState(false);
+    const [canScrollRight, setCanScrollRight] = useState(mediaList.length > 1);
+    const [activeIndex, setActiveIndex] = useState(0);
+
+    const checkScroll = () => {
+        if (!scrollContainerRef.current) return;
+        const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+        setCanScrollLeft(scrollLeft > 10);
+        setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+
+        const itemWidth = scrollContainerRef.current.firstElementChild?.clientWidth || clientWidth;
+        const current = Math.round(scrollLeft / (itemWidth + 12));
+        setActiveIndex(Math.min(Math.max(0, current), mediaList.length - 1));
+    };
+
+    useEffect(() => {
+        checkScroll();
+        const container = scrollContainerRef.current;
+        if (container) {
+            container.addEventListener('scroll', checkScroll, { passive: true });
+            window.addEventListener('resize', checkScroll);
+        }
+        return () => {
+            if (container) container.removeEventListener('scroll', checkScroll);
+            window.removeEventListener('resize', checkScroll);
+        };
+    }, [mediaList.length]);
+
+    const scroll = (direction: 'left' | 'right') => {
+        if (!scrollContainerRef.current) return;
+        const container = scrollContainerRef.current;
+        const scrollAmount = container.clientWidth * 0.8;
+        container.scrollBy({
+            left: direction === 'left' ? -scrollAmount : scrollAmount,
+            behavior: 'smooth',
+        });
+    };
+
+    const scrollToItem = (index: number) => {
+        if (!scrollContainerRef.current) return;
+        const container = scrollContainerRef.current;
+        const children = container.children;
+        if (children[index]) {
+            (children[index] as HTMLElement).scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+                inline: 'center',
+            });
+        }
+    };
+
+    if (mediaList.length === 1) {
+        const m = mediaList[0];
+        const isVid = isVideoMedia(m);
+        const isGif = isGifMedia(m);
+
+        return (
+            <div className="relative rounded-2xl overflow-hidden bg-black/90 border border-border/80 my-2 max-w-2xl group">
+                {isVid ? (
+                    <CustomVideoPlayer
+                        src={m.url}
+                        autoPlay={false}
+                        loop
+                        className="w-full h-auto max-h-[420px] rounded-2xl"
+                    />
+                ) : (
+                    <img
+                        src={m.url}
+                        alt={m.file_name || 'Process media'}
+                        className="w-full h-auto max-h-[420px] object-contain rounded-2xl cursor-zoom-in hover:brightness-105 transition-all bg-black/50"
+                        onClick={() => onOpenLightbox(0)}
+                    />
+                )}
+
+                <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 pointer-events-none z-10">
+                    {isVid ? (
+                        <span className="px-2.5 py-0.5 rounded-full bg-blue-600/90 text-white text-[10px] font-black flex items-center gap-1 shadow-md backdrop-blur-md">
+                            <Video className="h-3 w-3" /> TIMELAPSE / VIDEO
+                        </span>
+                    ) : isGif ? (
+                        <span className="px-2.5 py-0.5 rounded-full bg-purple-600/90 text-white text-[10px] font-black shadow-md backdrop-blur-md">
+                            GIF
+                        </span>
+                    ) : (
+                        <span className="px-2.5 py-0.5 rounded-full bg-black/70 text-white text-[10px] font-black shadow-md backdrop-blur-md">
+                            PROCESS / WIP
+                        </span>
+                    )}
+                </div>
+
+                {!isVid && (
+                    <button
+                        type="button"
+                        onClick={() => onOpenLightbox(0)}
+                        className="absolute top-2.5 right-2.5 h-7 px-2.5 rounded-full bg-black/70 hover:bg-black/90 text-white text-[11px] font-semibold flex items-center gap-1 shadow-md backdrop-blur-md border border-white/20 transition-all cursor-pointer opacity-0 group-hover:opacity-100 z-10"
+                    >
+                        <Maximize2 className="h-3 w-3" /> Expand
+                    </button>
+                )}
+            </div>
+        );
+    }
+
+    return (
+        <div className="relative rounded-2xl overflow-hidden bg-black/90 border border-border/80 my-2 group/gallery select-none">
+            {/* Horizontal Scroll Track */}
+            <div
+                ref={scrollContainerRef}
+                className="flex gap-3.5 overflow-x-auto snap-x snap-mandatory p-3.5 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent scroll-smooth"
+                style={{ scrollbarWidth: 'thin' }}
+            >
+                {mediaList.map((m, idx) => {
+                    const isVid = isVideoMedia(m);
+                    const isGif = isGifMedia(m);
+
+                    return (
+                        <div
+                            key={m.id || idx}
+                            className="relative snap-center shrink-0 w-[300px] sm:w-[380px] md:w-[440px] h-[210px] sm:h-[250px] md:h-[275px] rounded-xl overflow-hidden bg-black/80 border border-white/10 flex items-center justify-center group/card"
+                        >
+                            {isVid ? (
+                                <CustomVideoPlayer
+                                    src={m.url}
+                                    autoPlay={false}
+                                    loop
+                                    className="w-full h-full object-contain"
+                                />
+                            ) : (
+                                <img
+                                    src={m.url}
+                                    alt={m.file_name || `Process ${idx + 1}`}
+                                    className="w-full h-full object-contain cursor-zoom-in group-hover/card:scale-102 transition-transform duration-300"
+                                    onClick={() => onOpenLightbox(idx)}
+                                    loading="lazy"
+                                />
+                            )}
+
+                            {/* Top Badges */}
+                            <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 z-10 pointer-events-none">
+                                {isVid ? (
+                                    <span className="px-2.5 py-0.5 rounded-full bg-blue-600/90 text-white text-[10px] font-black flex items-center gap-1 shadow-md backdrop-blur-md">
+                                        <Video className="h-3 w-3" /> TIMELAPSE
+                                    </span>
+                                ) : isGif ? (
+                                    <span className="px-2.5 py-0.5 rounded-full bg-purple-600/90 text-white text-[10px] font-black shadow-md backdrop-blur-md">
+                                        GIF
+                                    </span>
+                                ) : (
+                                    <span className="px-2.5 py-0.5 rounded-full bg-black/75 text-white text-[10px] font-bold shadow-md backdrop-blur-md">
+                                        WIP {idx + 1}
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Top Right Counter & Expand Button */}
+                            <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 z-10">
+                                <span className="px-2.5 py-0.5 rounded-full bg-black/70 backdrop-blur-md text-white text-[10px] font-bold border border-white/10 shadow-xs">
+                                    {idx + 1}/{mediaList.length}
+                                </span>
+                                {!isVid && (
+                                    <button
+                                        type="button"
+                                        onClick={() => onOpenLightbox(idx)}
+                                        className="h-7 w-7 rounded-full bg-black/70 hover:bg-black/90 text-white flex items-center justify-center backdrop-blur-md border border-white/20 shadow-xs transition-all cursor-pointer opacity-0 group-hover/card:opacity-100"
+                                        title="Expand"
+                                    >
+                                        <Maximize2 className="h-3 w-3" />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Left / Right Nav Arrows */}
+            {canScrollLeft && (
+                <button
+                    type="button"
+                    onClick={() => scroll('left')}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-black/75 hover:bg-black/95 text-white border border-white/20 flex items-center justify-center shadow-lg backdrop-blur-md transition-all cursor-pointer z-20"
+                    title="Scroll left"
+                >
+                    <ChevronLeft className="h-4 w-4" />
+                </button>
+            )}
+            {canScrollRight && (
+                <button
+                    type="button"
+                    onClick={() => scroll('right')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-black/75 hover:bg-black/95 text-white border border-white/20 flex items-center justify-center shadow-lg backdrop-blur-md transition-all cursor-pointer z-20"
+                    title="Scroll right"
+                >
+                    <ChevronRight className="h-4 w-4" />
+                </button>
+            )}
+
+            {/* Bottom Navigation Dots */}
+            {mediaList.length > 1 && (
+                <div className="flex items-center justify-center gap-1.5 py-2 bg-black/70 backdrop-blur-xs border-t border-white/5">
+                    {mediaList.map((_, idx) => (
+                        <button
+                            key={idx}
+                            type="button"
+                            onClick={() => scrollToItem(idx)}
+                            className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                                idx === activeIndex
+                                    ? 'w-5 bg-white shadow-xs'
+                                    : 'w-1.5 bg-white/30 hover:bg-white/60'
+                            }`}
+                            aria-label={`Go to media ${idx + 1}`}
+                        />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 export const PortfolioDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
-    const [currentIndex, setCurrentIndex] = useState(0);
+
+    // Lightbox modal state
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [lightboxIndex, setLightboxIndex] = useState(0);
 
@@ -94,21 +331,31 @@ export const PortfolioDetailPage: React.FC = () => {
         );
     }
 
-    const mediaList = portfolio.media && portfolio.media.length > 0 ? portfolio.media : [];
-    const currentMedia = mediaList[currentIndex] || mediaList[0];
+    const allMedia = portfolio.media && portfolio.media.length > 0 ? portfolio.media : [];
+
+    // 1. Main Artwork Piece (first media item / thumbnail / cover)
+    const mainArtwork =
+        allMedia[0] ||
+        ((portfolio as any).thumbnail_media
+            ? { id: 0, url: (portfolio as any).thumbnail_media.url, media_type: 'image' }
+            : portfolio.cover_image_url
+            ? { id: 0, url: portfolio.cover_image_url, media_type: 'image' }
+            : null);
+
+    // 2. Additional Process Media & Timelapses (all media from index 1 onwards)
+    const processMedias = allMedia.length > 1 ? allMedia.slice(1) : [];
+
     const artist = portfolio.artist_profile;
     const artistUser = artist?.user;
 
-    const isVideo = (m: any) =>
-        m?.media_type === 'video' ||
-        m?.mime_type?.includes('video') ||
-        (typeof m?.url === 'string' && /\.(mp4|webm|mov|mkv)$/i.test(m.url));
+    const handleOpenMainLightbox = () => {
+        setLightboxIndex(0);
+        setLightboxOpen(true);
+    };
 
-    const handlePrev = () => setCurrentIndex((prev) => (prev - 1 + mediaList.length) % mediaList.length);
-    const handleNext = () => setCurrentIndex((prev) => (prev + 1) % mediaList.length);
-
-    const handleOpenLightbox = (index: number) => {
-        setLightboxIndex(index);
+    const handleOpenProcessLightbox = (processIdx: number) => {
+        // Offset by 1 since mainArtwork is at index 0 in allMedia
+        setLightboxIndex(processIdx + 1);
         setLightboxOpen(true);
     };
 
@@ -125,36 +372,26 @@ export const PortfolioDetailPage: React.FC = () => {
             </div>
 
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
-                {/* ── Hero Artwork Display ── */}
-                {mediaList.length > 0 && (
+                {/* ── 1. MAIN SHOWCASED ARTWORK (Hero Piece at Full Natural Dimensions) ── */}
+                {mainArtwork && (
                     <div className="relative rounded-3xl overflow-hidden bg-black/40 border border-border/60 group mb-6">
-                        {/* Main Artwork */}
-                        <AnimatePresence mode="wait">
-                            <motion.div
-                                key={currentMedia?.url + currentIndex}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 0.3 }}
-                                className="w-full flex items-center justify-center"
-                            >
-                                {isVideo(currentMedia) ? (
-                                    <CustomVideoPlayer
-                                        src={currentMedia.url}
-                                        autoPlay={false}
-                                        loop
-                                        className="w-full h-auto rounded-3xl"
-                                    />
-                                ) : (
-                                    <img
-                                        src={currentMedia.url}
-                                        alt={currentMedia.file_name || portfolio.title}
-                                        className="w-full h-auto block object-cover cursor-zoom-in select-none group-hover:brightness-105 transition-all"
-                                        onClick={() => handleOpenLightbox(currentIndex)}
-                                    />
-                                )}
-                            </motion.div>
-                        </AnimatePresence>
+                        <div className="w-full flex items-center justify-center">
+                            {isVideoMedia(mainArtwork) ? (
+                                <CustomVideoPlayer
+                                    src={mainArtwork.url}
+                                    autoPlay={false}
+                                    loop
+                                    className="w-full h-auto rounded-3xl"
+                                />
+                            ) : (
+                                <img
+                                    src={mainArtwork.url}
+                                    alt={mainArtwork.file_name || portfolio.title}
+                                    className="w-full h-auto block object-cover cursor-zoom-in select-none group-hover:brightness-105 transition-all"
+                                    onClick={handleOpenMainLightbox}
+                                />
+                            )}
+                        </div>
 
                         {/* Featured badge */}
                         {portfolio.starred && (
@@ -166,10 +403,10 @@ export const PortfolioDetailPage: React.FC = () => {
                         )}
 
                         {/* Expand button */}
-                        {!isVideo(currentMedia) && (
+                        {!isVideoMedia(mainArtwork) && (
                             <button
                                 type="button"
-                                onClick={() => handleOpenLightbox(currentIndex)}
+                                onClick={handleOpenMainLightbox}
                                 className="absolute top-4 right-4 h-8 px-3 rounded-full bg-black/75 hover:bg-black/95 text-white text-xs font-semibold flex items-center gap-1.5 shadow-lg backdrop-blur-md border border-white/20 transition-all cursor-pointer hover:scale-105 z-20 opacity-0 group-hover:opacity-100"
                                 title="Expand"
                             >
@@ -177,49 +414,10 @@ export const PortfolioDetailPage: React.FC = () => {
                                 <span>Expand</span>
                             </button>
                         )}
-
-                        {/* Navigation for multiple images */}
-                        {mediaList.length > 1 && (
-                            <>
-                                <div className="absolute top-4 right-4 px-2.5 py-0.5 rounded-full bg-black/65 backdrop-blur-md text-white text-[10px] font-bold border border-white/10 shadow-md z-10">
-                                    {currentIndex + 1}/{mediaList.length}
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={handlePrev}
-                                    className="absolute left-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer shadow-lg"
-                                >
-                                    <ChevronLeft className="h-5 w-5" />
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleNext}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer shadow-lg"
-                                >
-                                    <ChevronRight className="h-5 w-5" />
-                                </button>
-
-                                {/* Dot indicators */}
-                                <div className="absolute bottom-4 inset-x-0 flex justify-center gap-1.5 z-10">
-                                    {mediaList.map((_: any, idx: number) => (
-                                        <button
-                                            key={idx}
-                                            type="button"
-                                            onClick={() => setCurrentIndex(idx)}
-                                            className={`h-2 rounded-full transition-all cursor-pointer ${
-                                                idx === currentIndex
-                                                    ? 'w-6 bg-white shadow-md'
-                                                    : 'w-2 bg-white/40 hover:bg-white/60'
-                                            }`}
-                                        />
-                                    ))}
-                                </div>
-                            </>
-                        )}
                     </div>
                 )}
 
-                {/* ── Artwork Info Card ── */}
+                {/* ── 2. Artwork Info & Process Media Card ── */}
                 <Card className="rounded-3xl border border-border/80 bg-card overflow-hidden shadow-lg">
                     <CardContent className="p-6 sm:p-8 space-y-6">
                         {/* Title & Meta */}
@@ -287,6 +485,23 @@ export const PortfolioDetailPage: React.FC = () => {
                             </div>
                         )}
 
+                        {/* ── 3. ADDITIONAL PROCESS MEDIA & TIMELAPSES (Formatted exactly like Post Medias) ── */}
+                        {processMedias.length > 0 && (
+                            <div className="pt-4 border-t border-border/60 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-xs font-black uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                        <Film className="h-3.5 w-3.5 text-blue-400" />
+                                        Process Media, Timelapses & WIPs ({processMedias.length})
+                                    </p>
+                                </div>
+
+                                <ProcessMediaGallery
+                                    mediaList={processMedias}
+                                    onOpenLightbox={handleOpenProcessLightbox}
+                                />
+                            </div>
+                        )}
+
                         {/* Tags */}
                         {portfolio.tags && portfolio.tags.length > 0 && (
                             <div className="flex flex-wrap gap-2 pt-2">
@@ -302,57 +517,15 @@ export const PortfolioDetailPage: React.FC = () => {
                                 ))}
                             </div>
                         )}
-
-                        {/* Media Thumbnail Strip (Quick Jump) */}
-                        {mediaList.length > 1 && (
-                            <div className="pt-4 border-t border-border/60">
-                                <p className="text-xs font-bold text-muted-foreground mb-3 flex items-center gap-1.5">
-                                    <Sparkles className="h-3.5 w-3.5 text-purple-400" /> All Media ({mediaList.length})
-                                </p>
-                                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-border/40">
-                                    {mediaList.map((m: any, idx: number) => (
-                                        <button
-                                            key={m.id || idx}
-                                            type="button"
-                                            onClick={() => {
-                                                setCurrentIndex(idx);
-                                                window.scrollTo({ top: 0, behavior: 'smooth' });
-                                            }}
-                                            className={`relative shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all cursor-pointer ${
-                                                idx === currentIndex
-                                                    ? 'border-purple-500 ring-2 ring-purple-500/30 shadow-lg'
-                                                    : 'border-border/60 hover:border-purple-500/40 opacity-70 hover:opacity-100'
-                                            }`}
-                                        >
-                                            {isVideo(m) ? (
-                                                <div className="w-full h-full bg-black/80 flex items-center justify-center">
-                                                    <Video className="h-5 w-5 text-blue-400" />
-                                                </div>
-                                            ) : (
-                                                <img
-                                                    src={m.url}
-                                                    alt={m.file_name || `Media ${idx + 1}`}
-                                                    className="w-full h-full object-cover"
-                                                    loading="lazy"
-                                                />
-                                            )}
-                                            {idx === currentIndex && (
-                                                <div className="absolute inset-0 bg-purple-500/20" />
-                                            )}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
                     </CardContent>
                 </Card>
             </motion.div>
 
-            {/* Lightbox */}
+            {/* Lightbox for all artwork & process medias */}
             <MediaLightboxModal
                 isOpen={lightboxOpen}
                 onClose={() => setLightboxOpen(false)}
-                mediaList={mediaList}
+                mediaList={allMedia.length > 0 ? allMedia : mainArtwork ? [mainArtwork] : []}
                 initialIndex={lightboxIndex}
             />
         </div>
