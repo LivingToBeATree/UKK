@@ -42,10 +42,9 @@ class PortfolioController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StorePortfolioRequest $request): JsonResponse
-    {
         $portfolio = Portfolio::create([
-            ...$request->safe()->except(['media']),
+            ...$request->safe()->except(['media', 'starred']),
+            'starred' => $request->boolean('starred', false),
             'artist_profile_id' => $request->user()->artistProfile->id,
         ]);
 

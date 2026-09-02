@@ -30,3 +30,18 @@ export interface ArtistApplication{
     updated_at: string;
     user?: User
 }
+
+export interface Portfolio {
+    id: number;
+    artist_profile_id?: number;
+    title: string;
+    description?: string | null;
+    thumbnail_media_id?: number | null;
+    visibility?: string;
+    starred?: boolean;
+    created_at?: string;
+    updated_at?: string;
+    media?: { id: number; url: string; file_name?: string; media_type?: string }[];
+    thumbnail_media?: { id: number; url: string; file_name?: string };
+    tags?: { id: number; name: string }[];
+}

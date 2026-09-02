@@ -1,5 +1,6 @@
 import { api } from './api';
-import type { ApiResponse, ArtistProfile, ArtistApplication, ArtistPayoutAccount, CommissionReview } from '@/types';
+import type { ApiResponse, ArtistProfile, ArtistApplication, ArtistPayoutAccount, CommissionReview, Portfolio } from '@/types';
+export type { Portfolio };
 
 // Artist Payout Account (Iris / Bank)
 export const artistPayoutApi = {
@@ -87,15 +88,6 @@ export const artistApplicationApi = {
 };
 
 // Portfolios
-export interface Portfolio {
-    id: number;
-    artist_profile_id: number;
-    title: string;
-    description?: string | null;
-    created_at: string;
-    media?: { id: number; url: string; alt_text?: string }[];
-}
-
 export const portfolioApi = {
     list: async (page = 1) => {
         const res = await api.get<ApiResponse<Portfolio[]>>('/portfolios', { params: { page } });
@@ -124,6 +116,14 @@ export const portfolioApi = {
 
     destroy: async (id: number) => {
         await api.delete(`/portfolios/${id}`);
+    },
+
+    toggleStar: async (id: number, starred: boolean) => {
+        const formData = new FormData();
+        formData.append('starred', starred ? '1' : '0');
+        formData.append('_method', 'PUT');
+        const res = await api.post<ApiResponse<Portfolio>>(`/portfolios/${id}`, formData);
+        return res.data.data;
     },
 };
 

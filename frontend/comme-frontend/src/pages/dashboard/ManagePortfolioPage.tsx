@@ -159,9 +159,7 @@ export const ManagePortfolioPage: React.FC = () => {
             if (description.trim()) {
                 formData.append('description', description.trim());
             }
-            if (isStarred) {
-                formData.append('starred', '1');
-            }
+            formData.append('starred', isStarred ? '1' : '0');
 
             mediaPreviews.forEach((item) => {
                 formData.append('media[]', item.file);
@@ -177,6 +175,21 @@ export const ManagePortfolioPage: React.FC = () => {
             toast.error('Failed to create portfolio item');
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    const handleToggleStar = async (item: Portfolio, e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const nextStarred = !Boolean(item.starred);
+        try {
+            await portfolioApi.toggleStar(item.id, nextStarred);
+            setPortfolios((prev) =>
+                prev.map((p) => (p.id === item.id ? { ...p, starred: nextStarred } : p))
+            );
+            toast.success(nextStarred ? 'Marked as Featured!' : 'Removed from Featured');
+        } catch {
+            toast.error('Failed to update featured status');
         }
     };
 
@@ -460,12 +473,20 @@ export const ManagePortfolioPage: React.FC = () => {
                                         </div>
                                     )}
 
-                                    {/* Starred / Featured Badge */}
-                                    {(item as any).starred && (
-                                        <div className="absolute top-3 left-3 bg-amber-500/90 text-black text-[10px] font-black px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
-                                            <Star className="h-3 w-3 fill-black" /> FEATURED
-                                        </div>
-                                    )}
+                                    {/* Starred / Featured Toggle Badge Button */}
+                                    <button
+                                        type="button"
+                                        onClick={(e) => handleToggleStar(item, e)}
+                                        className={`absolute top-3 left-3 text-[10px] font-black px-2.5 py-0.5 rounded-full shadow-md flex items-center gap-1 transition-all cursor-pointer z-10 ${
+                                            (item as any).starred
+                                                ? 'bg-amber-500 text-black hover:bg-amber-400 scale-100'
+                                                : 'bg-black/60 text-white/70 hover:text-white hover:bg-black/90 opacity-0 group-hover:opacity-100 backdrop-blur-md border border-white/20'
+                                        }`}
+                                        title={(item as any).starred ? 'Featured Artwork (Click to unfeature)' : 'Click to feature this artwork'}
+                                    >
+                                        <Star className={`h-3 w-3 ${(item as any).starred ? 'fill-black text-black' : 'text-white'}`} />
+                                        {(item as any).starred ? 'FEATURED' : 'Feature'}
+                                    </button>
 
                                     {/* Media Count Badge */}
                                     {item.media && item.media.length > 1 && (
@@ -499,7 +520,15 @@ export const ManagePortfolioPage: React.FC = () => {
                                         )}
                                     </div>
                                     <div className="pt-2 flex items-center justify-between text-[11px] text-muted-foreground border-t border-border/50">
-                                        <span>{new Date(item.created_at).toLocaleDateString()}</span>
+                                        <span>
+                                            {item.created_at
+                                                ? new Date(item.created_at).toLocaleDateString(undefined, {
+                                                      month: 'short',
+                                                      day: 'numeric',
+                                                      year: 'numeric',
+                                                  })
+                                                : 'Recently added'}
+                                        </span>
                                     </div>
                                 </CardContent>
                             </Card>

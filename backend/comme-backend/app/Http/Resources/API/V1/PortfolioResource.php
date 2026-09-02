@@ -22,7 +22,9 @@ class PortfolioResource extends JsonResource
             'description' => $this->description,
             'thumbnail_media_id' => $this->thumbnail_media_id,
             'visibility' => $this->visibility?->value,
-            'starred' => $this->starred,
+            'starred' => (bool) $this->starred,
+            'created_at' => $this->created_at?->toISOString(),
+            'updated_at' => $this->updated_at?->toISOString(),
 
             'artist_profile' => new ArtistProfileResource($this->whenLoaded('artistProfile')),
             'thumbnail_media' => $thumbnail ? new MediaResource($thumbnail) : null,
