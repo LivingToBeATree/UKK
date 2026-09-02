@@ -89,9 +89,12 @@ export const ArtistApplicationsPage: React.FC = () => {
                                 </div>
 
                                 <div className="text-sm space-y-1">
-                                    <a href={app.portfolio_url} target="_blank" rel="noreferrer" className="text-primary hover:underline flex items-center gap-1 text-xs">
-                                        <ExternalLink className="h-3 w-3" /> {app.portfolio_url}
-                                    </a>
+                                    {(app.portfolio_links?.[0] || app.portfolio_url) && (
+                                        <a href={app.portfolio_links?.[0] || app.portfolio_url || undefined} target="_blank" rel="noreferrer" className="text-primary hover:underline flex items-center gap-1 text-xs">
+                                            <ExternalLink className="h-3 w-3" /> {app.portfolio_links?.[0] || app.portfolio_url}
+                                        </a>
+                                    )}
+                                    {app.bio && <p className="text-xs text-foreground/80">{app.bio}</p>}
                                     {app.note && <p className="text-xs text-muted-foreground">{app.note}</p>}
                                 </div>
 

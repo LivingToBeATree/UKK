@@ -18,17 +18,21 @@ export interface ArtistProfile {
 
 export type ApplicationStatus = 'pending' | 'approved' | 'rejected';
 
-export interface ArtistApplication{
+export interface ArtistApplication {
     id: number;
     user_id: number;
     status: ApplicationStatus;
-    portfolio_url: string;
+    bio?: string | null;
+    portfolio_links?: string[] | null;
+    portfolio_url?: string | null;
+    website?: string | null;
     social_links?: string[] | null;
     note?: string | null;
     rejection_reason?: string | null;
+    submitted_at?: string | null;
     created_at: string;
     updated_at: string;
-    user?: User
+    user?: User;
 }
 
 export interface Portfolio {

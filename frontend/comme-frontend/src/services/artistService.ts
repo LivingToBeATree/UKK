@@ -71,7 +71,13 @@ export const artistApplicationApi = {
         return res.data.data;
     },
 
-    create: async (payload: { portfolio_url: string; social_links?: string[]; note?: string }) => {
+    create: async (payload: {
+        bio: string;
+        portfolio_links: string[];
+        website?: string;
+        social_links?: string[];
+        note?: string;
+    }) => {
         const res = await api.post<ApiResponse<ArtistApplication>>('/artist-applications', payload);
         return res.data.data;
     },
