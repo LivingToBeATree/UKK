@@ -29,6 +29,7 @@ import { EscrowPage } from '@/pages/legal/EscrowPage';
 import { ExplorePage } from '@/pages/explore/ExplorePage';
 import { PostDetailPage } from '@/pages/explore/PostDetailPage';
 import { CreatePostPage } from '@/pages/explore/CreatePostPage';
+import { PortfolioDetailPage } from '@/pages/explore/PortfolioDetailPage';
 
 // Store / Marketplace
 import { StorePage } from '@/pages/store/StorePage';
@@ -88,6 +89,7 @@ export function AppRoutes() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/explore" element={<ExplorePage />} />
             <Route path="/posts/:id" element={<PostDetailPage />} />
+            <Route path="/portfolio/:id" element={<PortfolioDetailPage />} />
             <Route path="/store" element={<StorePage />} />
             <Route path="/store/:serviceId" element={<ServiceDetailPage />} />
             <Route path="/artists" element={<ArtistsDirectoryPage />} />

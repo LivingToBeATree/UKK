@@ -293,16 +293,44 @@ export const UserProfilePage: React.FC = () => {
                             </Card>
                         ) : (
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                                {portfolios.map((item) => (
-                                    <Card key={item.id} className="overflow-hidden border border-border">
-                                        <div className="aspect-square bg-secondary flex items-center justify-center">
-                                            <Palette className="h-6 w-6 text-muted-foreground/40" />
-                                        </div>
-                                        <div className="p-2.5">
-                                            <p className="text-xs font-bold truncate">{item.title}</p>
-                                        </div>
-                                    </Card>
-                                ))}
+                                {portfolios.map((item) => {
+                                    const thumbUrl =
+                                        (item as any).thumbnail_media?.url ||
+                                        item.media?.[0]?.url ||
+                                        item.cover_image_url ||
+                                        null;
+
+                                    return (
+                                        <Link
+                                            key={item.id}
+                                            to={`/portfolio/${item.id}`}
+                                            className="group block rounded-2xl overflow-hidden border border-border/80 hover:border-purple-500/60 bg-card transition-all duration-300 hover:shadow-lg"
+                                        >
+                                            <div className="aspect-square bg-secondary/40 relative overflow-hidden flex items-center justify-center">
+                                                {thumbUrl ? (
+                                                    <img
+                                                        src={thumbUrl}
+                                                        alt={item.title}
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                        loading="lazy"
+                                                    />
+                                                ) : (
+                                                    <Palette className="h-6 w-6 text-muted-foreground/40" />
+                                                )}
+                                                {item.starred && (
+                                                    <div className="absolute top-2 left-2 bg-amber-500 text-black text-[9px] font-black px-1.5 py-0.5 rounded shadow-sm">
+                                                        ★
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="p-2.5">
+                                                <p className="text-xs font-bold text-foreground truncate group-hover:text-purple-400 transition-colors">
+                                                    {item.title}
+                                                </p>
+                                            </div>
+                                        </Link>
+                                    );
+                                })}
                             </div>
                         )}
                     </TabsContent>

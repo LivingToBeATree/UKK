@@ -41,7 +41,9 @@ export interface Portfolio {
     starred?: boolean;
     created_at?: string;
     updated_at?: string;
-    media?: { id: number; url: string; file_name?: string; media_type?: string }[];
+    cover_image_url?: string;
+    media?: { id: number; url: string; file_name?: string; media_type?: string; mime_type?: string }[];
     thumbnail_media?: { id: number; url: string; file_name?: string };
     tags?: { id: number; name: string }[];
+    artist_profile?: ArtistProfile;
 }

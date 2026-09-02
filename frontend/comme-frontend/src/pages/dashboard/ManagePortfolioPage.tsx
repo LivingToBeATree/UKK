@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
     Plus,
@@ -12,6 +13,9 @@ import {
     CheckCircle2,
     Layers,
     Video,
+    ExternalLink,
+    Film,
+    Eye,
 } from 'lucide-react';
 import { portfolioApi, type Portfolio } from '@/services/artistService';
 import { Button } from '@/components/ui/button';
@@ -28,6 +32,7 @@ interface MediaPreviewItem {
     url: string;
     isVideo: boolean;
     size: string;
+    name: string;
 }
 
 export const ManagePortfolioPage: React.FC = () => {
@@ -39,11 +44,18 @@ export const ManagePortfolioPage: React.FC = () => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [isStarred, setIsStarred] = useState(false);
-    const [mediaPreviews, setMediaPreviews] = useState<MediaPreviewItem[]>([]);
-    const [submitting, setSubmitting] = useState(false);
-    const [isDragging, setIsDragging] = useState(false);
 
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    // 1. Primary / Main Artwork Upload State
+    const [mainArtwork, setMainArtwork] = useState<MediaPreviewItem | null>(null);
+    const [isDraggingMain, setIsDraggingMain] = useState(false);
+    const mainFileInputRef = useRef<HTMLInputElement>(null);
+
+    // 2. Additional Process Media & Timelapses State
+    const [additionalMedia, setAdditionalMedia] = useState<MediaPreviewItem[]>([]);
+    const [isDraggingAdd, setIsDraggingAdd] = useState(false);
+    const addFileInputRef = useRef<HTMLInputElement>(null);
+
+    const [submitting, setSubmitting] = useState(false);
 
     const fetchPortfolios = async () => {
         try {
@@ -61,25 +73,65 @@ export const ManagePortfolioPage: React.FC = () => {
         fetchPortfolios();
     }, []);
 
-    const handleFiles = (files: FileList | File[]) => {
+    // Main artwork handlers
+    const handleMainFile = (file: File) => {
+        const isVideo = file.type.startsWith('video/') || /\.(mp4|webm|mov|mkv)$/i.test(file.name);
+        const maxAllowedSize = isVideo ? 50 * 1024 * 1024 : 20 * 1024 * 1024;
+
+        if (file.size > maxAllowedSize) {
+            toast.error(`Main artwork file is too large (max ${isVideo ? '50MB' : '20MB'})`);
+            return;
+        }
+
+        if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+            toast.error('Please upload a valid image or video file');
+            return;
+        }
+
+        if (mainArtwork) {
+            URL.revokeObjectURL(mainArtwork.url);
+        }
+
+        const url = URL.createObjectURL(file);
+        const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+        setMainArtwork({
+            id: Math.random().toString(36).substring(2, 9),
+            file,
+            url,
+            isVideo,
+            size: `${sizeMb} MB`,
+            name: file.name,
+        });
+        toast.success(`Main artwork selected: ${file.name}`);
+    };
+
+    const handleRemoveMain = () => {
+        if (mainArtwork) {
+            URL.revokeObjectURL(mainArtwork.url);
+            setMainArtwork(null);
+        }
+    };
+
+    // Additional media handlers (timelapses, WIPs)
+    const handleAdditionalFiles = (files: FileList | File[]) => {
         const validItems: MediaPreviewItem[] = [];
 
         Array.from(files).forEach((file) => {
-            if (mediaPreviews.length + validItems.length >= 8) {
-                toast.error('Maximum 8 media files per portfolio piece');
+            if (additionalMedia.length + validItems.length >= 7) {
+                toast.error('Maximum 7 additional process files / timelapses');
                 return;
             }
 
             const isVideo = file.type.startsWith('video/') || /\.(mp4|webm|mov|mkv)$/i.test(file.name);
-            const maxAllowedSize = isVideo ? 50 * 1024 * 1024 : 15 * 1024 * 1024;
+            const maxAllowedSize = isVideo ? 100 * 1024 * 1024 : 20 * 1024 * 1024;
 
             if (file.size > maxAllowedSize) {
-                toast.error(`File ${file.name} is too large (max ${isVideo ? '50MB' : '15MB'})`);
+                toast.error(`File ${file.name} is too large (max ${isVideo ? '100MB' : '20MB'})`);
                 return;
             }
 
             if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-                toast.error(`File ${file.name} is not a supported image or video format`);
+                toast.error(`File ${file.name} is not a supported format`);
                 return;
             }
 
@@ -92,49 +144,29 @@ export const ManagePortfolioPage: React.FC = () => {
                 url,
                 isVideo,
                 size: `${sizeMb} MB`,
+                name: file.name,
             });
         });
 
         if (validItems.length > 0) {
-            setMediaPreviews((prev) => [...prev, ...validItems]);
+            setAdditionalMedia((prev) => [...prev, ...validItems]);
+            toast.success(`Added ${validItems.length} process attachment(s)`);
         }
     };
 
-    const handleRemoveMedia = (index: number) => {
-        URL.revokeObjectURL(mediaPreviews[index].url);
-        setMediaPreviews((prev) => prev.filter((_, i) => i !== index));
-    };
-
-    const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            handleFiles(e.target.files);
-            e.target.value = '';
-        }
-    };
-
-    const handleDragOver = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(true);
-    };
-
-    const handleDragLeave = () => {
-        setIsDragging(false);
-    };
-
-    const handleDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(false);
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            handleFiles(e.dataTransfer.files);
-        }
+    const handleRemoveAdditional = (index: number) => {
+        URL.revokeObjectURL(additionalMedia[index].url);
+        setAdditionalMedia((prev) => prev.filter((_, i) => i !== index));
     };
 
     const resetForm = () => {
         setTitle('');
         setDescription('');
         setIsStarred(false);
-        mediaPreviews.forEach((m) => URL.revokeObjectURL(m.url));
-        setMediaPreviews([]);
+        if (mainArtwork) URL.revokeObjectURL(mainArtwork.url);
+        additionalMedia.forEach((m) => URL.revokeObjectURL(m.url));
+        setMainArtwork(null);
+        setAdditionalMedia([]);
         setShowForm(false);
     };
 
@@ -145,8 +177,8 @@ export const ManagePortfolioPage: React.FC = () => {
             return;
         }
 
-        if (mediaPreviews.length === 0) {
-            toast.error('Please attach at least one artwork image or video');
+        if (!mainArtwork) {
+            toast.error('Please upload your main artwork piece');
             return;
         }
 
@@ -161,7 +193,11 @@ export const ManagePortfolioPage: React.FC = () => {
             }
             formData.append('starred', isStarred ? '1' : '0');
 
-            mediaPreviews.forEach((item) => {
+            // 1. Append Main Artwork FIRST (index 0 / cover)
+            formData.append('media[]', mainArtwork.file);
+
+            // 2. Append Additional Process Media / Timelapses sequentially
+            additionalMedia.forEach((item) => {
                 formData.append('media[]', item.file);
             });
 
@@ -193,7 +229,9 @@ export const ManagePortfolioPage: React.FC = () => {
         }
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: number, e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (!confirm('Are you sure you want to delete this artwork?')) return;
         try {
             await portfolioApi.destroy(id);
@@ -214,7 +252,7 @@ export const ManagePortfolioPage: React.FC = () => {
                         Portfolio Works
                     </h1>
                     <p className="text-sm text-muted-foreground mt-1">
-                        Showcase your original artwork illustrations, character designs, and creative projects.
+                        Showcase your original artwork illustrations, timelapses, character designs, and creative projects.
                     </p>
                 </div>
                 <Button
@@ -235,9 +273,9 @@ export const ManagePortfolioPage: React.FC = () => {
                         exit={{ opacity: 0, height: 0 }}
                         className="overflow-hidden"
                     >
-                        <Card className="rounded-3xl border-purple-500/30 bg-card/80 backdrop-blur-md shadow-xl overflow-hidden mb-6">
-                            <CardContent className="p-6">
-                                <form onSubmit={handleCreate} className="space-y-5">
+                        <Card className="rounded-3xl border-purple-500/30 bg-card/90 backdrop-blur-xl shadow-2xl overflow-hidden mb-6">
+                            <CardContent className="p-6 sm:p-8">
+                                <form onSubmit={handleCreate} className="space-y-6">
                                     <div className="flex items-center justify-between border-b border-border/60 pb-3">
                                         <div className="flex items-center gap-2">
                                             <Sparkles className="h-4 w-4 text-purple-400" />
@@ -254,51 +292,167 @@ export const ManagePortfolioPage: React.FC = () => {
                                         </button>
                                     </div>
 
-                                    {/* 1. Drag & Drop Media Upload Area */}
+                                    {/* ── TOP SECTION: Main Artwork Piece (Cover / Hero) ── */}
                                     <div className="space-y-2">
-                                        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                                            Artwork Images / Videos (Up to 8 files)
-                                        </Label>
+                                        <div className="flex items-center justify-between">
+                                            <Label className="text-xs font-black text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                                                <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+                                                1. Main Artwork Piece <span className="text-rose-400">*</span>
+                                            </Label>
+                                            <span className="text-[11px] text-muted-foreground">Primary piece shown on feed</span>
+                                        </div>
+
+                                        {!mainArtwork ? (
+                                            <div
+                                                onDragOver={(e) => {
+                                                    e.preventDefault();
+                                                    setIsDraggingMain(true);
+                                                }}
+                                                onDragLeave={() => setIsDraggingMain(false)}
+                                                onDrop={(e) => {
+                                                    e.preventDefault();
+                                                    setIsDraggingMain(false);
+                                                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                                                        handleMainFile(e.dataTransfer.files[0]);
+                                                    }
+                                                }}
+                                                onClick={() => mainFileInputRef.current?.click()}
+                                                className={`border-2 border-dashed rounded-3xl p-8 text-center cursor-pointer transition-all duration-200 flex flex-col items-center justify-center gap-2 ${
+                                                    isDraggingMain
+                                                        ? 'border-purple-500 bg-purple-500/10 scale-[0.99]'
+                                                        : 'border-purple-500/40 hover:border-purple-500 bg-purple-500/5 hover:bg-purple-500/10'
+                                                }`}
+                                            >
+                                                <input
+                                                    ref={mainFileInputRef}
+                                                    type="file"
+                                                    accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,video/mp4,video/webm"
+                                                    onChange={(e) => {
+                                                        if (e.target.files && e.target.files[0]) {
+                                                            handleMainFile(e.target.files[0]);
+                                                            e.target.value = '';
+                                                        }
+                                                    }}
+                                                    className="hidden"
+                                                />
+                                                <div className="h-12 w-12 rounded-2xl bg-purple-600/20 text-purple-400 flex items-center justify-center border border-purple-500/30 shadow-inner">
+                                                    <UploadCloud className="h-6 w-6" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-foreground">
+                                                        Upload Main Artwork (Primary Piece)
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground mt-0.5">
+                                                        PNG, JPG, WEBP, GIF, or MP4 (Up to 20MB)
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="relative rounded-2xl overflow-hidden bg-black/60 border-2 border-purple-500/60 p-2 flex items-center justify-between gap-4">
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                    <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-black/80 shrink-0 border border-white/10">
+                                                        {mainArtwork.isVideo ? (
+                                                            <video src={mainArtwork.url} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <img src={mainArtwork.url} alt="Main Artwork" className="w-full h-full object-cover" />
+                                                        )}
+                                                    </div>
+                                                    <div className="min-w-0 space-y-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="bg-purple-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm">
+                                                                MAIN ARTWORK / COVER
+                                                            </span>
+                                                            <span className="text-xs text-muted-foreground">{mainArtwork.size}</span>
+                                                        </div>
+                                                        <p className="text-xs font-bold text-foreground truncate">{mainArtwork.name}</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-2 pr-2">
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => mainFileInputRef.current?.click()}
+                                                        className="rounded-xl text-xs font-semibold cursor-pointer"
+                                                    >
+                                                        Change
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant="destructive"
+                                                        size="icon"
+                                                        onClick={handleRemoveMain}
+                                                        className="rounded-xl h-8 w-8 cursor-pointer"
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* ── BOTTOM SECTION: Additional Media, Timelapses & WIPs (Optional) ── */}
+                                    <div className="space-y-2 pt-2 border-t border-border/60">
+                                        <div className="flex items-center justify-between">
+                                            <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                                                <Film className="h-3.5 w-3.5 text-blue-400" />
+                                                2. Additional Media, Timelapses & Process WIPs (Optional)
+                                            </Label>
+                                            <span className="text-[11px] text-muted-foreground">Speedpaints, sketches, alternate views ({additionalMedia.length}/7)</span>
+                                        </div>
 
                                         <div
-                                            onDragOver={handleDragOver}
-                                            onDragLeave={handleDragLeave}
-                                            onDrop={handleDrop}
-                                            onClick={() => fileInputRef.current?.click()}
-                                            className={`border-2 border-dashed rounded-3xl p-8 text-center cursor-pointer transition-all duration-200 flex flex-col items-center justify-center gap-2 ${
-                                                isDragging
-                                                    ? 'border-purple-500 bg-purple-500/10 scale-[0.99]'
-                                                    : 'border-border/80 hover:border-purple-500/50 bg-secondary/20 hover:bg-secondary/40'
+                                            onDragOver={(e) => {
+                                                e.preventDefault();
+                                                setIsDraggingAdd(true);
+                                            }}
+                                            onDragLeave={() => setIsDraggingAdd(false)}
+                                            onDrop={(e) => {
+                                                e.preventDefault();
+                                                setIsDraggingAdd(false);
+                                                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                                                    handleAdditionalFiles(e.dataTransfer.files);
+                                                }
+                                            }}
+                                            onClick={() => addFileInputRef.current?.click()}
+                                            className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all duration-200 flex flex-col items-center justify-center gap-1.5 ${
+                                                isDraggingAdd
+                                                    ? 'border-blue-500 bg-blue-500/10 scale-[0.99]'
+                                                    : 'border-border/80 hover:border-blue-500/50 bg-secondary/15 hover:bg-secondary/30'
                                             }`}
                                         >
                                             <input
-                                                ref={fileInputRef}
+                                                ref={addFileInputRef}
                                                 type="file"
                                                 multiple
-                                                accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,video/mp4,video/webm,video/quicktime"
-                                                onChange={handleFileInputChange}
+                                                accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,video/mp4,video/webm"
+                                                onChange={(e) => {
+                                                    if (e.target.files && e.target.files.length > 0) {
+                                                        handleAdditionalFiles(e.target.files);
+                                                        e.target.value = '';
+                                                    }
+                                                }}
                                                 className="hidden"
                                             />
-                                            <div className="h-12 w-12 rounded-2xl bg-purple-600/15 text-purple-400 flex items-center justify-center border border-purple-500/20 shadow-inner">
-                                                <UploadCloud className="h-6 w-6" />
+                                            <div className="h-9 w-9 rounded-xl bg-blue-600/15 text-blue-400 flex items-center justify-center border border-blue-500/20">
+                                                <Video className="h-4 w-4" />
                                             </div>
-                                            <div>
-                                                <p className="text-sm font-bold text-foreground">
-                                                    Click to upload or drag & drop artwork
-                                                </p>
-                                                <p className="text-xs text-muted-foreground mt-0.5">
-                                                    PNG, JPG, WEBP, GIF, or MP4 (Up to 15MB per image, 50MB per video)
-                                                </p>
-                                            </div>
+                                            <p className="text-xs font-bold text-foreground">
+                                                Attach Timelapses (MP4), Process Videos, Sketches & Alternate Colors
+                                            </p>
+                                            <p className="text-[10px] text-muted-foreground">
+                                                Click or drag up to 7 additional files (Timelapses up to 100MB)
+                                            </p>
                                         </div>
 
-                                        {/* Attached Media Thumbnails Strip */}
-                                        {mediaPreviews.length > 0 && (
+                                        {/* Additional Media Thumbnails Grid */}
+                                        {additionalMedia.length > 0 && (
                                             <div className="flex flex-wrap items-center gap-3 pt-2">
-                                                {mediaPreviews.map((item, idx) => (
+                                                {additionalMedia.map((item, idx) => (
                                                     <div
                                                         key={item.id}
-                                                        className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-black/60 border border-border/80 group shrink-0 shadow-xs"
+                                                        className="relative w-24 h-24 rounded-2xl overflow-hidden bg-black/60 border border-border/80 group shrink-0 shadow-xs"
                                                     >
                                                         {item.isVideo ? (
                                                             <video src={item.url} className="w-full h-full object-cover" />
@@ -308,12 +462,12 @@ export const ManagePortfolioPage: React.FC = () => {
 
                                                         <div className="absolute top-1.5 left-1.5">
                                                             {item.isVideo ? (
-                                                                <span className="bg-blue-600/90 text-white text-[8px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-sm">
-                                                                    <Video className="h-2 w-2" /> VID
+                                                                <span className="bg-blue-600/90 text-white text-[8px] font-black px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-sm">
+                                                                    <Video className="h-2 w-2" /> TIMELAPSE
                                                                 </span>
                                                             ) : (
-                                                                <span className="bg-black/70 backdrop-blur-md text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm">
-                                                                    {idx === 0 ? 'COVER' : 'IMG'}
+                                                                <span className="bg-black/75 backdrop-blur-md text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+                                                                    WIP {idx + 1}
                                                                 </span>
                                                             )}
                                                         </div>
@@ -322,7 +476,7 @@ export const ManagePortfolioPage: React.FC = () => {
                                                             type="button"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                handleRemoveMedia(idx);
+                                                                handleRemoveAdditional(idx);
                                                             }}
                                                             className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-black/80 hover:bg-rose-600 text-white flex items-center justify-center transition-colors cursor-pointer shadow-md"
                                                         >
@@ -334,8 +488,8 @@ export const ManagePortfolioPage: React.FC = () => {
                                         )}
                                     </div>
 
-                                    {/* 2. Artwork Title */}
-                                    <div className="space-y-1.5">
+                                    {/* ── 3. Artwork Title ── */}
+                                    <div className="space-y-1.5 pt-2">
                                         <Label htmlFor="title" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                                             Artwork Title <span className="text-rose-400">*</span>
                                         </Label>
@@ -349,7 +503,7 @@ export const ManagePortfolioPage: React.FC = () => {
                                         />
                                     </div>
 
-                                    {/* 3. Description */}
+                                    {/* ── 4. Description ── */}
                                     <div className="space-y-1.5">
                                         <Label htmlFor="desc" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                                             Description & Process Notes (Optional)
@@ -358,12 +512,12 @@ export const ManagePortfolioPage: React.FC = () => {
                                             id="desc"
                                             value={description}
                                             onChange={(e) => setDescription(e.target.value)}
-                                            placeholder="Mention tools used, background story, design inspiration, or client context..."
+                                            placeholder="Mention tools used (Clip Studio, Blender, Photoshop), background lore, design inspiration, or client context..."
                                             className="min-h-[90px] rounded-2xl bg-secondary/40 border-border/80 text-xs"
                                         />
                                     </div>
 
-                                    {/* 4. Starred / Featured Toggle */}
+                                    {/* ── 5. Starred / Featured Toggle ── */}
                                     <div className="flex items-center gap-3 pt-1">
                                         <label className="flex items-center gap-2 text-xs font-bold text-foreground cursor-pointer select-none">
                                             <input
@@ -391,7 +545,7 @@ export const ManagePortfolioPage: React.FC = () => {
                                         </Button>
                                         <Button
                                             type="submit"
-                                            disabled={submitting || !title.trim() || mediaPreviews.length === 0}
+                                            disabled={submitting || !title.trim() || !mainArtwork}
                                             className="h-10 px-6 rounded-2xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-md gap-2"
                                         >
                                             <CheckCircle2 className="h-4 w-4" />
@@ -438,6 +592,7 @@ export const ManagePortfolioPage: React.FC = () => {
                         const coverUrl =
                             (item as any).thumbnail_media?.url ||
                             (item.media && item.media[0]?.url) ||
+                            item.cover_image_url ||
                             null;
 
                         const isCoverVideo = coverUrl && /\.(mp4|webm|mov|mkv)$/i.test(coverUrl);
@@ -445,10 +600,13 @@ export const ManagePortfolioPage: React.FC = () => {
                         return (
                             <Card
                                 key={item.id}
-                                className="group rounded-3xl overflow-hidden border border-border/80 hover:border-purple-500/60 bg-card transition-all duration-300 hover:shadow-xl flex flex-col"
+                                className="group relative rounded-3xl overflow-hidden border border-border/80 hover:border-purple-500/60 bg-card transition-all duration-300 hover:shadow-xl flex flex-col"
                             >
                                 {/* Media Container */}
-                                <div className="h-60 bg-secondary/40 relative overflow-hidden flex items-center justify-center">
+                                <Link
+                                    to={`/portfolio/${item.id}`}
+                                    className="h-60 bg-secondary/40 relative overflow-hidden flex items-center justify-center cursor-pointer block"
+                                >
                                     {coverUrl ? (
                                         isCoverVideo ? (
                                             <video
@@ -491,34 +649,44 @@ export const ManagePortfolioPage: React.FC = () => {
                                     {/* Media Count Badge */}
                                     {item.media && item.media.length > 1 && (
                                         <div className="absolute bottom-3 left-3 bg-black/70 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm">
-                                            <Layers className="h-3 w-3" /> {item.media.length} Files
+                                            <Layers className="h-3 w-3 text-purple-300" /> {item.media.length} Files
                                         </div>
                                     )}
 
-                                    {/* Delete Button */}
-                                    <Button
-                                        variant="destructive"
-                                        size="icon"
-                                        className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 rounded-full shadow-lg cursor-pointer"
-                                        onClick={() => handleDelete(item.id)}
-                                        title="Delete artwork"
-                                    >
-                                        <Trash2 className="h-3.5 w-3.5" />
-                                    </Button>
-                                </div>
+                                    {/* Hover "View Artwork" pill */}
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                        <span className="px-3 py-1.5 rounded-full bg-white/90 text-black text-xs font-bold flex items-center gap-1.5 shadow-lg backdrop-blur-md">
+                                            <Eye className="h-3.5 w-3.5" /> View Artwork
+                                        </span>
+                                    </div>
+                                </Link>
+
+                                {/* Delete Button */}
+                                <Button
+                                    variant="destructive"
+                                    size="icon"
+                                    className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 rounded-full shadow-lg cursor-pointer z-20"
+                                    onClick={(e) => handleDelete(item.id, e)}
+                                    title="Delete artwork"
+                                >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
 
                                 {/* Content */}
                                 <CardContent className="p-4 flex-1 flex flex-col justify-between space-y-2">
-                                    <div>
-                                        <h3 className="font-bold text-sm text-foreground truncate group-hover:text-purple-300 transition-colors">
-                                            {item.title}
-                                        </h3>
+                                    <Link to={`/portfolio/${item.id}`} className="block group-hover:text-purple-300 transition-colors">
+                                        <div className="flex items-start justify-between gap-2">
+                                            <h3 className="font-bold text-sm text-foreground truncate group-hover:text-purple-300 transition-colors">
+                                                {item.title}
+                                            </h3>
+                                            <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        </div>
                                         {item.description && (
                                             <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
                                                 {item.description}
                                             </p>
                                         )}
-                                    </div>
+                                    </Link>
                                     <div className="pt-2 flex items-center justify-between text-[11px] text-muted-foreground border-t border-border/50">
                                         <span>
                                             {item.created_at
@@ -529,6 +697,12 @@ export const ManagePortfolioPage: React.FC = () => {
                                                   })
                                                 : 'Recently added'}
                                         </span>
+                                        <Link
+                                            to={`/portfolio/${item.id}`}
+                                            className="text-purple-400 hover:text-purple-300 font-bold hover:underline"
+                                        >
+                                            Details →
+                                        </Link>
                                     </div>
                                 </CardContent>
                             </Card>

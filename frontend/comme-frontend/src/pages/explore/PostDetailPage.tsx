@@ -21,6 +21,7 @@ import {
     ChevronRight,
     Maximize2,
     Reply,
+    ExternalLink,
 } from 'lucide-react';
 import { postService } from '@/services/postService';
 import { useAuth } from '@/hooks/useAuth';
@@ -1033,6 +1034,37 @@ export const PostDetailPage: React.FC = () => {
                             <div className="pt-2 rounded-2xl overflow-hidden">
                                 <ScrollableMediaGallery mediaList={attachedMediaList} attachedPortfolio={post.portfolio} />
                             </div>
+                        )}
+
+                        {/* Clickable Portfolio Link */}
+                        {post.portfolio?.id && (
+                            <Link
+                                to={`/portfolio/${post.portfolio.id}`}
+                                className="flex items-center gap-3 p-3 rounded-2xl bg-amber-500/5 border border-amber-500/20 hover:border-amber-500/40 hover:bg-amber-500/10 transition-all cursor-pointer group"
+                            >
+                                {/* Portfolio thumbnail */}
+                                {(() => {
+                                    const thumbUrl = (post.portfolio as any)?.thumbnail_media?.url || post.portfolio.media?.[0]?.url || post.portfolio.cover_image_url;
+                                    return thumbUrl ? (
+                                        <img
+                                            src={thumbUrl}
+                                            alt={post.portfolio.title}
+                                            className="w-12 h-12 rounded-xl object-cover border border-border/60 shrink-0"
+                                        />
+                                    ) : (
+                                        <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+                                            <Sparkles className="h-5 w-5 text-amber-400" />
+                                        </div>
+                                    );
+                                })()}
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-xs font-bold text-amber-400 mb-0.5">Attached Portfolio Piece</p>
+                                    <p className="text-sm font-bold text-foreground truncate group-hover:text-amber-300 transition-colors">
+                                        {post.portfolio.title}
+                                    </p>
+                                </div>
+                                <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-amber-400 transition-colors shrink-0" />
+                            </Link>
                         )}
 
                         {/* Tags */}
