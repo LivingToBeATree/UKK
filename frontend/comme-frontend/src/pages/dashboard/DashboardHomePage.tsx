@@ -265,7 +265,7 @@ export const DashboardHomePage: React.FC = () => {
                                         <span className="font-mono font-bold text-sm text-foreground">
                                             {formatPrice(order.total_price || 0)}
                                         </span>
-                                        <Link to={`/commissions/${order.id}`}>
+                                        <Link to={`/dashboard/commissions/${order.id}`}>
                                             <Button size="sm" className="h-8 px-3 rounded-xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-xs">
                                                 Manage Order
                                             </Button>

@@ -148,7 +148,9 @@ export function AppRoutes() {
                         <Route path="portfolio" element={<ManagePortfolioPage />} />
                         <Route path="posts" element={<ManagePostsPage />} />
                         <Route path="commissions" element={<ArtistCommissionsPage />} />
+                        <Route path="commissions/:id" element={<CommissionDetailPage />} />
                         <Route path="inquiries" element={<ArtistInquiriesPage />} />
+                        <Route path="inquiries/:id" element={<CommissionDetailPage />} />
                         <Route path="messages" element={<Navigate to="/dashboard/inquiries" replace />} />
                         <Route path="reviews" element={<ArtistReviewsPage />} />
                         <Route path="earnings" element={<ArtistEarningsPage />} />

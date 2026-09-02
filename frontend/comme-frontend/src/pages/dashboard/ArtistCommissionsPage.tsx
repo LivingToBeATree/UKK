@@ -85,7 +85,7 @@ export const ArtistCommissionsPage: React.FC = () => {
                                 <CardContent className="p-5 space-y-3">
                                     <div className="flex items-center justify-between gap-4">
                                         <div className="flex-1 min-w-0">
-                                            <Link to={`/commissions/${c.id}`} className="font-bold text-sm text-foreground hover:text-purple-400 truncate block transition-colors">
+                                            <Link to={`/dashboard/commissions/${c.id}`} className="font-bold text-sm text-foreground hover:text-purple-400 truncate block transition-colors">
                                                 {c.commission_service?.name || `Commission Order #${c.id}`}
                                             </Link>
                                             <p className="text-xs text-muted-foreground mt-0.5">

@@ -202,7 +202,7 @@ export const ArtistInquiriesPage: React.FC = () => {
                                             )}
                                         </div>
 
-                                        <Link to={`/commissions/${order.id}`}>
+                                        <Link to={`/dashboard/commissions/${order.id}`}>
                                             <Button
                                                 size="sm"
                                                 className="h-9 px-4 rounded-xl font-bold text-xs gap-1.5 bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-xs"
