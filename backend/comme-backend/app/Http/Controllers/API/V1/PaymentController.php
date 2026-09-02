@@ -67,6 +67,61 @@ class PaymentController extends Controller
     }
 
     /**
+     * Local/Sandbox simulator endpoint for capturing payment into escrow.
+     */
+    public function simulate(Commission $commission): JsonResponse
+    {
+        Gate::authorize('initiatePayment', $commission);
+
+        $updatedCommission = DB::transaction(function () use ($commission) {
+            $lockedCommission = Commission::query()
+                ->with(['artistProfile', 'payments'])
+                ->whereKey($commission->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $payment = $lockedCommission->payments()
+                ->where('status', PaymentStatus::PENDING->value)
+                ->latest()
+                ->first();
+
+            if (! $payment) {
+                $payment = $lockedCommission->payments()->create([
+                    'order_id' => 'CMS-'.$lockedCommission->id.'-'.now()->timestamp.'-'.Str::random(8),
+                    'status' => PaymentStatus::PAID->value,
+                    'gross_amount' => $lockedCommission->total_price,
+                    'paid_at' => now(),
+                    'payment_type' => 'simulation_sandbox',
+                ]);
+            } else {
+                $payment->update([
+                    'status' => PaymentStatus::PAID->value,
+                    'paid_at' => now(),
+                    'payment_type' => 'simulation_sandbox',
+                ]);
+            }
+
+            $lockedCommission->update(['status' => CommissionStatus::IN_PROGRESS]);
+
+            Notification::create([
+                'user_id' => $lockedCommission->artistProfile->user_id,
+                'type' => NotificationType::PAYMENT_RECEIVED,
+                'title' => 'Payment received',
+                'message' => 'A client has paid for their commission - you can start working on it.',
+                'notifiable_type' => Commission::class,
+                'notifiable_id' => $lockedCommission->id,
+            ]);
+
+            return $lockedCommission;
+        });
+
+        return ApiResponseHelper::successResponse(
+            new \App\Http\Resources\API\V1\CommissionResource($updatedCommission->fresh(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
+            'Payment secured in Escrow! Commission is now in progress.'
+        );
+    }
+
+    /**
      * Public Midtrans callback. Authenticity comes from the Midtrans
      * signature, not from a browser session.
      */

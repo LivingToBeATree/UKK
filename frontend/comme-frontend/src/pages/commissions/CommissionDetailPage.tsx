@@ -259,29 +259,37 @@ export const CommissionDetailPage: React.FC = () => {
         setActionLoading(true);
         try {
             const payment = await commissionOrderApi.initiatePayment(commission.id);
+
+            // If token is a mock/dev token or window.snap is unavailable, simulate escrow payment
+            if (
+                payment.snap_token?.startsWith('mock_snap_token_') ||
+                typeof (window as unknown as { snap?: { pay: (token: string, cb: unknown) => void } }).snap?.pay !== 'function'
+            ) {
+                const updated = await commissionOrderApi.simulatePayment(commission.id);
+                setCommission(updated);
+                toast.success('Escrow Payment simulated successfully! Commission is now in progress.');
+                refreshData();
+                return;
+            }
+
             toast.success('Midtrans payment session initialized');
 
-            // If Snap JS is available in window
-            if (payment.snap_token && typeof (window as unknown as { snap?: { pay: (token: string, cb: unknown) => void } }).snap?.pay === 'function') {
-                (window as unknown as { snap: { pay: (token: string, cb: unknown) => void } }).snap.pay(payment.snap_token, {
-                    onSuccess: () => {
-                        toast.success('Payment captured! Commission is now in progress.');
-                        refreshData();
-                    },
-                    onPending: () => {
-                        toast.info('Payment pending completion.');
-                        refreshData();
-                    },
-                    onError: () => {
-                        toast.error('Payment failed.');
-                    },
-                });
-            } else {
-                toast.info(`Snap token generated: ${payment.snap_token || payment.order_id}`);
-                refreshData();
-            }
-        } catch {
-            toast.error('Failed to initiate Midtrans payment');
+            (window as unknown as { snap: { pay: (token: string, cb: unknown) => void } }).snap.pay(payment.snap_token, {
+                onSuccess: () => {
+                    toast.success('Payment captured! Commission is now in progress.');
+                    refreshData();
+                },
+                onPending: () => {
+                    toast.info('Payment pending completion.');
+                    refreshData();
+                },
+                onError: () => {
+                    toast.error('Payment failed.');
+                },
+            });
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to initiate Midtrans payment';
+            toast.error(msg);
         } finally {
             setActionLoading(false);
         }

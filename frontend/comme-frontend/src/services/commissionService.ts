@@ -143,6 +143,12 @@ export const commissionOrderApi = {
         const res = await api.post<ApiResponse<CommissionPayment>>(`/commissions/${commissionId}/payment`);
         return res.data.data;
     },
+
+    // Sandbox / Local test simulation
+    simulatePayment: async (commissionId: number) => {
+        const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${commissionId}/payment/simulate`);
+        return res.data.data;
+    },
 };
 
 // Artist payout account API
