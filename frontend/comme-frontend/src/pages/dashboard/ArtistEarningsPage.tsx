@@ -154,9 +154,9 @@ export const ArtistEarningsPage: React.FC = () => {
                     <span className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 mb-2">
                         <DollarSign className="h-3.5 w-3.5 text-emerald-400" /> Total Revenue
                     </span>
-                    <p className="text-2xl sm:text-3xl font-black text-foreground font-mono">
+                    <div className="text-2xl sm:text-3xl font-black text-foreground font-mono">
                         {loading ? <Skeleton className="h-8 w-32" /> : formatPrice(totalEarned)}
-                    </p>
+                    </div>
                     <p className="text-[11px] text-muted-foreground mt-1">
                         {completedOrders.length} completed commissions
                     </p>
@@ -166,9 +166,9 @@ export const ArtistEarningsPage: React.FC = () => {
                     <span className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 mb-2">
                         <Lock className="h-3.5 w-3.5 text-blue-400" /> In Escrow
                     </span>
-                    <p className="text-2xl sm:text-3xl font-black text-blue-400 font-mono">
+                    <div className="text-2xl sm:text-3xl font-black text-blue-400 font-mono">
                         {loading ? <Skeleton className="h-8 w-32" /> : formatPrice(inEscrow)}
-                    </p>
+                    </div>
                     <p className="text-[11px] text-muted-foreground mt-1">
                         {activeOrders.length} active in-progress orders
                     </p>
@@ -178,9 +178,9 @@ export const ArtistEarningsPage: React.FC = () => {
                     <span className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 mb-2">
                         <CheckCircle2 className="h-3.5 w-3.5 text-purple-400" /> Available for Payout
                     </span>
-                    <p className="text-2xl sm:text-3xl font-black text-purple-400 font-mono">
+                    <div className="text-2xl sm:text-3xl font-black text-purple-400 font-mono">
                         {loading ? <Skeleton className="h-8 w-32" /> : formatPrice(availableForPayout)}
-                    </p>
+                    </div>
                     <p className="text-[11px] text-muted-foreground mt-1">
                         Disbursed to your registered bank account
                     </p>
