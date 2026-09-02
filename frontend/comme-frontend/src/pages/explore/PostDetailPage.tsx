@@ -586,33 +586,33 @@ const ScrollableMediaGallery: React.FC<{
 
         return (
             <>
-                <div className="relative w-full max-h-[640px] bg-black/95 overflow-hidden flex items-center justify-center p-2 group">
+                <div className="relative w-full rounded-2xl overflow-hidden bg-black/40 border border-border/60 flex items-center justify-center my-2 group">
                     {isItemVideo ? (
                         <CustomVideoPlayer
                             src={m.url}
                             autoPlay={false}
                             loop
-                            className="w-full h-auto max-h-[600px] rounded-2xl"
+                            className="w-full h-auto rounded-2xl"
                         />
                     ) : (
                         <img
                             src={m.url}
                             alt={m.file_name || 'Attached media'}
-                            className="w-full h-auto max-h-[640px] object-contain rounded-2xl cursor-zoom-in group-hover:brightness-105 transition-all"
+                            className="w-full h-auto block object-cover rounded-2xl cursor-zoom-in group-hover:brightness-105 transition-all select-none"
                             onClick={() => handleOpenLightbox(0)}
                         />
                     )}
-                    <div className="absolute top-4 left-4 flex items-center gap-2 pointer-events-none">
+                    <div className="absolute top-4 left-4 flex items-center gap-2 pointer-events-none z-10">
                         {isItemVideo ? (
-                            <span className="px-3 py-1 rounded-full bg-blue-600/85 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5 shadow-md">
+                            <span className="px-3 py-1 rounded-full bg-blue-600/90 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5 shadow-md">
                                 <Video className="h-3.5 w-3.5" /> Video Attachment
                             </span>
                         ) : m.mime_type?.includes('gif') ? (
-                            <span className="px-3 py-1 rounded-full bg-purple-600/85 backdrop-blur-md text-white text-xs font-black shadow-md">
+                            <span className="px-3 py-1 rounded-full bg-purple-600/90 backdrop-blur-md text-white text-xs font-black shadow-md">
                                 GIF Attachment
                             </span>
                         ) : attachedPortfolio ? (
-                            <span className="px-3 py-1 rounded-full bg-black/65 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5 shadow-md">
+                            <span className="px-3 py-1 rounded-full bg-black/75 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5 shadow-md border border-white/10">
                                 <Sparkles className="h-3.5 w-3.5 text-amber-400" /> Attached Portfolio Piece
                             </span>
                         ) : null}
