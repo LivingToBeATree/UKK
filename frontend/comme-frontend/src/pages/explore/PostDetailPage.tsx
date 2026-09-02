@@ -155,30 +155,30 @@ const ScrollableCommentMediaGallery: React.FC<{
         const m = mediaList[0];
         return (
             <>
-                <div className="relative rounded-2xl overflow-hidden bg-black/80 border border-border/80 my-2 max-w-sm group">
+                <div className="relative rounded-2xl overflow-hidden bg-black/90 border border-border/80 my-2 max-w-xl group">
                     {m.isVideo ? (
                         <CustomVideoPlayer
                             src={m.url}
                             autoPlay={false}
                             loop
-                            className="w-full h-auto max-h-[220px] rounded-2xl"
+                            className="w-full h-auto max-h-[360px] rounded-2xl"
                         />
                     ) : (
                         <img
                             src={m.url}
                             alt={m.file_name}
-                            className="w-full h-auto max-h-[220px] object-contain rounded-2xl cursor-zoom-in hover:brightness-105 transition-all"
+                            className="w-full h-auto max-h-[360px] object-contain rounded-2xl cursor-zoom-in hover:brightness-105 transition-all bg-black/50"
                             onClick={() => handleOpenLightbox(0)}
                         />
                     )}
 
-                    <div className="absolute top-2 left-2 flex items-center gap-1 pointer-events-none">
+                    <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 pointer-events-none z-10">
                         {m.isVideo ? (
-                            <span className="px-2 py-0.5 rounded-full bg-blue-600/90 text-white text-[9px] font-black flex items-center gap-1 shadow-sm backdrop-blur-md">
-                                <Video className="h-2.5 w-2.5" /> VIDEO
+                            <span className="px-2.5 py-0.5 rounded-full bg-blue-600/90 text-white text-[10px] font-black flex items-center gap-1 shadow-md backdrop-blur-md">
+                                <Video className="h-3 w-3" /> VIDEO
                             </span>
                         ) : m.isGif ? (
-                            <span className="px-2 py-0.5 rounded-full bg-purple-600/90 text-white text-[9px] font-black shadow-sm backdrop-blur-md">
+                            <span className="px-2.5 py-0.5 rounded-full bg-purple-600/90 text-white text-[10px] font-black shadow-md backdrop-blur-md">
                                 GIF
                             </span>
                         ) : null}
@@ -188,9 +188,9 @@ const ScrollableCommentMediaGallery: React.FC<{
                         <button
                             type="button"
                             onClick={() => handleOpenLightbox(0)}
-                            className="absolute top-2 right-2 h-6 px-2 rounded-full bg-black/70 hover:bg-black/90 text-white text-[10px] font-semibold flex items-center gap-1 shadow-md backdrop-blur-md border border-white/20 transition-all cursor-pointer opacity-0 group-hover:opacity-100"
+                            className="absolute top-2.5 right-2.5 h-7 px-2.5 rounded-full bg-black/70 hover:bg-black/90 text-white text-[11px] font-semibold flex items-center gap-1 shadow-md backdrop-blur-md border border-white/20 transition-all cursor-pointer opacity-0 group-hover:opacity-100 z-10"
                         >
-                            <Maximize2 className="h-2.5 w-2.5" /> Expand
+                            <Maximize2 className="h-3 w-3" /> Expand
                         </button>
                     )}
                 </div>
@@ -207,61 +207,61 @@ const ScrollableCommentMediaGallery: React.FC<{
 
     return (
         <>
-            <div className="relative rounded-2xl overflow-hidden bg-black/80 border border-border/80 my-2 group/gallery select-none">
+            <div className="relative rounded-2xl overflow-hidden bg-black/90 border border-border/80 my-2 group/gallery select-none">
                 {/* Horizontal Scroll Track */}
                 <div
                     ref={scrollContainerRef}
-                    className="flex gap-3 overflow-x-auto snap-x snap-mandatory p-3 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent scroll-smooth"
+                    className="flex gap-3.5 overflow-x-auto snap-x snap-mandatory p-3.5 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent scroll-smooth"
                     style={{ scrollbarWidth: 'thin' }}
                 >
                     {mediaList.map((m, idx) => (
                         <div
                             key={m.id || idx}
-                            className="relative snap-center shrink-0 w-[240px] sm:w-[280px] h-[170px] sm:h-[190px] rounded-xl overflow-hidden bg-black/60 border border-white/10 flex items-center justify-center group/card"
+                            className="relative snap-center shrink-0 w-[300px] sm:w-[380px] md:w-[440px] h-[210px] sm:h-[250px] md:h-[275px] rounded-xl overflow-hidden bg-black/80 border border-white/10 flex items-center justify-center group/card"
                         >
                             {m.isVideo ? (
                                 <CustomVideoPlayer
                                     src={m.url}
                                     autoPlay={false}
                                     loop
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-contain"
                                 />
                             ) : (
                                 <img
                                     src={m.url}
                                     alt={m.file_name}
-                                    className="w-full h-full object-cover cursor-zoom-in group-hover/card:scale-105 transition-transform duration-300"
+                                    className="w-full h-full object-contain cursor-zoom-in group-hover/card:scale-102 transition-transform duration-300"
                                     onClick={() => handleOpenLightbox(idx)}
                                     loading="lazy"
                                 />
                             )}
 
                             {/* Top Badges */}
-                            <div className="absolute top-2 left-2 flex items-center gap-1 z-10 pointer-events-none">
+                            <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 z-10 pointer-events-none">
                                 {m.isVideo ? (
-                                    <span className="px-2 py-0.5 rounded-full bg-blue-600/90 text-white text-[9px] font-black flex items-center gap-1 shadow-sm backdrop-blur-md">
-                                        <Video className="h-2.5 w-2.5" /> VID
+                                    <span className="px-2.5 py-0.5 rounded-full bg-blue-600/90 text-white text-[10px] font-black flex items-center gap-1 shadow-md backdrop-blur-md">
+                                        <Video className="h-3 w-3" /> VID
                                     </span>
                                 ) : m.isGif ? (
-                                    <span className="px-2 py-0.5 rounded-full bg-purple-600/90 text-white text-[9px] font-black shadow-sm backdrop-blur-md">
+                                    <span className="px-2.5 py-0.5 rounded-full bg-purple-600/90 text-white text-[10px] font-black shadow-md backdrop-blur-md">
                                         GIF
                                     </span>
                                 ) : null}
                             </div>
 
                             {/* Top Right Counter & Expand Button */}
-                            <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
-                                <span className="px-2 py-0.5 rounded-full bg-black/70 backdrop-blur-md text-white text-[9px] font-bold border border-white/10 shadow-xs">
+                            <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 z-10">
+                                <span className="px-2.5 py-0.5 rounded-full bg-black/70 backdrop-blur-md text-white text-[10px] font-bold border border-white/10 shadow-xs">
                                     {idx + 1}/{mediaList.length}
                                 </span>
                                 {!m.isVideo && (
                                     <button
                                         type="button"
                                         onClick={() => handleOpenLightbox(idx)}
-                                        className="h-6 w-6 rounded-full bg-black/70 hover:bg-black/90 text-white flex items-center justify-center backdrop-blur-md border border-white/20 shadow-xs transition-all cursor-pointer opacity-0 group-hover/card:opacity-100"
+                                        className="h-7 w-7 rounded-full bg-black/70 hover:bg-black/90 text-white flex items-center justify-center backdrop-blur-md border border-white/20 shadow-xs transition-all cursor-pointer opacity-0 group-hover/card:opacity-100"
                                         title="Expand"
                                     >
-                                        <Maximize2 className="h-2.5 w-2.5" />
+                                        <Maximize2 className="h-3 w-3" />
                                     </button>
                                 )}
                             </div>
@@ -865,19 +865,38 @@ export const PostDetailPage: React.FC = () => {
         }
     };
 
+    const addReplyToTree = (list: PostComment[], newReply: PostComment, parentId: number): PostComment[] => {
+        return list.map((c) => {
+            if (c.id === parentId) {
+                return {
+                    ...c,
+                    replies: [...(c.replies || []), newReply],
+                };
+            }
+            if (c.replies && c.replies.length > 0) {
+                return {
+                    ...c,
+                    replies: addReplyToTree(c.replies, newReply, parentId),
+                };
+            }
+            return c;
+        });
+    };
+
+    const deleteCommentFromTree = (list: PostComment[], commentId: number): PostComment[] => {
+        return list
+            .filter((c) => c.id !== commentId)
+            .map((c) => ({
+                ...c,
+                replies: c.replies ? deleteCommentFromTree(c.replies, commentId) : [],
+            }));
+    };
+
     const handleDeleteComment = async (commentId: number) => {
         setDeletingCommentId(commentId);
         try {
             await postService.deleteComment(commentId);
-            setComments((prev: PostComment[]) => {
-                // Remove comment or remove from replies
-                return prev
-                    .filter((c: PostComment) => c.id !== commentId)
-                    .map((c) => ({
-                        ...c,
-                        replies: c.replies ? c.replies.filter((r) => r.id !== commentId) : [],
-                    }));
-            });
+            setComments((prev: PostComment[]) => deleteCommentFromTree(prev, commentId));
             if (post) setPost({ ...post, comments_count: Math.max(0, post.comments_count - 1) });
             toast.success('Comment deleted');
         } catch {
@@ -888,17 +907,7 @@ export const PostDetailPage: React.FC = () => {
     };
 
     const handleReplyAdded = (newReply: PostComment, parentId: number) => {
-        setComments((prev: PostComment[]) => {
-            return prev.map((c) => {
-                if (c.id === parentId) {
-                    return {
-                        ...c,
-                        replies: [...(c.replies || []), newReply],
-                    };
-                }
-                return c;
-            });
-        });
+        setComments((prev: PostComment[]) => addReplyToTree(prev, newReply, parentId));
         if (post) setPost({ ...post, comments_count: post.comments_count + 1 });
     };
 

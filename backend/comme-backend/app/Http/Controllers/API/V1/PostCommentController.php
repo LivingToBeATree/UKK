@@ -24,14 +24,31 @@ class PostCommentController extends Controller
     {
         Gate::authorize('view', $post);
 
-        $comments = $post->comments()
-            ->whereNull('parent_comment_id')
-            ->with(['user', 'replies.user'])
-            ->latest()
-            ->paginate(20);
+        $allComments = $post->comments()
+            ->with(['user', 'likes', 'bookmarks'])
+            ->oldest()
+            ->get();
 
-        return ApiResponseHelper::paginatedResponse(
-            PostCommentResource::collection($comments),
+        $commentsById = [];
+        $rootComments = collect();
+
+        foreach ($allComments as $c) {
+            $c->setRelation('replies', collect());
+            $commentsById[$c->id] = $c;
+        }
+
+        foreach ($allComments as $c) {
+            if ($c->parent_comment_id && isset($commentsById[$c->parent_comment_id])) {
+                $commentsById[$c->parent_comment_id]->replies->push($c);
+            } else if (!$c->parent_comment_id) {
+                $rootComments->push($c);
+            }
+        }
+
+        $sortedRoot = $rootComments->sortByDesc('created_at')->values();
+
+        return ApiResponseHelper::successResponse(
+            PostCommentResource::collection($sortedRoot),
             'Comments retrieved successfully.',
         );
     }

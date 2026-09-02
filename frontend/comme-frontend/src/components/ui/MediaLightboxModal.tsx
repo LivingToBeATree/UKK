@@ -167,21 +167,21 @@ export const MediaLightboxModal: React.FC<MediaLightboxModalProps> = ({
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.96 }}
                         transition={{ duration: 0.2 }}
-                        className="flex items-center justify-center max-w-full max-h-full"
+                        className="flex items-center justify-center w-full h-full p-2"
                     >
                         {isVideo ? (
                             <CustomVideoPlayer
                                 src={currentMedia.url}
                                 autoPlay
                                 loop
-                                className="max-w-[90vw] max-h-[calc(100vh-190px)] rounded-2xl shadow-2xl border border-white/10"
-                                videoClassName="max-h-[calc(100vh-190px)]"
+                                className="max-w-[92vw] max-h-[78vh] rounded-2xl shadow-2xl border border-white/10"
+                                videoClassName="max-h-[78vh]"
                             />
                         ) : (
                             <img
                                 src={currentMedia.url}
                                 alt={currentMedia.file_name || 'Preview media'}
-                                className="max-w-[90vw] max-h-[calc(100vh-190px)] rounded-2xl shadow-2xl object-contain"
+                                className="max-w-[92vw] max-h-[78vh] w-auto h-auto object-contain rounded-2xl shadow-2xl"
                             />
                         )}
                     </motion.div>
