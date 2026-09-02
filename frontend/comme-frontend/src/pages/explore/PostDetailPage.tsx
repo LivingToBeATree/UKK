@@ -493,13 +493,8 @@ export const PostDetailPage: React.FC = () => {
             {/* ── Main Post Card ── */}
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                 <Card className="rounded-3xl border border-border/80 bg-card overflow-hidden shadow-lg">
-                    {/* Attached Multi-Media Scrollable Gallery or Hero Media */}
-                    {attachedMediaList.length > 0 && (
-                        <ScrollableMediaGallery mediaList={attachedMediaList} attachedPortfolio={post.portfolio} />
-                    )}
-
                     <CardContent className="p-6 sm:p-8 space-y-6">
-                        {/* Author Header */}
+                        {/* 1. Author Header */}
                         <div className="flex items-center justify-between gap-4 pb-4 border-b border-border/60">
                             <div className="flex items-center gap-3.5">
                                 <Link to={`/@${post.user?.username || ''}`} className="cursor-pointer">
@@ -541,10 +536,19 @@ export const PostDetailPage: React.FC = () => {
                             </Badge>
                         </div>
 
-                        {/* Post Content */}
-                        <div className="pt-2">
-                            <MarkdownContent content={post.content} />
-                        </div>
+                        {/* 2. Post Text Content */}
+                        {post.content && (
+                            <div className="pt-1">
+                                <MarkdownContent content={post.content} />
+                            </div>
+                        )}
+
+                        {/* 3. Attached Multi-Media Scrollable Gallery or Hero Media (Below Text) */}
+                        {attachedMediaList.length > 0 && (
+                            <div className="pt-2 rounded-2xl overflow-hidden">
+                                <ScrollableMediaGallery mediaList={attachedMediaList} attachedPortfolio={post.portfolio} />
+                            </div>
+                        )}
 
                         {/* Tags */}
                         {post.tags && post.tags.length > 0 && (

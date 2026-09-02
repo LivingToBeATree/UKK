@@ -124,8 +124,8 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({
                         if (isVideo && src) {
                             return (
                                 <div
-                                    className={`rounded-2xl overflow-hidden my-3 border border-border/80 bg-black shadow-md ${
-                                        isComment ? 'max-w-[340px] sm:max-w-[400px]' : 'max-w-xl'
+                                    className={`rounded-2xl overflow-hidden my-2.5 border border-border/80 bg-black shadow-md ${
+                                        isComment ? 'max-w-md w-full' : 'max-w-xl w-full'
                                     }`}
                                 >
                                     <CustomVideoPlayer
@@ -138,16 +138,18 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({
                         }
 
                         return (
-                            <img
-                                src={src}
-                                alt={alt || 'Image attachment'}
-                                className={`rounded-xl object-contain my-2 border border-border/80 shadow-xs bg-black/40 transition-all ${
-                                    isComment
-                                        ? 'max-h-[160px] sm:max-h-[190px] max-w-[240px] sm:max-w-[280px]'
-                                        : 'max-h-[300px] sm:max-h-[360px] max-w-full'
-                                }`}
-                                loading="lazy"
-                            />
+                            <div className="relative inline-block my-2 max-w-full rounded-2xl overflow-hidden border border-border/80 bg-secondary/20 shadow-xs hover:border-purple-500/40 hover:shadow-md transition-all duration-300">
+                                <img
+                                    src={src}
+                                    alt={alt || 'Attachment'}
+                                    className={`w-auto h-auto object-contain rounded-2xl transition-transform duration-300 hover:scale-[1.02] ${
+                                        isComment
+                                            ? 'max-h-[260px] sm:max-h-[300px]'
+                                            : 'max-h-[380px] sm:max-h-[460px]'
+                                    }`}
+                                    loading="lazy"
+                                />
+                            </div>
                         );
                     },
                 }}
