@@ -605,6 +605,7 @@ export const ExplorePage: React.FC = () => {
                                                 <div className="py-0.5">
                                                     <MarkdownContent
                                                         content={post.content}
+                                                        disableLinks
                                                         className="text-xs line-clamp-4 leading-relaxed text-foreground/90 font-medium"
                                                     />
                                                 </div>

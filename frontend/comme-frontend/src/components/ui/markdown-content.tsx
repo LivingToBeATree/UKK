@@ -9,6 +9,7 @@ interface MarkdownContentProps {
     className?: string;
     variant?: 'default' | 'comment';
     compact?: boolean;
+    disableLinks?: boolean;
 }
 
 export const MarkdownContent: React.FC<MarkdownContentProps> = ({
@@ -16,6 +17,7 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({
     className = '',
     variant = 'default',
     compact = false,
+    disableLinks = false,
 }) => {
     if (!content) return null;
 
@@ -66,16 +68,19 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({
                             {children}
                         </pre>
                     ),
-                    a: ({ href, children }) => (
-                        <a
-                            href={href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary font-bold hover:underline transition-colors cursor-pointer"
-                        >
-                            {children}
-                        </a>
-                    ),
+                    a: ({ href, children }) =>
+                        disableLinks ? (
+                            <span className="text-primary font-bold">{children}</span>
+                        ) : (
+                            <a
+                                href={href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary font-bold hover:underline transition-colors cursor-pointer"
+                            >
+                                {children}
+                            </a>
+                        ),
                     h1: ({ children }) => (
                         <h1
                             className={`font-black text-foreground mt-3 mb-1.5 ${
