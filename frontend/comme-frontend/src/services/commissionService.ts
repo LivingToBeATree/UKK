@@ -60,6 +60,7 @@ export const commissionOrderApi = {
     create: async (payload: {
         commission_service_id: number;
         commission_option_id?: number | null;
+        addon_ids?: number[];
         description: string;
         deadline?: string | null;
     }) => {

@@ -75,7 +75,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         },
         {
             id: 'services',
-            label: 'Commission Tiers',
+            label: 'Commission Services',
             icon: Sparkles,
             path: '/dashboard/services',
             isActive: location.pathname.startsWith('/dashboard/services'),

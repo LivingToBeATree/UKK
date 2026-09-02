@@ -4,12 +4,15 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Http\Resources\API\V1\CommissionServiceResource;
 use App\Models\CommissionService;
+use App\Models\CommissionServiceMedia;
+use App\Enum\MediaType;
 use App\Http\Requests\API\V1\CommissionService\StoreCommissionServiceRequest;
 use App\Http\Requests\API\V1\CommissionService\UpdateCommissionServiceRequest;
 use App\Http\Helpers\ApiResponseHelper;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 
 class CommissionServiceController extends Controller
 {
@@ -20,7 +23,7 @@ class CommissionServiceController extends Controller
     {
         Gate::authorize('viewAny', CommissionService::class);
 
-        $commissionServices = CommissionService::with('artistProfile')->paginate(20);
+        $commissionServices = CommissionService::with(['artistProfile.user', 'thumbnailMedia', 'media', 'options.addons', 'tags'])->paginate(20);
 
         return ApiResponseHelper::paginatedResponse(
             CommissionServiceResource::collection($commissionServices),
@@ -29,29 +32,67 @@ class CommissionServiceController extends Controller
     }
 
     /**
-     * artist_profile_id is never taken from the request body — it's always
-     * derived from the logged-in user's own profile, same reasoning as
-     * user_id on ArtistProfileController::store(). The policy already
-     * guarantees an artistProfile exists here, since create() requires it.
+     * Store a newly created commission service in storage.
      */
     public function store(StoreCommissionServiceRequest $request): JsonResponse
     {
         $validated = $request->validated();
         $optionsData = $validated['options'] ?? null;
-        unset($validated['options']);
+        unset($validated['options'], $validated['media']);
 
         $commissionService = CommissionService::create([
             ...$validated,
             'artist_profile_id' => $request->user()->artistProfile->id,
         ]);
 
+        // 1. Process showcase and reference media uploads
+        if ($request->hasFile('media')) {
+            $firstMediaId = null;
+            foreach ($request->file('media') as $index => $file) {
+                $path = $file->store('commission_services/media', 'public');
+                $mime = $file->getClientMimeType();
+                $mediaType = str_starts_with($mime, 'video/') ? MediaType::VIDEO : MediaType::IMAGE;
+
+                $serviceMedia = CommissionServiceMedia::create([
+                    'commission_service_id' => $commissionService->id,
+                    'file_name' => $file->getClientOriginalName(),
+                    'file_path' => $path,
+                    'file_size' => $file->getSize(),
+                    'media_type' => $mediaType,
+                    'mime_type' => $mime,
+                    'sort_order' => $index,
+                ]);
+
+                if ($index === 0) {
+                    $firstMediaId = $serviceMedia->id;
+                }
+            }
+
+            if ($firstMediaId && empty($commissionService->thumbnail_media_id)) {
+                $commissionService->update(['thumbnail_media_id' => $firstMediaId]);
+            }
+        }
+
+        // 2. Process Service Packages/Options & Add-ons
         if (! empty($optionsData) && is_array($optionsData)) {
             foreach ($optionsData as $opt) {
-                $commissionService->options()->create([
-                    'title' => $opt['title'] ?? 'Standard Tier',
+                $option = $commissionService->options()->create([
+                    'title' => $opt['title'] ?? 'Standard Package',
                     'description' => $opt['description'] ?? null,
                     'base_price' => $opt['base_price'] ?? 0,
                 ]);
+
+                if (! empty($opt['addons']) && is_array($opt['addons'])) {
+                    foreach ($opt['addons'] as $addon) {
+                        if (! empty($addon['title'])) {
+                            $option->addons()->create([
+                                'title' => $addon['title'],
+                                'description' => $addon['description'] ?? null,
+                                'additional_price' => $addon['additional_price'] ?? 0,
+                            ]);
+                        }
+                    }
+                }
             }
         }
 
@@ -71,7 +112,7 @@ class CommissionServiceController extends Controller
 
         return ApiResponseHelper::successResponse(
             new CommissionServiceResource(
-                $commissionService->load(['artistProfile', 'thumbnailMedia', 'media', 'options.addons', 'tags'])
+                $commissionService->load(['artistProfile.user', 'thumbnailMedia', 'media', 'options.addons', 'tags'])
             ),
             'Commission service retrieved successfully.'
         );
@@ -82,7 +123,59 @@ class CommissionServiceController extends Controller
      */
     public function update(UpdateCommissionServiceRequest $request, CommissionService $commissionService): JsonResponse
     {
-        $commissionService->update($request->validated());
+        $validated = $request->validated();
+        $optionsData = $validated['options'] ?? null;
+        unset($validated['options'], $validated['media']);
+
+        $commissionService->update($validated);
+
+        // Process new showcase/reference media uploads if provided
+        if ($request->hasFile('media')) {
+            $currentMaxOrder = $commissionService->media()->max('sort_order') ?? -1;
+            foreach ($request->file('media') as $index => $file) {
+                $path = $file->store('commission_services/media', 'public');
+                $mime = $file->getClientMimeType();
+                $mediaType = str_starts_with($mime, 'video/') ? MediaType::VIDEO : MediaType::IMAGE;
+
+                $serviceMedia = CommissionServiceMedia::create([
+                    'commission_service_id' => $commissionService->id,
+                    'file_name' => $file->getClientOriginalName(),
+                    'file_path' => $path,
+                    'file_size' => $file->getSize(),
+                    'media_type' => $mediaType,
+                    'mime_type' => $mime,
+                    'sort_order' => $currentMaxOrder + 1 + $index,
+                ]);
+
+                if (empty($commissionService->thumbnail_media_id)) {
+                    $commissionService->update(['thumbnail_media_id' => $serviceMedia->id]);
+                }
+            }
+        }
+
+        // Sync options & addons if provided
+        if ($optionsData !== null && is_array($optionsData)) {
+            $commissionService->options()->delete();
+            foreach ($optionsData as $opt) {
+                $option = $commissionService->options()->create([
+                    'title' => $opt['title'] ?? 'Standard Package',
+                    'description' => $opt['description'] ?? null,
+                    'base_price' => $opt['base_price'] ?? 0,
+                ]);
+
+                if (! empty($opt['addons']) && is_array($opt['addons'])) {
+                    foreach ($opt['addons'] as $addon) {
+                        if (! empty($addon['title'])) {
+                            $option->addons()->create([
+                                'title' => $addon['title'],
+                                'description' => $addon['description'] ?? null,
+                                'additional_price' => $addon['additional_price'] ?? 0,
+                            ]);
+                        }
+                    }
+                }
+            }
+        }
 
         return ApiResponseHelper::successResponse(
             new CommissionServiceResource($commissionService->load(['artistProfile', 'thumbnailMedia', 'media', 'options.addons', 'tags'])),

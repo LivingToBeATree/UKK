@@ -17,11 +17,21 @@ class UpdateCommissionServiceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['sometimes','string','max:255'],
-            'description' => ['sometimes','string'],
+            'name' => ['sometimes', 'string', 'max:255'],
+            'description' => ['sometimes', 'string'],
             'alt_text' => ['sometimes', 'nullable', 'string', 'max:255'],
             'thumbnail_media_id' => ['sometimes', 'nullable', 'exists:medias,id'],
             'status' => ['sometimes', new Enum(ServiceStatus::class)],
+            'media' => ['sometimes', 'array'],
+            'media.*' => ['file', 'mimes:jpeg,jpg,png,webp,gif,mp4', 'max:51200'],
+            'options' => ['sometimes', 'array'],
+            'options.*.title' => ['required_with:options', 'string', 'max:255'],
+            'options.*.description' => ['nullable', 'string'],
+            'options.*.base_price' => ['required_with:options', 'numeric', 'min:0'],
+            'options.*.addons' => ['sometimes', 'nullable', 'array'],
+            'options.*.addons.*.title' => ['required_with:options.*.addons', 'string', 'max:255'],
+            'options.*.addons.*.description' => ['nullable', 'string'],
+            'options.*.addons.*.additional_price' => ['required_with:options.*.addons', 'numeric', 'min:0'],
         ];
     }
 }

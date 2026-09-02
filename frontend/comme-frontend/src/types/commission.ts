@@ -4,14 +4,25 @@ import type { MediaItem } from './post';
 
 export type ServiceStatus = 'open' | 'closed' | 'draft';
 
+export interface CommissionAddon {
+  id?: number;
+  commission_option_id?: number;
+  title: string;
+  description?: string | null;
+  additional_price: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface CommissionOption {
-  id: number;
-  commission_service_id: number;
+  id?: number;
+  commission_service_id?: number;
   title: string;
   description?: string | null;
   base_price: number;
   price?: number;
   duration_days?: number;
+  addons?: CommissionAddon[];
   created_at?: string;
   updated_at?: string;
 }

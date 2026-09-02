@@ -50,8 +50,22 @@ class CommissionController extends Controller
     {
         $service = CommissionService::findOrFail($request->commission_service_id);
         $option = $request->commission_option_id
-        ? CommissionOption::findOrFail($request->commission_option_id)
-        : null;
+            ? CommissionOption::with('addons')->findOrFail($request->commission_option_id)
+            : null;
+
+        $basePrice = $option?->base_price ? (float) $option->base_price : 0;
+        $addonTotal = 0;
+        $selectedAddons = [];
+
+        if ($request->has('addon_ids') && is_array($request->addon_ids) && $option) {
+            $validAddons = $option->addons()->whereIn('id', $request->addon_ids)->get();
+            foreach ($validAddons as $addon) {
+                $addonTotal += (float) $addon->additional_price;
+                $selectedAddons[] = $addon;
+            }
+        }
+
+        $totalPrice = $basePrice + $addonTotal;
 
         $commission = Commission::create([
             ...$request->only(['description', 'deadline']),
@@ -60,11 +74,19 @@ class CommissionController extends Controller
             'artist_profile_id' => $service->artist_profile_id,
             'user_id' => $request->user()->id,
             'status' => CommissionStatus::PENDING,
-            'total_price' => $option?->base_price ?? 0,
+            'total_price' => $totalPrice,
         ]);
 
+        foreach ($selectedAddons as $addon) {
+            $commission->addonsSelections()->create([
+                'commission_addon_id' => $addon->id,
+                'title' => $addon->title,
+                'price' => $addon->additional_price,
+            ]);
+        }
+
         return ApiResponseHelper::successResponse(
-            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review'])),
+            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review', 'addonsSelections'])),
             'Commission created successfully.',
             Response::HTTP_CREATED,
         );
