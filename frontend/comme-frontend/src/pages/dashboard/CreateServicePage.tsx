@@ -15,6 +15,8 @@ import {
     PlusCircle,
     CheckCircle2,
     Tag,
+    Lock,
+    EyeOff,
 } from 'lucide-react';
 import { commissionServiceApi } from '@/services/commissionService';
 import { Button } from '@/components/ui/button';
@@ -392,7 +394,7 @@ export const CreateServicePage: React.FC = () => {
                                 onChange={(e) => setName(e.target.value)}
                                 placeholder="e.g. Dynamic Anime Character Illustration / Live2D Model & Rigging"
                                 required
-                                className="h-11 rounded-2xl bg-secondary/40 border-border/80 text-sm font-medium"
+                                className="h-11 rounded-xl bg-secondary/30 border-border/80 text-sm font-medium focus-visible:ring-purple-500"
                             />
                         </div>
 
@@ -407,24 +409,71 @@ export const CreateServicePage: React.FC = () => {
                                 placeholder="What do you specialize in? Outline drawing styles, turnaround time expectations, accepted themes, and commercial usage policies..."
                                 rows={4}
                                 required
-                                className="rounded-2xl bg-secondary/40 border-border/80 text-xs leading-relaxed"
+                                className="rounded-xl bg-secondary/30 border-border/80 text-xs leading-relaxed focus-visible:ring-purple-500"
                             />
                         </div>
 
-                        <div className="space-y-1.5">
-                            <Label htmlFor="status" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        <div className="space-y-2">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                                 Availability Status
                             </Label>
-                            <select
-                                id="status"
-                                value={status}
-                                onChange={(e) => setStatus(e.target.value as 'open' | 'closed' | 'draft')}
-                                className="w-full h-11 rounded-2xl border border-border/80 bg-secondary/40 px-3.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500/40 cursor-pointer"
-                            >
-                                <option value="open">Open (Ready to accept orders)</option>
-                                <option value="closed">Closed (Queue currently full)</option>
-                                <option value="draft">Draft (Hidden from store &amp; public)</option>
-                            </select>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                {[
+                                    {
+                                        id: 'open' as const,
+                                        label: 'Open for Orders',
+                                        desc: 'Accepting client requests in store',
+                                        icon: CheckCircle2,
+                                        activeClass: 'border-emerald-500/80 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/30',
+                                        iconColor: 'text-emerald-400',
+                                        dotColor: 'bg-emerald-400',
+                                    },
+                                    {
+                                        id: 'closed' as const,
+                                        label: 'Closed (Queue Full)',
+                                        desc: 'Temporarily pause new requests',
+                                        icon: Lock,
+                                        activeClass: 'border-rose-500/80 bg-rose-500/10 text-rose-300 ring-1 ring-rose-500/30',
+                                        iconColor: 'text-rose-400',
+                                        dotColor: 'bg-rose-400',
+                                    },
+                                    {
+                                        id: 'draft' as const,
+                                        label: 'Draft (Hidden)',
+                                        desc: 'Hidden from public store listings',
+                                        icon: EyeOff,
+                                        activeClass: 'border-amber-500/80 bg-amber-500/10 text-amber-300 ring-1 ring-amber-500/30',
+                                        iconColor: 'text-amber-400',
+                                        dotColor: 'bg-amber-400',
+                                    },
+                                ].map((opt) => {
+                                    const isSelected = status === opt.id;
+                                    const Icon = opt.icon;
+                                    return (
+                                        <button
+                                            key={opt.id}
+                                            type="button"
+                                            onClick={() => setStatus(opt.id)}
+                                            className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 ${
+                                                isSelected
+                                                    ? opt.activeClass
+                                                    : 'border-border/80 bg-secondary/20 hover:bg-secondary/40 text-muted-foreground hover:text-foreground'
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-between w-full">
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`w-2 h-2 rounded-full ${isSelected ? opt.dotColor : 'bg-muted-foreground/40'}`} />
+                                                    <span className="text-xs font-bold text-foreground">{opt.label}</span>
+                                                </div>
+                                                <Icon className={`h-4 w-4 ${isSelected ? opt.iconColor : 'text-muted-foreground/50'}`} />
+                                            </div>
+                                            <p className="text-[11px] text-muted-foreground leading-tight">
+                                                {opt.desc}
+                                            </p>
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
