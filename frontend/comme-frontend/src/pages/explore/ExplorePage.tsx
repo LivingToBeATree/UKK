@@ -122,7 +122,11 @@ const PostCardMedia: React.FC<{ post: Post }> = ({ post }) => {
     const isArtwork = isPostArtwork(post);
 
     return (
-        <div className="relative w-full rounded-2xl overflow-hidden bg-black/40 border border-border/60 flex items-center justify-center select-none group/media my-1">
+        <div
+            className={`relative w-full overflow-hidden flex items-center justify-center select-none group/media ${
+                isArtwork ? 'bg-black/20' : 'rounded-2xl bg-black/40 border border-border/60 my-1'
+            }`}
+        >
             <AnimatePresence mode="wait">
                 <motion.div
                     key={currentMedia.url + currentIndex}
@@ -473,10 +477,10 @@ export const ExplorePage: React.FC = () => {
                     )}
                 </div>
             ) : (
-                /* Consistent Hierarchy Feed: 1. Author Header -> 2. Text Content -> 3. Shuffling Media -> 4. Action Bar */
                 <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 [column-fill:_balance]">
                     <AnimatePresence>
                         {filteredPosts.map((post) => {
+                            const isArt = isPostArtwork(post);
                             const postHasMedia = hasAnyMedia(post);
 
                             return (
@@ -488,102 +492,177 @@ export const ExplorePage: React.FC = () => {
                                     transition={{ duration: 0.25 }}
                                     className="break-inside-avoid mb-4"
                                 >
-                                    <Link
-                                        to={`/posts/${post.id}`}
-                                        className="group relative block rounded-2xl overflow-hidden bg-card border border-border/80 hover:border-purple-500/60 shadow-xs hover:shadow-xl transition-all duration-300 cursor-pointer p-4 space-y-3"
-                                    >
-                                        {/* 1. Author Header at the Top */}
-                                        <div className="flex items-center justify-between gap-2">
-                                            <div className="flex items-center gap-2.5 min-w-0">
-                                                <Avatar
-                                                    size="sm"
-                                                    fallback={post.user?.display_name || post.user?.username || '?'}
-                                                    src={post.user?.avatar_url}
-                                                    className="h-8 w-8 shrink-0 ring-1 ring-border shadow-xs"
-                                                />
-                                                <div className="min-w-0">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <span className="text-xs font-bold text-foreground truncate group-hover:text-purple-400 transition-colors">
-                                                            {post.user?.display_name || post.user?.username}
-                                                        </span>
-                                                        <span className="text-[9px] font-bold text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20 shrink-0">
-                                                            {post.user?.artist_profile ? 'Artist' : 'Creator'}
-                                                        </span>
-                                                    </div>
-                                                    {post.created_at && (
-                                                        <span className="text-[10px] text-muted-foreground block">
-                                                            {formatPostDate(post.created_at)}
-                                                        </span>
+                                    {isArt ? (
+                                        /* ── 1. Full-Bleed Artwork Card (Edge-to-Edge Showcase with Bottom Gradient) ── */
+                                        <Link
+                                            to={`/posts/${post.id}`}
+                                            className="group relative block rounded-2xl overflow-hidden bg-card border border-border/80 hover:border-purple-500/60 shadow-xs hover:shadow-xl transition-all duration-300 cursor-pointer"
+                                        >
+                                            <div className="relative w-full overflow-hidden">
+                                                <PostCardMedia post={post} />
+
+                                                {/* Bottom Floating Dark Gradient Overlay */}
+                                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-3 sm:p-4 text-white flex flex-col justify-end gap-2 z-20">
+                                                    {/* Artwork Caption / Title */}
+                                                    {post.content && (
+                                                        <p className="text-xs font-semibold text-white/95 line-clamp-2 drop-shadow-md leading-relaxed">
+                                                            {post.content}
+                                                        </p>
                                                     )}
+
+                                                    {/* Author Row & Glassmorphic Action Buttons */}
+                                                    <div className="flex items-center justify-between gap-2 pt-0.5">
+                                                        <div className="flex items-center gap-2 min-w-0">
+                                                            <Avatar
+                                                                size="sm"
+                                                                fallback={post.user?.display_name || post.user?.username || '?'}
+                                                                src={post.user?.avatar_url}
+                                                                className="h-6 w-6 ring-1 ring-white/30 shrink-0 shadow-xs"
+                                                            />
+                                                            <div className="flex items-center gap-1.5 min-w-0">
+                                                                <span className="text-xs font-bold text-white truncate drop-shadow-sm group-hover:text-purple-300 transition-colors">
+                                                                    {post.user?.display_name || post.user?.username}
+                                                                </span>
+                                                                <span className="text-[9px] font-black text-amber-300 bg-amber-400/20 px-1.5 py-0.2 rounded border border-amber-400/30 shrink-0 backdrop-blur-xs">
+                                                                    Artist
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Glassmorphic Actions */}
+                                                        <div className="flex items-center gap-1.5 shrink-0">
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => handleLike(e, post.id)}
+                                                                className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full backdrop-blur-md transition-all cursor-pointer ${
+                                                                    post.is_liked
+                                                                        ? 'bg-rose-500/90 text-white font-bold'
+                                                                        : 'bg-black/40 hover:bg-black/60 text-white/90 border border-white/10'
+                                                                }`}
+                                                                aria-label="Like"
+                                                            >
+                                                                <Heart className={`h-3 w-3 ${post.is_liked ? 'fill-white text-white' : ''}`} />
+                                                                <span className="text-[10px]">{post.likes_count || 0}</span>
+                                                            </button>
+
+                                                            <span className="flex items-center gap-1 text-white/90 text-[10px] px-2 py-0.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
+                                                                <MessageSquare className="h-3 w-3" />
+                                                                <span>{post.comments_count || 0}</span>
+                                                            </span>
+
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => handleBookmark(e, post.id)}
+                                                                className={`p-1 rounded-full backdrop-blur-md transition-all cursor-pointer ${
+                                                                    post.is_bookmarked
+                                                                        ? 'bg-blue-500/90 text-white'
+                                                                        : 'bg-black/40 hover:bg-black/60 text-white/90 border border-white/10'
+                                                                }`}
+                                                                aria-label="Bookmark"
+                                                            >
+                                                                <Bookmark className={`h-3 w-3 ${post.is_bookmarked ? 'fill-white text-white' : ''}`} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-
-                                        {/* 2. Text Content Below Author */}
-                                        {post.content && (
-                                            <div className="py-0.5">
-                                                <MarkdownContent
-                                                    content={post.content}
-                                                    className="text-xs line-clamp-4 leading-relaxed text-foreground/90 font-medium"
-                                                />
+                                        </Link>
+                                    ) : (
+                                        /* ── 2. Discussion Card ── */
+                                        <Link
+                                            to={`/posts/${post.id}`}
+                                            className="group relative block rounded-2xl overflow-hidden bg-card border border-border/80 hover:border-purple-500/60 shadow-xs hover:shadow-xl transition-all duration-300 cursor-pointer p-4 space-y-3"
+                                        >
+                                            {/* Author Header */}
+                                            <div className="flex items-center justify-between gap-2">
+                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                    <Avatar
+                                                        size="sm"
+                                                        fallback={post.user?.display_name || post.user?.username || '?'}
+                                                        src={post.user?.avatar_url}
+                                                        className="h-8 w-8 shrink-0 ring-1 ring-border shadow-xs"
+                                                    />
+                                                    <div className="min-w-0">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className="text-xs font-bold text-foreground truncate group-hover:text-purple-400 transition-colors">
+                                                                {post.user?.display_name || post.user?.username}
+                                                            </span>
+                                                            <span className="text-[9px] font-bold text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20 shrink-0">
+                                                                Creator
+                                                            </span>
+                                                        </div>
+                                                        {post.created_at && (
+                                                            <span className="text-[10px] text-muted-foreground block">
+                                                                {formatPostDate(post.created_at)}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
-                                        )}
 
-                                        {/* 3. Media Showcase Below Text (With 5s Auto-Shuffling Loop) */}
-                                        {postHasMedia && (
-                                            <div className="pt-0.5">
-                                                <PostCardMedia post={post} />
-                                            </div>
-                                        )}
+                                            {/* Markdown Content */}
+                                            {post.content && (
+                                                <div className="py-0.5">
+                                                    <MarkdownContent
+                                                        content={post.content}
+                                                        className="text-xs line-clamp-4 leading-relaxed text-foreground/90 font-medium"
+                                                    />
+                                                </div>
+                                            )}
 
-                                        {/* 4. Action Buttons Row at the Bottom */}
-                                        <div className="flex items-center justify-between pt-2 border-t border-border/40 text-xs">
-                                            <div className="flex items-center gap-2">
-                                                {/* Like Button */}
+                                            {/* Media Showcase */}
+                                            {postHasMedia && (
+                                                <div className="pt-0.5">
+                                                    <PostCardMedia post={post} />
+                                                </div>
+                                            )}
+
+                                            {/* Action Buttons Row */}
+                                            <div className="flex items-center justify-between pt-2 border-t border-border/40 text-xs">
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => handleLike(e, post.id)}
+                                                        className={`flex items-center gap-1 px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
+                                                            post.is_liked
+                                                                ? 'text-rose-500 font-bold bg-rose-500/10'
+                                                                : 'text-muted-foreground hover:text-rose-500 hover:bg-secondary/60'
+                                                        }`}
+                                                        aria-label="Like"
+                                                    >
+                                                        <Heart
+                                                            className={`h-3.5 w-3.5 ${
+                                                                post.is_liked ? 'fill-rose-500 text-rose-500' : ''
+                                                            }`}
+                                                        />
+                                                        <span className="text-[11px]">{post.likes_count || 0}</span>
+                                                    </button>
+
+                                                    <span className="flex items-center gap-1 text-muted-foreground text-[11px] px-2 py-1 rounded-xl bg-secondary/40">
+                                                        <MessageSquare className="h-3.5 w-3.5" />
+                                                        <span>{post.comments_count || 0}</span>
+                                                    </span>
+                                                </div>
+
                                                 <button
                                                     type="button"
-                                                    onClick={(e) => handleLike(e, post.id)}
-                                                    className={`flex items-center gap-1 px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
-                                                        post.is_liked
-                                                            ? 'text-rose-500 font-bold bg-rose-500/10'
-                                                            : 'text-muted-foreground hover:text-rose-500 hover:bg-secondary/60'
+                                                    onClick={(e) => handleBookmark(e, post.id)}
+                                                    className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
+                                                        post.is_bookmarked
+                                                            ? 'text-blue-500 bg-blue-500/10'
+                                                            : 'text-muted-foreground hover:text-blue-500 hover:bg-secondary/60'
                                                     }`}
-                                                    aria-label="Like"
+                                                    aria-label="Bookmark"
                                                 >
-                                                    <Heart
+                                                    <Bookmark
                                                         className={`h-3.5 w-3.5 ${
-                                                            post.is_liked ? 'fill-rose-500 text-rose-500' : ''
+                                                            post.is_bookmarked ? 'fill-blue-500 text-blue-500' : ''
                                                         }`}
                                                     />
-                                                    <span className="text-[11px]">{post.likes_count || 0}</span>
                                                 </button>
-
-                                                {/* Comments Count */}
-                                                <span className="flex items-center gap-1 text-muted-foreground text-[11px] px-2 py-1 rounded-xl bg-secondary/40">
-                                                    <MessageSquare className="h-3.5 w-3.5" />
-                                                    <span>{post.comments_count || 0}</span>
-                                                </span>
                                             </div>
-
-                                            {/* Bookmark Button */}
-                                            <button
-                                                type="button"
-                                                onClick={(e) => handleBookmark(e, post.id)}
-                                                className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
-                                                    post.is_bookmarked
-                                                        ? 'text-blue-500 bg-blue-500/10'
-                                                        : 'text-muted-foreground hover:text-blue-500 hover:bg-secondary/60'
-                                                }`}
-                                                aria-label="Bookmark"
-                                            >
-                                                <Bookmark
-                                                    className={`h-3.5 w-3.5 ${
-                                                        post.is_bookmarked ? 'fill-blue-500 text-blue-500' : ''
-                                                    }`}
-                                                />
-                                            </button>
-                                        </div>
-                                    </Link>
+                                        </Link>
+                                    )}
                                 </motion.div>
                             );
                         })}
