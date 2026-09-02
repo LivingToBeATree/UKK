@@ -46,4 +46,14 @@ class PostComment extends Model
     {
         return $this->hasMany(PostComment::class, 'parent_comment_id');
     }
+
+    public function likes(): HasMany
+    {
+        return $this->hasMany(PostCommentLike::class, 'post_comment_id');
+    }
+
+    public function bookmarks(): HasMany
+    {
+        return $this->hasMany(PostCommentBookmark::class, 'post_comment_id');
+    }
 }

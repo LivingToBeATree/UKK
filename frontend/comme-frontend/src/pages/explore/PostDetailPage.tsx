@@ -16,11 +16,11 @@ import {
     Clock,
     Check,
     AlertTriangle,
-    X,
     Video,
     ChevronLeft,
     ChevronRight,
     Maximize2,
+    Reply,
 } from 'lucide-react';
 import { postService } from '@/services/postService';
 import { useAuth } from '@/hooks/useAuth';
@@ -57,7 +57,461 @@ function formatPostDate(dateStr?: string | null): string {
     });
 }
 
-// ── Horizontal Scrollable Media Gallery Component ──
+// ── Extract Media Items from Comment Markdown ──
+function extractCommentMedia(content: string): {
+    cleanText: string;
+    mediaList: Array<{ id: number; url: string; file_name: string; media_type: 'image' | 'video'; isVideo: boolean; isGif: boolean }>;
+} {
+    const mediaList: Array<{ id: number; url: string; file_name: string; media_type: 'image' | 'video'; isVideo: boolean; isGif: boolean }> = [];
+    const imageRegex = /!\[(.*?)\]\((.*?)\)/g;
+    let match;
+    let idCounter = 1;
+
+    while ((match = imageRegex.exec(content)) !== null) {
+        const alt = match[1] || 'Attachment';
+        const url = match[2] || '';
+        const isVideo = /\.(mp4|webm|mov|mkv|avi)$/i.test(url) || url.includes('/media/stream/') || /\.(mp4|webm|mov|mkv|avi)$/i.test(alt);
+        const isGif = /\.gif$/i.test(url) || alt.toLowerCase().includes('gif');
+        mediaList.push({
+            id: idCounter++,
+            url,
+            file_name: alt,
+            media_type: isVideo ? 'video' : 'image',
+            isVideo,
+            isGif,
+        });
+    }
+
+    const cleanText = content.replace(imageRegex, '').trim();
+    return { cleanText, mediaList };
+}
+
+// ── Compact Horizontal Scrollable Media Gallery for Comments ──
+const ScrollableCommentMediaGallery: React.FC<{
+    mediaList: Array<{ id: number; url: string; file_name: string; media_type: 'image' | 'video'; isVideo: boolean; isGif: boolean }>;
+}> = ({ mediaList }) => {
+    const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+    const [canScrollLeft, setCanScrollLeft] = useState(false);
+    const [canScrollRight, setCanScrollRight] = useState(mediaList.length > 1);
+    const [activeIndex, setActiveIndex] = useState(0);
+
+    // Lightbox modal state
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [lightboxIndex, setLightboxIndex] = useState(0);
+
+    const handleOpenLightbox = (index: number) => {
+        setLightboxIndex(index);
+        setLightboxOpen(true);
+    };
+
+    const checkScroll = () => {
+        if (!scrollContainerRef.current) return;
+        const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+        setCanScrollLeft(scrollLeft > 10);
+        setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+
+        const itemWidth = scrollContainerRef.current.firstElementChild?.clientWidth || clientWidth;
+        const current = Math.round(scrollLeft / (itemWidth + 12));
+        setActiveIndex(Math.min(Math.max(0, current), mediaList.length - 1));
+    };
+
+    useEffect(() => {
+        checkScroll();
+        const container = scrollContainerRef.current;
+        if (container) {
+            container.addEventListener('scroll', checkScroll, { passive: true });
+            window.addEventListener('resize', checkScroll);
+        }
+        return () => {
+            if (container) container.removeEventListener('scroll', checkScroll);
+            window.removeEventListener('resize', checkScroll);
+        };
+    }, [mediaList.length]);
+
+    const scroll = (direction: 'left' | 'right') => {
+        if (!scrollContainerRef.current) return;
+        const container = scrollContainerRef.current;
+        const scrollAmount = container.clientWidth * 0.8;
+        container.scrollBy({
+            left: direction === 'left' ? -scrollAmount : scrollAmount,
+            behavior: 'smooth',
+        });
+    };
+
+    const scrollToItem = (index: number) => {
+        if (!scrollContainerRef.current) return;
+        const container = scrollContainerRef.current;
+        const children = container.children;
+        if (children[index]) {
+            (children[index] as HTMLElement).scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+                inline: 'center',
+            });
+        }
+    };
+
+    if (mediaList.length === 1) {
+        const m = mediaList[0];
+        return (
+            <>
+                <div className="relative rounded-2xl overflow-hidden bg-black/80 border border-border/80 my-2 max-w-sm group">
+                    {m.isVideo ? (
+                        <CustomVideoPlayer
+                            src={m.url}
+                            autoPlay={false}
+                            loop
+                            className="w-full h-auto max-h-[220px] rounded-2xl"
+                        />
+                    ) : (
+                        <img
+                            src={m.url}
+                            alt={m.file_name}
+                            className="w-full h-auto max-h-[220px] object-contain rounded-2xl cursor-zoom-in hover:brightness-105 transition-all"
+                            onClick={() => handleOpenLightbox(0)}
+                        />
+                    )}
+
+                    <div className="absolute top-2 left-2 flex items-center gap-1 pointer-events-none">
+                        {m.isVideo ? (
+                            <span className="px-2 py-0.5 rounded-full bg-blue-600/90 text-white text-[9px] font-black flex items-center gap-1 shadow-sm backdrop-blur-md">
+                                <Video className="h-2.5 w-2.5" /> VIDEO
+                            </span>
+                        ) : m.isGif ? (
+                            <span className="px-2 py-0.5 rounded-full bg-purple-600/90 text-white text-[9px] font-black shadow-sm backdrop-blur-md">
+                                GIF
+                            </span>
+                        ) : null}
+                    </div>
+
+                    {!m.isVideo && (
+                        <button
+                            type="button"
+                            onClick={() => handleOpenLightbox(0)}
+                            className="absolute top-2 right-2 h-6 px-2 rounded-full bg-black/70 hover:bg-black/90 text-white text-[10px] font-semibold flex items-center gap-1 shadow-md backdrop-blur-md border border-white/20 transition-all cursor-pointer opacity-0 group-hover:opacity-100"
+                        >
+                            <Maximize2 className="h-2.5 w-2.5" /> Expand
+                        </button>
+                    )}
+                </div>
+
+                <MediaLightboxModal
+                    isOpen={lightboxOpen}
+                    onClose={() => setLightboxOpen(false)}
+                    mediaList={mediaList as any}
+                    initialIndex={lightboxIndex}
+                />
+            </>
+        );
+    }
+
+    return (
+        <>
+            <div className="relative rounded-2xl overflow-hidden bg-black/80 border border-border/80 my-2 group/gallery select-none">
+                {/* Horizontal Scroll Track */}
+                <div
+                    ref={scrollContainerRef}
+                    className="flex gap-3 overflow-x-auto snap-x snap-mandatory p-3 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent scroll-smooth"
+                    style={{ scrollbarWidth: 'thin' }}
+                >
+                    {mediaList.map((m, idx) => (
+                        <div
+                            key={m.id || idx}
+                            className="relative snap-center shrink-0 w-[240px] sm:w-[280px] h-[170px] sm:h-[190px] rounded-xl overflow-hidden bg-black/60 border border-white/10 flex items-center justify-center group/card"
+                        >
+                            {m.isVideo ? (
+                                <CustomVideoPlayer
+                                    src={m.url}
+                                    autoPlay={false}
+                                    loop
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <img
+                                    src={m.url}
+                                    alt={m.file_name}
+                                    className="w-full h-full object-cover cursor-zoom-in group-hover/card:scale-105 transition-transform duration-300"
+                                    onClick={() => handleOpenLightbox(idx)}
+                                    loading="lazy"
+                                />
+                            )}
+
+                            {/* Top Badges */}
+                            <div className="absolute top-2 left-2 flex items-center gap-1 z-10 pointer-events-none">
+                                {m.isVideo ? (
+                                    <span className="px-2 py-0.5 rounded-full bg-blue-600/90 text-white text-[9px] font-black flex items-center gap-1 shadow-sm backdrop-blur-md">
+                                        <Video className="h-2.5 w-2.5" /> VID
+                                    </span>
+                                ) : m.isGif ? (
+                                    <span className="px-2 py-0.5 rounded-full bg-purple-600/90 text-white text-[9px] font-black shadow-sm backdrop-blur-md">
+                                        GIF
+                                    </span>
+                                ) : null}
+                            </div>
+
+                            {/* Top Right Counter & Expand Button */}
+                            <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
+                                <span className="px-2 py-0.5 rounded-full bg-black/70 backdrop-blur-md text-white text-[9px] font-bold border border-white/10 shadow-xs">
+                                    {idx + 1}/{mediaList.length}
+                                </span>
+                                {!m.isVideo && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleOpenLightbox(idx)}
+                                        className="h-6 w-6 rounded-full bg-black/70 hover:bg-black/90 text-white flex items-center justify-center backdrop-blur-md border border-white/20 shadow-xs transition-all cursor-pointer opacity-0 group-hover/card:opacity-100"
+                                        title="Expand"
+                                    >
+                                        <Maximize2 className="h-2.5 w-2.5" />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Left / Right Nav Arrows */}
+                {canScrollLeft && (
+                    <button
+                        type="button"
+                        onClick={() => scroll('left')}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-black/75 hover:bg-black/95 text-white border border-white/20 flex items-center justify-center shadow-lg backdrop-blur-md transition-all cursor-pointer z-20"
+                        title="Scroll left"
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                    </button>
+                )}
+                {canScrollRight && (
+                    <button
+                        type="button"
+                        onClick={() => scroll('right')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-black/75 hover:bg-black/95 text-white border border-white/20 flex items-center justify-center shadow-lg backdrop-blur-md transition-all cursor-pointer z-20"
+                        title="Scroll right"
+                    >
+                        <ChevronRight className="h-4 w-4" />
+                    </button>
+                )}
+
+                {/* Bottom Navigation Dots */}
+                {mediaList.length > 1 && (
+                    <div className="flex items-center justify-center gap-1.5 py-2 bg-black/70 backdrop-blur-xs border-t border-white/5">
+                        {mediaList.map((_, idx) => (
+                            <button
+                                key={idx}
+                                type="button"
+                                onClick={() => scrollToItem(idx)}
+                                className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                                    idx === activeIndex
+                                        ? 'w-5 bg-white shadow-sm'
+                                        : 'w-1.5 bg-white/40 hover:bg-white/70'
+                                }`}
+                                title={`Jump to media ${idx + 1}`}
+                            />
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            <MediaLightboxModal
+                isOpen={lightboxOpen}
+                onClose={() => setLightboxOpen(false)}
+                mediaList={mediaList as any}
+                initialIndex={lightboxIndex}
+            />
+        </>
+    );
+};
+
+// ── Interactive Comment Item with Replies, Likes & Bookmarks ──
+const CommentItem: React.FC<{
+    comment: PostComment;
+    postId: number;
+    postAuthorId?: number;
+    onDeleteComment: (commentId: number) => void;
+    onReplyAdded: (reply: PostComment, parentId: number) => void;
+    deletingCommentId: number | null;
+}> = ({ comment, postId, postAuthorId, onDeleteComment, onReplyAdded, deletingCommentId }) => {
+    const { user } = useAuth();
+    const { requireAuth } = useAuthModal();
+    const [isLiked, setIsLiked] = useState(Boolean(comment.is_liked));
+    const [likesCount, setLikesCount] = useState(comment.likes_count || 0);
+    const [isBookmarked, setIsBookmarked] = useState(Boolean(comment.is_bookmarked));
+    const [showReplyComposer, setShowReplyComposer] = useState(false);
+
+    const { cleanText, mediaList } = extractCommentMedia(comment.content || comment.body || '');
+
+    const handleLike = async () => {
+        if (!requireAuth('like')) return;
+        try {
+            const res = await postService.toggleCommentLike(comment.id);
+            const liked = res.is_liked ?? res.liked ?? false;
+            setIsLiked(liked);
+            setLikesCount(res.likes_count ?? (liked ? likesCount + 1 : Math.max(0, likesCount - 1)));
+        } catch {
+            toast.error('Failed to like comment');
+        }
+    };
+
+    const handleBookmark = async () => {
+        if (!requireAuth('bookmark')) return;
+        try {
+            const res = await postService.toggleCommentBookmark(comment.id);
+            const bookmarked = res.is_bookmarked ?? res.bookmarked ?? false;
+            setIsBookmarked(bookmarked);
+            toast.success(bookmarked ? 'Comment saved to bookmarks' : 'Comment removed from bookmarks');
+        } catch {
+            toast.error('Failed to bookmark comment');
+        }
+    };
+
+    return (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-2">
+            <Card className="rounded-2xl border border-border/70 bg-card/85 shadow-2xs hover:border-border transition-colors">
+                <CardContent className="p-4 sm:p-5 space-y-3">
+                    {/* Header: Author Info */}
+                    <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                            <Link to={`/@${comment.user?.username || ''}`}>
+                                <Avatar
+                                    size="sm"
+                                    fallback={comment.user?.display_name || comment.user?.username || '?'}
+                                    src={comment.user?.avatar_url}
+                                    className="ring-1 ring-border shadow-2xs"
+                                />
+                            </Link>
+                            <div className="min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <Link
+                                        to={`/@${comment.user?.username || ''}`}
+                                        className="font-bold text-xs text-foreground hover:text-primary transition-colors truncate"
+                                    >
+                                        {comment.user?.display_name || comment.user?.username}
+                                    </Link>
+                                    {comment.user_id === postAuthorId && (
+                                        <span className="text-[9px] font-bold text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20">
+                                            Author
+                                        </span>
+                                    )}
+                                    <span className="text-[11px] text-muted-foreground">
+                                        {formatPostDate(comment.created_at)}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Delete Comment for Comment Owner or Admin */}
+                        {user && (user.id === comment.user_id || user.role === 'admin') && (
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onDeleteComment(comment.id)}
+                                disabled={deletingCommentId === comment.id}
+                                className="h-7 w-7 p-0 text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 rounded-lg cursor-pointer shrink-0"
+                                title="Delete comment"
+                            >
+                                <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                        )}
+                    </div>
+
+                    {/* Clean Text Content */}
+                    {cleanText && (
+                        <div className="pt-0.5">
+                            <MarkdownContent content={cleanText} variant="comment" className="text-foreground/90 leading-relaxed text-xs sm:text-sm font-medium" />
+                        </div>
+                    )}
+
+                    {/* Extracted Media Gallery formatted like Post Media */}
+                    {mediaList.length > 0 && (
+                        <ScrollableCommentMediaGallery mediaList={mediaList} />
+                    )}
+
+                    {/* Comment Interactive Actions Row */}
+                    <div className="flex items-center justify-between pt-2 border-t border-border/40 text-xs">
+                        <div className="flex items-center gap-3">
+                            {/* Like Button */}
+                            <button
+                                type="button"
+                                onClick={handleLike}
+                                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
+                                    isLiked
+                                        ? 'text-rose-500 font-bold bg-rose-500/10'
+                                        : 'text-muted-foreground hover:text-rose-500 hover:bg-secondary/60'
+                                }`}
+                                aria-label="Like comment"
+                            >
+                                <Heart className={`h-3.5 w-3.5 ${isLiked ? 'fill-rose-500 text-rose-500' : ''}`} />
+                                <span className="text-[11px]">{likesCount}</span>
+                            </button>
+
+                            {/* Reply Button to start thread */}
+                            <button
+                                type="button"
+                                onClick={() => setShowReplyComposer((prev) => !prev)}
+                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-muted-foreground hover:text-purple-400 hover:bg-purple-500/10 transition-colors cursor-pointer"
+                                aria-label="Reply to comment"
+                            >
+                                <Reply className="h-3.5 w-3.5" />
+                                <span className="text-[11px]">
+                                    Reply {comment.replies && comment.replies.length > 0 ? `(${comment.replies.length})` : ''}
+                                </span>
+                            </button>
+                        </div>
+
+                        {/* Bookmark Button */}
+                        <button
+                            type="button"
+                            onClick={handleBookmark}
+                            className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
+                                isBookmarked
+                                    ? 'text-blue-500 bg-blue-500/10'
+                                    : 'text-muted-foreground hover:text-blue-500 hover:bg-secondary/60'
+                            }`}
+                            aria-label="Bookmark comment"
+                        >
+                            <Bookmark className={`h-3.5 w-3.5 ${isBookmarked ? 'fill-blue-500 text-blue-500' : ''}`} />
+                        </button>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Inline Nested Reply Composer */}
+            {showReplyComposer && (
+                <div className="pl-4 sm:pl-6 border-l-2 border-purple-500/40 mt-2">
+                    <CommentComposer
+                        postId={postId}
+                        parentCommentId={comment.id}
+                        placeholder={`Reply to @${comment.user?.username || 'user'}...`}
+                        onCommentAdded={(newReply) => {
+                            onReplyAdded(newReply, comment.id);
+                            setShowReplyComposer(false);
+                        }}
+                        onCancel={() => setShowReplyComposer(false)}
+                    />
+                </div>
+            )}
+
+            {/* Threaded Nested Replies Tree */}
+            {comment.replies && comment.replies.length > 0 && (
+                <div className="pl-4 sm:pl-6 border-l-2 border-primary/30 space-y-2.5 mt-2">
+                    {comment.replies.map((reply) => (
+                        <CommentItem
+                            key={reply.id}
+                            comment={reply}
+                            postId={postId}
+                            postAuthorId={postAuthorId}
+                            onDeleteComment={onDeleteComment}
+                            onReplyAdded={onReplyAdded}
+                            deletingCommentId={deletingCommentId}
+                        />
+                    ))}
+                </div>
+            )}
+        </motion.div>
+    );
+};
+
+// ── Horizontal Scrollable Media Gallery Component for Posts ──
 const ScrollableMediaGallery: React.FC<{
     mediaList: NonNullable<Post['media']>;
     attachedPortfolio?: Post['portfolio'];
@@ -164,7 +618,6 @@ const ScrollableMediaGallery: React.FC<{
                         ) : null}
                     </div>
 
-                    {/* Explicit Expand into Lightbox Button */}
                     <button
                         type="button"
                         onClick={() => handleOpenLightbox(0)}
@@ -188,7 +641,7 @@ const ScrollableMediaGallery: React.FC<{
 
     return (
         <>
-            <div className="relative bg-black/95 group/gallery select-none overflow-hidden">
+            <div className="relative bg-black/95 group/gallery select-none overflow-hidden rounded-2xl">
                 {/* Scroll Track Container */}
                 <div
                     ref={scrollContainerRef}
@@ -200,63 +653,59 @@ const ScrollableMediaGallery: React.FC<{
                             m.media_type === 'video' ||
                             m.mime_type?.includes('video') ||
                             (typeof m.url === 'string' && /\.(mp4|webm|mov|mkv)$/i.test(m.url));
-                        const isItemGif =
-                            m.mime_type?.includes('gif') ||
-                            (typeof m.url === 'string' && /\.gif$/i.test(m.url));
 
                         return (
                             <div
                                 key={m.id || idx}
-                                className="relative shrink-0 snap-center rounded-2xl overflow-hidden bg-black border border-white/10 shadow-2xl flex items-center justify-center w-[85%] sm:w-[70%] md:w-[60%] max-w-[620px] aspect-video sm:aspect-16/10 transition-transform duration-300 group/card"
+                                className="relative snap-center shrink-0 w-[300px] sm:w-[420px] md:w-[480px] h-[220px] sm:h-[300px] md:h-[340px] rounded-2xl overflow-hidden bg-black/60 border border-white/10 flex items-center justify-center group/card"
                             >
                                 {isItemVideo ? (
                                     <CustomVideoPlayer
                                         src={m.url}
                                         autoPlay={false}
                                         loop
-                                        className="w-full h-full max-h-[500px]"
+                                        className="w-full h-full object-cover"
                                     />
                                 ) : (
                                     <img
                                         src={m.url}
                                         alt={m.file_name || `Media ${idx + 1}`}
-                                        className="w-full h-full object-contain cursor-zoom-in bg-black group-hover/card:scale-102 transition-transform duration-300"
+                                        className="w-full h-full object-cover cursor-zoom-in group-hover/card:scale-105 transition-transform duration-300"
                                         onClick={() => handleOpenLightbox(idx)}
                                         loading="lazy"
                                     />
                                 )}
 
-                                {/* Badge Left */}
-                                <div className="absolute top-3 left-3 flex items-center gap-1.5 pointer-events-none z-10">
+                                {/* Top Left Badges */}
+                                <div className="absolute top-3 left-3 flex items-center gap-1.5 z-10 pointer-events-none">
                                     {isItemVideo ? (
-                                        <span className="bg-blue-600/90 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-md backdrop-blur-md flex items-center gap-1">
+                                        <span className="px-2.5 py-0.5 rounded-full bg-blue-600/90 text-white text-[10px] font-black flex items-center gap-1 shadow-md backdrop-blur-md">
                                             <Video className="h-3 w-3" /> VIDEO
                                         </span>
-                                    ) : isItemGif ? (
-                                        <span className="bg-purple-600/90 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-md backdrop-blur-md">
+                                    ) : m.mime_type?.includes('gif') ? (
+                                        <span className="px-2.5 py-0.5 rounded-full bg-purple-600/90 text-white text-[10px] font-black shadow-md backdrop-blur-md">
                                             GIF
                                         </span>
                                     ) : null}
                                 </div>
 
-                                {/* Item Count Badge Right */}
-                                <div className="absolute top-3 right-3 px-2.5 py-0.5 rounded-full bg-black/65 backdrop-blur-md text-white text-[11px] font-bold shadow-md z-10 pointer-events-none">
-                                    {idx + 1} / {mediaList.length}
+                                {/* Top Right Counter & Expand Button */}
+                                <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+                                    <span className="px-2.5 py-0.5 rounded-full bg-black/65 backdrop-blur-md text-white text-[10px] font-bold border border-white/10 shadow-md">
+                                        {idx + 1}/{mediaList.length}
+                                    </span>
+                                    {!isItemVideo && (
+                                        <button
+                                            type="button"
+                                            onClick={() => handleOpenLightbox(idx)}
+                                            className="h-7 px-2 rounded-full bg-black/65 hover:bg-black/90 text-white text-[10px] font-semibold flex items-center gap-1 backdrop-blur-md border border-white/20 shadow-md transition-all cursor-pointer opacity-0 group-hover/card:opacity-100"
+                                            title="Expand"
+                                        >
+                                            <Maximize2 className="h-3 w-3" />
+                                            <span>Expand</span>
+                                        </button>
+                                    )}
                                 </div>
-
-                                {/* Floating Expand Button */}
-                                <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleOpenLightbox(idx);
-                                    }}
-                                    className="absolute top-3 right-14 sm:right-16 h-6 px-2 sm:px-2.5 rounded-full bg-black/75 hover:bg-black/95 text-white text-[10px] sm:text-[11px] font-semibold flex items-center gap-1 shadow-md backdrop-blur-md border border-white/20 transition-all cursor-pointer hover:scale-105 z-20"
-                                    title="Expand into fullscreen lightbox"
-                                >
-                                    <Maximize2 className="h-3 w-3" />
-                                    <span className="hidden sm:inline">Expand</span>
-                                </button>
                             </div>
                         );
                     })}
@@ -306,7 +755,6 @@ const ScrollableMediaGallery: React.FC<{
                 )}
             </div>
 
-            {/* In-App Fullscreen Lightbox Modal */}
             <MediaLightboxModal
                 isOpen={lightboxOpen}
                 onClose={() => setLightboxOpen(false)}
@@ -421,7 +869,15 @@ export const PostDetailPage: React.FC = () => {
         setDeletingCommentId(commentId);
         try {
             await postService.deleteComment(commentId);
-            setComments((prev: PostComment[]) => prev.filter((c: PostComment) => c.id !== commentId));
+            setComments((prev: PostComment[]) => {
+                // Remove comment or remove from replies
+                return prev
+                    .filter((c: PostComment) => c.id !== commentId)
+                    .map((c) => ({
+                        ...c,
+                        replies: c.replies ? c.replies.filter((r) => r.id !== commentId) : [],
+                    }));
+            });
             if (post) setPost({ ...post, comments_count: Math.max(0, post.comments_count - 1) });
             toast.success('Comment deleted');
         } catch {
@@ -429,6 +885,21 @@ export const PostDetailPage: React.FC = () => {
         } finally {
             setDeletingCommentId(null);
         }
+    };
+
+    const handleReplyAdded = (newReply: PostComment, parentId: number) => {
+        setComments((prev: PostComment[]) => {
+            return prev.map((c) => {
+                if (c.id === parentId) {
+                    return {
+                        ...c,
+                        replies: [...(c.replies || []), newReply],
+                    };
+                }
+                return c;
+            });
+        });
+        if (post) setPost({ ...post, comments_count: post.comments_count + 1 });
     };
 
     if (loading) {
@@ -574,13 +1045,13 @@ export const PostDetailPage: React.FC = () => {
                                     variant="outline"
                                     size="sm"
                                     onClick={handleLike}
-                                    className={`h-10 px-4 rounded-xl font-bold text-xs gap-2 cursor-pointer transition-all ${
+                                    className={`rounded-xl gap-2 font-bold cursor-pointer transition-all active:scale-95 ${
                                         post.is_liked
-                                            ? 'bg-rose-500/15 border-rose-500/40 text-rose-500 ring-1 ring-rose-500/30 hover:bg-rose-500/25'
-                                            : 'text-muted-foreground hover:text-foreground'
+                                            ? 'text-rose-500 border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20'
+                                            : 'hover:text-rose-500 hover:border-rose-500/20'
                                     }`}
                                 >
-                                    <Heart className={`h-4 w-4 ${post.is_liked ? 'fill-rose-500 text-rose-500' : ''}`} />
+                                    <Heart className={`h-4 w-4 ${post.is_liked ? 'fill-rose-500' : ''}`} />
                                     <span>{post.likes_count} {post.likes_count === 1 ? 'Like' : 'Likes'}</span>
                                 </Button>
 
@@ -589,113 +1060,80 @@ export const PostDetailPage: React.FC = () => {
                                     variant="outline"
                                     size="sm"
                                     onClick={handleBookmark}
-                                    className={`h-10 px-4 rounded-xl font-bold text-xs gap-2 cursor-pointer transition-all ${
+                                    className={`rounded-xl gap-2 font-bold cursor-pointer transition-all active:scale-95 ${
                                         post.is_bookmarked
-                                            ? 'bg-blue-500/15 border-blue-500/40 text-blue-500 ring-1 ring-blue-500/30 hover:bg-blue-500/25'
-                                            : 'text-muted-foreground hover:text-foreground'
+                                            ? 'text-blue-500 border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20'
+                                            : 'hover:text-blue-500 hover:border-blue-500/20'
                                     }`}
                                 >
-                                    <Bookmark className={`h-4 w-4 ${post.is_bookmarked ? 'fill-blue-500 text-blue-500' : ''}`} />
-                                    <span>{post.bookmarks_count} {post.bookmarks_count === 1 ? 'Saved' : 'Saves'}</span>
+                                    <Bookmark className={`h-4 w-4 ${post.is_bookmarked ? 'fill-blue-500' : ''}`} />
+                                    <span>{post.bookmarks_count} {post.bookmarks_count === 1 ? 'Save' : 'Saves'}</span>
                                 </Button>
                             </div>
 
                             <div className="flex items-center gap-2">
-                                {user && (user.id === post.user_id || user.id === post.user?.id || user.role === 'admin') && (
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setShowDeleteModal(true)}
-                                        className="h-10 px-3 rounded-xl text-xs font-bold text-rose-500 hover:text-rose-600 bg-rose-500/10 hover:bg-rose-500/20 cursor-pointer gap-1.5 border border-rose-500/30"
-                                        title="Delete your post"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                        <span className="hidden sm:inline">Delete</span>
-                                    </Button>
-                                )}
-
                                 <Button
                                     type="button"
                                     variant="ghost"
                                     size="sm"
                                     onClick={handleShare}
-                                    className={`h-10 px-3.5 rounded-xl text-xs font-semibold cursor-pointer gap-1.5 transition-all ${
-                                        copied
-                                            ? 'text-emerald-400 bg-emerald-500/10'
-                                            : 'text-muted-foreground hover:text-foreground'
-                                    }`}
+                                    className="rounded-xl gap-2 text-muted-foreground hover:text-foreground cursor-pointer"
                                 >
-                                    {copied ? (
-                                        <>
-                                            <Check className="h-4 w-4 text-emerald-400" />
-                                            <span className="text-emerald-400 font-bold">Copied!</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Share2 className="h-4 w-4" />
-                                            <span className="hidden sm:inline">Share</span>
-                                        </>
-                                    )}
+                                    {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Share2 className="h-4 w-4" />}
+                                    <span>{copied ? 'Copied Link' : 'Share'}</span>
                                 </Button>
+
+                                {user && (user.id === post.user_id || user.role === 'admin') && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setShowDeleteModal(true)}
+                                        className="rounded-xl gap-2 text-rose-500 hover:bg-rose-500/10 cursor-pointer"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                        <span className="hidden sm:inline">Delete</span>
+                                    </Button>
+                                )}
                             </div>
                         </div>
                     </CardContent>
                 </Card>
             </motion.div>
 
-            {/* ── Delete Post Confirmation Modal Dialog ── */}
+            {/* ── Confirm Delete Post Modal ── */}
             <AnimatePresence>
                 {showDeleteModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                            className="bg-card border border-border/80 w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-5"
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="w-full max-w-md bg-card border border-border/80 rounded-3xl p-6 space-y-5 shadow-2xl"
                         >
-                            <div className="flex items-center justify-between pb-3 border-b border-border/60">
-                                <div className="flex items-center gap-2.5 text-rose-400">
-                                    <div className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/20">
-                                        <AlertTriangle className="h-5 w-5" />
-                                    </div>
-                                    <h3 className="text-base font-bold text-foreground">Delete Community Post?</h3>
+                            <div className="flex items-center gap-3 text-rose-500">
+                                <div className="h-10 w-10 rounded-2xl bg-rose-500/10 flex items-center justify-center shrink-0">
+                                    <AlertTriangle className="h-5 w-5" />
                                 </div>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => setShowDeleteModal(false)}
-                                    className="h-8 w-8 rounded-full cursor-pointer"
-                                >
-                                    <X className="h-4 w-4" />
-                                </Button>
+                                <h3 className="font-extrabold text-lg text-foreground">Delete Post</h3>
                             </div>
-
-                            <div className="space-y-2 text-xs text-muted-foreground">
-                                <p className="leading-relaxed">
-                                    Are you sure you want to permanently delete this post? This will remove all artwork attachments, discussion comments, and saved likes.
-                                </p>
-                                <p className="font-semibold text-rose-400/90">
-                                    This action cannot be undone.
-                                </p>
-                            </div>
-
-                            <div className="pt-3 border-t border-border/60 flex items-center justify-end gap-2.5">
+                            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                                Are you sure you want to permanently delete this post? This will remove all artwork attachments, discussion comments, and saved likes.
+                            </p>
+                            <div className="flex items-center justify-end gap-3 pt-2">
                                 <Button
                                     variant="outline"
                                     onClick={() => setShowDeleteModal(false)}
                                     disabled={isDeletingPost}
-                                    className="h-10 px-4 text-xs font-semibold cursor-pointer"
+                                    className="rounded-xl font-semibold cursor-pointer"
                                 >
                                     Cancel
                                 </Button>
                                 <Button
-                                    variant="destructive"
                                     onClick={handleDeletePost}
                                     disabled={isDeletingPost}
-                                    className="h-10 px-5 text-xs font-bold gap-2 cursor-pointer shadow-md bg-rose-600 hover:bg-rose-700 text-white"
+                                    className="rounded-xl font-bold bg-rose-600 hover:bg-rose-700 text-white cursor-pointer"
                                 >
-                                    <Trash2 className="h-4 w-4" />
                                     {isDeletingPost ? 'Deleting...' : 'Delete Post'}
                                 </Button>
                             </div>
@@ -729,7 +1167,7 @@ export const PostDetailPage: React.FC = () => {
                 )}
 
                 {/* Comments List */}
-                <div className="space-y-3">
+                <div className="space-y-4">
                     <AnimatePresence>
                         {comments.length === 0 ? (
                             <div className="p-8 rounded-2xl border border-dashed border-border/80 text-center space-y-1 bg-card/40">
@@ -740,67 +1178,15 @@ export const PostDetailPage: React.FC = () => {
                             </div>
                         ) : (
                             comments.map((comment: PostComment) => (
-                                <motion.div
+                                <CommentItem
                                     key={comment.id}
-                                    initial={{ opacity: 0, y: 8 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0 }}
-                                >
-                                    <Card className="rounded-2xl border border-border/70 bg-card/80 shadow-2xs hover:border-border transition-colors">
-                                        <CardContent className="p-5 flex items-start justify-between gap-4">
-                                            <div className="flex items-start gap-3.5 flex-1 min-w-0">
-                                                <Link to={`/@${comment.user?.username || ''}`}>
-                                                    <Avatar
-                                                        size="sm"
-                                                        fallback={comment.user?.display_name || comment.user?.username || '?'}
-                                                        src={comment.user?.avatar_url}
-                                                        className="mt-0.5 ring-1 ring-border"
-                                                    />
-                                                </Link>
-                                                <div className="flex-1 min-w-0 space-y-1">
-                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                        <Link
-                                                            to={`/@${comment.user?.username || ''}`}
-                                                            className="font-bold text-xs text-foreground hover:text-primary transition-colors"
-                                                        >
-                                                            {comment.user?.display_name || comment.user?.username}
-                                                        </Link>
-                                                        {comment.user_id === post.user_id && (
-                                                             <span className="text-[9px] font-bold text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20">
-                                                                Author
-                                                            </span>
-                                                        )}
-                                                        <span className="text-[11px] text-muted-foreground">
-                                                            {formatPostDate(comment.created_at)}
-                                                        </span>
-                                                    </div>
-                                                    <div className="pt-1">
-                                                        <MarkdownContent
-                                                            content={comment.content || comment.body || ''}
-                                                            variant="comment"
-                                                            className="text-foreground/90 leading-relaxed"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Delete Comment for Comment Owner or Admin */}
-                                            {user && (user.id === comment.user_id || user.role === 'admin') && (
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => handleDeleteComment(comment.id)}
-                                                    disabled={deletingCommentId === comment.id}
-                                                    className="h-7 w-7 p-0 text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 rounded-lg cursor-pointer shrink-0"
-                                                    title="Delete comment"
-                                                >
-                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                </Button>
-                                            )}
-                                        </CardContent>
-                                    </Card>
-                                </motion.div>
+                                    comment={comment}
+                                    postId={Number(id)}
+                                    postAuthorId={post.user_id}
+                                    onDeleteComment={handleDeleteComment}
+                                    onReplyAdded={handleReplyAdded}
+                                    deletingCommentId={deletingCommentId}
+                                />
                             ))
                         )}
                     </AnimatePresence>

@@ -70,17 +70,43 @@ export const postService = {
         return res.data;
     },
 
-    // Create comment
-    createComment: async (postId: number, body: string) => {
-        const res = await api.post<ApiResponse<PostComment>>(`/posts/${postId}/comments`, {
+    // Create comment or reply
+    createComment: async (postId: number, body: string, parentCommentId?: number) => {
+        const payload: Record<string, any> = {
             content: body,
             body: body,
-        });
+        };
+        if (parentCommentId) {
+            payload.parent_comment_id = parentCommentId;
+        }
+        const res = await api.post<ApiResponse<PostComment>>(`/posts/${postId}/comments`, payload);
         return res.data.data;
     },
 
     // Delete comment
     deleteComment: async (commentId: number) => {
         await api.delete(`/comments/${commentId}`);
+    },
+
+    // Toggle comment like
+    toggleCommentLike: async (commentId: number) => {
+        const res = await api.post<ApiResponse<{ liked?: boolean; is_liked?: boolean; likes_count: number }>>(`/comments/${commentId}/like`);
+        const data = res.data.data;
+        return {
+            liked: data.liked ?? data.is_liked ?? false,
+            is_liked: data.is_liked ?? data.liked ?? false,
+            likes_count: data.likes_count,
+        };
+    },
+
+    // Toggle comment bookmark
+    toggleCommentBookmark: async (commentId: number) => {
+        const res = await api.post<ApiResponse<{ bookmarked?: boolean; is_bookmarked?: boolean; bookmarks_count: number }>>(`/comments/${commentId}/bookmark`);
+        const data = res.data.data;
+        return {
+            bookmarked: data.bookmarked ?? data.is_bookmarked ?? false,
+            is_bookmarked: data.is_bookmarked ?? data.bookmarked ?? false,
+            bookmarks_count: data.bookmarks_count,
+        };
     },
 };

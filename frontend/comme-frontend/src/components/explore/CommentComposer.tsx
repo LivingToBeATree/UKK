@@ -37,7 +37,9 @@ import type { PostComment } from '@/types';
 
 interface CommentComposerProps {
     postId: number;
+    parentCommentId?: number;
     onCommentAdded: (comment: PostComment) => void;
+    onCancel?: () => void;
     placeholder?: string;
 }
 
@@ -53,7 +55,9 @@ interface AttachedMedia {
 
 export const CommentComposer: React.FC<CommentComposerProps> = ({
     postId,
+    parentCommentId,
     onCommentAdded,
+    onCancel,
     placeholder = 'Share your feedback, inquiry, or appreciation...',
 }) => {
     const { user } = useAuth();
@@ -345,7 +349,7 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
                 }
             }
 
-            const newComment = await postService.createComment(postId, finalContent);
+            const newComment = await postService.createComment(postId, finalContent, parentCommentId);
             onCommentAdded(newComment);
 
             // Clean up
@@ -355,7 +359,7 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
             setEditorTab('write');
 
             toast.dismiss(toastId);
-            toast.success('Comment posted to Community Discussion!');
+            toast.success(parentCommentId ? 'Reply posted!' : 'Comment posted to Community Discussion!');
         } catch {
             toast.dismiss(toastId);
             toast.error('Failed to post comment. Please try again.');
@@ -726,13 +730,23 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
                         </div>
 
                         <div className="flex items-center justify-end gap-2">
+                            {onCancel && (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    onClick={onCancel}
+                                    className="h-9 px-4 rounded-xl font-bold text-xs cursor-pointer"
+                                >
+                                    Cancel
+                                </Button>
+                            )}
                             <Button
                                 type="submit"
                                 disabled={submitting || (!content.trim() && attachedMedia.length === 0)}
-                                className="h-9 px-5 rounded-xl font-bold text-xs gap-2 shadow-md cursor-pointer"
+                                className="h-9 px-5 rounded-xl font-bold text-xs gap-2 shadow-md cursor-pointer bg-purple-600 hover:bg-purple-700 text-white"
                             >
                                 <Send className="h-3.5 w-3.5" />
-                                {submitting ? 'Posting...' : 'Post Comment'}
+                                {submitting ? 'Posting...' : parentCommentId ? 'Post Reply' : 'Post Comment'}
                             </Button>
                         </div>
                     </div>

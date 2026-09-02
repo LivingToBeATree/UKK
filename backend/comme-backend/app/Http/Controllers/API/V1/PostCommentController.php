@@ -92,4 +92,64 @@ class PostCommentController extends Controller
 
         return ApiResponseHelper::successResponse(message: 'Comment deleted successfully.');
     }
+
+    /**
+     * Toggle like on a comment
+     */
+    public function toggleLike(PostComment $comment, \Illuminate\Http\Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $existing = \App\Models\PostCommentLike::where('post_comment_id', $comment->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if ($existing) {
+            $existing->delete();
+            $liked = false;
+        } else {
+            \App\Models\PostCommentLike::create([
+                'post_comment_id' => $comment->id,
+                'user_id' => $user->id,
+            ]);
+            $liked = true;
+        }
+
+        $likesCount = $comment->likes()->count();
+
+        return ApiResponseHelper::successResponse([
+            'liked' => $liked,
+            'is_liked' => $liked,
+            'likes_count' => $likesCount,
+        ], $liked ? 'Comment liked.' : 'Comment unliked.');
+    }
+
+    /**
+     * Toggle bookmark on a comment
+     */
+    public function toggleBookmark(PostComment $comment, \Illuminate\Http\Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $existing = \App\Models\PostCommentBookmark::where('post_comment_id', $comment->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if ($existing) {
+            $existing->delete();
+            $bookmarked = false;
+        } else {
+            \App\Models\PostCommentBookmark::create([
+                'post_comment_id' => $comment->id,
+                'user_id' => $user->id,
+            ]);
+            $bookmarked = true;
+        }
+
+        $bookmarksCount = $comment->bookmarks()->count();
+
+        return ApiResponseHelper::successResponse([
+            'bookmarked' => $bookmarked,
+            'is_bookmarked' => $bookmarked,
+            'bookmarks_count' => $bookmarksCount,
+        ], $bookmarked ? 'Comment saved to bookmarks.' : 'Comment removed from bookmarks.');
+    }
 }

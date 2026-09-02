@@ -43,6 +43,13 @@ export interface PostComment {
   user_id: number;
   body: string;
   content?: string;
+  parent_comment_id?: number | null;
+  likes_count?: number;
+  is_liked?: boolean;
+  bookmarks_count?: number;
+  is_bookmarked?: boolean;
   created_at: string;
+  updated_at?: string;
   user?: User;
+  replies?: PostComment[];
 }

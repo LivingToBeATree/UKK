@@ -10,4 +10,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('comments/{comment}', [PostCommentController::class, 'show']);
     Route::match(['put', 'patch'], 'comments/{comment}', [PostCommentController::class, 'update']);
     Route::delete('comments/{comment}', [PostCommentController::class, 'destroy']);
+    Route::post('comments/{comment}/like', [PostCommentController::class, 'toggleLike']);
+    Route::post('comments/{comment}/bookmark', [PostCommentController::class, 'toggleBookmark']);
 });
