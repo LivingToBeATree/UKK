@@ -27,6 +27,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('commissions/{commission}/deadline', [CommissionController::class, 'updateDeadline'])
         ->name('commissions.update-deadline');
 
+    Route::post('commissions/{commission}/propose-deadline', [CommissionController::class, 'proposeDeadline'])
+        ->name('commissions.propose-deadline');
+
+    Route::post('commissions/{commission}/accept-deadline', [CommissionController::class, 'acceptDeadline'])
+        ->name('commissions.accept-deadline');
+
+    Route::post('commissions/{commission}/decline-deadline', [CommissionController::class, 'declineDeadline'])
+        ->name('commissions.decline-deadline');
+
     Route::get('commissions/{commission}/messages', [CommissionMessageController::class, 'index']);
     Route::post('commissions/{commission}/messages', [CommissionMessageController::class, 'store']);
 

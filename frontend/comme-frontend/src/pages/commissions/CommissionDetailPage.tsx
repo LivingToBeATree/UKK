@@ -20,6 +20,7 @@ import {
     Maximize2,
     Loader2,
     X,
+    Lock,
 } from 'lucide-react';
 import { commissionOrderApi, commissionReviewApi } from '@/services/commissionService';
 import { useAuth } from '@/hooks/useAuth';
@@ -33,6 +34,7 @@ import { Label } from '@/components/ui/label';
 import { Avatar } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MediaLightboxModal } from '@/components/ui/MediaLightboxModal';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
     Dialog,
     DialogTrigger,
@@ -88,8 +90,9 @@ export const CommissionDetailPage: React.FC = () => {
     const [artistReplyText, setArtistReplyText] = useState('');
     const [showReplyForm, setShowReplyForm] = useState(false);
 
-    // Deadline Dialog state
+    // Deadline Proposal Dialog state
     const [newDeadline, setNewDeadline] = useState('');
+    const [deadlineProposalNote, setDeadlineProposalNote] = useState('');
     const [deadlineModalOpen, setDeadlineModalOpen] = useState(false);
 
     // Revision Dialog state
@@ -346,16 +349,51 @@ export const CommissionDetailPage: React.FC = () => {
         }
     };
 
-    const handleUpdateDeadline = async () => {
+    const handleProposeDeadline = async () => {
         if (!commission || !newDeadline) return;
         setActionLoading(true);
         try {
-            const updated = await commissionOrderApi.updateDeadline(commission.id, newDeadline);
+            const updated = await commissionOrderApi.proposeDeadline(commission.id, {
+                proposed_deadline: newDeadline,
+                note: deadlineProposalNote.trim() || undefined,
+            });
             setCommission(updated);
-            toast.success('Deadline updated successfully');
+            toast.success('Deadline extension proposal submitted to client!');
             setDeadlineModalOpen(false);
-        } catch {
-            toast.error('Failed to update deadline');
+            setDeadlineProposalNote('');
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to propose deadline';
+            toast.error(msg);
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleAcceptDeadline = async () => {
+        if (!commission) return;
+        setActionLoading(true);
+        try {
+            const updated = await commissionOrderApi.acceptDeadline(commission.id);
+            setCommission(updated);
+            toast.success('New delivery deadline accepted!');
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to accept proposed deadline';
+            toast.error(msg);
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleDeclineDeadline = async () => {
+        if (!commission) return;
+        setActionLoading(true);
+        try {
+            const updated = await commissionOrderApi.declineDeadline(commission.id);
+            setCommission(updated);
+            toast.info('Deadline proposal declined/withdrawn.');
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to decline proposal';
+            toast.error(msg);
         } finally {
             setActionLoading(false);
         }
@@ -522,6 +560,11 @@ export const CommissionDetailPage: React.FC = () => {
                                     <p className="font-bold mt-1 text-foreground">
                                         {formatDateSafe(commission.deadline, { dateStyle: 'medium' }, 'Flexible')}
                                     </p>
+                                    {commission.proposed_deadline && (
+                                        <span className="text-[10px] text-purple-400 block mt-0.5 font-mono">
+                                            Proposed: {formatDateSafe(commission.proposed_deadline, { dateStyle: 'short' })}
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="p-3 rounded-xl border border-border/60 bg-muted/20">
                                     <p className="text-muted-foreground flex items-center gap-1.5 font-medium">
@@ -538,6 +581,80 @@ export const CommissionDetailPage: React.FC = () => {
                                     </p>
                                 </div>
                             </div>
+
+                            {/* BUYER: Deadline Extension Proposal Alert Banner */}
+                            {isBuyer && commission.proposed_deadline && (
+                                <div className="p-4 sm:p-5 rounded-2xl border border-purple-500/40 bg-purple-500/10 backdrop-blur-md space-y-3">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="space-y-1">
+                                            <p className="font-bold text-sm text-purple-300 flex items-center gap-2">
+                                                <Clock className="h-4 w-4 text-purple-400" /> Deadline Extension Proposed by Artist
+                                            </p>
+                                            <p className="text-xs text-muted-foreground leading-relaxed">
+                                                The artist has requested to extend the delivery deadline to{' '}
+                                                <span className="font-bold text-foreground font-mono">
+                                                    {formatDateSafe(commission.proposed_deadline, { dateStyle: 'medium' })}
+                                                </span>.
+                                            </p>
+                                        </div>
+                                        <Badge variant="purple" className="shrink-0 font-mono text-[10px]">
+                                            Pending Your Approval
+                                        </Badge>
+                                    </div>
+
+                                    {commission.deadline_proposal_note && (
+                                        <div className="p-3 rounded-xl bg-black/20 border border-purple-500/20 text-xs text-foreground/90 italic">
+                                            "{commission.deadline_proposal_note}"
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center gap-2.5 pt-1">
+                                        <Button
+                                            size="sm"
+                                            onClick={handleAcceptDeadline}
+                                            disabled={actionLoading}
+                                            className="gap-1.5 bg-purple-600 hover:bg-purple-700 text-white font-bold cursor-pointer"
+                                        >
+                                            <CheckCircle2 className="h-4 w-4" /> Accept New Deadline
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={handleDeclineDeadline}
+                                            disabled={actionLoading}
+                                            className="cursor-pointer"
+                                        >
+                                            Decline Proposal
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* ARTIST: Deadline Extension Proposal Pending Banner */}
+                            {isArtistUser && commission.proposed_deadline && (
+                                <div className="p-4 rounded-2xl border border-purple-500/30 bg-purple-500/10 space-y-2 text-xs">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <p className="font-bold text-purple-300 flex items-center gap-1.5">
+                                            <Clock className="h-4 w-4 text-purple-400" /> Pending Deadline Extension Proposal
+                                        </p>
+                                        <Button
+                                            size="xs"
+                                            variant="outline"
+                                            onClick={handleDeclineDeadline}
+                                            disabled={actionLoading}
+                                            className="text-muted-foreground hover:text-foreground cursor-pointer"
+                                        >
+                                            Withdraw Proposal
+                                        </Button>
+                                    </div>
+                                    <p className="text-muted-foreground">
+                                        You proposed to extend the deadline to{' '}
+                                        <span className="font-bold text-foreground font-mono">
+                                            {formatDateSafe(commission.proposed_deadline, { dateStyle: 'medium' })}
+                                        </span>. Awaiting client's review.
+                                    </p>
+                                </div>
+                            )}
 
                             {/* Brief Description */}
                             {commission.description && (
@@ -685,32 +802,48 @@ export const CommissionDetailPage: React.FC = () => {
                                     </Button>
                                 )}
 
-                                {/* ARTIST: Update Deadline */}
-                                {isArtistUser && !['completed', 'cancelled', 'declined'].includes(commission.status) && (
+                                {/* ARTIST: Propose New Deadline */}
+                                {isArtistUser && !['completed', 'cancelled', 'declined', 'pending'].includes(commission.status) && (
                                     <Dialog open={deadlineModalOpen} onOpenChange={setDeadlineModalOpen}>
                                         <DialogTrigger asChild>
                                             <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer">
-                                                <Calendar className="h-3.5 w-3.5" /> Adjust Deadline
+                                                <Calendar className="h-3.5 w-3.5 text-purple-400" /> Propose New Deadline
                                             </Button>
                                         </DialogTrigger>
-                                        <DialogContent>
+                                        <DialogContent className="max-w-md">
                                             <DialogHeader>
-                                                <DialogTitle>Update Delivery Deadline</DialogTitle>
+                                                <DialogTitle>Propose New Delivery Deadline</DialogTitle>
                                                 <DialogDescription>
-                                                    Set an updated expected delivery date for this commission.
+                                                    Select a proposed delivery date. The client will be asked to review and accept or decline your proposal.
                                                 </DialogDescription>
                                             </DialogHeader>
-                                            <div className="space-y-3 py-2">
-                                                <Label>New Deadline Date</Label>
-                                                <Input
-                                                    type="date"
-                                                    value={newDeadline}
-                                                    onChange={(e) => setNewDeadline(e.target.value)}
-                                                />
+                                            <div className="space-y-4 py-3">
+                                                <div className="space-y-2">
+                                                    <Label>Proposed Delivery Date</Label>
+                                                    <DatePicker
+                                                        value={newDeadline}
+                                                        onChange={setNewDeadline}
+                                                        minDate={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
+                                                        placeholder="Select proposed deadline..."
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>Reason / Note for Client (Optional)</Label>
+                                                    <Textarea
+                                                        placeholder="e.g. Need a few extra days to polish complex background rendering and character armor..."
+                                                        rows={3}
+                                                        value={deadlineProposalNote}
+                                                        onChange={(e) => setDeadlineProposalNote(e.target.value)}
+                                                    />
+                                                </div>
                                             </div>
                                             <DialogFooter>
-                                                <Button onClick={handleUpdateDeadline} disabled={actionLoading || !newDeadline}>
-                                                    Update Deadline
+                                                <Button
+                                                    onClick={handleProposeDeadline}
+                                                    disabled={actionLoading || !newDeadline}
+                                                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold cursor-pointer"
+                                                >
+                                                    Send Proposal to Client
                                                 </Button>
                                             </DialogFooter>
                                         </DialogContent>
@@ -1012,8 +1145,8 @@ export const CommissionDetailPage: React.FC = () => {
                             className="hidden"
                         />
 
-                        {/* Message Input Form */}
-                        {!['cancelled', 'declined'].includes(commission.status) ? (
+                        {/* Message Input Form or Status Lock Notice */}
+                        {['accepted', 'in_progress', 'waiting_for_client', 'revision'].includes(commission.status) ? (
                             <form onSubmit={handleSendMessage} className="p-3 border-t border-border bg-muted/10 flex items-center gap-2">
                                 {/* Media Attachment Insert Button */}
                                 <Button
@@ -1043,9 +1176,32 @@ export const CommissionDetailPage: React.FC = () => {
                                     {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                                 </Button>
                             </form>
+                        ) : commission.status === 'pending' ? (
+                            <div className="p-4 border-t border-border bg-muted/20 text-center space-y-1.5">
+                                <div className="flex items-center justify-center gap-1.5 text-amber-400 font-bold text-xs">
+                                    <Lock className="h-4 w-4" /> Workspace Locked
+                                </div>
+                                <p className="text-[11px] text-muted-foreground max-w-xs mx-auto">
+                                    Direct messaging will unlock once the artist reviews and accepts this commission request.
+                                </p>
+                            </div>
+                        ) : commission.status === 'completed' ? (
+                            <div className="p-4 border-t border-border bg-muted/20 text-center space-y-1">
+                                <div className="flex items-center justify-center gap-1.5 text-emerald-400 font-bold text-xs">
+                                    <CheckCircle2 className="h-4 w-4" /> Commission Completed
+                                </div>
+                                <p className="text-[11px] text-muted-foreground">
+                                    This commission has concluded. Workspace chat is archived.
+                                </p>
+                            </div>
                         ) : (
-                            <div className="p-3 border-t border-border bg-muted/20 text-center text-xs text-muted-foreground">
-                                This commission is {commission.status}. Chat is archived.
+                            <div className="p-4 border-t border-border bg-muted/20 text-center space-y-1">
+                                <div className="flex items-center justify-center gap-1.5 text-rose-400 font-bold text-xs">
+                                    <XCircle className="h-4 w-4" /> Commission {commission.status.toUpperCase()}
+                                </div>
+                                <p className="text-[11px] text-muted-foreground">
+                                    This commission was {commission.status}. Workspace chat is archived.
+                                </p>
                             </div>
                         )}
                     </Card>

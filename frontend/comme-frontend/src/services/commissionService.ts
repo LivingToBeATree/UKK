@@ -84,6 +84,21 @@ export const commissionOrderApi = {
         return res.data.data;
     },
 
+    proposeDeadline: async (id: number, payload: { proposed_deadline: string; note?: string }) => {
+        const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${id}/propose-deadline`, payload);
+        return res.data.data;
+    },
+
+    acceptDeadline: async (id: number) => {
+        const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${id}/accept-deadline`);
+        return res.data.data;
+    },
+
+    declineDeadline: async (id: number) => {
+        const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${id}/decline-deadline`);
+        return res.data.data;
+    },
+
     // Messages within a commission
     getMessages: async (commissionId: number, page = 1) => {
         const res = await api.get<ApiResponse<CommissionMessage[]>>(`/commissions/${commissionId}/messages`, { params: { page } });

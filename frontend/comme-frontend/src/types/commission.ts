@@ -121,6 +121,8 @@ export interface CommissionOrder {
   status: OrderStatus;
   description?: string | null;
   deadline?: string | null;
+  proposed_deadline?: string | null;
+  deadline_proposal_note?: string | null;
   delivered_at?: string | null;
   review_deadline?: string | null;
   completed_at?: string | null;

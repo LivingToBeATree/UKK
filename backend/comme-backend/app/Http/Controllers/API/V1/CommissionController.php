@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V1;
 use App\Enum\CommissionStatus;
 use App\Http\Requests\API\V1\Commission\StoreCommissionRequest;
 use App\Http\Requests\API\V1\Commission\UpdateCommissionDeadlineRequest;
+use App\Http\Requests\API\V1\Commission\ProposeCommissionDeadlineRequest;
 use App\Http\Requests\API\V1\Commission\UpdateCommissionRequest;
 use App\Http\Resources\API\V1\CommissionResource;
 use App\Http\Helpers\ApiResponseHelper;
@@ -301,6 +302,65 @@ class CommissionController extends Controller
         return ApiResponseHelper::successResponse(
             new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review'])),
             'Commission deadline updated successfully.'
+        );
+    }
+
+    public function proposeDeadline(ProposeCommissionDeadlineRequest $request, Commission $commission): JsonResponse
+    {
+        $commission->update([
+            'proposed_deadline' => $request->validated('proposed_deadline'),
+            'deadline_proposal_note' => $request->validated('note'),
+        ]);
+
+        return ApiResponseHelper::successResponse(
+            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review'])),
+            'Deadline extension proposal submitted to the client.'
+        );
+    }
+
+    public function acceptDeadline(Commission $commission): JsonResponse
+    {
+        Gate::authorize('acceptDeadline', $commission);
+
+        if (!$commission->proposed_deadline) {
+            return ApiResponseHelper::errorResponse(
+                'There is no pending deadline proposal to accept.',
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
+        $newDeadline = $commission->proposed_deadline;
+        $commission->update([
+            'deadline' => $newDeadline,
+            'proposed_deadline' => null,
+            'deadline_proposal_note' => null,
+        ]);
+
+        return ApiResponseHelper::successResponse(
+            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review'])),
+            'Proposed deadline accepted.'
+        );
+    }
+
+    public function declineDeadline(Commission $commission): JsonResponse
+    {
+        Gate::authorize('declineDeadline', $commission);
+
+        if (!$commission->proposed_deadline) {
+            return ApiResponseHelper::errorResponse(
+                'There is no pending deadline proposal.',
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
+        $commission->update([
+            'proposed_deadline' => null,
+            'deadline_proposal_note' => null,
+        ]);
+
+        return ApiResponseHelper::successResponse(
+            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review'])),
+            'Deadline proposal declined/withdrawn.'
         );
     }
 }

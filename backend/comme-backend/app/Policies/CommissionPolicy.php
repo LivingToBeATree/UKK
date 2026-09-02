@@ -86,7 +86,23 @@ class CommissionPolicy
 
     public function updateDeadline(User $user, Commission $commission): bool
     {
-        return $user->id === $commission->artistProfile->user_id;
+        return $user->id === $commission->artistProfile?->user_id;
+    }
+
+    public function proposeDeadline(User $user, Commission $commission): bool
+    {
+        return $user->id === $commission->artistProfile?->user_id;
+    }
+
+    public function acceptDeadline(User $user, Commission $commission): bool
+    {
+        return $user->id === $commission->user_id;
+    }
+
+    public function declineDeadline(User $user, Commission $commission): bool
+    {
+        return $user->id === $commission->user_id
+            || $user->id === $commission->artistProfile?->user_id;
     }
 
     /**

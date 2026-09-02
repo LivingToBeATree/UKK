@@ -58,6 +58,14 @@ class CommissionMessageController extends Controller
             throw new AccessDeniedHttpException('Only the buyer or artist can send messages for this commission.');
         }
 
+        $statusValue = $commission->status instanceof \App\Enum\CommissionStatus ? $commission->status->value : $commission->status;
+        if (!in_array($statusValue, ['accepted', 'in_progress', 'waiting_for_client', 'revision'])) {
+            return ApiResponseHelper::errorResponse(
+                'Direct messaging is only available while the commission is active (after acceptance and before completion).',
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
         $message = CommissionMessage::create([
             'commission_id' => $commission->id,
             'sender_id' => $currentUser->id,

@@ -18,6 +18,8 @@ class CommissionResource extends JsonResource
             'status' => $this->status?->value ?? $this->status,
             'description' => $this->description,
             'deadline' => $this->deadline instanceof \DateTimeInterface ? $this->deadline->toISOString() : ($this->deadline ? (string) $this->deadline : null),
+            'proposed_deadline' => $this->proposed_deadline instanceof \DateTimeInterface ? $this->proposed_deadline->toISOString() : ($this->proposed_deadline ? (string) $this->proposed_deadline : null),
+            'deadline_proposal_note' => $this->deadline_proposal_note,
             'delivered_at' => $this->delivered_at?->toISOString(),
             'review_deadline' => $this->review_deadline?->toISOString(),
             'completed_at' => $this->completed_at?->toISOString(),

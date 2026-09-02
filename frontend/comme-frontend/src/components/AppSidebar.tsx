@@ -4,7 +4,6 @@ import {
     LayoutDashboard,
     Palette,
     Layers,
-    MessageSquare,
     Star,
     Wallet,
     Settings,
@@ -27,6 +26,15 @@ import { commissionOrderApi } from '@/services/commissionService';
 export interface AppSidebarProps {
     activeTab?: string;
     onTabChange?: (tab: string) => void;
+}
+
+interface MenuItem {
+    id: string;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    path: string;
+    badge?: number;
+    isActive: boolean;
 }
 
 export const AppSidebar: React.FC<AppSidebarProps> = ({
@@ -58,7 +66,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         fetchBadgeCounts();
     }, [location.pathname]);
 
-    const studioMenu = [
+    const studioMenu: MenuItem[] = [
         {
             id: 'overview',
             label: 'Studio Overview',
@@ -90,15 +98,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         },
     ];
 
-    const commsMenu = [
-        {
-            id: 'messages',
-            label: 'Client Inquiries',
-            icon: MessageSquare,
-            path: '/dashboard/inquiries',
-            badge: activeOrdersCount,
-            isActive: location.pathname.startsWith('/dashboard/inquiries') || location.pathname.startsWith('/dashboard/messages'),
-        },
+    const commsMenu: MenuItem[] = [
         {
             id: 'reviews',
             label: 'Reviews & Ratings',
@@ -108,7 +108,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         },
     ];
 
-    const financeMenu = [
+    const financeMenu: MenuItem[] = [
         {
             id: 'payouts',
             label: 'Earnings & Escrow',
