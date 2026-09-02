@@ -14,12 +14,10 @@ import {
     Sidebar,
     SidebarHeader,
     SidebarContent,
-    SidebarFooter,
     SidebarGroup,
     SidebarGroupLabel,
     SidebarMenu,
     SidebarMenuButton,
-    SidebarTrigger,
 } from './ui/sidebar';
 import { useSidebar } from '@/hooks/useSidebar';
 import { Avatar } from './ui/avatar';
@@ -152,7 +150,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             </SidebarHeader>
 
             {/* Sidebar Nav Content */}
-            <SidebarContent>
+            <SidebarContent className="flex-1">
                 {/* 1. Studio Group */}
                 <SidebarGroup>
                     <SidebarGroupLabel>Studio</SidebarGroupLabel>
@@ -206,18 +204,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                     </SidebarMenu>
                 </SidebarGroup>
             </SidebarContent>
-
-            {/* Sidebar Footer with Collapse Toggle */}
-            <SidebarFooter>
-                <div className="flex items-center justify-between">
-                    {!collapsed && (
-                        <span className="text-[11px] font-medium text-muted-foreground px-2">
-                            Collapse Sidebar
-                        </span>
-                    )}
-                    <SidebarTrigger className={collapsed ? 'mx-auto' : ''} />
-                </div>
-            </SidebarFooter>
         </Sidebar>
     );
 };

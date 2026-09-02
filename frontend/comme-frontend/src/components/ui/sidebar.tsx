@@ -83,7 +83,7 @@ export function Sidebar({ className, children, ...props }: SidebarProps) {
                 animate={{ width: collapsed ? 72 : 256 }}
                 transition={{ type: 'spring', damping: 26, stiffness: 300 }}
                 className={cn(
-                    'hidden md:flex relative flex-col h-full shrink-0 border-r border-border bg-card/60 backdrop-blur-md z-30 transition-colors',
+                    'hidden md:flex relative flex-col h-auto min-h-full shrink-0 border-r border-border bg-card/60 backdrop-blur-md z-30 transition-colors',
                     className
                 )}
                 {...props}
