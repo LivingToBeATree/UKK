@@ -11,6 +11,7 @@ import {
     ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useSidebar } from '@/hooks/useSidebar';
 import { Button } from '@/components/ui/button';
 
 const adminNavItems = [
@@ -23,19 +24,24 @@ const adminNavItems = [
 ];
 
 export const AdminLayout: React.FC = () => {
+    const { collapsed: railCollapsed } = useSidebar();
     const [collapsed, setCollapsed] = useState(false);
     const location = useLocation();
 
+    const railOffset = railCollapsed ? 68 : 260;
+    const adminWidth = collapsed ? 64 : 240;
+
     return (
-        <div className="flex min-h-screen w-full relative items-start">
-            {/* Sidebar */}
+        <div className="flex min-h-screen w-full relative">
+            {/* Fixed Sidebar (Permanently on screen, cannot scroll away) */}
             <aside
-                className={cn(
-                    'hidden md:flex sticky top-0 h-screen min-h-screen border-r border-border bg-card flex-col transition-all duration-200 z-30 overflow-y-auto shrink-0',
-                    collapsed ? 'w-16' : 'w-60'
-                )}
+                className="hidden md:flex fixed top-0 bottom-0 z-30 border-r border-border bg-card flex-col transition-all duration-300 overflow-y-auto shrink-0"
+                style={{
+                    left: `${railOffset}px`,
+                    width: `${adminWidth}px`,
+                }}
             >
-                <div className="p-3 border-b border-border">
+                <div className="p-3 border-b border-border shrink-0">
                     {!collapsed && (
                         <div className="flex items-center gap-2 px-2">
                             <Shield className="h-5 w-5 text-amber-400" />
@@ -68,7 +74,7 @@ export const AdminLayout: React.FC = () => {
                     })}
                 </nav>
 
-                <div className="p-2 border-t border-border">
+                <div className="p-2 border-t border-border shrink-0">
                     <Button
                         variant="ghost"
                         size="sm"
@@ -80,8 +86,15 @@ export const AdminLayout: React.FC = () => {
                 </div>
             </aside>
 
+            {/* Flow Spacer */}
+            <div
+                className="hidden md:block shrink-0 transition-all duration-300"
+                style={{ width: `${adminWidth}px` }}
+                aria-hidden="true"
+            />
+
             {/* Main Content */}
-            <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+            <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8">
                 <Outlet />
             </main>
         </div>
