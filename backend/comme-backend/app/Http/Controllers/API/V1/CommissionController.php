@@ -219,7 +219,7 @@ class CommissionController extends Controller
         );
     }
 
-    public function deliver(Commission $commission): JsonResponse
+    public function deliver(Request $request, Commission $commission): JsonResponse
     {
         Gate::authorize('markDelivered', $commission);
 
@@ -230,15 +230,63 @@ class CommissionController extends Controller
             );
         }
 
-        $commission->update([
-            'status' => CommissionStatus::WAITING_FOR_CLIENT,
-            'delivered_at' => now(),
-            'review_deadline' => now()->addDays(7),
-        ]);
+        $files = $request->file('files') ?? $request->file('attachments') ?? [];
+        if (!is_array($files)) {
+            $files = $files ? [$files] : [];
+        }
+
+        $deliveryNote = $request->input('note') ?? $request->input('message') ?? 'Here are the completed deliverables for your review!';
+
+        DB::transaction(function () use ($commission, $files, $deliveryNote, $request) {
+            $commission->update([
+                'status' => CommissionStatus::WAITING_FOR_CLIENT,
+                'delivered_at' => now(),
+                'review_deadline' => now()->addDays(7),
+            ]);
+
+            // Create a dedicated Delivery Message in the chat workspace
+            $deliveryMessage = \App\Models\CommissionMessage::create([
+                'commission_id' => $commission->id,
+                'sender_id' => $request->user()->id,
+                'recipient_id' => $commission->user_id,
+                'message' => "[Final Work Delivered]: {$deliveryNote}",
+                'message_type' => \App\Enum\MessageType::USER,
+            ]);
+
+            foreach ($files as $index => $file) {
+                if (!$file || !$file->isValid()) {
+                    continue;
+                }
+                $path = $file->store('commissions/deliverables', 'public');
+                $mime = $file->getClientMimeType() ?: 'application/octet-stream';
+                $mediaType = str_starts_with($mime, 'image/')
+                    ? \App\Enum\MediaType::IMAGE
+                    : (str_starts_with($mime, 'video/') ? \App\Enum\MediaType::VIDEO : \App\Enum\MediaType::IMAGE);
+
+                \App\Models\CommissionMessageMedia::create([
+                    'commission_message_id' => $deliveryMessage->id,
+                    'file_name' => $file->getClientOriginalName(),
+                    'file_path' => $path,
+                    'file_size' => $file->getSize() ?: 0,
+                    'media_type' => $mediaType,
+                    'mime_type' => $mime,
+                    'sort_order' => $index,
+                ]);
+            }
+
+            \App\Models\Notification::create([
+                'user_id' => $commission->user_id,
+                'type' => \App\Enum\NotificationType::COMMISSION_MESSAGE,
+                'title' => 'Deliverables submitted',
+                'message' => 'The artist has delivered final work for your commission. Please review it within 7 days.',
+                'notifiable_type' => Commission::class,
+                'notifiable_id' => $commission->id,
+            ]);
+        });
 
         return ApiResponseHelper::successResponse(
-            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review', 'payout'])),
-            'Commission marked as delivered. 7-day client review window has commenced.'
+            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages.media', 'review', 'payout'])),
+            'Completed work delivered! 7-day client review window has commenced.'
         );
     }
 

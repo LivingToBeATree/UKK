@@ -123,8 +123,10 @@ export const commissionOrderApi = {
         return res.data.data;
     },
 
-    deliver: async (id: number) => {
-        const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${id}/deliver`);
+    deliver: async (id: number, data?: FormData) => {
+        const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${id}/deliver`, data, {
+            headers: data instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : undefined,
+        });
         return res.data.data;
     },
 

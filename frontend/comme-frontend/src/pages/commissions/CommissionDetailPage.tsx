@@ -21,6 +21,8 @@ import {
     Loader2,
     X,
     Lock,
+    UploadCloud,
+    FileCheck,
 } from 'lucide-react';
 import { commissionOrderApi, commissionReviewApi } from '@/services/commissionService';
 import { useAuth } from '@/hooks/useAuth';
@@ -69,10 +71,17 @@ export const CommissionDetailPage: React.FC = () => {
     // Messages auto-scroll ref
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    // Media attachment state
+    // Media attachment state for chat
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [filePreviews, setFilePreviews] = useState<{ file: File; url: string; isImage: boolean; name: string; size: number }[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Deliver Final Work state (Artist Upload)
+    const [deliverModalOpen, setDeliverModalOpen] = useState(false);
+    const [deliverFiles, setDeliverFiles] = useState<File[]>([]);
+    const [deliverPreviews, setDeliverPreviews] = useState<{ file: File; url: string; isImage: boolean; name: string; size: number }[]>([]);
+    const [deliverNote, setDeliverNote] = useState('');
+    const deliverFileInputRef = useRef<HTMLInputElement>(null);
 
     // Lightbox modal state
     const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -145,6 +154,60 @@ export const CommissionDetailPage: React.FC = () => {
         }
         const updatedPreviews = filePreviews.filter((_, i) => i !== index);
         setFilePreviews(updatedPreviews);
+    };
+
+    const handleDeliverFilesSelect = (files: FileList | File[]) => {
+        const fileArray = Array.from(files);
+        if (!fileArray.length) return;
+
+        const combined = [...deliverFiles, ...fileArray].slice(0, 10);
+        setDeliverFiles(combined);
+
+        const previews = combined.map((file) => ({
+            file,
+            url: URL.createObjectURL(file),
+            isImage: file.type.startsWith('image/'),
+            name: file.name,
+            size: file.size,
+        }));
+        setDeliverPreviews(previews);
+    };
+
+    const handleRemoveDeliverFile = (index: number) => {
+        const updated = deliverFiles.filter((_, i) => i !== index);
+        setDeliverFiles(updated);
+        if (deliverPreviews[index]?.url) {
+            URL.revokeObjectURL(deliverPreviews[index].url);
+        }
+        setDeliverPreviews((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    const handleSubmitDelivery = async () => {
+        if (!commission) return;
+        setActionLoading(true);
+        try {
+            const formData = new FormData();
+            if (deliverNote.trim()) {
+                formData.append('note', deliverNote.trim());
+            }
+            deliverFiles.forEach((file) => {
+                formData.append('attachments[]', file);
+            });
+
+            const updated = await commissionOrderApi.deliver(commission.id, formData);
+            setCommission(updated);
+            toast.success('Completed deliverables submitted! 7-day client review window started.');
+            setDeliverModalOpen(false);
+            setDeliverFiles([]);
+            setDeliverPreviews([]);
+            setDeliverNote('');
+            refreshData();
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to submit deliverables';
+            toast.error(msg);
+        } finally {
+            setActionLoading(false);
+        }
     };
 
     const handlePaste = (e: React.ClipboardEvent) => {
@@ -274,7 +337,7 @@ export const CommissionDetailPage: React.FC = () => {
 
             toast.success('Midtrans payment session initialized');
 
-            (window as unknown as { snap: { pay: (token: string, cb: unknown) => void } }).snap.pay(payment.snap_token, {
+            (window as unknown as { snap: { pay: (token: string, cb: unknown) => void } }).snap.pay(payment.snap_token!, {
                 onSuccess: () => {
                     toast.success('Payment captured! Commission is now in progress.');
                     refreshData();
@@ -338,20 +401,6 @@ export const CommissionDetailPage: React.FC = () => {
             toast.info('Commission request declined.');
         } catch {
             toast.error('Failed to decline commission');
-        } finally {
-            setActionLoading(false);
-        }
-    };
-
-    const handleDeliver = async () => {
-        if (!commission) return;
-        setActionLoading(true);
-        try {
-            const updated = await commissionOrderApi.deliver(commission.id);
-            setCommission(updated);
-            toast.success('Work marked as delivered! 7-day client review window started.');
-        } catch {
-            toast.error('Failed to mark work as delivered');
         } finally {
             setActionLoading(false);
         }
@@ -700,6 +749,85 @@ export const CommissionDetailPage: React.FC = () => {
                                 </div>
                             )}
 
+                            {/* Final Deliverables Showcase (When waiting_for_client or completed) */}
+                            {['waiting_for_client', 'completed'].includes(commission.status) && (
+                                <div className="p-4 sm:p-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 backdrop-blur-md space-y-3">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="space-y-0.5">
+                                            <p className="font-bold text-sm text-emerald-400 flex items-center gap-2">
+                                                <FileCheck className="h-4 w-4" /> Final Deliverables & Completed Work
+                                            </p>
+                                            <p className="text-[11px] text-muted-foreground">
+                                                Delivered on {formatDateTimeSafe(commission.delivered_at, 'Recently')}
+                                            </p>
+                                        </div>
+                                        <Badge variant="teal" className="shrink-0 font-mono text-[10px]">
+                                            {commission.status === 'completed' ? 'Delivered & Accepted' : 'Under Review'}
+                                        </Badge>
+                                    </div>
+
+                                    {/* Deliverable media grid */}
+                                    {messages.some(m => m.message?.startsWith('[Final Work Delivered]') && m.media && m.media.length > 0) ? (
+                                        <div className="space-y-2 pt-1">
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                                                {messages
+                                                    .filter(m => m.message?.startsWith('[Final Work Delivered]'))
+                                                    .flatMap(m => m.media || [])
+                                                    .map((item, idx, allMedia) => {
+                                                        const isImage = !item.media_type || item.media_type === 'image' || item.mime_type?.startsWith('image/');
+                                                        return (
+                                                            <div key={item.id || idx} className="group relative rounded-xl overflow-hidden border border-border bg-card">
+                                                                {isImage ? (
+                                                                    <div
+                                                                        onClick={() => openLightbox(allMedia, idx)}
+                                                                        className="aspect-square cursor-pointer overflow-hidden bg-black/20 relative"
+                                                                    >
+                                                                        <img
+                                                                            src={item.url}
+                                                                            alt={item.file_name || 'Deliverable'}
+                                                                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                                        />
+                                                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                                                                            <Maximize2 className="h-5 w-5 drop-shadow" />
+                                                                        </div>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="aspect-square p-3 flex flex-col items-center justify-center text-center bg-muted/40 gap-1.5">
+                                                                        <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                                                                            <FileText className="h-5 w-5" />
+                                                                        </div>
+                                                                        <p className="font-semibold text-[11px] truncate w-full px-1 text-foreground">{item.file_name || 'File'}</p>
+                                                                    </div>
+                                                                )}
+                                                                <div className="p-2 border-t border-border flex items-center justify-between gap-1.5 bg-card/90">
+                                                                    <div className="min-w-0 flex-1">
+                                                                        <p className="text-[11px] font-medium truncate text-foreground">{item.file_name || 'Deliverable'}</p>
+                                                                        {item.size && <p className="text-[9px] text-muted-foreground">{formatFileSize(item.size)}</p>}
+                                                                    </div>
+                                                                    <a
+                                                                        href={item.url}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        download={item.file_name || 'deliverable'}
+                                                                        className="h-7 w-7 rounded-lg bg-secondary hover:bg-muted text-foreground flex items-center justify-center shrink-0 transition-colors cursor-pointer"
+                                                                        title="Download deliverable"
+                                                                    >
+                                                                        <Download className="h-3.5 w-3.5" />
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-muted-foreground italic">
+                                            Final work deliverables have been submitted by the artist in the workspace.
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
                             {/* Actions */}
                             <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-border">
                                 {/* BUYER: Pay with Midtrans (When Status is 'accepted') */}
@@ -798,16 +926,125 @@ export const CommissionDetailPage: React.FC = () => {
                                     </>
                                 )}
 
-                                {/* ARTIST: Mark as Delivered (When In Progress or Revision) */}
+                                {/* ARTIST: Deliver Completed Work (When In Progress or Revision) */}
                                 {isArtistUser && ['in_progress', 'revision'].includes(commission.status) && (
-                                    <Button
-                                        size="sm"
-                                        onClick={handleDeliver}
-                                        disabled={actionLoading}
-                                        className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer"
-                                    >
-                                        <CheckCircle2 className="h-4 w-4" /> Mark as Delivered (Start 7-Day Review)
-                                    </Button>
+                                    <Dialog open={deliverModalOpen} onOpenChange={setDeliverModalOpen}>
+                                        <DialogTrigger asChild>
+                                            <Button
+                                                size="sm"
+                                                className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer shadow-md shadow-emerald-600/20"
+                                            >
+                                                <UploadCloud className="h-4 w-4" /> Deliver Completed Work
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="max-w-xl">
+                                            <DialogHeader>
+                                                <DialogTitle className="flex items-center gap-2">
+                                                    <UploadCloud className="h-5 w-5 text-emerald-400" /> Deliver Completed Commission Work
+                                                </DialogTitle>
+                                                <DialogDescription>
+                                                    Upload your final high-resolution files (PNG, JPG, PSD, CLIP, PDF, ZIP). The client will receive these deliverables and enter the 7-day review window.
+                                                </DialogDescription>
+                                            </DialogHeader>
+
+                                            <div className="space-y-4 py-3">
+                                                {/* Upload Drag & Drop Zone */}
+                                                <div
+                                                    onClick={() => deliverFileInputRef.current?.click()}
+                                                    onDragOver={(e) => e.preventDefault()}
+                                                    onDrop={(e) => {
+                                                        e.preventDefault();
+                                                        if (e.dataTransfer.files) handleDeliverFilesSelect(e.dataTransfer.files);
+                                                    }}
+                                                    className="border-2 border-dashed border-border/80 hover:border-emerald-500/60 bg-muted/20 hover:bg-emerald-500/5 rounded-2xl p-6 text-center cursor-pointer transition-all space-y-2 group"
+                                                >
+                                                    <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto group-hover:scale-105 transition-transform">
+                                                        <UploadCloud className="h-6 w-6" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs font-bold text-foreground">Click to browse or drag & drop deliverable files</p>
+                                                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                                                            PNG, JPG, PSD, CLIP, PDF, ZIP (Max 10 files)
+                                                        </p>
+                                                    </div>
+                                                    <input
+                                                        type="file"
+                                                        ref={deliverFileInputRef}
+                                                        onChange={(e) => {
+                                                            if (e.target.files) handleDeliverFilesSelect(e.target.files);
+                                                        }}
+                                                        multiple
+                                                        accept="image/*,.png,.jpg,.jpeg,.gif,.webp,.pdf,.zip,.psd,.clip,.rar,.7z"
+                                                        className="hidden"
+                                                    />
+                                                </div>
+
+                                                {/* Previews Grid */}
+                                                {deliverPreviews.length > 0 && (
+                                                    <div className="space-y-2">
+                                                        <Label className="text-xs font-bold text-muted-foreground">Attached Deliverable Files ({deliverPreviews.length})</Label>
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+                                                            {deliverPreviews.map((p, idx) => (
+                                                                <div key={idx} className="relative rounded-xl border border-border bg-card p-2 flex items-center gap-2.5">
+                                                                    {p.isImage ? (
+                                                                        <img src={p.url} alt={p.name} className="h-10 w-10 object-cover rounded-lg shrink-0" />
+                                                                    ) : (
+                                                                        <div className="h-10 w-10 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+                                                                            <FileText className="h-5 w-5" />
+                                                                        </div>
+                                                                    )}
+                                                                    <div className="min-w-0 flex-1">
+                                                                        <p className="font-semibold text-xs truncate text-foreground">{p.name}</p>
+                                                                        <p className="text-[10px] text-muted-foreground">{formatFileSize(p.size)}</p>
+                                                                    </div>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleRemoveDeliverFile(idx);
+                                                                        }}
+                                                                        className="h-6 w-6 rounded-full hover:bg-destructive/20 text-muted-foreground hover:text-destructive flex items-center justify-center cursor-pointer transition-colors"
+                                                                    >
+                                                                        <X className="h-3.5 w-3.5" />
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Delivery Note */}
+                                                <div className="space-y-2">
+                                                    <Label className="text-xs font-bold text-muted-foreground">Delivery Message & Notes for Client</Label>
+                                                    <Textarea
+                                                        placeholder="e.g. Here is the full resolution artwork with transparent and background variants, along with the source files! Thank you for the wonderful commission."
+                                                        rows={3}
+                                                        value={deliverNote}
+                                                        onChange={(e) => setDeliverNote(e.target.value)}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <DialogFooter className="gap-2 sm:gap-0">
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={() => setDeliverModalOpen(false)}
+                                                    disabled={actionLoading}
+                                                    className="cursor-pointer"
+                                                >
+                                                    Cancel
+                                                </Button>
+                                                <Button
+                                                    onClick={handleSubmitDelivery}
+                                                    disabled={actionLoading || (deliverFiles.length === 0 && !deliverNote.trim())}
+                                                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer gap-1.5"
+                                                >
+                                                    {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                                                    Confirm & Send Deliverables
+                                                </Button>
+                                            </DialogFooter>
+                                        </DialogContent>
+                                    </Dialog>
                                 )}
 
                                 {/* ARTIST: Propose New Deadline */}
