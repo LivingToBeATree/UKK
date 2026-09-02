@@ -37,6 +37,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MediaLightboxModal } from '@/components/ui/MediaLightboxModal';
 import { DatePicker } from '@/components/ui/date-picker';
+import { MidtransPaymentModal } from '@/components/ui/MidtransPaymentModal';
 import {
     Dialog,
     DialogTrigger,
@@ -107,6 +108,10 @@ export const CommissionDetailPage: React.FC = () => {
     // Revision Dialog state
     const [revisionModalOpen, setRevisionModalOpen] = useState(false);
     const [revisionNotes, setRevisionNotes] = useState('');
+
+    // Midtrans Payment Modal state
+    const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+    const [paymentOrderId, setPaymentOrderId] = useState<string | undefined>(undefined);
 
     const isBuyer = Boolean(commission && user && commission.user_id === user.id);
     const isArtistUser = Boolean(
@@ -322,34 +327,32 @@ export const CommissionDetailPage: React.FC = () => {
         setActionLoading(true);
         try {
             const payment = await commissionOrderApi.initiatePayment(commission.id);
+            setPaymentOrderId(payment.order_id);
 
-            // If token is a mock/dev token or window.snap is unavailable, simulate escrow payment
+            // If a live Midtrans Snap token is present and window.snap is loaded
             if (
-                payment.snap_token?.startsWith('mock_snap_token_') ||
-                typeof (window as unknown as { snap?: { pay: (token: string, cb: unknown) => void } }).snap?.pay !== 'function'
+                payment.snap_token &&
+                !payment.snap_token.startsWith('mock_snap_token_') &&
+                typeof (window as unknown as { snap?: { pay: (token: string, cb: unknown) => void } }).snap?.pay === 'function'
             ) {
-                const updated = await commissionOrderApi.simulatePayment(commission.id);
-                setCommission(updated);
-                toast.success('Escrow Payment simulated successfully! Commission is now in progress.');
-                refreshData();
-                return;
+                toast.success('Midtrans payment session initialized');
+                (window as unknown as { snap: { pay: (token: string, cb: unknown) => void } }).snap.pay(payment.snap_token, {
+                    onSuccess: () => {
+                        toast.success('Payment captured! Commission is now in progress.');
+                        refreshData();
+                    },
+                    onPending: () => {
+                        toast.info('Payment pending completion.');
+                        refreshData();
+                    },
+                    onError: () => {
+                        toast.error('Payment failed.');
+                    },
+                });
+            } else {
+                // Open the interactive Midtrans payment gateway modal (QRIS, Bank VAs, Credit Card)
+                setPaymentModalOpen(true);
             }
-
-            toast.success('Midtrans payment session initialized');
-
-            (window as unknown as { snap: { pay: (token: string, cb: unknown) => void } }).snap.pay(payment.snap_token!, {
-                onSuccess: () => {
-                    toast.success('Payment captured! Commission is now in progress.');
-                    refreshData();
-                },
-                onPending: () => {
-                    toast.info('Payment pending completion.');
-                    refreshData();
-                },
-                onError: () => {
-                    toast.error('Payment failed.');
-                },
-            });
         } catch (err: unknown) {
             const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to initiate Midtrans payment';
             toast.error(msg);
@@ -1460,6 +1463,20 @@ export const CommissionDetailPage: React.FC = () => {
                 mediaList={lightboxMedia}
                 initialIndex={lightboxIndex}
             />
+
+            {/* Midtrans Escrow Payment Gateway Modal */}
+            {commission && (
+                <MidtransPaymentModal
+                    isOpen={paymentModalOpen}
+                    onClose={() => setPaymentModalOpen(false)}
+                    commission={commission}
+                    orderId={paymentOrderId}
+                    onPaymentSuccess={(updated) => {
+                        setCommission(updated);
+                        refreshData();
+                    }}
+                />
+            )}
         </div>
     );
 };
