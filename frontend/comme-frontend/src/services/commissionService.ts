@@ -57,14 +57,15 @@ export const commissionOrderApi = {
         return res.data.data;
     },
 
-    create: async (payload: {
+    create: async (payload: FormData | {
         commission_service_id: number;
         commission_option_id?: number | null;
         addon_ids?: number[];
         description: string;
         deadline?: string | null;
     }) => {
-        const res = await api.post<ApiResponse<CommissionOrder>>('/commissions', payload);
+        const headers = payload instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {};
+        const res = await api.post<ApiResponse<CommissionOrder>>('/commissions', payload, { headers });
         return res.data.data;
     },
 

@@ -48,6 +48,12 @@ class StoreCommissionRequest extends FormRequest
             'deadline' => ['nullable', 'date', 'after:today'],
             'addon_ids' => ['sometimes', 'nullable', 'array'],
             'addon_ids.*' => ['integer', 'exists:commission_addons,id'],
+            'attachments' => ['nullable', 'array', 'max:10'],
+            'attachments.*' => ['file', 'max:51200'],
+            'media' => ['nullable', 'array', 'max:10'],
+            'media.*' => ['file', 'max:51200'],
+            'reference_images' => ['nullable', 'array', 'max:10'],
+            'reference_images.*' => ['file', 'max:51200'],
             // Deliberately no 'total_price', 'status', 'user_id', or
             // 'artist_profile_id' rules here — none of those are ever
             // trusted from client input.

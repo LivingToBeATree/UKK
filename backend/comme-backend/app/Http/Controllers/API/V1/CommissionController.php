@@ -86,8 +86,53 @@ class CommissionController extends Controller
             ]);
         }
 
+        // Handle uploaded reference files / initial message
+        $files = [];
+        if ($request->hasFile('attachments')) {
+            $uploaded = $request->file('attachments');
+            $files = is_array($uploaded) ? $uploaded : [$uploaded];
+        } elseif ($request->hasFile('media')) {
+            $uploaded = $request->file('media');
+            $files = is_array($uploaded) ? $uploaded : [$uploaded];
+        } elseif ($request->hasFile('reference_images')) {
+            $uploaded = $request->file('reference_images');
+            $files = is_array($uploaded) ? $uploaded : [$uploaded];
+        }
+
+        // Create initial commission message with the brief and attached references
+        $initialMessage = \App\Models\CommissionMessage::create([
+            'commission_id' => $commission->id,
+            'sender_id' => $request->user()->id,
+            'recipient_id' => $service->artistProfile?->user_id,
+            'message' => $request->description,
+            'message_type' => \App\Enum\MessageType::USER,
+        ]);
+
+        if (!empty($files)) {
+            foreach ($files as $index => $file) {
+                if (!$file || !$file->isValid()) {
+                    continue;
+                }
+                $path = $file->store('commissions/messages', 'public');
+                $mime = $file->getClientMimeType() ?: 'application/octet-stream';
+                $mediaType = str_starts_with($mime, 'image/') 
+                    ? \App\Enum\MediaType::IMAGE 
+                    : (str_starts_with($mime, 'video/') ? \App\Enum\MediaType::VIDEO : \App\Enum\MediaType::IMAGE);
+
+                \App\Models\CommissionMessageMedia::create([
+                    'commission_message_id' => $initialMessage->id,
+                    'file_name' => $file->getClientOriginalName(),
+                    'file_path' => $path,
+                    'file_size' => $file->getSize() ?: 0,
+                    'media_type' => $mediaType,
+                    'mime_type' => $mime,
+                    'sort_order' => $index,
+                ]);
+            }
+        }
+
         return ApiResponseHelper::successResponse(
-            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review', 'addonsSelections'])),
+            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages.media', 'review', 'addonsSelections'])),
             'Commission created successfully.',
             Response::HTTP_CREATED,
         );
