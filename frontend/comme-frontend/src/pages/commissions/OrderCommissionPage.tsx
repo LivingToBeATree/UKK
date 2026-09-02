@@ -14,8 +14,10 @@ import {
     X,
     UploadCloud,
     Loader2,
+    AlertCircle,
 } from 'lucide-react';
 import { commissionOrderApi } from '@/services/commissionService';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -34,6 +36,7 @@ const formatFileSize = (bytes?: number) => {
 };
 
 export const OrderCommissionPage: React.FC = () => {
+    const { user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const {
@@ -70,6 +73,26 @@ export const OrderCommissionPage: React.FC = () => {
                 <Link to="/store">
                     <Button variant="outline" className="rounded-xl">Browse Store</Button>
                 </Link>
+            </div>
+        );
+    }
+
+    const isOwnService = Boolean(user && (service.artist_profile?.user_id === user.id || user.artist_profile?.id === service.artist_profile_id));
+
+    if (isOwnService) {
+        return (
+            <div className="max-w-2xl mx-auto px-4 py-20 text-center space-y-4">
+                <AlertCircle className="h-12 w-12 text-amber-400 mx-auto" />
+                <h2 className="text-xl font-bold">Cannot Order Own Commission</h2>
+                <p className="text-sm text-muted-foreground">You are the artist of this service listing and cannot submit a commission order to yourself.</p>
+                <div className="flex items-center justify-center gap-3 pt-2">
+                    <Link to="/dashboard/services">
+                        <Button className="rounded-xl">Manage in Studio</Button>
+                    </Link>
+                    <Link to="/store">
+                        <Button variant="outline" className="rounded-xl">Browse Store</Button>
+                    </Link>
+                </div>
             </div>
         );
     }

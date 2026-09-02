@@ -23,7 +23,13 @@ class StoreCommissionRequest extends FormRequest
             // must be 'open' — a closed/draft/paused service fails validation.
             'commission_service_id' => [
                 'required',
-                Rule::exists('commission_services', 'id')->where('status', ServiceStatus::OPEN->value)
+                Rule::exists('commission_services', 'id')->where('status', ServiceStatus::OPEN->value),
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    $service = \App\Models\CommissionService::with('artistProfile')->find($value);
+                    if ($service && ($service->artistProfile?->user_id === $this->user()?->id || $service->artist_profile_id === $this->user()?->artistProfile?->id)) {
+                        $fail('You cannot order a commission from your own artist profile.');
+                    }
+                },
             ],
 
             'commission_option_id' => [

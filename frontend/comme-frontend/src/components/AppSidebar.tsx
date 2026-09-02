@@ -51,7 +51,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     useEffect(() => {
         const fetchBadgeCounts = async () => {
             try {
-                const res = await commissionOrderApi.list(1);
+                const res = await commissionOrderApi.list(1, { role: 'artist' });
                 const active = (res.data || []).filter((o: any) =>
                     ['pending', 'accepted', 'in_progress', 'revision'].includes(o.status)
                 );

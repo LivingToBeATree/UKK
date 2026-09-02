@@ -20,7 +20,7 @@ export const ArtistCommissionsPage: React.FC = () => {
         const fetch = async () => {
             try {
                 setLoading(true);
-                const params: Record<string, string> = {};
+                const params: Record<string, string> = { role: 'artist' };
                 if (filter) params.status = filter;
                 const res = await commissionOrderApi.list(1, params);
                 setCommissions(res.data);

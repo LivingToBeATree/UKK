@@ -31,7 +31,7 @@ export const MyCommissionsPage: React.FC = () => {
     const loadMore = async () => {
         const nextPage = page + 1;
         try {
-            const params: Record<string, string> = {};
+            const params: Record<string, string> = { role: 'buyer' };
             if (filter) params.status = filter;
             const res = await commissionOrderApi.list(nextPage, params);
             setCommissions((prev) => [...prev, ...res.data]);
@@ -47,7 +47,7 @@ export const MyCommissionsPage: React.FC = () => {
         const load = async () => {
             try {
                 setLoading(true);
-                const params: Record<string, string> = {};
+                const params: Record<string, string> = { role: 'buyer' };
                 if (filter) params.status = filter;
                 const res = await commissionOrderApi.list(1, params);
                 if (isMounted) {

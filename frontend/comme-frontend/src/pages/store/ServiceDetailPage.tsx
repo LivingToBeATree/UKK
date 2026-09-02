@@ -11,8 +11,10 @@ import {
     Check,
     ImageIcon,
     ShieldCheck,
+    PenTool,
 } from 'lucide-react';
 import { commissionServiceApi, commissionReviewApi, type CommissionReview } from '@/services/commissionService';
+import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -25,6 +27,7 @@ import type { CommissionService, CommissionOption, CommissionAddon } from '@/typ
 
 export const ServiceDetailPage: React.FC = () => {
     const { serviceId } = useParams<{ serviceId: string }>();
+    const { user } = useAuth();
     const { requireAuth } = useAuthModal();
     const navigate = useNavigate();
 
@@ -415,32 +418,43 @@ export const ServiceDetailPage: React.FC = () => {
                                 <p className="text-xs text-muted-foreground italic">Please select a service package above</p>
                             )}
 
-                            <Button
-                                className="w-full h-11 rounded-2xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-md gap-2"
-                                disabled={!selectedOption || service.status !== 'open'}
-                                onClick={() => {
-                                    if (
-                                        !requireAuth({
-                                            intent: 'commission',
-                                            redirectUrl: `/store/${serviceId}/order`,
-                                        })
-                                    ) {
-                                        return;
-                                    }
-                                    navigate(`/store/${serviceId}/order`, {
-                                        state: {
-                                            service,
-                                            selectedOption,
-                                            selectedAddonIds,
-                                            selectedAddons,
-                                            grandTotal,
-                                        },
-                                    });
-                                }}
-                            >
-                                <ShoppingCart className="h-4 w-4" />
-                                {service.status === 'open' ? 'Proceed to Order' : 'Service Currently Closed'}
-                            </Button>
+                            {Boolean(user && (service.artist_profile?.user_id === user.id || user.artist_profile?.id === service.artist_profile_id)) ? (
+                                <Link to="/dashboard/services" className="w-full block">
+                                    <Button
+                                        className="w-full h-11 rounded-2xl font-bold text-xs bg-secondary hover:bg-muted text-foreground border border-border cursor-pointer shadow-md gap-2"
+                                    >
+                                        <PenTool className="h-4 w-4 text-purple-400" />
+                                        Manage in Artist Studio
+                                    </Button>
+                                </Link>
+                            ) : (
+                                <Button
+                                    className="w-full h-11 rounded-2xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-md gap-2"
+                                    disabled={!selectedOption || service.status !== 'open'}
+                                    onClick={() => {
+                                        if (
+                                            !requireAuth({
+                                                intent: 'commission',
+                                                redirectUrl: `/store/${serviceId}/order`,
+                                            })
+                                        ) {
+                                            return;
+                                        }
+                                        navigate(`/store/${serviceId}/order`, {
+                                            state: {
+                                                service,
+                                                selectedOption,
+                                                selectedAddonIds,
+                                                selectedAddons,
+                                                grandTotal,
+                                            },
+                                        });
+                                    }}
+                                >
+                                    <ShoppingCart className="h-4 w-4" />
+                                    {service.status === 'open' ? 'Proceed to Order' : 'Service Currently Closed'}
+                                </Button>
+                            )}
 
                             <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
                                 <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />

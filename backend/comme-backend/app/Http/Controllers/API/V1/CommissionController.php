@@ -25,14 +25,31 @@ class CommissionController extends Controller
      * "only show commissions involving me" restriction happens in this
      * query, using orWhereHas to check both sides (buyer or artist).
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         Gate::authorize('viewAny', Commission::class);
 
         $userId = auth()->id();
+        $query = Commission::query();
 
-        $commissions = Commission::where('user_id', $userId)
-            ->orWhereHas('artistProfile', fn ($query) => $query->where('user_id', $userId))
+        $role = $request->query('role'); // 'buyer' or 'artist'
+
+        if ($role === 'artist') {
+            $query->whereHas('artistProfile', fn ($q) => $q->where('user_id', $userId));
+        } elseif ($role === 'buyer') {
+            $query->where('user_id', $userId);
+        } else {
+            $query->where(function ($q) use ($userId) {
+                $q->where('user_id', $userId)
+                  ->orWhereHas('artistProfile', fn ($sub) => $sub->where('user_id', $userId));
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->query('status'));
+        }
+
+        $commissions = $query
             ->with(['commissionService', 'commissionOption.addons', 'artistProfile.user', 'user'])
             ->latest()
             ->paginate(20);
@@ -52,7 +69,15 @@ class CommissionController extends Controller
      */
     public function store(StoreCommissionRequest $request): JsonResponse
     {
-        $service = CommissionService::findOrFail($request->commission_service_id);
+        $service = CommissionService::with('artistProfile')->findOrFail($request->commission_service_id);
+
+        if ($service->artistProfile?->user_id === $request->user()->id || $service->artist_profile_id === $request->user()->artistProfile?->id) {
+            return ApiResponseHelper::errorResponse(
+                'You cannot order a commission from your own artist profile.',
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
         $option = $request->commission_option_id
             ? CommissionOption::with('addons')->findOrFail($request->commission_option_id)
             : null;
