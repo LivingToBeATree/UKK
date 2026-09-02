@@ -82,13 +82,41 @@ class PortfolioController extends Controller
 
         // When "post as an artwork" is enabled, also publish as a Post on community feed
         if ($request->boolean('post_as_artwork', false)) {
-            \App\Models\Post::create([
+            $visibility = match ($request->input('post_visibility')) {
+                'followers' => \App\Enum\PostVisibilityType::FOLLOWERS,
+                'private' => \App\Enum\PostVisibilityType::PRIVATE,
+                default => \App\Enum\PostVisibilityType::PUBLIC,
+            };
+
+            $post = \App\Models\Post::create([
                 'user_id' => $request->user()->id,
                 'portfolio_id' => $portfolio->id,
-                'content' => $portfolio->description ?: $portfolio->title,
-                'visibility' => \App\Enum\PostVisibilityType::PUBLIC,
-                'commentable' => true,
+                'content' => $request->filled('post_content')
+                    ? $request->input('post_content')
+                    : ($portfolio->description ?: $portfolio->title),
+                'visibility' => $visibility,
+                'commentable' => $request->boolean('post_commentable', true),
             ]);
+
+            // Sync tags if provided
+            if ($request->has('post_tags')) {
+                $tagNames = is_array($request->post_tags) ? $request->post_tags : explode(',', (string) $request->post_tags);
+                $tagIds = [];
+                foreach ($tagNames as $name) {
+                    $cleanName = trim(str_replace('#', '', (string) $name));
+                    if (!empty($cleanName)) {
+                        $tag = \App\Models\Tag::firstOrCreate(
+                            ['name' => $cleanName],
+                            ['slug' => \Illuminate\Support\Str::slug($cleanName)]
+                        );
+                        $tagIds[] = $tag->id;
+                    }
+                }
+                if (!empty($tagIds)) {
+                    $post->tags()->sync($tagIds);
+                    $portfolio->tags()->sync($tagIds);
+                }
+            }
         }
 
         return ApiResponseHelper::successResponse(

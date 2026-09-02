@@ -16,15 +16,34 @@ import {
     ExternalLink,
     Film,
     Eye,
+    Bold,
+    Italic,
+    Link2,
+    Code,
+    Quote,
+    List,
+    Tag,
+    Globe,
+    Users,
+    Lock,
+    MessageSquare,
+    Check,
+    Smile,
 } from 'lucide-react';
 import { portfolioApi, type Portfolio } from '@/services/artistService';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Avatar } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { MarkdownContent } from '@/components/ui/markdown-content';
 import { toast } from '@/components/ui/sonner';
+
+const POPULAR_TAGS = ['Illustration', 'ConceptArt', 'Anime', 'CommissionOpen', 'DigitalArt'];
 
 interface MediaPreviewItem {
     id: string;
@@ -43,8 +62,18 @@ export const ManagePortfolioPage: React.FC = () => {
     // Form states
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
+    const { user } = useAuth();
     const [isStarred, setIsStarred] = useState(false);
     const [postAsArtwork, setPostAsArtwork] = useState(true);
+
+    // Post Customization States (Active when postAsArtwork is checked)
+    const [postContent, setPostContent] = useState('');
+    const [editorTab, setEditorTab] = useState<'write' | 'preview'>('write');
+    const [postTags, setPostTags] = useState<string[]>([]);
+    const [postTagInput, setPostTagInput] = useState('');
+    const [postVisibility, setPostVisibility] = useState<'public' | 'followers' | 'private'>('public');
+    const [postCommentable, setPostCommentable] = useState(true);
+    const postTextareaRef = useRef<HTMLTextAreaElement>(null);
 
     // 1. Primary / Main Artwork Upload State
     const [mainArtwork, setMainArtwork] = useState<MediaPreviewItem | null>(null);
@@ -57,6 +86,35 @@ export const ManagePortfolioPage: React.FC = () => {
     const addFileInputRef = useRef<HTMLInputElement>(null);
 
     const [submitting, setSubmitting] = useState(false);
+
+    const insertFormatting = (before: string, after: string = '', defaultText: string = '') => {
+        const textarea = postTextareaRef.current;
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selected = postContent.substring(start, end) || defaultText;
+        const replacement = `${before}${selected}${after}`;
+
+        const newContent = postContent.substring(0, start) + replacement + postContent.substring(end);
+        setPostContent(newContent);
+
+        setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + before.length, start + before.length + selected.length);
+        }, 0);
+    };
+
+    const handleAddPostTag = (tagStr: string) => {
+        const clean = tagStr.trim().replace(/^#/, '').replace(/[^a-zA-Z0-9_-]/g, '');
+        if (!clean || postTags.includes(clean) || postTags.length >= 8) return;
+        setPostTags((prev) => [...prev, clean]);
+        setPostTagInput('');
+    };
+
+    const handleRemovePostTag = (tagToRemove: string) => {
+        setPostTags((prev) => prev.filter((t) => t !== tagToRemove));
+    };
 
     const fetchPortfolios = async () => {
         try {
@@ -165,6 +223,12 @@ export const ManagePortfolioPage: React.FC = () => {
         setDescription('');
         setIsStarred(false);
         setPostAsArtwork(true);
+        setPostContent('');
+        setEditorTab('write');
+        setPostTags([]);
+        setPostTagInput('');
+        setPostVisibility('public');
+        setPostCommentable(true);
         if (mainArtwork) URL.revokeObjectURL(mainArtwork.url);
         additionalMedia.forEach((m) => URL.revokeObjectURL(m.url));
         setMainArtwork(null);
@@ -195,6 +259,19 @@ export const ManagePortfolioPage: React.FC = () => {
             }
             formData.append('starred', isStarred ? '1' : '0');
             formData.append('post_as_artwork', postAsArtwork ? '1' : '0');
+
+            if (postAsArtwork) {
+                if (postContent.trim()) {
+                    formData.append('post_content', postContent.trim());
+                } else if (description.trim()) {
+                    formData.append('post_content', description.trim());
+                }
+                formData.append('post_visibility', postVisibility);
+                formData.append('post_commentable', postCommentable ? '1' : '0');
+                if (postTags.length > 0) {
+                    formData.append('post_tags', postTags.join(','));
+                }
+            }
 
             // 1. Append Main Artwork FIRST (index 0 / cover)
             formData.append('media[]', mainArtwork.file);
@@ -549,6 +626,345 @@ export const ManagePortfolioPage: React.FC = () => {
                                             </span>
                                         </label>
                                     </div>
+
+                                    {/* ── 6. Expandable Post Settings (When "Post as an artwork" is Checked) ── */}
+                                    <AnimatePresence>
+                                        {postAsArtwork && (
+                                            <motion.div
+                                                initial={{ opacity: 0, height: 0, y: -6 }}
+                                                animate={{ opacity: 1, height: 'auto', y: 0 }}
+                                                exit={{ opacity: 0, height: 0, y: -6 }}
+                                                transition={{ duration: 0.25 }}
+                                                className="space-y-6 pt-4 pb-2 border-t border-purple-500/20 bg-purple-950/10 p-4 sm:p-5 rounded-3xl border border-border/80 overflow-hidden"
+                                            >
+                                                {/* Author Header & Visibility Badge */}
+                                                <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border/60">
+                                                    <div className="flex items-center gap-3">
+                                                        <Avatar
+                                                            size="md"
+                                                            fallback={user?.display_name || user?.username || 'Artist'}
+                                                            src={user?.avatar_url}
+                                                            className="h-10 w-10 ring-1 ring-border/80"
+                                                        />
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-bold text-sm text-foreground">
+                                                                    {user?.display_name || user?.username || 'Artist'}
+                                                                </span>
+                                                                <span className="text-[10px] font-bold text-purple-400 bg-purple-500/15 px-2 py-0.5 rounded-full border border-purple-500/25">
+                                                                    Artist
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-xs text-muted-foreground">@{user?.username}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Visibility Badge */}
+                                                    <span className="text-xs font-semibold px-3 py-1 rounded-full bg-secondary/80 border border-border/80 text-foreground flex items-center gap-1.5 shadow-xs">
+                                                        {postVisibility === 'public' && <Globe className="h-3.5 w-3.5 text-emerald-400" />}
+                                                        {postVisibility === 'followers' && <Users className="h-3.5 w-3.5 text-primary" />}
+                                                        {postVisibility === 'private' && <Lock className="h-3.5 w-3.5 text-amber-400" />}
+                                                        <span className="capitalize">{postVisibility === 'private' ? 'Private' : postVisibility === 'followers' ? 'Followers' : 'Public'}</span>
+                                                    </span>
+                                                </div>
+
+                                                {/* Markdown Editor with Toolbar */}
+                                                <div className="space-y-2">
+                                                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                        {/* Write / Preview Tabs */}
+                                                        <div className="flex items-center gap-1 p-1 rounded-xl bg-secondary/60 border border-border/80">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setEditorTab('write')}
+                                                                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                                                    editorTab === 'write'
+                                                                        ? 'bg-card text-foreground shadow-xs'
+                                                                        : 'text-muted-foreground hover:text-foreground'
+                                                                }`}
+                                                            >
+                                                                Write
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setEditorTab('preview')}
+                                                                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                                                                    editorTab === 'preview'
+                                                                        ? 'bg-card text-foreground shadow-xs'
+                                                                        : 'text-muted-foreground hover:text-foreground'
+                                                                }`}
+                                                            >
+                                                                <Eye className="h-3.5 w-3.5" /> Preview
+                                                            </button>
+                                                        </div>
+
+                                                        {/* Toolbar Buttons */}
+                                                        {editorTab === 'write' && (
+                                                            <div className="flex items-center gap-0.5 p-1 rounded-xl bg-secondary/40 border border-border/70 flex-wrap">
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => insertFormatting('**', '**', 'bold text')}
+                                                                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
+                                                                    title="Bold"
+                                                                >
+                                                                    <Bold className="h-3.5 w-3.5" />
+                                                                </Button>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => insertFormatting('*', '*', 'italic text')}
+                                                                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
+                                                                    title="Italic"
+                                                                >
+                                                                    <Italic className="h-3.5 w-3.5" />
+                                                                </Button>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => insertFormatting('[', '](https://example.com)', 'link text')}
+                                                                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
+                                                                    title="Link"
+                                                                >
+                                                                    <Link2 className="h-3.5 w-3.5" />
+                                                                </Button>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => insertFormatting('`', '`', 'code')}
+                                                                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
+                                                                    title="Code"
+                                                                >
+                                                                    <Code className="h-3.5 w-3.5" />
+                                                                </Button>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => insertFormatting('> ', '', 'quote text')}
+                                                                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
+                                                                    title="Quote"
+                                                                >
+                                                                    <Quote className="h-3.5 w-3.5" />
+                                                                </Button>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => insertFormatting('- ', '', 'list item')}
+                                                                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
+                                                                    title="Bullet List"
+                                                                >
+                                                                    <List className="h-3.5 w-3.5" />
+                                                                </Button>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => insertFormatting('![Image](', ')', 'https://example.com/image.png')}
+                                                                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
+                                                                    title="Embed Image"
+                                                                >
+                                                                    <ImageIcon className="h-3.5 w-3.5" />
+                                                                </Button>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => insertFormatting('![GIF](', ')', 'https://media.giphy.com/media/...')}
+                                                                    className="h-7 px-1.5 text-muted-foreground hover:text-foreground cursor-pointer text-xs font-bold"
+                                                                    title="Embed GIF"
+                                                                >
+                                                                    GIF
+                                                                </Button>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => insertFormatting('✨ ', '', '')}
+                                                                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground cursor-pointer"
+                                                                    title="Emoji / Sparkles"
+                                                                >
+                                                                    <Smile className="h-3.5 w-3.5" />
+                                                                </Button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Textarea or Preview */}
+                                                    {editorTab === 'write' ? (
+                                                        <Textarea
+                                                            ref={postTextareaRef}
+                                                            placeholder="Share your artwork progress, process breakdown, commission updates, or stories..."
+                                                            value={postContent}
+                                                            onChange={(e) => setPostContent(e.target.value.slice(0, 2000))}
+                                                            rows={6}
+                                                            className="resize-y min-h-[160px] text-sm leading-relaxed p-4 rounded-2xl bg-card border-border/80 focus-visible:ring-primary font-medium"
+                                                        />
+                                                    ) : (
+                                                        <div className="min-h-[160px] p-4 rounded-2xl border border-border/80 bg-secondary/20 overflow-y-auto">
+                                                            {postContent || description ? (
+                                                                <MarkdownContent content={postContent || description} />
+                                                            ) : (
+                                                                <p className="text-xs text-muted-foreground italic">
+                                                                    Nothing to preview yet. Switch to Write to start typing...
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                    <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+                                                        <span>Format with Bold (**), Italic (*), Quote (&gt;), Lists (-)</span>
+                                                        <span className={postContent.length > 1800 ? 'text-amber-400 font-bold' : ''}>
+                                                            {postContent.length} / 2000
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* ── Post Tags (0/8) ── */}
+                                                <div className="space-y-2.5 pt-2 border-t border-border/60">
+                                                    <div className="flex items-center justify-between">
+                                                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                                                            <Tag className="h-3.5 w-3.5 text-purple-400" /> POST TAGS ({postTags.length}/8)
+                                                        </Label>
+                                                        <span className="text-[11px] text-muted-foreground">Press Enter or comma to add</span>
+                                                    </div>
+
+                                                    {/* Tag Chips */}
+                                                    <div className="flex flex-wrap gap-2 items-center">
+                                                        {postTags.map((tag) => (
+                                                            <Badge
+                                                                key={tag}
+                                                                variant="secondary"
+                                                                className="pl-3 pr-2 py-1 text-xs font-bold gap-1.5 bg-purple-500/15 text-purple-300 border border-purple-500/30"
+                                                            >
+                                                                #{tag}
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleRemovePostTag(tag)}
+                                                                    className="hover:text-rose-400 transition-colors cursor-pointer"
+                                                                >
+                                                                    <X className="h-3 w-3" />
+                                                                </button>
+                                                            </Badge>
+                                                        ))}
+                                                        {postTags.length < 8 && (
+                                                            <Input
+                                                                value={postTagInput}
+                                                                onChange={(e) => setPostTagInput(e.target.value)}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter' || e.key === ',') {
+                                                                        e.preventDefault();
+                                                                        handleAddPostTag(postTagInput);
+                                                                    }
+                                                                }}
+                                                                placeholder="Add tag..."
+                                                                className="h-8 w-32 rounded-lg text-xs px-3 bg-secondary/40 border-border/70"
+                                                            />
+                                                        )}
+                                                    </div>
+
+                                                    {/* Suggested Quick Tags */}
+                                                    <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                                                        <span className="text-[11px] text-muted-foreground font-medium mr-1">Suggested:</span>
+                                                        {POPULAR_TAGS.filter((t) => !postTags.includes(t)).map((tag) => (
+                                                            <button
+                                                                key={tag}
+                                                                type="button"
+                                                                onClick={() => handleAddPostTag(tag)}
+                                                                className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors cursor-pointer"
+                                                            >
+                                                                +{tag}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                {/* ── Post Visibility ── */}
+                                                <div className="space-y-2 pt-2 border-t border-border/60">
+                                                    <div className="flex items-center gap-2">
+                                                        <Globe className="h-4 w-4 text-purple-400" />
+                                                        <div>
+                                                            <p className="text-xs font-bold text-foreground">Post Visibility</p>
+                                                            <p className="text-[11px] text-muted-foreground">Choose who can discover and see this post across Comme.</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-2 pt-1">
+                                                        {[
+                                                            {
+                                                                id: 'public' as const,
+                                                                label: 'Public',
+                                                                desc: 'Visible to everyone on Artwork Feed & search',
+                                                                icon: Globe,
+                                                            },
+                                                            {
+                                                                id: 'followers' as const,
+                                                                label: 'Followers Only',
+                                                                desc: 'Only users following your profile can view',
+                                                                icon: Users,
+                                                            },
+                                                            {
+                                                                id: 'private' as const,
+                                                                label: 'Private / Unlisted',
+                                                                desc: 'Only accessible via direct link',
+                                                                icon: Lock,
+                                                            },
+                                                        ].map((opt) => {
+                                                            const Icon = opt.icon;
+                                                            const isSelected = postVisibility === opt.id;
+                                                            return (
+                                                                <button
+                                                                    key={opt.id}
+                                                                    type="button"
+                                                                    onClick={() => setPostVisibility(opt.id)}
+                                                                    className={`w-full p-3 rounded-xl border text-left flex items-start justify-between gap-3 transition-all cursor-pointer ${
+                                                                        isSelected
+                                                                            ? 'border-purple-500 bg-purple-500/10 ring-1 ring-purple-500/30 text-foreground'
+                                                                            : 'border-border hover:bg-secondary/60 text-muted-foreground'
+                                                                    }`}
+                                                                >
+                                                                    <div className="flex items-start gap-3">
+                                                                        <Icon className={`h-4 w-4 mt-0.5 shrink-0 ${isSelected ? 'text-purple-400' : 'text-muted-foreground'}`} />
+                                                                        <div>
+                                                                            <p className="text-xs font-bold text-foreground">{opt.label}</p>
+                                                                            <p className="text-[11px] text-muted-foreground mt-0.5">{opt.desc}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                    {isSelected && <Check className="h-4 w-4 text-purple-400 shrink-0" />}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+
+                                                {/* ── Community Comments ── */}
+                                                <div className="p-3.5 rounded-2xl border border-border/80 bg-secondary/30 flex items-center justify-between gap-4">
+                                                    <div className="space-y-0.5">
+                                                        <div className="flex items-center gap-2">
+                                                            <MessageSquare className="h-4 w-4 text-purple-400" />
+                                                            <Label htmlFor="post_commentable_toggle" className="text-xs font-bold text-foreground cursor-pointer">
+                                                                Community Comments
+                                                            </Label>
+                                                        </div>
+                                                        <p className="text-[11px] text-muted-foreground">
+                                                            Allow collectors &amp; users to comment on this post
+                                                        </p>
+                                                    </div>
+                                                    <input
+                                                        id="post_commentable_toggle"
+                                                        type="checkbox"
+                                                        checked={postCommentable}
+                                                        onChange={(e) => setPostCommentable(e.target.checked)}
+                                                        className="h-5 w-5 accent-purple-600 rounded cursor-pointer"
+                                                    />
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
 
                                     {/* Actions */}
                                     <div className="flex items-center justify-end gap-3 pt-3 border-t border-border/60">
