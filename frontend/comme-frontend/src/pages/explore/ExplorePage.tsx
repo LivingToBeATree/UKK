@@ -42,6 +42,15 @@ function formatPostDate(dateStr?: string | null): string {
     });
 }
 
+const isPostArtwork = (post: Post) => {
+    return (
+        Boolean(post.portfolio_id) ||
+        Boolean(post.portfolio?.id) ||
+        Boolean((post.portfolio as any)?.thumbnail_media?.url) ||
+        Boolean(post.user?.artist_profile)
+    );
+};
+
 // ── Auto-Rotating / Shuffling Card Media Component ──
 const PostCardMedia: React.FC<{ post: Post }> = ({ post }) => {
     const mediaList =
@@ -110,6 +119,8 @@ const PostCardMedia: React.FC<{ post: Post }> = ({ post }) => {
         setCurrentIndex((prev) => (prev + 1) % mediaList.length);
     };
 
+    const isArtwork = isPostArtwork(post);
+
     return (
         <div className="relative w-full rounded-2xl overflow-hidden bg-black/40 border border-border/60 flex items-center justify-center select-none group/media my-1">
             <AnimatePresence mode="wait">
@@ -119,7 +130,9 @@ const PostCardMedia: React.FC<{ post: Post }> = ({ post }) => {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="w-full h-full flex items-center justify-center min-h-[180px] max-h-[460px] overflow-hidden"
+                    className={`w-full flex items-center justify-center overflow-hidden ${
+                        isArtwork ? 'h-auto min-h-[200px]' : 'w-full h-full min-h-[180px] max-h-[460px]'
+                    }`}
                 >
                     {isVideo ? (
                         <video
@@ -128,13 +141,15 @@ const PostCardMedia: React.FC<{ post: Post }> = ({ post }) => {
                             autoPlay
                             loop
                             playsInline
-                            className="w-full h-auto max-h-[460px] object-cover"
+                            className={`w-full h-auto object-cover ${isArtwork ? '' : 'max-h-[460px]'}`}
                         />
                     ) : (
                         <img
                             src={currentMedia.url}
                             alt={post.content || post.portfolio?.title || 'Post media'}
-                            className="w-full h-auto max-h-[460px] object-cover transition-transform duration-500 group-hover/media:scale-105"
+                            className={`w-full h-auto object-cover transition-transform duration-500 group-hover/media:scale-105 ${
+                                isArtwork ? 'w-full h-auto block' : 'max-h-[460px]'
+                            }`}
                             loading="lazy"
                         />
                     )}
