@@ -156,19 +156,19 @@ const ScrollableCommentMediaGallery: React.FC<{
         const m = mediaList[0];
         return (
             <>
-                <div className="relative rounded-2xl overflow-hidden bg-black/90 border border-border/80 my-2 max-w-xl group">
+                <div className="relative rounded-2xl overflow-hidden bg-secondary/30 border border-border/80 my-2 max-w-2xl group">
                     {m.isVideo ? (
                         <CustomVideoPlayer
                             src={m.url}
                             autoPlay={false}
                             loop
-                            className="w-full h-auto max-h-[360px] rounded-2xl"
+                            className="w-full h-auto max-h-[420px] rounded-2xl"
                         />
                     ) : (
                         <img
                             src={m.url}
                             alt={m.file_name}
-                            className="w-full h-auto max-h-[360px] object-contain rounded-2xl cursor-zoom-in hover:brightness-105 transition-all bg-black/50"
+                            className="w-full h-auto max-h-[420px] object-contain rounded-2xl cursor-zoom-in hover:brightness-105 transition-all bg-secondary/20"
                             onClick={() => handleOpenLightbox(0)}
                         />
                     )}
@@ -208,7 +208,7 @@ const ScrollableCommentMediaGallery: React.FC<{
 
     return (
         <>
-            <div className="relative rounded-2xl overflow-hidden bg-black/90 border border-border/80 my-2 group/gallery select-none">
+            <div className="relative rounded-2xl overflow-hidden bg-secondary/20 border border-border/80 my-2 group/gallery select-none">
                 {/* Horizontal Scroll Track */}
                 <div
                     ref={scrollContainerRef}
@@ -945,7 +945,8 @@ export const PostDetailPage: React.FC = () => {
         post.portfolio_id ||
         post.portfolio?.id ||
         (post.portfolio as any)?.thumbnail_media?.url ||
-        post.portfolio?.cover_image_url
+        post.portfolio?.cover_image_url ||
+        (post.user?.artist_profile && post.media && post.media.length > 0)
     );
 
     // 1. Main Artwork Piece (Shown as Hero Showcase)
@@ -955,7 +956,7 @@ export const PostDetailPage: React.FC = () => {
            (post.portfolio.cover_image_url
                ? { id: 0, url: post.portfolio.cover_image_url, file_name: post.portfolio.title || 'Artwork', media_type: 'image' }
                : null))
-        : null;
+        : (isArtwork && post.media && post.media.length > 0 ? post.media[0] : null);
 
     // 2. Additional Process Medias & Timelapses (Formatted as Post Medias Beneath)
     const additionalMedias: any[] = post.portfolio
@@ -963,7 +964,7 @@ export const PostDetailPage: React.FC = () => {
               ...(post.portfolio.media && post.portfolio.media.length > 1 ? post.portfolio.media.slice(1) : []),
               ...(post.media || []),
           ]
-        : post.media || [];
+        : (isArtwork && post.media && post.media.length > 1 ? post.media.slice(1) : (isArtwork ? [] : post.media || []));
 
     const [heroLightboxOpen, setHeroLightboxOpen] = useState(false);
 

@@ -488,7 +488,7 @@ export const ExplorePage: React.FC = () => {
                                     {isArt ? (
                                         /* ── 1. Full-Bleed Artwork Card (Edge-to-Edge Showcase with Bottom Gradient) ── */
                                         <Link
-                                            to={`/posts/${post.id}`}
+                                            to={post.portfolio?.id ? `/portfolio/${post.portfolio.id}` : post.portfolio_id ? `/portfolio/${post.portfolio_id}` : `/posts/${post.id}`}
                                             className="group relative block rounded-2xl overflow-hidden bg-card border border-border/80 hover:border-purple-500/60 shadow-xs hover:shadow-xl transition-all duration-300 cursor-pointer"
                                         >
                                             <div className="relative w-full overflow-hidden">
