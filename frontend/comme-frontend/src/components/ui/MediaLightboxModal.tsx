@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, ChevronLeft, ChevronRight, Video, ExternalLink } from 'lucide-react';
 import { CustomVideoPlayer } from '@/components/ui/CustomVideoPlayer';
@@ -63,7 +64,7 @@ export const MediaLightboxModal: React.FC<MediaLightboxModalProps> = ({
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isOpen, handlePrev, handleNext, onClose, mediaList.length]);
 
-    if (!isOpen || mediaList.length === 0) return null;
+    if (!isOpen || mediaList.length === 0 || typeof document === 'undefined') return null;
 
     const currentMedia = mediaList[currentIndex];
     if (!currentMedia) return null;
@@ -77,14 +78,14 @@ export const MediaLightboxModal: React.FC<MediaLightboxModalProps> = ({
         currentMedia.mime_type?.includes('gif') ||
         (typeof currentMedia.url === 'string' && /\.gif$/i.test(currentMedia.url));
 
-    return (
+    const content = (
         <AnimatePresence>
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="fixed inset-0 z-50 flex flex-col items-center justify-between bg-black/92 backdrop-blur-2xl p-4 sm:p-6 select-none"
+                className="fixed inset-0 z-[9999] flex flex-col items-center justify-between bg-black/95 backdrop-blur-2xl p-4 sm:p-6 select-none"
                 onClick={(e) => {
                     if (e.target === e.currentTarget) onClose();
                 }}
@@ -140,7 +141,7 @@ export const MediaLightboxModal: React.FC<MediaLightboxModalProps> = ({
 
                 {/* ── Center Stage Media Viewer ── */}
                 <div
-                    className="relative flex-1 w-full flex items-center justify-center overflow-hidden my-2"
+                    className="relative flex-1 w-full min-h-0 flex items-center justify-center overflow-hidden my-2"
                     onClick={(e) => {
                         if (e.target === e.currentTarget) onClose();
                     }}
@@ -167,21 +168,21 @@ export const MediaLightboxModal: React.FC<MediaLightboxModalProps> = ({
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.96 }}
                         transition={{ duration: 0.2 }}
-                        className="flex items-center justify-center w-full h-full p-2"
+                        className="flex items-center justify-center w-full h-full p-2 max-w-full max-h-full"
                     >
                         {isVideo ? (
                             <CustomVideoPlayer
                                 src={currentMedia.url}
                                 autoPlay
                                 loop
-                                className="max-w-[92vw] max-h-[78vh] rounded-2xl shadow-2xl border border-white/10"
-                                videoClassName="max-h-[78vh]"
+                                className="max-w-[92vw] max-h-[76vh] rounded-2xl shadow-2xl border border-white/10"
+                                videoClassName="max-h-[76vh]"
                             />
                         ) : (
                             <img
                                 src={currentMedia.url}
                                 alt={currentMedia.file_name || 'Preview media'}
-                                className="max-w-[92vw] max-h-[78vh] w-auto h-auto object-contain rounded-2xl shadow-2xl"
+                                className="max-w-[92vw] max-h-[76vh] w-auto h-auto object-contain rounded-2xl shadow-2xl select-none"
                             />
                         )}
                     </motion.div>
@@ -242,4 +243,6 @@ export const MediaLightboxModal: React.FC<MediaLightboxModalProps> = ({
             </motion.div>
         </AnimatePresence>
     );
+
+    return createPortal(content, document.body);
 };
