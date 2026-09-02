@@ -400,9 +400,11 @@ export const CommissionDetailPage: React.FC = () => {
         }
     };
 
+    const isInsideDashboard = location.pathname.startsWith('/dashboard');
+
     if (loading) {
         return (
-            <div className="w-full max-w-7xl mx-auto space-y-6">
+            <div className={`w-full max-w-7xl mx-auto space-y-6 ${isInsideDashboard ? '' : 'px-4 sm:px-6 lg:px-8 py-6 sm:py-8'}`}>
                 <Skeleton className="h-8 w-48" />
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     <div className="lg:col-span-7 space-y-6">
@@ -419,7 +421,7 @@ export const CommissionDetailPage: React.FC = () => {
 
     if (!commission) {
         return (
-            <div className="w-full max-w-3xl mx-auto px-4 py-20 text-center space-y-4">
+            <div className="w-full max-w-3xl mx-auto px-4 py-24 text-center space-y-4">
                 <AlertCircle className="h-10 w-10 text-rose-500 mx-auto" />
                 <h2 className="text-xl font-bold">Commission Not Found</h2>
                 <p className="text-sm text-muted-foreground">The commission order does not exist or you do not have permission to view it.</p>
@@ -433,12 +435,12 @@ export const CommissionDetailPage: React.FC = () => {
     }
 
     return (
-        <div className="w-full max-w-7xl mx-auto space-y-6 pb-12">
+        <div className={`w-full max-w-7xl mx-auto space-y-6 pb-16 ${isInsideDashboard ? '' : 'px-4 sm:px-6 lg:px-8 py-6 sm:py-8'}`}>
             {/* Header Navigation */}
             <div className="flex items-center justify-between gap-4">
                 <Link
                     to={isArtistUser ? "/dashboard/commissions" : "/commissions"}
-                    className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl border border-border bg-card/60 hover:bg-secondary text-muted-foreground hover:text-foreground transition-all"
+                    className="inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-xl border border-border bg-card/80 hover:bg-secondary text-muted-foreground hover:text-foreground transition-all shadow-xs"
                 >
                     <ArrowLeft className="h-4 w-4" /> {isArtistUser ? "Back to Studio Order Queue" : "Back to My Commissions"}
                 </Link>
