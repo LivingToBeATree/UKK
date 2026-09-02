@@ -940,23 +940,28 @@ export const PostDetailPage: React.FC = () => {
         );
     }
 
-    const attachedMediaList: NonNullable<Post['media']> =
-        post.media && post.media.length > 0
-            ? post.media
-            : post.portfolio?.media && post.portfolio.media.length > 0
-            ? (post.portfolio.media as any)
-            : (post.portfolio as any)?.thumbnail_media
-            ? [(post.portfolio as any).thumbnail_media]
-            : post.portfolio?.cover_image_url
-            ? [
-                  {
-                      id: 0,
-                      url: post.portfolio.cover_image_url,
-                      file_name: post.portfolio?.title || 'Artwork',
-                      media_type: 'image',
-                  },
-              ]
-            : [];
+    // Build media list: portfolio artwork FIRST, then direct uploads (never lose either)
+    const buildAttachedMediaList = (): NonNullable<Post['media']> => {
+        const portfolioMedia: any[] = [];
+        const directMedia: any[] = post.media && post.media.length > 0 ? [...post.media] : [];
+
+        if (post.portfolio?.media && post.portfolio.media.length > 0) {
+            portfolioMedia.push(...(post.portfolio.media as any));
+        } else if ((post.portfolio as any)?.thumbnail_media) {
+            portfolioMedia.push((post.portfolio as any).thumbnail_media);
+        } else if (post.portfolio?.cover_image_url) {
+            portfolioMedia.push({
+                id: 0,
+                url: post.portfolio.cover_image_url,
+                file_name: post.portfolio?.title || 'Artwork',
+                media_type: 'image',
+            });
+        }
+
+        return [...portfolioMedia, ...directMedia];
+    };
+
+    const attachedMediaList = buildAttachedMediaList();
 
     return (
         <div className="w-full max-w-4xl lg:max-w-5xl mx-auto px-4 sm:px-8 py-8 space-y-8">

@@ -53,35 +53,42 @@ const isPostArtwork = (post: Post) => {
 
 // ── Auto-Rotating / Shuffling Card Media Component ──
 const PostCardMedia: React.FC<{ post: Post }> = ({ post }) => {
-    const mediaList =
-        post.media && post.media.length > 0
-            ? post.media
-            : post.portfolio?.media && post.portfolio.media.length > 0
-            ? post.portfolio.media.map((m: any) => ({
-                  id: m.id,
-                  url: m.url,
-                  media_type: m.media_type || 'image',
-                  mime_type: m.mime_type || 'image/jpeg',
-              }))
-            : (post.portfolio as any)?.thumbnail_media?.url
-            ? [
-                  {
-                      id: 0,
-                      url: (post.portfolio as any).thumbnail_media.url,
-                      media_type: 'image',
-                      mime_type: 'image/jpeg',
-                  },
-              ]
-            : post.portfolio?.cover_image_url
-            ? [
-                  {
-                      id: 0,
-                      url: post.portfolio.cover_image_url,
-                      media_type: 'image',
-                      mime_type: 'image/jpeg',
-                  },
-              ]
-            : [];
+    // Build media list: portfolio artwork FIRST, then direct uploads
+    const buildMediaList = () => {
+        const portfolioMedia: any[] = [];
+        const directMedia: any[] = post.media && post.media.length > 0 ? [...post.media] : [];
+
+        // Collect portfolio media sources (artwork images)
+        if (post.portfolio?.media && post.portfolio.media.length > 0) {
+            post.portfolio.media.forEach((m: any) => {
+                portfolioMedia.push({
+                    id: m.id,
+                    url: m.url,
+                    media_type: m.media_type || 'image',
+                    mime_type: m.mime_type || 'image/jpeg',
+                });
+            });
+        } else if ((post.portfolio as any)?.thumbnail_media?.url) {
+            portfolioMedia.push({
+                id: 0,
+                url: (post.portfolio as any).thumbnail_media.url,
+                media_type: 'image',
+                mime_type: 'image/jpeg',
+            });
+        } else if (post.portfolio?.cover_image_url) {
+            portfolioMedia.push({
+                id: 0,
+                url: post.portfolio.cover_image_url,
+                media_type: 'image',
+                mime_type: 'image/jpeg',
+            });
+        }
+
+        // Portfolio artwork goes first, then any direct media uploads
+        return [...portfolioMedia, ...directMedia];
+    };
+
+    const mediaList = buildMediaList();
 
     const [currentIndex, setCurrentIndex] = useState(0);
 
