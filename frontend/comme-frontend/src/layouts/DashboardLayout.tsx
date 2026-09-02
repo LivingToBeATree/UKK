@@ -12,9 +12,9 @@ export const DashboardLayout: React.FC = () => {
 
     return (
         <SidebarContext.Provider value={{ collapsed, setCollapsed, toggleSidebar, mobileOpen, setMobileOpen, toggleMobile }}>
-            <div className="flex min-h-[calc(100vh-4rem)]">
+            <div className="flex min-h-screen w-full relative items-start">
                 <AppSidebar />
-                <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+                <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8">
                     <Outlet />
                 </main>
             </div>

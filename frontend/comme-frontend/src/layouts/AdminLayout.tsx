@@ -27,11 +27,11 @@ export const AdminLayout: React.FC = () => {
     const location = useLocation();
 
     return (
-        <div className="flex min-h-[calc(100vh-4rem)]">
+        <div className="flex min-h-screen w-full relative items-start">
             {/* Sidebar */}
             <aside
                 className={cn(
-                    'border-r border-border bg-card flex flex-col transition-all duration-200',
+                    'hidden md:flex sticky top-0 h-screen min-h-screen border-r border-border bg-card flex-col transition-all duration-200 z-30 overflow-y-auto shrink-0',
                     collapsed ? 'w-16' : 'w-60'
                 )}
             >
