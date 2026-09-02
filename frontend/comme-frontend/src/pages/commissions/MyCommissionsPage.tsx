@@ -72,8 +72,8 @@ export const MyCommissionsPage: React.FC = () => {
     return (
         <div className="max-w-4xl mx-auto px-4 py-8">
             <div className="mb-8">
-                <h1 className="text-2xl font-bold">My Commissions</h1>
-                <p className="text-sm text-muted-foreground mt-1">Track your commission orders</p>
+                <h1 className="text-2xl font-bold">My Orders</h1>
+                <p className="text-sm text-muted-foreground mt-1">Track and manage your commissioned artwork orders</p>
             </div>
 
             {/* Status Filters */}
@@ -85,7 +85,7 @@ export const MyCommissionsPage: React.FC = () => {
                         size="sm"
                         onClick={() => setFilter(s)}
                     >
-                        {s || 'All'}
+                        {s ? s.replace('_', ' ') : 'All'}
                     </Button>
                 ))}
             </div>
@@ -100,10 +100,10 @@ export const MyCommissionsPage: React.FC = () => {
                     <Card>
                         <CardContent className="p-12 text-center">
                             <Layers className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
-                            <p className="text-muted-foreground">No commissions yet</p>
+                            <p className="text-muted-foreground">No orders placed yet</p>
                             <Link to="/store">
                                 <Button variant="outline" className="mt-4">
-                                    Browse Store
+                                    Browse Commission Store
                                 </Button>
                             </Link>
                         </CardContent>

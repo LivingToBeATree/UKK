@@ -6,7 +6,7 @@ import {
     Compass,
     FolderKanban,
     Layers,
-    Bookmark,
+    ShoppingBag,
     User as UserIcon,
     Settings,
     LogOut,
@@ -227,10 +227,10 @@ export const SidebarRail: React.FC = () => {
                     onClick={guardNav('studio')}
                 />
 
-                {/* 5. My Commissions */}
+                {/* 5. My Orders */}
                 <NavItem
-                    icon={Bookmark}
-                    label="My Commissions"
+                    icon={ShoppingBag}
+                    label="My Orders"
                     path="/commissions"
                     isActive={location.pathname.startsWith('/commissions') || location.pathname.startsWith('/orders')}
                     collapsed={collapsed}

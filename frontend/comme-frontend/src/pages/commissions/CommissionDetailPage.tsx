@@ -525,7 +525,7 @@ export const CommissionDetailPage: React.FC = () => {
                 <p className="text-sm text-muted-foreground">The commission order does not exist or you do not have permission to view it.</p>
                 <Link to={isArtistUser ? "/dashboard/commissions" : "/commissions"}>
                     <Button variant="outline">
-                        {isArtistUser ? "Back to Studio Order Queue" : "Back to My Commissions"}
+                        {isArtistUser ? "Back to Studio Order Queue" : "Back to My Orders"}
                     </Button>
                 </Link>
             </div>
@@ -540,7 +540,7 @@ export const CommissionDetailPage: React.FC = () => {
                     to={isArtistUser ? "/dashboard/commissions" : "/commissions"}
                     className="inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-xl border border-border bg-card/80 hover:bg-secondary text-muted-foreground hover:text-foreground transition-all shadow-xs"
                 >
-                    <ArrowLeft className="h-4 w-4" /> {isArtistUser ? "Back to Studio Order Queue" : "Back to My Commissions"}
+                    <ArrowLeft className="h-4 w-4" /> {isArtistUser ? "Back to Studio Order Queue" : "Back to My Orders"}
                 </Link>
                 <div className="flex items-center gap-2">
                     <span className="text-xs font-mono text-muted-foreground hidden sm:inline-block">Order #COM-{commission.id}</span>
