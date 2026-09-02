@@ -45,7 +45,7 @@ class PortfolioController extends Controller
     public function store(StorePortfolioRequest $request): JsonResponse
     {
         $portfolio = Portfolio::create([
-            ...$request->safe()->except(['media', 'starred']),
+            ...$request->safe()->except(['media', 'starred', 'post_as_artwork']),
             'starred' => $request->boolean('starred', false),
             'artist_profile_id' => $request->user()->artistProfile->id,
         ]);
@@ -78,6 +78,17 @@ class PortfolioController extends Controller
                     'is_thumbnail' => $index === 0,
                 ]);
             }
+        }
+
+        // When "post as an artwork" is enabled, also publish as a Post on community feed
+        if ($request->boolean('post_as_artwork', false)) {
+            \App\Models\Post::create([
+                'user_id' => $request->user()->id,
+                'portfolio_id' => $portfolio->id,
+                'content' => $portfolio->description ?: $portfolio->title,
+                'visibility' => \App\Enum\PostVisibilityType::PUBLIC,
+                'commentable' => true,
+            ]);
         }
 
         return ApiResponseHelper::successResponse(

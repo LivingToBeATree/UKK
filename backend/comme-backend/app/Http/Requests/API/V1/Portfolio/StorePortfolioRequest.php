@@ -22,6 +22,7 @@ class StorePortfolioRequest extends FormRequest
             'thumbnail_media_id' => ['nullable', 'exists:medias,id'],
             'visibility' => ['sometimes', new Enum(CommissionVisibility::class)],
             'starred' => ['sometimes', 'boolean'],
+            'post_as_artwork' => ['sometimes', 'boolean'],
             'media' => ['nullable', 'array', 'max:10'],
             'media.*' => ['file', 'mimes:jpeg,png,jpg,gif,webp,mp4,mov', 'max:25600'],
         ];

@@ -44,6 +44,7 @@ export const ManagePortfolioPage: React.FC = () => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [isStarred, setIsStarred] = useState(false);
+    const [postAsArtwork, setPostAsArtwork] = useState(true);
 
     // 1. Primary / Main Artwork Upload State
     const [mainArtwork, setMainArtwork] = useState<MediaPreviewItem | null>(null);
@@ -163,6 +164,7 @@ export const ManagePortfolioPage: React.FC = () => {
         setTitle('');
         setDescription('');
         setIsStarred(false);
+        setPostAsArtwork(true);
         if (mainArtwork) URL.revokeObjectURL(mainArtwork.url);
         additionalMedia.forEach((m) => URL.revokeObjectURL(m.url));
         setMainArtwork(null);
@@ -192,6 +194,7 @@ export const ManagePortfolioPage: React.FC = () => {
                 formData.append('description', description.trim());
             }
             formData.append('starred', isStarred ? '1' : '0');
+            formData.append('post_as_artwork', postAsArtwork ? '1' : '0');
 
             // 1. Append Main Artwork FIRST (index 0 / cover)
             formData.append('media[]', mainArtwork.file);
@@ -517,8 +520,8 @@ export const ManagePortfolioPage: React.FC = () => {
                                         />
                                     </div>
 
-                                    {/* ── 5. Starred / Featured Toggle ── */}
-                                    <div className="flex items-center gap-3 pt-1">
+                                    {/* ── 5. Options: Featured & Post as Artwork ── */}
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 pt-1">
                                         <label className="flex items-center gap-2 text-xs font-bold text-foreground cursor-pointer select-none">
                                             <input
                                                 type="checkbox"
@@ -529,6 +532,20 @@ export const ManagePortfolioPage: React.FC = () => {
                                             <span className="flex items-center gap-1">
                                                 <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
                                                 Highlight as Featured Artwork
+                                            </span>
+                                        </label>
+
+                                        <label className="flex items-center gap-2 text-xs font-bold text-foreground cursor-pointer select-none">
+                                            <input
+                                                type="checkbox"
+                                                checked={postAsArtwork}
+                                                onChange={(e) => setPostAsArtwork(e.target.checked)}
+                                                className="rounded border-border text-purple-600 focus:ring-purple-500 h-4 w-4"
+                                            />
+                                            <span className="flex items-center gap-1.5">
+                                                <Sparkles className="h-3.5 w-3.5 text-purple-400" />
+                                                Post as an artwork
+                                                <span className="text-[10px] font-normal text-muted-foreground">(also shares to community feed)</span>
                                             </span>
                                         </label>
                                     </div>
