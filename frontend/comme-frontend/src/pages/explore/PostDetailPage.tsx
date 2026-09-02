@@ -941,28 +941,31 @@ export const PostDetailPage: React.FC = () => {
         );
     }
 
-    // Build media list: portfolio artwork FIRST, then direct uploads (never lose either)
-    const buildAttachedMediaList = (): NonNullable<Post['media']> => {
-        const portfolioMedia: any[] = [];
-        const directMedia: any[] = post.media && post.media.length > 0 ? [...post.media] : [];
+    const isArtwork = Boolean(
+        post.portfolio_id ||
+        post.portfolio?.id ||
+        (post.portfolio as any)?.thumbnail_media?.url ||
+        post.portfolio?.cover_image_url
+    );
 
-        if (post.portfolio?.media && post.portfolio.media.length > 0) {
-            portfolioMedia.push(...(post.portfolio.media as any));
-        } else if ((post.portfolio as any)?.thumbnail_media) {
-            portfolioMedia.push((post.portfolio as any).thumbnail_media);
-        } else if (post.portfolio?.cover_image_url) {
-            portfolioMedia.push({
-                id: 0,
-                url: post.portfolio.cover_image_url,
-                file_name: post.portfolio?.title || 'Artwork',
-                media_type: 'image',
-            });
-        }
+    // 1. Main Artwork Piece (Shown as Hero Showcase)
+    const mainArtwork = post.portfolio
+        ? ((post.portfolio as any)?.thumbnail_media ||
+           post.portfolio.media?.[0] ||
+           (post.portfolio.cover_image_url
+               ? { id: 0, url: post.portfolio.cover_image_url, file_name: post.portfolio.title || 'Artwork', media_type: 'image' }
+               : null))
+        : null;
 
-        return [...portfolioMedia, ...directMedia];
-    };
+    // 2. Additional Process Medias & Timelapses (Formatted as Post Medias Beneath)
+    const additionalMedias: any[] = post.portfolio
+        ? [
+              ...(post.portfolio.media && post.portfolio.media.length > 1 ? post.portfolio.media.slice(1) : []),
+              ...(post.media || []),
+          ]
+        : post.media || [];
 
-    const attachedMediaList = buildAttachedMediaList();
+    const [heroLightboxOpen, setHeroLightboxOpen] = useState(false);
 
     return (
         <div className="w-full max-w-4xl lg:max-w-5xl mx-auto px-4 sm:px-8 py-8 space-y-8">
@@ -1022,6 +1025,42 @@ export const PostDetailPage: React.FC = () => {
                             </Badge>
                         </div>
 
+                        {/* ── Hero Artwork Display (For Portfolio / Artwork Posts) ── */}
+                        {mainArtwork && (
+                            <div className="relative rounded-3xl overflow-hidden bg-black/40 border border-border/60 group">
+                                <div className="w-full flex items-center justify-center">
+                                    {mainArtwork.media_type === 'video' || mainArtwork.mime_type?.includes('video') ? (
+                                        <CustomVideoPlayer
+                                            src={mainArtwork.url}
+                                            autoPlay={false}
+                                            loop
+                                            className="w-full h-auto rounded-3xl"
+                                        />
+                                    ) : (
+                                        <img
+                                            src={mainArtwork.url}
+                                            alt={mainArtwork.file_name || post.portfolio?.title || 'Artwork'}
+                                            className="w-full h-auto block object-cover cursor-zoom-in select-none group-hover:brightness-105 transition-all"
+                                            onClick={() => setHeroLightboxOpen(true)}
+                                        />
+                                    )}
+                                </div>
+
+                                {/* Expand button */}
+                                {mainArtwork.media_type !== 'video' && !mainArtwork.mime_type?.includes('video') && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setHeroLightboxOpen(true)}
+                                        className="absolute top-3 right-3 h-8 px-3 rounded-full bg-black/75 hover:bg-black/95 text-white text-xs font-semibold flex items-center gap-1.5 shadow-lg backdrop-blur-md border border-white/20 transition-all cursor-pointer opacity-0 group-hover:opacity-100 z-10"
+                                        title="Expand"
+                                    >
+                                        <Maximize2 className="h-3.5 w-3.5" />
+                                        <span>Expand</span>
+                                    </button>
+                                )}
+                            </div>
+                        )}
+
                         {/* 2. Post Text Content */}
                         {post.content && (
                             <div className="pt-1">
@@ -1029,10 +1068,16 @@ export const PostDetailPage: React.FC = () => {
                             </div>
                         )}
 
-                        {/* 3. Attached Multi-Media Scrollable Gallery or Hero Media (Below Text) */}
-                        {attachedMediaList.length > 0 && (
-                            <div className="pt-2 rounded-2xl overflow-hidden">
-                                <ScrollableMediaGallery mediaList={attachedMediaList} attachedPortfolio={post.portfolio} />
+                        {/* 3. Additional Process Media & Timelapses (Formatted Exactly Like Post Medias) */}
+                        {additionalMedias.length > 0 && (
+                            <div className="pt-2 rounded-2xl overflow-hidden space-y-2">
+                                {isArtwork && (
+                                    <p className="text-xs font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                                        <Video className="h-3.5 w-3.5 text-blue-400" />
+                                        Additional Media & Timelapses ({additionalMedias.length})
+                                    </p>
+                                )}
+                                <ScrollableMediaGallery mediaList={additionalMedias} attachedPortfolio={post.portfolio} />
                             </div>
                         )}
 
@@ -1238,6 +1283,16 @@ export const PostDetailPage: React.FC = () => {
                     </AnimatePresence>
                 </div>
             </div>
+
+            {/* Lightbox for Hero Artwork */}
+            {mainArtwork && (
+                <MediaLightboxModal
+                    isOpen={heroLightboxOpen}
+                    onClose={() => setHeroLightboxOpen(false)}
+                    mediaList={[mainArtwork as any]}
+                    initialIndex={0}
+                />
+            )}
         </div>
     );
 };

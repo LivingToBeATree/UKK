@@ -53,55 +53,43 @@ const isPostArtwork = (post: Post) => {
 
 // ── Auto-Rotating / Shuffling Card Media Component ──
 const PostCardMedia: React.FC<{ post: Post }> = ({ post }) => {
-    // Build media list: portfolio artwork FIRST, then direct uploads
-    const buildMediaList = () => {
-        const portfolioMedia: any[] = [];
-        const directMedia: any[] = post.media && post.media.length > 0 ? [...post.media] : [];
+    const isArtwork = isPostArtwork(post);
 
-        // Collect portfolio media sources (artwork images)
-        if (post.portfolio?.media && post.portfolio.media.length > 0) {
-            post.portfolio.media.forEach((m: any) => {
-                portfolioMedia.push({
-                    id: m.id,
-                    url: m.url,
-                    media_type: m.media_type || 'image',
-                    mime_type: m.mime_type || 'image/jpeg',
-                });
-            });
-        } else if ((post.portfolio as any)?.thumbnail_media?.url) {
-            portfolioMedia.push({
-                id: 0,
-                url: (post.portfolio as any).thumbnail_media.url,
-                media_type: 'image',
-                mime_type: 'image/jpeg',
-            });
-        } else if (post.portfolio?.cover_image_url) {
-            portfolioMedia.push({
-                id: 0,
-                url: post.portfolio.cover_image_url,
-                media_type: 'image',
-                mime_type: 'image/jpeg',
-            });
+    // If it's an artwork post, ONLY use the artwork thumbnail / cover (never rotate)
+    const getArtworkMedia = () => {
+        if ((post.portfolio as any)?.thumbnail_media?.url) {
+            return [{ id: 0, url: (post.portfolio as any).thumbnail_media.url, media_type: 'image', mime_type: 'image/jpeg' }];
         }
-
-        // Portfolio artwork goes first, then any direct media uploads
-        return [...portfolioMedia, ...directMedia];
+        if (post.portfolio?.cover_image_url) {
+            return [{ id: 0, url: post.portfolio.cover_image_url, media_type: 'image', mime_type: 'image/jpeg' }];
+        }
+        if (post.portfolio?.media && post.portfolio.media.length > 0) {
+            const first = post.portfolio.media[0];
+            return [{ id: first.id, url: first.url, media_type: (first as any).media_type || 'image', mime_type: (first as any).mime_type || 'image/jpeg' }];
+        }
+        if (post.media && post.media.length > 0) {
+            const first = post.media[0];
+            return [{ id: first.id, url: first.url, media_type: first.media_type || 'image', mime_type: (first as any).mime_type || 'image/jpeg' }];
+        }
+        return [];
     };
 
-    const mediaList = buildMediaList();
+    const mediaList = isArtwork
+        ? getArtworkMedia()
+        : (post.media && post.media.length > 0 ? post.media : []);
 
     const [currentIndex, setCurrentIndex] = useState(0);
 
-    // Auto rotate every 5 seconds (5000ms) and loop back
+    // Auto rotate every 5 seconds for regular multi-media posts ONLY (never rotate for artworks)
     useEffect(() => {
-        if (mediaList.length <= 1) return;
+        if (isArtwork || mediaList.length <= 1) return;
 
         const interval = window.setInterval(() => {
             setCurrentIndex((prev) => (prev + 1) % mediaList.length);
         }, 5000);
 
         return () => window.clearInterval(interval);
-    }, [mediaList.length]);
+    }, [isArtwork, mediaList.length]);
 
     if (mediaList.length === 0) return null;
 
@@ -125,8 +113,6 @@ const PostCardMedia: React.FC<{ post: Post }> = ({ post }) => {
         e.stopPropagation();
         setCurrentIndex((prev) => (prev + 1) % mediaList.length);
     };
-
-    const isArtwork = isPostArtwork(post);
 
     return (
         <div
