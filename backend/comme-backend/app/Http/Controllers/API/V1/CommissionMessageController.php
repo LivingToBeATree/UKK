@@ -62,17 +62,59 @@ class CommissionMessageController extends Controller
             'commission_id' => $commission->id,
             'sender_id' => $currentUser->id,
             'recipient_id' => $recipientId,
-            'message' => $request->validated('message'),
+            'message' => $request->validated('message') ?? '',
             'message_type' => $request->validated('message_type') ?? MessageType::USER,
         ]);
 
+        // Handle uploaded attachments / media
+        $files = [];
+        if ($request->hasFile('attachments')) {
+            $uploaded = $request->file('attachments');
+            $files = is_array($uploaded) ? $uploaded : [$uploaded];
+        } elseif ($request->hasFile('media')) {
+            $uploaded = $request->file('media');
+            $files = is_array($uploaded) ? $uploaded : [$uploaded];
+        }
+
+        if ($request->hasFile('attachment')) {
+            $files[] = $request->file('attachment');
+        }
+
+        if (!empty($files)) {
+            foreach ($files as $index => $file) {
+                if (!$file || !$file->isValid()) {
+                    continue;
+                }
+                $path = $file->store('commissions/messages', 'public');
+                $mime = $file->getClientMimeType() ?: 'application/octet-stream';
+                $mediaType = str_starts_with($mime, 'image/') 
+                    ? \App\Enum\MediaType::IMAGE 
+                    : (str_starts_with($mime, 'video/') ? \App\Enum\MediaType::VIDEO : \App\Enum\MediaType::IMAGE);
+
+                \App\Models\CommissionMessageMedia::create([
+                    'commission_message_id' => $message->id,
+                    'file_name' => $file->getClientOriginalName(),
+                    'file_path' => $path,
+                    'file_size' => $file->getSize() ?: 0,
+                    'media_type' => $mediaType,
+                    'mime_type' => $mime,
+                    'sort_order' => $index,
+                ]);
+            }
+        }
+
         if ($recipientId) {
+            $hasFiles = !empty($files);
+            $notificationSnippet = filled($message->message)
+                ? $message->message
+                : ($hasFiles ? 'Sent an attachment' : 'Sent a message');
+
             InAppNotification::create([
                 'user_id' => $recipientId,
                 'actor_id' => $currentUser->id,
                 'type' => NotificationType::COMMISSION_MESSAGE,
                 'title' => 'New Commission Message',
-                'message' => "{$currentUser->display_name} sent a message regarding commission #{$commission->id}.",
+                'message' => "{$currentUser->display_name}: {$notificationSnippet}",
                 'notifiable_type' => Commission::class,
                 'notifiable_id' => $commission->id,
             ]);

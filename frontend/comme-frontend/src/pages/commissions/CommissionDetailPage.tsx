@@ -14,6 +14,12 @@ import {
     AlertCircle,
     RefreshCw,
     MessageSquare,
+    Paperclip,
+    FileText,
+    Download,
+    Maximize2,
+    Loader2,
+    X,
 } from 'lucide-react';
 import { commissionOrderApi, commissionReviewApi } from '@/services/commissionService';
 import { useAuth } from '@/hooks/useAuth';
@@ -26,6 +32,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Avatar } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { MediaLightboxModal } from '@/components/ui/MediaLightboxModal';
 import {
     Dialog,
     DialogTrigger,
@@ -37,6 +44,13 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from '@/components/ui/sonner';
 import type { CommissionOrder, CommissionMessage } from '@/types';
+
+const formatFileSize = (bytes?: number) => {
+    if (!bytes) return '';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 export const CommissionDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -52,6 +66,16 @@ export const CommissionDetailPage: React.FC = () => {
 
     // Messages auto-scroll ref
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    // Media attachment state
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [filePreviews, setFilePreviews] = useState<{ file: File; url: string; isImage: boolean; name: string; size: number }[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Lightbox modal state
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [lightboxMedia, setLightboxMedia] = useState<{ url: string; file_name?: string; media_type?: string; mime_type?: string }[]>([]);
+    const [lightboxIndex, setLightboxIndex] = useState(0);
 
     // Review state
     const [showReview, setShowReview] = useState(false);
@@ -92,6 +116,47 @@ export const CommissionDetailPage: React.FC = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
+    const handleFilesSelect = (files: FileList | File[]) => {
+        const fileArray = Array.from(files);
+        if (!fileArray.length) return;
+
+        // Limit to max 5 files per message
+        const combined = [...selectedFiles, ...fileArray].slice(0, 5);
+        setSelectedFiles(combined);
+
+        const previews = combined.map((file) => ({
+            file,
+            url: URL.createObjectURL(file),
+            isImage: file.type.startsWith('image/'),
+            name: file.name,
+            size: file.size,
+        }));
+        setFilePreviews(previews);
+    };
+
+    const handleRemoveFile = (index: number) => {
+        const updatedFiles = selectedFiles.filter((_, i) => i !== index);
+        setSelectedFiles(updatedFiles);
+        if (filePreviews[index]?.url) {
+            URL.revokeObjectURL(filePreviews[index].url);
+        }
+        const updatedPreviews = filePreviews.filter((_, i) => i !== index);
+        setFilePreviews(updatedPreviews);
+    };
+
+    const handlePaste = (e: React.ClipboardEvent) => {
+        if (e.clipboardData.files && e.clipboardData.files.length > 0) {
+            e.preventDefault();
+            handleFilesSelect(e.clipboardData.files);
+        }
+    };
+
+    const openLightbox = (mediaItems: { url: string; file_name?: string; media_type?: string; mime_type?: string }[], index = 0) => {
+        setLightboxMedia(mediaItems);
+        setLightboxIndex(index);
+        setLightboxOpen(true);
+    };
+
     const refreshData = async () => {
         if (!id) return;
         try {
@@ -129,16 +194,28 @@ export const CommissionDetailPage: React.FC = () => {
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim()) return;
+        if (!newMessage.trim() && selectedFiles.length === 0) return;
         setSending(true);
         try {
             const formData = new FormData();
-            formData.append('message', newMessage);
+            if (newMessage.trim()) {
+                formData.append('message', newMessage.trim());
+            }
+            selectedFiles.forEach((file) => {
+                formData.append('attachments[]', file);
+            });
+
             const msg = await commissionOrderApi.sendMessage(Number(id), formData);
-            setMessages([...messages, msg]);
+            setMessages((prev) => [...prev, msg]);
             setNewMessage('');
-        } catch {
-            toast.error('Failed to send message');
+            setSelectedFiles([]);
+            setFilePreviews([]);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+        } catch (err: unknown) {
+            const errorMsg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to send message';
+            toast.error(errorMsg);
         } finally {
             setSending(false);
         }
@@ -792,6 +869,23 @@ export const CommissionDetailPage: React.FC = () => {
                             ) : (
                                 messages.map((msg) => {
                                     const isMe = msg.user_id === user?.id || msg.sender_id === user?.id;
+                                    const hasMedia = msg.media && msg.media.length > 0;
+                                    const imageMedia = hasMedia
+                                        ? msg.media!.filter(
+                                              (m) =>
+                                                  !m.media_type ||
+                                                  m.media_type === 'image' ||
+                                                  m.mime_type?.startsWith('image/')
+                                          )
+                                        : [];
+                                    const otherMedia = hasMedia
+                                        ? msg.media!.filter(
+                                              (m) =>
+                                                  m.media_type !== 'image' &&
+                                                  !m.mime_type?.startsWith('image/')
+                                          )
+                                        : [];
+
                                     return (
                                         <div key={msg.id} className={`flex gap-2.5 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
                                             <Avatar
@@ -799,13 +893,73 @@ export const CommissionDetailPage: React.FC = () => {
                                                 fallback={msg.user?.display_name || msg.user?.username || '?'}
                                                 src={msg.user?.avatar_url}
                                             />
-                                            <div className={`max-w-[80%] p-3.5 rounded-2xl text-xs leading-relaxed ${
+                                            <div className={`max-w-[82%] p-3.5 rounded-2xl text-xs leading-relaxed space-y-2 ${
                                                 isMe
                                                     ? 'bg-primary text-primary-foreground rounded-tr-xs shadow-xs'
                                                     : 'bg-muted/80 text-foreground rounded-tl-xs border border-border/40'
                                             }`}>
-                                                {msg.message}
-                                                <p className={`text-[10px] mt-1 font-mono ${isMe ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
+                                                {/* Text Message */}
+                                                {msg.message && (
+                                                    <p className="whitespace-pre-wrap break-words">{msg.message}</p>
+                                                )}
+
+                                                {/* Image Attachments Grid */}
+                                                {imageMedia.length > 0 && (
+                                                    <div className={`grid gap-1.5 rounded-xl overflow-hidden ${
+                                                        imageMedia.length === 1 ? 'grid-cols-1 max-w-[260px]' : 'grid-cols-2 max-w-[300px]'
+                                                    }`}>
+                                                        {imageMedia.map((mediaItem, idx) => (
+                                                            <div
+                                                                key={mediaItem.id || idx}
+                                                                onClick={() => openLightbox(imageMedia, idx)}
+                                                                className="group relative cursor-pointer overflow-hidden rounded-lg bg-black/20 aspect-video sm:aspect-square"
+                                                            >
+                                                                <img
+                                                                    src={mediaItem.url}
+                                                                    alt={mediaItem.file_name || 'Attached image'}
+                                                                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                                    loading="lazy"
+                                                                />
+                                                                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                                                                    <Maximize2 className="h-5 w-5 drop-shadow" />
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                {/* Non-Image File Attachments */}
+                                                {otherMedia.length > 0 && (
+                                                    <div className="space-y-1.5 pt-1">
+                                                        {otherMedia.map((mediaItem, idx) => (
+                                                            <a
+                                                                key={mediaItem.id || idx}
+                                                                href={mediaItem.url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                download={mediaItem.file_name || 'attachment'}
+                                                                className={`flex items-center gap-2 p-2 rounded-xl border transition-all text-xs ${
+                                                                    isMe
+                                                                        ? 'bg-primary-foreground/10 border-primary-foreground/20 hover:bg-primary-foreground/20 text-primary-foreground'
+                                                                        : 'bg-card border-border hover:bg-secondary text-foreground'
+                                                                }`}
+                                                            >
+                                                                <div className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">
+                                                                    <FileText className="h-4 w-4" />
+                                                                </div>
+                                                                <div className="min-w-0 flex-1">
+                                                                    <p className="font-semibold truncate text-[11px]">{mediaItem.file_name || 'Attachment'}</p>
+                                                                    {mediaItem.size && (
+                                                                        <p className="text-[10px] opacity-75">{formatFileSize(mediaItem.size)}</p>
+                                                                    )}
+                                                                </div>
+                                                                <Download className="h-4 w-4 shrink-0 opacity-80" />
+                                                            </a>
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                <p className={`text-[10px] font-mono ${isMe ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
                                                     {formatDateSafe(msg.created_at, { hour: '2-digit', minute: '2-digit' }, 'Just now')}
                                                 </p>
                                             </div>
@@ -816,17 +970,75 @@ export const CommissionDetailPage: React.FC = () => {
                             <div ref={messagesEndRef} />
                         </div>
 
+                        {/* File Previews Tray */}
+                        {filePreviews.length > 0 && (
+                            <div className="p-2.5 border-t border-border bg-muted/30 flex items-center gap-2 overflow-x-auto">
+                                {filePreviews.map((preview, idx) => (
+                                    <div key={idx} className="relative group shrink-0 rounded-xl overflow-hidden border border-border bg-card p-1 flex items-center gap-2 pr-2">
+                                        {preview.isImage ? (
+                                            <img src={preview.url} alt={preview.name} className="h-10 w-10 object-cover rounded-lg" />
+                                        ) : (
+                                            <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                                                <FileText className="h-5 w-5" />
+                                            </div>
+                                        )}
+                                        <div className="text-[11px] max-w-[120px]">
+                                            <p className="font-medium truncate text-foreground">{preview.name}</p>
+                                            <p className="text-[10px] text-muted-foreground">{formatFileSize(preview.size)}</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveFile(idx)}
+                                            className="h-5 w-5 rounded-full bg-rose-500/80 hover:bg-rose-600 text-white flex items-center justify-center cursor-pointer transition-colors"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Hidden File Input */}
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={(e) => {
+                                if (e.target.files) handleFilesSelect(e.target.files);
+                            }}
+                            multiple
+                            accept="image/*,.png,.jpg,.jpeg,.gif,.webp,.pdf,.zip,.psd,.clip"
+                            className="hidden"
+                        />
+
                         {/* Message Input Form */}
                         {!['cancelled', 'declined'].includes(commission.status) ? (
                             <form onSubmit={handleSendMessage} className="p-3 border-t border-border bg-muted/10 flex items-center gap-2">
+                                {/* Media Attachment Insert Button */}
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    title="Attach media or files (Images, Sketches, PSDs, PDFs, ZIPs)"
+                                    className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
+                                >
+                                    <Paperclip className="h-4 w-4" />
+                                </Button>
+
                                 <Input
                                     placeholder="Type a message or paste revision feedback..."
                                     value={newMessage}
                                     onChange={(e) => setNewMessage(e.target.value)}
+                                    onPaste={handlePaste}
                                     className="flex-1 text-xs h-9 bg-card"
                                 />
-                                <Button type="submit" size="icon" className="h-9 w-9 shrink-0 cursor-pointer" disabled={sending || !newMessage.trim()}>
-                                    <Send className="h-4 w-4" />
+                                <Button
+                                    type="submit"
+                                    size="icon"
+                                    className="h-9 w-9 shrink-0 cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90"
+                                    disabled={sending || (!newMessage.trim() && selectedFiles.length === 0)}
+                                >
+                                    {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                                 </Button>
                             </form>
                         ) : (
@@ -837,6 +1049,14 @@ export const CommissionDetailPage: React.FC = () => {
                     </Card>
                 </div>
             </motion.div>
+
+            {/* Media Lightbox Modal for Chat Images & Media */}
+            <MediaLightboxModal
+                isOpen={lightboxOpen}
+                onClose={() => setLightboxOpen(false)}
+                mediaList={lightboxMedia}
+                initialIndex={lightboxIndex}
+            />
         </div>
     );
 };
