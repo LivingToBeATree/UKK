@@ -12,12 +12,15 @@ import {
     ArrowLeft,
     RefreshCw,
     ShieldCheck,
+    ImageIcon,
+    Maximize2,
 } from 'lucide-react';
 import { artistApplicationApi } from '@/services/artistService';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { MediaLightboxModal } from '@/components/ui/MediaLightboxModal';
 import { formatDateSafe } from '@/utils/format';
 import type { ArtistApplication } from '@/types';
 
@@ -28,7 +31,7 @@ const statusConfig = {
         bg: 'bg-amber-500/10',
         badgeVariant: 'gold' as const,
         label: 'Under Review',
-        desc: 'Our curation team is inspecting your portfolio and verification links. We typically respond within 24 to 48 hours.',
+        desc: 'Our Moderator Panel is reviewing your portfolio and verification links. We typically respond within 24 to 48 hours.',
     },
     approved: {
         icon: CheckCircle2,
@@ -52,6 +55,10 @@ export const ApplicationStatusPage: React.FC = () => {
     const [application, setApplication] = useState<ArtistApplication | null>(null);
     const [loading, setLoading] = useState(true);
     const [notFound, setNotFound] = useState(false);
+
+    // Lightbox Modal state
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [lightboxIndex, setLightboxIndex] = useState(0);
 
     useEffect(() => {
         let isMounted = true;
@@ -91,7 +98,7 @@ export const ApplicationStatusPage: React.FC = () => {
                     <p className="text-sm text-muted-foreground">You haven't submitted an artist application yet.</p>
                 </div>
                 <Link to="/apply-artist">
-                    <Button className="rounded-xl font-bold bg-purple-600 hover:bg-purple-700 text-white gap-2">
+                    <Button className="rounded-xl font-bold bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
                         <Sparkles className="h-4 w-4" /> Apply as Artist
                     </Button>
                 </Link>
@@ -107,6 +114,8 @@ export const ApplicationStatusPage: React.FC = () => {
         : application.portfolio_url
         ? [application.portfolio_url]
         : [];
+
+    const sampleArtworks = application.sample_artworks || [];
 
     return (
         <div className="max-w-2xl mx-auto px-4 py-10 space-y-6">
@@ -187,6 +196,37 @@ export const ApplicationStatusPage: React.FC = () => {
                             </div>
                         )}
 
+                        {/* Uploaded Sample Artworks Showcase */}
+                        {sampleArtworks.length > 0 && (
+                            <div className="space-y-2">
+                                <span className="text-[11px] font-bold text-muted-foreground uppercase font-mono flex items-center gap-1.5">
+                                    <ImageIcon className="h-3.5 w-3.5 text-emerald-400" />
+                                    Uploaded Artwork Samples ({sampleArtworks.length})
+                                </span>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                    {sampleArtworks.map((art, idx) => (
+                                        <div
+                                            key={idx}
+                                            onClick={() => {
+                                                setLightboxIndex(idx);
+                                                setLightboxOpen(true);
+                                            }}
+                                            className="group relative rounded-2xl overflow-hidden border border-border bg-muted/20 aspect-square cursor-pointer hover:border-emerald-500/60 transition-all shadow-xs"
+                                        >
+                                            <img
+                                                src={art.url}
+                                                alt={art.file_name || `Sample artwork ${idx + 1}`}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                            />
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                                <Maximize2 className="h-5 w-5 text-white" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Portfolio Links */}
                         {portfolioList.length > 0 && (
                             <div className="space-y-1.5">
@@ -227,7 +267,7 @@ export const ApplicationStatusPage: React.FC = () => {
                                             rel="noopener noreferrer"
                                             className="px-3 py-1.5 rounded-xl border border-border bg-muted/20 hover:bg-muted text-xs font-semibold flex items-center gap-1.5 text-foreground transition-colors"
                                         >
-                                            <Globe className="h-3.5 w-3.5 text-purple-400" /> Website
+                                            <Globe className="h-3.5 w-3.5 text-primary" /> Website
                                         </a>
                                     )}
                                     {application.social_links?.map((link, i) => (
@@ -238,7 +278,7 @@ export const ApplicationStatusPage: React.FC = () => {
                                             rel="noopener noreferrer"
                                             className="px-3 py-1.5 rounded-xl border border-border bg-muted/20 hover:bg-muted text-xs font-semibold flex items-center gap-1.5 text-foreground transition-colors"
                                         >
-                                            <ExternalLink className="h-3.5 w-3.5 text-pink-400" /> Link #{i + 1}
+                                            <ExternalLink className="h-3.5 w-3.5 text-primary" /> Link #{i + 1}
                                         </a>
                                     ))}
                                 </div>
@@ -247,6 +287,18 @@ export const ApplicationStatusPage: React.FC = () => {
                     </CardContent>
                 </Card>
             </motion.div>
+
+            {/* Lightbox Modal for sample artworks */}
+            <MediaLightboxModal
+                isOpen={lightboxOpen}
+                onClose={() => setLightboxOpen(false)}
+                mediaList={sampleArtworks.map((a) => ({
+                    url: a.url,
+                    file_name: a.file_name,
+                    media_type: 'image',
+                }))}
+                initialIndex={lightboxIndex}
+            />
         </div>
     );
 };

@@ -11,7 +11,7 @@ class PortfolioPolicy
 {
     public function before(?User $user, string $ability): ?bool
     {
-        return $user?->isAdmin() ? true : null;
+        return $user?->isStaff() ? true : null;
     }
  
     public function viewAny(?User $user): bool
@@ -21,7 +21,7 @@ class PortfolioPolicy
  
     public function view(?User $user, Portfolio $portfolio): bool
     {
-        if ($user && $user->id === $portfolio->artistProfile->user_id) {
+        if ($user && $user->id === $portfolio->artistProfile?->user_id) {
             return true;
         }
  

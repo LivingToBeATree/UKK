@@ -6,6 +6,7 @@ export interface ArtistProfile {
     id: number;
     user_id: number;
     bio?: string | null;
+    banner?: string | null;
     commission_status: CommissionStatus;
     portfolio_url?: string | null;
     social_links?: string[] | Record<string, string> | null;
@@ -18,12 +19,21 @@ export interface ArtistProfile {
 
 export type ApplicationStatus = 'pending' | 'approved' | 'rejected';
 
+export interface SampleArtwork {
+    url: string;
+    file_name?: string;
+    file_size?: number;
+    mime_type?: string;
+    file_path?: string;
+}
+
 export interface ArtistApplication {
     id: number;
     user_id: number;
     status: ApplicationStatus;
     bio?: string | null;
     portfolio_links?: string[] | null;
+    sample_artworks?: SampleArtwork[] | null;
     portfolio_url?: string | null;
     website?: string | null;
     social_links?: string[] | null;
@@ -42,6 +52,8 @@ export interface Portfolio {
     description?: string | null;
     thumbnail_media_id?: number | null;
     visibility?: string;
+    is_taken_down?: boolean;
+    taken_down_reason?: string | null;
     starred?: boolean;
     created_at?: string;
     updated_at?: string;

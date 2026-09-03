@@ -22,6 +22,8 @@ class PortfolioResource extends JsonResource
             'description' => $this->description,
             'thumbnail_media_id' => $this->thumbnail_media_id,
             'visibility' => $this->visibility?->value,
+            'is_taken_down' => (bool) $this->is_taken_down,
+            'taken_down_reason' => $this->when($request->user()?->id === $this->artistProfile?->user_id || $request->user()?->isStaff(), $this->taken_down_reason),
             'starred' => (bool) $this->starred,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),

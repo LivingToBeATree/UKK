@@ -60,6 +60,8 @@ export const CreateServicePage: React.FC = () => {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [status, setStatus] = useState<'open' | 'closed' | 'draft'>('open');
+    const [serviceTags, setServiceTags] = useState<string[]>([]);
+    const [tagInput, setTagInput] = useState('');
 
     // Packages & Options state
     const [options, setOptions] = useState<OptionPackageItem[]>([
@@ -96,6 +98,10 @@ export const CreateServicePage: React.FC = () => {
                 setName(svc.name || '');
                 setDescription(svc.description || '');
                 setStatus(svc.status || 'open');
+
+                if (svc.tags && svc.tags.length > 0) {
+                    setServiceTags(svc.tags.map((t) => t.name));
+                }
 
                 if (svc.options && svc.options.length > 0) {
                     setOptions(
@@ -176,6 +182,17 @@ export const CreateServicePage: React.FC = () => {
             URL.revokeObjectURL(item.url);
         }
         setMediaItems((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    const handleAddTag = (tagStr: string) => {
+        const clean = tagStr.trim().replace(/^#/, '').replace(/[^a-zA-Z0-9_-]/g, '');
+        if (!clean || serviceTags.includes(clean) || serviceTags.length >= 8) return;
+        setServiceTags((prev) => [...prev, clean]);
+        setTagInput('');
+    };
+
+    const handleRemoveTag = (tagToRemove: string) => {
+        setServiceTags((prev) => prev.filter((t) => t !== tagToRemove));
     };
 
     // Option Package Handlers
@@ -295,6 +312,13 @@ export const CreateServicePage: React.FC = () => {
             formData.append('description', description.trim());
             formData.append('status', status);
 
+            // Tags
+            if (serviceTags.length > 0) {
+                serviceTags.forEach((tag, idx) => {
+                    formData.append(`tags[${idx}]`, tag);
+                });
+            }
+
             // Append new files
             mediaItems.forEach((m) => {
                 if (m.file) {
@@ -413,6 +437,7 @@ export const CreateServicePage: React.FC = () => {
                             />
                         </div>
 
+                        {/* Availability Status */}
                         <div className="space-y-2">
                             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                                 Availability Status
@@ -454,25 +479,100 @@ export const CreateServicePage: React.FC = () => {
                                             key={opt.id}
                                             type="button"
                                             onClick={() => setStatus(opt.id)}
-                                            className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 ${
+                                            className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 ${
                                                 isSelected
                                                     ? opt.activeClass
-                                                    : 'border-border/80 bg-secondary/20 hover:bg-secondary/40 text-muted-foreground hover:text-foreground'
+                                                    : 'border-border/80 bg-secondary/30 hover:border-border hover:bg-secondary/60 text-muted-foreground'
                                             }`}
                                         >
-                                            <div className="flex items-center justify-between w-full">
-                                                <div className="flex items-center gap-2">
-                                                    <span className={`w-2 h-2 rounded-full ${isSelected ? opt.dotColor : 'bg-muted-foreground/40'}`} />
-                                                    <span className="text-xs font-bold text-foreground">{opt.label}</span>
-                                                </div>
-                                                <Icon className={`h-4 w-4 ${isSelected ? opt.iconColor : 'text-muted-foreground/50'}`} />
+                                            <div className="flex items-center justify-between">
+                                                <Icon className={`h-4 w-4 ${isSelected ? opt.iconColor : 'text-muted-foreground'}`} />
+                                                <div className={`w-2 h-2 rounded-full ${isSelected ? opt.dotColor : 'bg-muted-foreground/40'}`} />
                                             </div>
-                                            <p className="text-[11px] text-muted-foreground leading-tight">
-                                                {opt.desc}
-                                            </p>
+                                            <div>
+                                                <div className="text-xs font-bold text-foreground">{opt.label}</div>
+                                                <div className="text-[10px] text-muted-foreground mt-0.5">{opt.desc}</div>
+                                            </div>
                                         </button>
                                     );
                                 })}
+                            </div>
+                        </div>
+
+                        {/* Service Category & Specialty Tags */}
+                        <div className="space-y-3 pt-2 border-t border-border/60">
+                            <div className="flex items-center justify-between">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                                    <Tag className="h-3.5 w-3.5 text-purple-400" />
+                                    Service Tags & Specialties ({serviceTags.length}/8)
+                                </Label>
+                                <span className="text-[10px] text-muted-foreground">Press Enter or comma to add</span>
+                            </div>
+
+                            {/* Active Tags */}
+                            {serviceTags.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5">
+                                    {serviceTags.map((tag) => (
+                                        <span
+                                            key={tag}
+                                            className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-purple-600/20 text-purple-300 border border-purple-500/30"
+                                        >
+                                            #{tag}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveTag(tag)}
+                                                className="hover:text-white cursor-pointer ml-1 p-0.5"
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </button>
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Tag Input */}
+                            {serviceTags.length < 8 && (
+                                <div className="flex gap-2">
+                                    <Input
+                                        value={tagInput}
+                                        onChange={(e) => setTagInput(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ',') {
+                                                e.preventDefault();
+                                                handleAddTag(tagInput);
+                                            }
+                                        }}
+                                        placeholder="Add a specialty tag (e.g. Anime, Chibi, VTuber, Emotes, Live2D)..."
+                                        className="h-10 rounded-xl bg-secondary/30 border-border/80 text-xs focus-visible:ring-purple-500"
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => handleAddTag(tagInput)}
+                                        disabled={!tagInput.trim()}
+                                        className="h-10 rounded-xl text-xs font-bold shrink-0"
+                                    >
+                                        Add
+                                    </Button>
+                                </div>
+                            )}
+
+                            {/* Suggested Quick Tags */}
+                            <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                                <span className="text-[10px] text-muted-foreground font-semibold">Suggested:</span>
+                                {['Anime', 'Chibi', 'VTuber', 'CharacterDesign', 'Illustration', 'Emotes', 'Live2D', 'FullBody', 'Commercial']
+                                    .filter((t) => !serviceTags.includes(t))
+                                    .slice(0, 7)
+                                    .map((tag) => (
+                                        <button
+                                            key={tag}
+                                            type="button"
+                                            onClick={() => handleAddTag(tag)}
+                                            className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-secondary/60 hover:bg-secondary text-muted-foreground hover:text-foreground border border-border/60 transition-colors cursor-pointer"
+                                        >
+                                            +{tag}
+                                        </button>
+                                    ))}
                             </div>
                         </div>
                     </CardContent>

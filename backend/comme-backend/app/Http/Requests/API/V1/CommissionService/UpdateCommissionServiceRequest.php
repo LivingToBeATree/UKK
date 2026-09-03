@@ -32,6 +32,7 @@ class UpdateCommissionServiceRequest extends FormRequest
             'options.*.addons.*.title' => ['required_with:options.*.addons', 'string', 'max:255'],
             'options.*.addons.*.description' => ['nullable', 'string'],
             'options.*.addons.*.additional_price' => ['required_with:options.*.addons', 'numeric', 'min:0'],
+            'tags' => ['sometimes', 'nullable'],
         ];
     }
 }

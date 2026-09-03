@@ -23,6 +23,10 @@ class UpdatePortfolioRequest extends FormRequest
             'starred' => ['sometimes', 'boolean'],
             'media' => ['nullable', 'array', 'max:10'],
             'media.*' => ['file', 'mimes:jpeg,png,jpg,gif,webp,mp4,mov', 'max:25600'],
+            'tags' => ['sometimes', 'nullable'],
+            'tags.*' => ['string', 'max:50'],
+            'delete_media_ids' => ['sometimes', 'nullable'],
+            'delete_media_ids.*' => ['integer'],
         ];
     }
 }

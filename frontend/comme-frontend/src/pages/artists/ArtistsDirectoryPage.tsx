@@ -111,7 +111,7 @@ export const ArtistsDirectoryPage: React.FC = () => {
                 ) : (
                     artists.map((artist) => (
                         <motion.div key={artist.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                            <Link to={`/artists/${artist.id}`}>
+                            <Link to={artist.user?.username ? `/users/${artist.user.username}` : `/artists/${artist.id}`}>
                                 <Card className="h-full hover:border-primary/40 transition-all hover:-translate-y-1">
                                     <CardContent className="p-6 flex flex-col items-center text-center space-y-3">
                                         <Avatar

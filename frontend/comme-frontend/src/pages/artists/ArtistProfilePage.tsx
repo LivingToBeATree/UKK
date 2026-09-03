@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { ArrowLeft, Star, ExternalLink, UserPlus, UserCheck } from 'lucide-react';
 import { artistProfileApi, followApi, portfolioApi, type Portfolio } from '@/services/artistService';
@@ -17,6 +17,7 @@ import type { ArtistProfile, CommissionService } from '@/types';
 
 export const ArtistProfilePage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
     const { user: currentUser } = useAuth();
     const { requireAuth } = useAuthModal();
     const [profile, setProfile] = useState<ArtistProfile | null>(null);
@@ -27,6 +28,12 @@ export const ArtistProfilePage: React.FC = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (!id) return;
+        if (isNaN(Number(id))) {
+            navigate(`/users/${id}`, { replace: true });
+            return;
+        }
+
         const fetchData = async () => {
             try {
                 const artistProfile = await artistProfileApi.show(Number(id));

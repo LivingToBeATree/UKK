@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -18,6 +18,10 @@ import {
     Loader2,
     Zap,
     BadgeCheck,
+    UploadCloud,
+    ImageIcon,
+    Maximize2,
+    X,
 } from 'lucide-react';
 import { artistApplicationApi } from '@/services/artistService';
 import { useAuth } from '@/hooks/useAuth';
@@ -29,6 +33,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
 import { toast } from '@/components/ui/sonner';
+import { MediaLightboxModal } from '@/components/ui/MediaLightboxModal';
 import { formatDateSafe } from '@/utils/format';
 import type { ArtistApplication } from '@/types';
 
@@ -45,6 +50,13 @@ const ART_SPECIALTIES = [
     'Comics / Webtoon',
 ];
 
+const formatFileSize = (bytes?: number) => {
+    if (!bytes) return '';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
 export const ApplyArtistPage: React.FC = () => {
     const { user, refreshUser } = useAuth();
     const navigate = useNavigate();
@@ -58,6 +70,17 @@ export const ApplyArtistPage: React.FC = () => {
     const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>(['Anime / Manga', 'Character Design']);
     const [primaryPortfolio, setPrimaryPortfolio] = useState('');
     const [additionalPortfolios, setAdditionalPortfolios] = useState<string[]>([]);
+    
+    // Sample Artwork Uploads (Manual Portfolio)
+    const [sampleFiles, setSampleFiles] = useState<File[]>([]);
+    const [samplePreviews, setSamplePreviews] = useState<{ file: File; url: string; name: string; size: number }[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Lightbox Modal for uploaded artwork preview
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [lightboxMedia, setLightboxMedia] = useState<{ url: string; file_name?: string; media_type?: string }[]>([]);
+    const [lightboxIndex, setLightboxIndex] = useState(0);
+
     const [website, setWebsite] = useState('');
     const [twitterUrl, setTwitterUrl] = useState('');
     const [instagramUrl, setInstagramUrl] = useState('');
@@ -114,6 +137,48 @@ export const ApplyArtistPage: React.FC = () => {
         setAdditionalPortfolios((prev) => prev.filter((_, i) => i !== index));
     };
 
+    // Handle Manual Sample Artwork Files Selection
+    const handleFilesSelect = (files: FileList | File[]) => {
+        const fileArray = Array.from(files);
+        if (!fileArray.length) return;
+
+        // Filter images only
+        const imageFiles = fileArray.filter((f) => f.type.startsWith('image/'));
+        if (imageFiles.length < fileArray.length) {
+            toast.error('Only image files (PNG, JPG, WebP, GIF) are accepted for portfolio samples');
+        }
+
+        const combined = [...sampleFiles, ...imageFiles].slice(0, 8);
+        setSampleFiles(combined);
+
+        const previews = combined.map((file) => ({
+            file,
+            url: URL.createObjectURL(file),
+            name: file.name,
+            size: file.size,
+        }));
+        setSamplePreviews(previews);
+    };
+
+    const handleRemoveSampleFile = (index: number) => {
+        const updatedFiles = sampleFiles.filter((_, i) => i !== index);
+        const updatedPreviews = samplePreviews.filter((_, i) => i !== index);
+        setSampleFiles(updatedFiles);
+        setSamplePreviews(updatedPreviews);
+    };
+
+    const handleOpenLightbox = (index: number) => {
+        setLightboxMedia(
+            samplePreviews.map((p) => ({
+                url: p.url,
+                file_name: p.name,
+                media_type: 'image',
+            }))
+        );
+        setLightboxIndex(index);
+        setLightboxOpen(true);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -122,14 +187,16 @@ export const ApplyArtistPage: React.FC = () => {
             return;
         }
 
-        if (!primaryPortfolio.trim()) {
-            toast.error('Please provide a primary portfolio URL');
+        const urlPattern = /^https?:\/\/.+/i;
+        const hasValidUrl = primaryPortfolio.trim() && urlPattern.test(primaryPortfolio.trim());
+        const hasSampleFiles = sampleFiles.length > 0;
+
+        if (!hasValidUrl && !hasSampleFiles) {
+            toast.error('Please provide a portfolio URL or upload at least one sample artwork file');
             return;
         }
 
-        // Validate URL format
-        const urlPattern = /^https?:\/\/.+/i;
-        if (!urlPattern.test(primaryPortfolio.trim())) {
+        if (primaryPortfolio.trim() && !urlPattern.test(primaryPortfolio.trim())) {
             toast.error('Please enter a valid URL (e.g. https://artstation.com/yourname)');
             return;
         }
@@ -141,11 +208,28 @@ export const ApplyArtistPage: React.FC = () => {
 
         setSubmitting(true);
         try {
+            const formData = new FormData();
+
+            // Format full bio with selected specialties
+            const specialtiesNote = selectedSpecialties.length > 0
+                ? `\n\n[Specialties]: ${selectedSpecialties.join(', ')}`
+                : '';
+            const fullBio = `${bio.trim()}${specialtiesNote}`;
+            formData.append('bio', fullBio);
+
+            if (website.trim()) {
+                formData.append('website', website.trim());
+            }
+
             // Aggregate all portfolio links
             const validPortfolios = [
                 primaryPortfolio.trim(),
                 ...additionalPortfolios.map((p) => p.trim()).filter((p) => p && urlPattern.test(p)),
-            ];
+            ].filter(Boolean);
+
+            validPortfolios.forEach((link) => {
+                formData.append('portfolio_links[]', link);
+            });
 
             // Aggregate social links
             const socialLinks = [
@@ -155,20 +239,18 @@ export const ApplyArtistPage: React.FC = () => {
                 otherSocialUrl.trim(),
             ].filter((s) => s && urlPattern.test(s));
 
-            // Format full bio with selected specialties
-            const specialtiesNote = selectedSpecialties.length > 0
-                ? `\n\n[Specialties]: ${selectedSpecialties.join(', ')}`
-                : '';
-            const fullBio = `${bio.trim()}${specialtiesNote}`;
-
-            await artistApplicationApi.create({
-                bio: fullBio,
-                portfolio_links: validPortfolios,
-                website: website.trim() ? website.trim() : undefined,
-                social_links: socialLinks.length > 0 ? socialLinks : undefined,
+            socialLinks.forEach((link) => {
+                formData.append('social_links[]', link);
             });
 
-            toast.success('Artist application submitted successfully!');
+            // Append uploaded sample artworks
+            sampleFiles.forEach((file) => {
+                formData.append('sample_artworks[]', file);
+            });
+
+            await artistApplicationApi.create(formData);
+
+            toast.success('Artist application submitted successfully with portfolio samples!');
             await refreshUser();
             navigate('/apply-artist/status');
         } catch (err: unknown) {
@@ -256,9 +338,12 @@ export const ApplyArtistPage: React.FC = () => {
                                 </span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-muted-foreground">Primary Portfolio:</span>
+                                <span className="text-muted-foreground">Portfolio Showcase:</span>
                                 <span className="font-bold text-primary truncate max-w-[200px]">
-                                    {existingApplication.portfolio_links?.[0] || existingApplication.portfolio_url || 'Provided'}
+                                    {existingApplication.portfolio_links?.[0] ||
+                                     (existingApplication.sample_artworks && existingApplication.sample_artworks.length > 0
+                                         ? `${existingApplication.sample_artworks.length} Uploaded Artwork Samples`
+                                         : 'Submitted')}
                                 </span>
                             </div>
                         </div>
@@ -280,15 +365,15 @@ export const ApplyArtistPage: React.FC = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10">
             {/* ── Top Hero Banner ── */}
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-4 max-w-3xl mx-auto">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-300 text-xs font-semibold backdrop-blur-md">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-semibold backdrop-blur-md">
                     <Sparkles className="h-3.5 w-3.5" />
                     <span>Comme Creator Program</span>
-                    <span className="h-1 w-1 rounded-full bg-purple-400" />
-                    <span className="text-purple-400 font-bold">Artist Verification</span>
+                    <span className="h-1 w-1 rounded-full bg-primary" />
+                    <span className="text-primary font-bold">Artist Verification</span>
                 </div>
 
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-foreground tracking-tight">
-                    Turn Your Art into Income with <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-emerald-400">Escrow Security</span>
+                    Turn Your Art into Income with <span className="text-primary">Escrow Security</span>
                 </h1>
 
                 <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
@@ -298,7 +383,7 @@ export const ApplyArtistPage: React.FC = () => {
                 {/* 3 Value Pillars */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4">
                     <div className="p-3.5 rounded-2xl border border-border/70 bg-card/60 backdrop-blur-md flex items-center gap-3 text-left">
-                        <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                             <ShieldCheck className="h-5 w-5" />
                         </div>
                         <div>
@@ -308,7 +393,7 @@ export const ApplyArtistPage: React.FC = () => {
                     </div>
 
                     <div className="p-3.5 rounded-2xl border border-border/70 bg-card/60 backdrop-blur-md flex items-center gap-3 text-left">
-                        <div className="h-10 w-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center shrink-0">
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                             <Zap className="h-5 w-5" />
                         </div>
                         <div>
@@ -318,7 +403,7 @@ export const ApplyArtistPage: React.FC = () => {
                     </div>
 
                     <div className="p-3.5 rounded-2xl border border-border/70 bg-card/60 backdrop-blur-md flex items-center gap-3 text-left">
-                        <div className="h-10 w-10 rounded-xl bg-pink-500/10 text-pink-400 flex items-center justify-center shrink-0">
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                             <BadgeCheck className="h-5 w-5" />
                         </div>
                         <div>
@@ -340,7 +425,7 @@ export const ApplyArtistPage: React.FC = () => {
                                 <XCircle className="h-4 w-4" /> Previous Application Not Approved
                             </div>
                             <p className="text-muted-foreground">
-                                {existingApplication.rejection_reason || 'Your previous submission did not meet the verification criteria. You are welcome to submit updated portfolio links below.'}
+                                {existingApplication.rejection_reason || 'Your previous submission did not meet the verification criteria. You are welcome to submit updated portfolio links and artwork samples below.'}
                             </p>
                         </div>
                     )}
@@ -384,7 +469,7 @@ export const ApplyArtistPage: React.FC = () => {
                                                     onClick={() => toggleSpecialty(spec)}
                                                     className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
                                                         isSelected
-                                                            ? 'bg-purple-600 text-white border-purple-500 shadow-sm shadow-purple-600/20'
+                                                            ? 'bg-primary text-primary-foreground border-primary shadow-xs'
                                                             : 'bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted border-border'
                                                     }`}
                                                 >
@@ -419,92 +504,215 @@ export const ApplyArtistPage: React.FC = () => {
                             </CardContent>
                         </Card>
 
-                        {/* 2. Portfolio Showcase Card */}
+                        {/* 2. Portfolio Showcase & Manual Artwork Uploads Card */}
                         <Card className="border border-border/80 bg-card/80 backdrop-blur-md shadow-xs overflow-hidden">
                             <CardHeader className="pb-4 border-b border-border/50">
                                 <div className="flex items-center gap-2.5">
-                                    <div className="h-7 w-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xs font-bold font-mono">
+                                    <div className="h-7 w-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-xs font-bold font-mono">
                                         2
                                     </div>
                                     <div>
-                                        <CardTitle className="text-base font-bold text-foreground">Portfolio Showcase</CardTitle>
-                                        <CardDescription className="text-xs">Provide public links where our curators can review your finished artwork</CardDescription>
+                                        <CardTitle className="text-base font-bold text-foreground">Portfolio Showcase &amp; Artwork Samples</CardTitle>
+                                        <CardDescription className="text-xs">Upload sample illustrations directly or provide public portfolio URLs for curator review</CardDescription>
                                     </div>
                                 </div>
                             </CardHeader>
 
-                            <CardContent className="p-5 space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="primary_portfolio" className="text-xs font-bold text-muted-foreground uppercase font-mono">
-                                        Primary Portfolio URL *
-                                    </Label>
-                                    <div className="relative">
-                                        <Globe className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
-                                        <Input
-                                            id="primary_portfolio"
-                                            placeholder="https://artstation.com/yourname (or Cara, Pixiv, Behance, Carrd)"
-                                            value={primaryPortfolio}
-                                            onChange={(e) => setPrimaryPortfolio(e.target.value)}
-                                            className="pl-9 text-xs sm:text-sm bg-muted/20"
-                                        />
+                            <CardContent className="p-5 space-y-6">
+                                {/* ── DIRECT MEDIA UPLOAD (Manual Portfolio) ── */}
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <Label className="text-xs font-bold text-foreground flex items-center gap-1.5 uppercase font-mono">
+                                                <ImageIcon className="h-4 w-4 text-emerald-400" />
+                                                Direct Artwork Uploads (Manual Portfolio)
+                                            </Label>
+                                            <p className="text-[11px] text-muted-foreground">
+                                                Upload 3 to 8 high-resolution sample artworks ({sampleFiles.length}/8 uploaded, max 15MB each)
+                                            </p>
+                                        </div>
+                                        {sampleFiles.length > 0 && (
+                                            <Badge variant="teal" className="text-[10px] font-mono">
+                                                {sampleFiles.length} file{sampleFiles.length > 1 ? 's' : ''} ready
+                                            </Badge>
+                                        )}
                                     </div>
-                                    <p className="text-[11px] text-muted-foreground">
-                                        Must be a public URL with accessible illustration galleries.
-                                    </p>
-                                </div>
 
-                                {/* Dynamic Additional Portfolios */}
-                                {additionalPortfolios.map((link, idx) => (
-                                    <div key={idx} className="space-y-1.5">
-                                        <Label className="text-[11px] text-muted-foreground font-mono">
-                                            Additional Gallery Link #{idx + 1}
-                                        </Label>
-                                        <div className="flex gap-2">
-                                            <div className="relative flex-1">
-                                                <ExternalLink className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
-                                                <Input
-                                                    placeholder="https://cara.app/yourname or https://behance.net/..."
-                                                    value={link}
-                                                    onChange={(e) => handleUpdateAdditionalPortfolio(idx, e.target.value)}
-                                                    className="pl-9 text-xs sm:text-sm bg-muted/20"
-                                                />
+                                    {/* Upload Dropzone */}
+                                    <div
+                                        onClick={() => fileInputRef.current?.click()}
+                                        onDragOver={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                        }}
+                                        onDrop={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            if (e.dataTransfer.files) {
+                                                handleFilesSelect(e.dataTransfer.files);
+                                            }
+                                        }}
+                                        className="border-2 border-dashed border-border/80 hover:border-emerald-500/60 bg-muted/10 hover:bg-muted/30 rounded-2xl p-6 text-center cursor-pointer transition-all duration-200 group relative overflow-hidden"
+                                    >
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            multiple
+                                            accept="image/png,image/jpeg,image/webp,image/gif"
+                                            onChange={(e) => e.target.files && handleFilesSelect(e.target.files)}
+                                            className="hidden"
+                                        />
+                                        <div className="flex flex-col items-center justify-center gap-2">
+                                            <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                <UploadCloud className="h-6 w-6" />
                                             </div>
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => handleRemoveAdditionalPortfolio(idx)}
-                                                className="text-muted-foreground hover:text-destructive shrink-0 cursor-pointer"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
+                                            <div>
+                                                <p className="text-xs font-bold text-foreground">
+                                                    Click to browse or drag &amp; drop sample artwork images
+                                                </p>
+                                                <p className="text-[11px] text-muted-foreground mt-0.5">
+                                                    Supports PNG, JPG, WebP, GIF (up to 8 files)
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
-                                ))}
 
-                                {additionalPortfolios.length < 5 && (
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={handleAddPortfolioField}
-                                        className="text-xs gap-1.5 cursor-pointer mt-1"
-                                    >
-                                        <Plus className="h-3.5 w-3.5" /> Add Another Portfolio Link
-                                    </Button>
-                                )}
+                                    {/* Uploaded Previews Grid */}
+                                    {samplePreviews.length > 0 && (
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                                            {samplePreviews.map((item, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    className="group relative rounded-2xl overflow-hidden border border-border/80 bg-muted/30 aspect-square flex flex-col justify-between"
+                                                >
+                                                    <img
+                                                        src={item.url}
+                                                        alt={item.name}
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                    />
 
-                                <div className="space-y-2 pt-2 border-t border-border/50">
-                                    <Label htmlFor="website" className="text-xs font-bold text-muted-foreground uppercase font-mono">
-                                        Personal Website / Portfolio Site (Optional)
-                                    </Label>
-                                    <Input
-                                        id="website"
-                                        placeholder="https://yourname.carrd.co or https://yourstudio.com"
-                                        value={website}
-                                        onChange={(e) => setWebsite(e.target.value)}
-                                        className="text-xs sm:text-sm bg-muted/20"
-                                    />
+                                                    {/* Top overlay buttons */}
+                                                    <div className="absolute top-1.5 right-1.5 flex items-center gap-1 z-10">
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleOpenLightbox(idx);
+                                                            }}
+                                                            className="p-1 rounded-lg bg-black/60 hover:bg-black/80 text-white backdrop-blur-md cursor-pointer transition-colors"
+                                                            title="Enlarge preview"
+                                                        >
+                                                            <Maximize2 className="h-3.5 w-3.5" />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleRemoveSampleFile(idx);
+                                                            }}
+                                                            className="p-1 rounded-lg bg-rose-600/80 hover:bg-rose-600 text-white backdrop-blur-md cursor-pointer transition-colors"
+                                                            title="Remove image"
+                                                        >
+                                                            <X className="h-3.5 w-3.5" />
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Bottom file info pill */}
+                                                    <div className="absolute bottom-0 inset-x-0 p-1.5 bg-gradient-to-t from-black/80 via-black/40 to-transparent text-[10px] text-white truncate">
+                                                        <p className="truncate font-medium">{item.name}</p>
+                                                        <p className="text-white/70 text-[9px] font-mono">{formatFileSize(item.size)}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="relative py-1">
+                                    <div className="absolute inset-0 flex items-center">
+                                        <span className="w-full border-t border-border/60" />
+                                    </div>
+                                    <div className="relative flex justify-center text-[10px] uppercase font-mono">
+                                        <span className="bg-card px-3 text-muted-foreground">
+                                            Online Portfolio URLs
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* ── ONLINE PORTFOLIO URLS ── */}
+                                <div className="space-y-3">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="primary_portfolio" className="text-xs font-bold text-muted-foreground uppercase font-mono">
+                                            Primary Portfolio URL
+                                        </Label>
+                                        <div className="relative">
+                                            <Globe className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+                                            <Input
+                                                id="primary_portfolio"
+                                                placeholder="https://artstation.com/yourname (or Cara, Pixiv, Behance, Carrd)"
+                                                value={primaryPortfolio}
+                                                onChange={(e) => setPrimaryPortfolio(e.target.value)}
+                                                className="pl-9 text-xs sm:text-sm bg-muted/20"
+                                            />
+                                        </div>
+                                        <p className="text-[11px] text-muted-foreground">
+                                            Public profile where our curators can view your complete illustration galleries.
+                                        </p>
+                                    </div>
+
+                                    {/* Dynamic Additional Portfolios */}
+                                    {additionalPortfolios.map((link, idx) => (
+                                        <div key={idx} className="space-y-1.5">
+                                            <Label className="text-[11px] text-muted-foreground font-mono">
+                                                Additional Gallery Link #{idx + 1}
+                                            </Label>
+                                            <div className="flex gap-2">
+                                                <div className="relative flex-1">
+                                                    <ExternalLink className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+                                                    <Input
+                                                        placeholder="https://cara.app/yourname or https://behance.net/..."
+                                                        value={link}
+                                                        onChange={(e) => handleUpdateAdditionalPortfolio(idx, e.target.value)}
+                                                        className="pl-9 text-xs sm:text-sm bg-muted/20"
+                                                    />
+                                                </div>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => handleRemoveAdditionalPortfolio(idx)}
+                                                    className="text-muted-foreground hover:text-destructive shrink-0 cursor-pointer"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {additionalPortfolios.length < 5 && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleAddPortfolioField}
+                                            className="text-xs gap-1.5 cursor-pointer mt-1"
+                                        >
+                                            <Plus className="h-3.5 w-3.5" /> Add Another Portfolio Link
+                                        </Button>
+                                    )}
+
+                                    <div className="space-y-2 pt-2 border-t border-border/50">
+                                        <Label htmlFor="website" className="text-xs font-bold text-muted-foreground uppercase font-mono">
+                                            Personal Website / Portfolio Site (Optional)
+                                        </Label>
+                                        <Input
+                                            id="website"
+                                            placeholder="https://yourname.carrd.co or https://yourstudio.com"
+                                            value={website}
+                                            onChange={(e) => setWebsite(e.target.value)}
+                                            className="text-xs sm:text-sm bg-muted/20"
+                                        />
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
@@ -569,14 +777,14 @@ export const ApplyArtistPage: React.FC = () => {
                         </Card>
 
                         {/* 4. Creator Agreement & Submission */}
-                        <Card className="border border-purple-500/30 bg-purple-500/5 backdrop-blur-md shadow-lg overflow-hidden">
+                        <Card className="border border-primary/30 bg-primary/5 backdrop-blur-md shadow-lg overflow-hidden">
                             <CardContent className="p-5 space-y-4">
                                 <label className="flex items-start gap-3 cursor-pointer select-none">
                                     <input
                                         type="checkbox"
                                         checked={agreeTerms}
                                         onChange={(e) => setAgreeTerms(e.target.checked)}
-                                        className="mt-1 h-4 w-4 rounded border-border text-purple-600 focus:ring-purple-500 accent-purple-600 cursor-pointer"
+                                        className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary accent-primary cursor-pointer"
                                     />
                                     <div className="text-xs text-muted-foreground leading-relaxed">
                                         <span className="font-bold text-foreground block">
@@ -588,13 +796,18 @@ export const ApplyArtistPage: React.FC = () => {
 
                                 <Button
                                     type="submit"
-                                    disabled={submitting || !agreeTerms || !primaryPortfolio.trim() || bio.trim().length < 20}
-                                    className="w-full h-12 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 hover:opacity-95 text-white font-bold rounded-2xl gap-2 shadow-lg shadow-purple-600/25 cursor-pointer text-sm"
+                                    disabled={
+                                        submitting ||
+                                        !agreeTerms ||
+                                        (!primaryPortfolio.trim() && sampleFiles.length === 0) ||
+                                        bio.trim().length < 20
+                                    }
+                                    className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-2xl gap-2 shadow-lg shadow-primary/20 cursor-pointer text-sm"
                                 >
                                     {submitting ? (
                                         <>
                                             <Loader2 className="h-4 w-4 animate-spin" />
-                                            Submitting Application...
+                                            Submitting Application &amp; Media...
                                         </>
                                     ) : (
                                         <>
@@ -614,33 +827,33 @@ export const ApplyArtistPage: React.FC = () => {
                     <Card className="border border-border/80 bg-card/80 backdrop-blur-md shadow-xs">
                         <CardHeader className="pb-3">
                             <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
-                                <Sparkles className="h-4 w-4 text-purple-400" />
+                                <Sparkles className="h-4 w-4 text-primary" />
                                 Verification Roadmap
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4 text-xs">
                             <div className="flex items-start gap-3">
-                                <div className="h-6 w-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center font-mono font-bold text-[10px] shrink-0 mt-0.5">
+                                <div className="h-6 w-6 rounded-full bg-primary/15 text-primary flex items-center justify-center font-mono font-bold text-[10px] shrink-0 mt-0.5">
                                     1
                                 </div>
                                 <div>
-                                    <p className="font-bold text-foreground">Submit Your Portfolio</p>
-                                    <p className="text-muted-foreground mt-0.5">Fill out your art styles, portfolio URLs, and introduction.</p>
+                                    <p className="font-bold text-foreground">Submit Portfolio &amp; Art Samples</p>
+                                    <p className="text-muted-foreground mt-0.5">Upload artwork files or link external portfolios (ArtStation, Cara, Pixiv).</p>
                                 </div>
                             </div>
 
                             <div className="flex items-start gap-3">
-                                <div className="h-6 w-6 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-mono font-bold text-[10px] shrink-0 mt-0.5">
+                                <div className="h-6 w-6 rounded-full bg-muted text-muted-foreground flex items-center justify-center font-mono font-bold text-[10px] shrink-0 mt-0.5">
                                     2
                                 </div>
                                 <div>
-                                    <p className="font-bold text-foreground">Curator Quality Review</p>
-                                    <p className="text-muted-foreground mt-0.5">Our team verifies original artwork and active commission capability (24-48 hours).</p>
+                                    <p className="font-bold text-foreground">Moderator Panel Review</p>
+                                    <p className="text-muted-foreground mt-0.5">Your application is sent directly to our Moderator Panel for review (24-48 hours).</p>
                                 </div>
                             </div>
 
                             <div className="flex items-start gap-3">
-                                <div className="h-6 w-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-mono font-bold text-[10px] shrink-0 mt-0.5">
+                                <div className="h-6 w-6 rounded-full bg-primary/15 text-primary flex items-center justify-center font-mono font-bold text-[10px] shrink-0 mt-0.5">
                                     3
                                 </div>
                                 <div>
@@ -655,21 +868,21 @@ export const ApplyArtistPage: React.FC = () => {
                     <Card className="border border-border/80 bg-card/80 backdrop-blur-md shadow-xs">
                         <CardHeader className="pb-3">
                             <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
-                                <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                                <ShieldCheck className="h-4 w-4 text-primary" />
                                 Creator Standards
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2.5 text-xs text-muted-foreground">
                             <div className="flex items-center gap-2 text-foreground font-medium">
-                                <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                                <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
                                 <span>Minimum 3-5 completed original illustrations in portfolio</span>
                             </div>
                             <div className="flex items-center gap-2 text-foreground font-medium">
-                                <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                                <span>Verifiable public creator account (X, Pixiv, Cara, ArtStation)</span>
+                                <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                                <span>Verifiable public creator account or uploaded original artwork</span>
                             </div>
                             <div className="flex items-center gap-2 text-foreground font-medium">
-                                <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                                <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
                                 <span>No AI-generated or traced artwork without full disclosure</span>
                             </div>
                         </CardContent>
@@ -691,7 +904,7 @@ export const ApplyArtistPage: React.FC = () => {
                                 },
                                 {
                                     q: 'How long does portfolio review take?',
-                                    a: 'Applications are typically reviewed within 24 to 48 hours on business days. You will receive an in-app notification once approved.',
+                                    a: 'Applications are reviewed by our Moderator Panel within 24 to 48 hours. You will receive an in-app notification once approved.',
                                 },
                                 {
                                     q: 'What payout methods are supported?',
@@ -729,6 +942,14 @@ export const ApplyArtistPage: React.FC = () => {
                     </Card>
                 </div>
             </div>
+
+            {/* Lightbox for Artwork Preview */}
+            <MediaLightboxModal
+                isOpen={lightboxOpen}
+                onClose={() => setLightboxOpen(false)}
+                mediaList={lightboxMedia}
+                initialIndex={lightboxIndex}
+            />
         </div>
     );
 };

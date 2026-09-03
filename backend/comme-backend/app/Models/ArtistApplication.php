@@ -15,6 +15,7 @@ class ArtistApplication extends Model
         'user_id',
         'bio',
         'portfolio_links',
+        'sample_artworks',
         'website',
         'social_links',
         'status',
@@ -29,6 +30,7 @@ class ArtistApplication extends Model
         return [
             'status' => ArtistApplicationStatus::class,
             'portfolio_links' => 'array',
+            'sample_artworks' => 'array',
             'social_links' => 'array',
             'reviewed_at' => 'datetime',
             'submitted_at' => 'datetime',

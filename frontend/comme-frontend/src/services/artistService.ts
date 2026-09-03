@@ -71,14 +71,15 @@ export const artistApplicationApi = {
         return res.data.data;
     },
 
-    create: async (payload: {
+    create: async (payload: FormData | {
         bio: string;
-        portfolio_links: string[];
+        portfolio_links?: string[];
         website?: string;
         social_links?: string[];
         note?: string;
     }) => {
-        const res = await api.post<ApiResponse<ArtistApplication>>('/artist-applications', payload);
+        const headers = payload instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : undefined;
+        const res = await api.post<ApiResponse<ArtistApplication>>('/artist-applications', payload, { headers });
         return res.data.data;
     },
 

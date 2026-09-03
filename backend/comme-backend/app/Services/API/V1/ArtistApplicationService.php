@@ -16,14 +16,29 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class ArtistApplicationService
 {
-    public function submit(User $user, array $data): ArtistApplication
+    public function submit(User $user, array $data, array $sampleFiles = []): ArtistApplication
     {
         try {
-            return DB::transaction(function () use ($user, $data): ArtistApplication {
+            return DB::transaction(function () use ($user, $data, $sampleFiles): ArtistApplication {
+                $sampleArtworks = [];
+                foreach ($sampleFiles as $file) {
+                    if ($file && $file->isValid()) {
+                        $path = $file->store('artist_applications/samples', 'public');
+                        $sampleArtworks[] = [
+                            'url' => asset('storage/' . $path),
+                            'file_path' => $path,
+                            'file_name' => $file->getClientOriginalName(),
+                            'file_size' => $file->getSize() ?: 0,
+                            'mime_type' => $file->getClientMimeType() ?: 'image/jpeg',
+                        ];
+                    }
+                }
+
                 $application = ArtistApplication::create([
                     'user_id' => $user->id,
                     'bio' => $data['bio'] ?? null,
                     'portfolio_links' => $data['portfolio_links'] ?? [],
+                    'sample_artworks' => !empty($sampleArtworks) ? $sampleArtworks : null,
                     'website' => $data['website'] ?? null,
                     'social_links' => $data['social_links'] ?? [],
                     'status' => ArtistApplicationStatus::PENDING,

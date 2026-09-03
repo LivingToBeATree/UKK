@@ -15,6 +15,7 @@ class ArtistApplicationResource extends JsonResource
             'user' => new UserResource($this->whenLoaded('user')),
             'bio' => $this->bio,
             'portfolio_links' => $this->portfolio_links ?? [],
+            'sample_artworks' => $this->sample_artworks ?? [],
             'website' => $this->website,
             'social_links' => $this->social_links ?? [],
             'status' => $this->status->value,

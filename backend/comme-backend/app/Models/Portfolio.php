@@ -16,6 +16,8 @@ class Portfolio extends Model
         'title',
         'description',
         'visibility',
+        'is_taken_down',
+        'taken_down_reason',
         'starred',
     ];
 
@@ -23,10 +25,11 @@ class Portfolio extends Model
     {
         return [
             'visibility' => CommissionVisibility::class,
+            'is_taken_down' => 'boolean',
             'starred' => 'boolean',
             'views' => 'integer',
             'likes' => 'integer',
-            'bookmarks' => 'integer'
+            'bookmarks' => 'integer',
         ];
     }
 

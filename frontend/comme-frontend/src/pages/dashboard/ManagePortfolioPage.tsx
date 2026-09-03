@@ -29,8 +29,10 @@ import {
     MessageSquare,
     Check,
     Smile,
+    Pencil,
 } from 'lucide-react';
 import { portfolioApi, type Portfolio } from '@/services/artistService';
+import { EditPortfolioModal } from '@/components/modals/EditPortfolioModal';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -58,6 +60,7 @@ export const ManagePortfolioPage: React.FC = () => {
     const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
+    const [editingPortfolio, setEditingPortfolio] = useState<Portfolio | null>(null);
 
     // Form states
     const [title, setTitle] = useState('');
@@ -1094,16 +1097,31 @@ export const ManagePortfolioPage: React.FC = () => {
                                     </div>
                                 </Link>
 
-                                {/* Delete Button */}
-                                <Button
-                                    variant="destructive"
-                                    size="icon"
-                                    className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 rounded-full shadow-lg cursor-pointer z-20"
-                                    onClick={(e) => handleDelete(item.id, e)}
-                                    title="Delete artwork"
-                                >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
+                                {/* Action Buttons (Edit & Delete) */}
+                                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 z-20">
+                                    <Button
+                                        variant="secondary"
+                                        size="icon"
+                                        className="h-8 w-8 rounded-full shadow-lg bg-black/70 hover:bg-black/90 text-white backdrop-blur-md border border-white/20 cursor-pointer"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            setEditingPortfolio(item);
+                                        }}
+                                        title="Edit artwork"
+                                    >
+                                        <Pencil className="h-3.5 w-3.5" />
+                                    </Button>
+                                    <Button
+                                        variant="destructive"
+                                        size="icon"
+                                        className="h-8 w-8 rounded-full shadow-lg cursor-pointer bg-rose-600/90 hover:bg-rose-600"
+                                        onClick={(e) => handleDelete(item.id, e)}
+                                        title="Delete artwork"
+                                    >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                </div>
 
                                 {/* Content */}
                                 <CardContent className="p-4 flex-1 flex flex-col justify-between space-y-2">
@@ -1130,12 +1148,25 @@ export const ManagePortfolioPage: React.FC = () => {
                                                   })
                                                 : 'Recently added'}
                                         </span>
-                                        <Link
-                                            to={`/portfolio/${item.id}`}
-                                            className="text-purple-400 hover:text-purple-300 font-bold hover:underline"
-                                        >
-                                            Details →
-                                        </Link>
+                                        <div className="flex items-center gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    setEditingPortfolio(item);
+                                                }}
+                                                className="text-muted-foreground hover:text-foreground font-semibold hover:underline cursor-pointer flex items-center gap-1"
+                                            >
+                                                <Pencil className="h-3 w-3" /> Edit
+                                            </button>
+                                            <Link
+                                                to={`/portfolio/${item.id}`}
+                                                className="text-purple-400 hover:text-purple-300 font-bold hover:underline"
+                                            >
+                                                Details →
+                                            </Link>
+                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -1143,6 +1174,21 @@ export const ManagePortfolioPage: React.FC = () => {
                     })
                 )}
             </div>
+
+            {/* Edit Portfolio Modal */}
+            {editingPortfolio && (
+                <EditPortfolioModal
+                    isOpen={Boolean(editingPortfolio)}
+                    onClose={() => setEditingPortfolio(null)}
+                    portfolio={editingPortfolio}
+                    onPortfolioUpdated={(updated) => {
+                        setPortfolios((prev) =>
+                            prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p))
+                        );
+                        setEditingPortfolio(null);
+                    }}
+                />
+            )}
         </motion.div>
     );
 };
