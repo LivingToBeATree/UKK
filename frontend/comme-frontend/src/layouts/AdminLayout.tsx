@@ -40,8 +40,35 @@ export const AdminLayout: React.FC = () => {
     const adminWidth = 240; // Always expanded — no collapse
 
     return (
-        <div className="flex min-h-screen w-full relative">
-            {/* Fixed Sidebar (Permanently on screen, cannot scroll away) */}
+        <div className="flex flex-col md:flex-row min-h-screen w-full relative">
+            {/* Mobile Sub-Navigation Bar (Horizontal scrollable tabs) */}
+            <div className="md:hidden sticky top-14 z-30 bg-card/95 backdrop-blur-xl border-b border-border px-3 py-2 flex items-center gap-1.5 overflow-x-auto scrollbar-none shadow-xs">
+                <div className="flex items-center gap-1.5 shrink-0 pr-2 border-r border-border/80 mr-1">
+                    <Shield className={cn('h-4 w-4', iconColor)} />
+                    <span className="font-bold text-xs">{isAdmin ? 'Admin' : 'Mod'}</span>
+                </div>
+                {navItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = location.pathname === item.path;
+                    return (
+                        <Link
+                            key={item.id}
+                            to={item.path}
+                            className={cn(
+                                'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition-colors',
+                                isActive
+                                    ? 'bg-primary text-primary-foreground shadow-xs'
+                                    : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                            )}
+                        >
+                            <Icon className="h-3.5 w-3.5" />
+                            <span>{item.label}</span>
+                        </Link>
+                    );
+                })}
+            </div>
+
+            {/* Desktop Fixed Sidebar (Permanently on screen, cannot scroll away) */}
             <aside
                 className="hidden md:flex fixed top-0 bottom-0 z-30 border-r border-border bg-card flex-col transition-all duration-300 overflow-y-auto shrink-0"
                 style={{
@@ -87,7 +114,7 @@ export const AdminLayout: React.FC = () => {
             />
 
             {/* Main Content */}
-            <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8">
+            <main className="flex-1 min-w-0 p-3 sm:p-6 lg:p-8">
                 <Outlet />
             </main>
         </div>

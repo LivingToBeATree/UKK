@@ -100,6 +100,9 @@ export const CommissionDetailPage: React.FC = () => {
     const [artistReplyText, setArtistReplyText] = useState('');
     const [showReplyForm, setShowReplyForm] = useState(false);
 
+    // Responsive Mobile Workspace View Switcher ('details' | 'chat')
+    const [mobileTab, setMobileTab] = useState<'details' | 'chat'>('details');
+
     // Deadline Proposal Dialog state
     const [newDeadline, setNewDeadline] = useState('');
     const [deadlineProposalNote, setDeadlineProposalNote] = useState('');
@@ -592,9 +595,32 @@ export const CommissionDetailPage: React.FC = () => {
                 </div>
             </div>
 
+            {/* Mobile Viewport Segmented Switcher */}
+            <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-secondary/60 border border-border/80 lg:hidden">
+                <button
+                    type="button"
+                    onClick={() => setMobileTab('details')}
+                    className={`py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                        mobileTab === 'details' ? 'bg-card text-foreground shadow-xs' : 'text-muted-foreground'
+                    }`}
+                >
+                    Order Brief & Deliverables
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setMobileTab('chat')}
+                    className={`py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                        mobileTab === 'chat' ? 'bg-card text-foreground shadow-xs' : 'text-muted-foreground'
+                    }`}
+                >
+                    <MessageSquare className="h-3.5 w-3.5" />
+                    Workspace Chat ({messages.length})
+                </button>
+            </div>
+
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 {/* ── Left Column: Order Summary & Review (7 cols) ── */}
-                <div className="lg:col-span-7 xl:col-span-7 space-y-6">
+                <div className={`lg:col-span-7 xl:col-span-7 space-y-6 ${mobileTab === 'details' ? 'block' : 'hidden lg:block'}`}>
                     {/* 1. Order Summary Card */}
                     <Card className="overflow-hidden border border-border bg-card/80 backdrop-blur-md shadow-xs">
                         <div className="h-2 bg-gradient-to-r from-primary via-emerald-400 to-amber-400" />
@@ -1276,8 +1302,8 @@ export const CommissionDetailPage: React.FC = () => {
                 </div>
 
                 {/* ── Right Column: Collaboration & Direct Chat (5 cols) ── */}
-                <div className="lg:col-span-5 xl:col-span-5 space-y-6 lg:sticky lg:top-6">
-                    <Card className="border border-border bg-card/80 backdrop-blur-md shadow-xs overflow-hidden flex flex-col h-[640px]">
+                <div className={`lg:col-span-5 xl:col-span-5 space-y-6 lg:sticky lg:top-6 ${mobileTab === 'chat' ? 'block' : 'hidden lg:block'}`}>
+                    <Card className="border border-border bg-card/80 backdrop-blur-md shadow-xs overflow-hidden flex flex-col h-[560px] sm:h-[640px]">
                         <div className="p-4 border-b border-border flex items-center justify-between bg-muted/20">
                             <div className="flex items-center gap-2.5">
                                 <div className="p-2 rounded-xl bg-primary/10 text-primary">
