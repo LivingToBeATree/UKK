@@ -94,8 +94,8 @@ export const LicensePage: React.FC = () => {
                                 Read our Terms of Service
                             </Link>{' '}
                             or{' '}
-                            <a href="mailto:support@comme.art" className="text-foreground underline font-semibold hover:text-primary transition-colors">
-                                Contact Support
+                            <a href="mailto:aryarega2811@gmail.com" className="text-foreground underline font-semibold hover:text-primary transition-colors">
+                                Contact Support (aryarega2811@gmail.com)
                             </a>.
                         </p>
                     </div>

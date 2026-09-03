@@ -12,6 +12,9 @@ export const formatPrice = (value: number | string | undefined | null): string =
     }).format(num);
 };
 
+export const formatCurrencySafe = formatPrice;
+export const formatCurrency = formatPrice;
+
 /**
  * Safely format date strings into human-readable format without throwing RangeError on invalid/missing dates.
  */

@@ -1,27 +1,27 @@
+import type { User } from './user';
+
 export interface AppNotification {
   id: string | number;
   user_id: number;
+  actor_id?: number | null;
+  actor?: User | null;
   type: string;
-  data: {
+  title?: string;
+  message?: string;
+  data?: {
     title?: string;
-    message: string;
+    message?: string;
     action_url?: string;
     [key: string]: unknown;
   };
+  notifiable_type?: string | null;
+  notifiable_id?: number | null;
   read_at: string | null;
+  is_read?: boolean;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface UnreadNotificationCount {
   unread_count: number;
-}
-
-export interface Report {
-  id: number;
-  user_id: number;
-  reportable_type: 'user' | 'post' | 'commission' | string;
-  reportable_id: number;
-  reason: string;
-  status: 'pending' | 'investigating' | 'resolved' | 'dismissed';
-  created_at: string;
 }

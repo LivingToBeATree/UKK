@@ -35,7 +35,6 @@ import { PortfolioDetailPage } from '@/pages/explore/PortfolioDetailPage';
 import { StorePage } from '@/pages/store/StorePage';
 import { ServiceDetailPage } from '@/pages/store/ServiceDetailPage';
 import { ArtistsDirectoryPage } from '@/pages/artists/ArtistsDirectoryPage';
-import { ArtistProfilePage } from '@/pages/artists/ArtistProfilePage';
 
 // Commissions
 import { OrderCommissionPage } from '@/pages/commissions/OrderCommissionPage';
@@ -46,6 +45,7 @@ import { CommissionDetailPage } from '@/pages/commissions/CommissionDetailPage';
 import { SettingsPage } from '@/pages/settings/SettingsPage';
 import { NotificationsPage } from '@/pages/notifications/NotificationsPage';
 import { BookmarksPage } from '@/pages/bookmarks/BookmarksPage';
+import { UserTicketsPage } from '@/pages/dashboard/UserTicketsPage';
 import { ApplyArtistPage } from '@/pages/artist-application/ApplyArtistPage';
 import { ApplicationStatusPage } from '@/pages/artist-application/ApplicationStatusPage';
 
@@ -93,7 +93,8 @@ export function AppRoutes() {
             <Route path="/store" element={<StorePage />} />
             <Route path="/store/:serviceId" element={<ServiceDetailPage />} />
             <Route path="/artists" element={<ArtistsDirectoryPage />} />
-            <Route path="/artists/:id" element={<ArtistProfilePage />} />
+            <Route path="/artists/:id" element={<UserProfilePage />} />
+            <Route path="/artists/:username" element={<UserProfilePage />} />
 
             {/* Legal & Policies */}
             <Route path="/terms" element={<TermsPage />} />
@@ -103,10 +104,11 @@ export function AppRoutes() {
             <Route path="/api-terms" element={<ApiTermsPage />} />
             <Route path="/escrow-terms" element={<EscrowPage />} />
 
-            {/* User profiles */}
-            <Route path="/@:username" element={<UserProfilePage />} />
-            <Route path="/users/:username" element={<UserProfilePage />} />
+            {/* User & Creator Profiles */}
             <Route path="/profile" element={<UserProfilePage />} />
+            <Route path="/profile/:username" element={<UserProfilePage />} />
+            <Route path="/users/:username" element={<UserProfilePage />} />
+            <Route path="/u/:username" element={<UserProfilePage />} />
 
             {/* Guest only routes */}
             <Route element={<GuestRoute />}>
@@ -133,6 +135,9 @@ export function AppRoutes() {
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
                 <Route path="/bookmarks" element={<BookmarksPage />} />
+                <Route path="/support" element={<UserTicketsPage />} />
+                <Route path="/tickets" element={<Navigate to="/support" replace />} />
+                <Route path="/dashboard/tickets" element={<Navigate to="/support" replace />} />
                 <Route path="/apply-artist" element={<ApplyArtistPage />} />
                 <Route path="/apply-artist/status" element={<ApplicationStatusPage />} />
                 <Route path="/artist-application/apply" element={<Navigate to="/apply-artist" replace />} />
@@ -171,6 +176,8 @@ export function AppRoutes() {
                         <Route path="tickets/:id" element={<TicketDetailPage />} />
                         <Route path="moderation-log" element={<ModerationLogPage />} />
                     </Route>
+                    <Route path="/moderator" element={<Navigate to="/admin" replace />} />
+                    <Route path="/moderation" element={<Navigate to="/admin" replace />} />
                 </Route>
             </Route>
 

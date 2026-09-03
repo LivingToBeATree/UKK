@@ -102,7 +102,7 @@ export const PrivacyPage: React.FC = () => {
                             For data access requests, account rectification, or statutory privacy inquiries under UU PDP, contact our team:
                         </p>
                         <div className="pt-2 border-t border-border/50 text-foreground font-semibold">
-                            DPO Contact: <a href="mailto:privacy@comme.art" className="text-primary underline">privacy@comme.art</a>
+                            DPO Contact: <a href="mailto:aryarega2811@gmail.com" className="text-primary underline">aryarega2811@gmail.com</a>
                         </div>
                     </div>
                 </div>

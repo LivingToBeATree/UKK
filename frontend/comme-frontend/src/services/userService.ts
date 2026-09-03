@@ -2,6 +2,16 @@ import { api } from './api';
 import type { ApiResponse, User } from '@/types';
 
 export const userService = {
+    uploadMedia: async (file: File, isThumbnail = false) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        if (isThumbnail) formData.append('is_thumbnail', '1');
+        const res = await api.post<ApiResponse<{ id: number; url: string; file_name: string }>>('/media', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        return res.data.data;
+    },
+
     updateProfile: async (payload: FormData) => {
         payload.append('_method', 'PATCH');
         const res = await api.post<ApiResponse<User>>('/profile', payload, {
@@ -50,5 +60,10 @@ export const userService = {
             data: { password },
         });
         return res.data;
+    },
+
+    acknowledgeWarning: async () => {
+        const res = await api.post<ApiResponse<User>>('/profile/acknowledge-warning');
+        return res.data.data;
     },
 };

@@ -127,6 +127,22 @@ const INTENT_PRESETS: Record<AuthModalIntent, IntentPreset> = {
         ],
         primaryCtaText: 'Get started as an artist',
     },
+    report: {
+        title: 'Submit a report or dispute',
+        subtitle: 'Sign in to file moderation reports and track support ticket resolutions.',
+        images: [
+            '/JPGs/super-cool-abstract-art-thingy.jpg',
+            '/JPGs/close-up-hand-writing-notebook.jpg',
+            '/JPGs/digital-art-looking.jpg',
+        ],
+        checklist: [
+            'Direct communication with moderation staff',
+            'Track investigation progress in your ticket portal',
+            'Safeguard intellectual property and community standards',
+            'Confidential dispute mediation',
+        ],
+        primaryCtaText: 'Sign in to report',
+    },
     generic: {
         title: 'Welcome to Comme',
         subtitle: 'Join thousands of creators and collectors ordering custom art.',

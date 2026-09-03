@@ -7,6 +7,7 @@ import { useSidebar } from '@/hooks/useSidebar';
 import { SidebarRail } from '@/components/SidebarRail';
 import { Navbar } from '@/components/Navbar';
 import { Toaster } from '@/components/ui/sonner';
+import { WarningNoticeModal } from '@/components/modals/WarningNoticeModal';
 
 import { useLocation } from 'react-router-dom';
 
@@ -28,6 +29,7 @@ function AppLayout() {
             <div className="min-h-screen bg-background text-foreground font-sans transition-colors duration-200">
                 <AppRoutes />
                 <Toaster />
+                <WarningNoticeModal />
             </div>
         );
     }
@@ -50,6 +52,7 @@ function AppLayout() {
                 </main>
             </motion.div>
             <Toaster />
+            <WarningNoticeModal />
         </div>
     );
 }

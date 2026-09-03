@@ -168,7 +168,14 @@ export const InfoFlyout: React.FC<{ collapsed: boolean }> = ({ collapsed }) => {
                                     <span>Creator &amp; Escrow</span>
                                 </div>
                                 <ul className="space-y-1.5 text-xs text-muted-foreground">
-                                    {user?.artist_profile ? (
+                                    {user?.role === 'admin' || user?.role === 'moderator' ? (
+                                        <li>
+                                            <Link to="/admin" onClick={() => setIsOpen(false)} className="hover:text-foreground transition-colors flex items-center gap-1.5 py-0.5 font-medium text-amber-400">
+                                                <Shield className="h-3 w-3" />
+                                                <span>{user?.role === 'admin' ? 'Admin Workbench' : 'Moderator Workbench'}</span>
+                                            </Link>
+                                        </li>
+                                    ) : user?.artist_profile ? (
                                         <li>
                                             <Link to="/dashboard" onClick={() => setIsOpen(false)} className="hover:text-foreground transition-colors flex items-center gap-1.5 py-0.5 font-medium text-emerald-400">
                                                 <Palette className="h-3 w-3" />

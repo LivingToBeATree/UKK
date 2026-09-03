@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -7,13 +7,17 @@ import {
     FolderKanban,
     Layers,
     ShoppingBag,
+    Bell,
     User as UserIcon,
     Settings,
     LogOut,
+    LifeBuoy,
+    Shield,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 import { useSidebar } from '@/hooks/useSidebar';
+import { notificationService } from '@/services/notificationService';
 import { Avatar } from './ui/avatar';
 import { InfoFlyout } from './InfoFlyout';
 import {
@@ -24,7 +28,6 @@ import {
     DropdownMenuSeparator,
 } from './ui/dropdown-menu';
 import { toast } from './ui/sonner';
-import { cn } from '@/lib/utils';
 
 /* ─── Reusable Sidebar Navigation Item ─── */
 interface NavItemProps {
@@ -33,10 +36,11 @@ interface NavItemProps {
     path: string;
     isActive: boolean;
     collapsed: boolean;
+    badge?: number;
     onClick?: (e: React.MouseEvent) => void;
 }
 
-const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, path, isActive, collapsed, onClick }) => {
+const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, path, isActive, collapsed, badge, onClick }) => {
     const [showTooltip, setShowTooltip] = useState(false);
 
     return (
@@ -54,22 +58,33 @@ const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, path, isActive, co
                 aria-label={label}
             >
                 {/* Icon Container */}
-                <div className="w-6 h-6 flex items-center justify-center shrink-0">
+                <div className="w-6 h-6 flex items-center justify-center shrink-0 relative">
                     <Icon className={`h-5 w-5 transition-transform duration-200 group-hover:scale-110 ${isActive ? 'text-primary' : ''}`} />
+                    {/* Collapsed dot badge */}
+                    {collapsed && typeof badge === 'number' && badge > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary ring-2 ring-card animate-pulse" />
+                    )}
                 </div>
 
-                {/* Animated Label */}
+                {/* Animated Label + Badge */}
                 <AnimatePresence initial={false}>
                     {!collapsed && (
-                        <motion.span
+                        <motion.div
                             initial={{ opacity: 0, x: -6 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -6 }}
                             transition={{ duration: 0.15 }}
-                            className="text-xs font-semibold truncate whitespace-nowrap text-left"
+                            className="flex items-center justify-between flex-1 min-w-0 pr-1"
                         >
-                            {label}
-                        </motion.span>
+                            <span className="text-xs font-semibold truncate whitespace-nowrap text-left">
+                                {label}
+                            </span>
+                            {typeof badge === 'number' && badge > 0 && (
+                                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-primary/20 text-primary border border-primary/30 shrink-0">
+                                    {badge > 99 ? '99+' : badge}
+                                </span>
+                            )}
+                        </motion.div>
                     )}
                 </AnimatePresence>
             </Link>
@@ -82,9 +97,14 @@ const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, path, isActive, co
                         animate={{ opacity: 1, x: 0, scale: 1 }}
                         exit={{ opacity: 0, x: -6, scale: 0.94 }}
                         transition={{ type: 'spring', damping: 22, stiffness: 420 }}
-                        className="absolute left-[calc(100%+14px)] top-1/2 -translate-y-1/2 z-50 px-3 py-1.5 text-xs font-semibold text-white bg-zinc-900 border border-zinc-700/80 rounded-lg shadow-2xl whitespace-nowrap pointer-events-none select-none"
+                        className="absolute left-[calc(100%+14px)] top-1/2 -translate-y-1/2 z-50 px-3 py-1.5 text-xs font-semibold text-white bg-zinc-900 border border-zinc-700/80 rounded-lg shadow-2xl whitespace-nowrap pointer-events-none select-none flex items-center gap-1.5"
                     >
-                        {label}
+                        <span>{label}</span>
+                        {typeof badge === 'number' && badge > 0 && (
+                            <span className="px-1 py-0.2 rounded-full text-[10px] font-mono font-bold bg-primary text-primary-foreground">
+                                {badge}
+                            </span>
+                        )}
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -106,8 +126,40 @@ export const SidebarRail: React.FC = () => {
     const { collapsed, toggleSidebar } = useSidebar();
     const [showLogoTooltip, setShowLogoTooltip] = useState(false);
     const [showUserTooltip, setShowUserTooltip] = useState(false);
+    const [unreadNotifications, setUnreadNotifications] = useState<number | undefined>(undefined);
     const location = useLocation();
     const navigate = useNavigate();
+
+    // Fetch unread notification count
+    useEffect(() => {
+        if (!isAuthenticated) {
+            setUnreadNotifications(undefined);
+            return;
+        }
+
+        let isMounted = true;
+        const fetchUnread = async () => {
+            try {
+                const res = await notificationService.unreadCount();
+                if (isMounted) {
+                    if (res && res.unread_count > 0) {
+                        setUnreadNotifications(res.unread_count);
+                    } else {
+                        setUnreadNotifications(undefined);
+                    }
+                }
+            } catch {
+                // Ignore silent errors
+            }
+        };
+
+        fetchUnread();
+        const interval = setInterval(fetchUnread, 20000); // Check every 20s
+        return () => {
+            isMounted = false;
+            clearInterval(interval);
+        };
+    }, [isAuthenticated, location.pathname]);
 
     /** Intercept clicks on auth-gated sidebar links for guests */
     const guardNav = (intent: Parameters<typeof requireAuth>[0]) => (e: React.MouseEvent) => {
@@ -217,15 +269,33 @@ export const SidebarRail: React.FC = () => {
 
                 <SidebarDivider />
 
-                {/* 4. Studio / Creator Hub */}
-                <NavItem
-                    icon={PenTool}
-                    label={user?.artist_profile ? 'Artist Studio' : 'Become an Artist'}
-                    path={user?.artist_profile ? '/dashboard' : '/apply-artist'}
-                    isActive={location.pathname.startsWith('/dashboard') || location.pathname === '/apply-artist'}
-                    collapsed={collapsed}
-                    onClick={guardNav('studio')}
-                />
+                {/* 4. Studio / Admin / Moderator / Creator Hub */}
+                {user?.role === 'admin' ? (
+                    <NavItem
+                        icon={Shield}
+                        label="Admin Panel"
+                        path="/admin"
+                        isActive={location.pathname.startsWith('/admin')}
+                        collapsed={collapsed}
+                    />
+                ) : user?.role === 'moderator' ? (
+                    <NavItem
+                        icon={Shield}
+                        label="Moderator Panel"
+                        path="/admin"
+                        isActive={location.pathname.startsWith('/admin')}
+                        collapsed={collapsed}
+                    />
+                ) : (
+                    <NavItem
+                        icon={PenTool}
+                        label={user?.artist_profile ? 'Artist Studio' : 'Become an Artist'}
+                        path={user?.artist_profile ? '/dashboard' : '/apply-artist'}
+                        isActive={location.pathname.startsWith('/dashboard') || location.pathname === '/apply-artist'}
+                        collapsed={collapsed}
+                        onClick={guardNav('studio')}
+                    />
+                )}
 
                 {/* 5. My Orders */}
                 <NavItem
@@ -236,6 +306,29 @@ export const SidebarRail: React.FC = () => {
                     collapsed={collapsed}
                     onClick={guardNav('commission')}
                 />
+
+                {/* 6. Notifications */}
+                <NavItem
+                    icon={Bell}
+                    label="Notifications"
+                    path="/notifications"
+                    isActive={location.pathname === '/notifications'}
+                    collapsed={collapsed}
+                    badge={unreadNotifications}
+                    onClick={guardNav('generic')}
+                />
+
+                {/* 7. Support & Tickets (Only for regular users & artists; staff have tickets in their workbench) */}
+                {user?.role !== 'admin' && user?.role !== 'moderator' && (
+                    <NavItem
+                        icon={LifeBuoy}
+                        label="Support & Tickets"
+                        path="/support"
+                        isActive={location.pathname === '/support' || location.pathname.startsWith('/tickets')}
+                        collapsed={collapsed}
+                        onClick={guardNav('generic')}
+                    />
+                )}
             </div>
 
             {/* ── BOTTOM GROUP: Settings & User Profile ── */}
@@ -279,77 +372,112 @@ export const SidebarRail: React.FC = () => {
                                                 animate={{ opacity: 1, x: 0 }}
                                                 exit={{ opacity: 0, x: -6 }}
                                                 transition={{ duration: 0.15 }}
-                                                className="flex flex-col min-w-0 flex-1 text-left overflow-hidden whitespace-nowrap"
+                                                className="flex flex-col min-w-0 flex-1 overflow-hidden"
                                             >
-                                                <p className="font-bold text-xs truncate text-foreground leading-tight">
+                                                <span className="font-bold text-xs truncate text-foreground leading-tight">
                                                     {user.display_name || user.username}
-                                                </p>
-                                                <p className="text-[10px] text-muted-foreground truncate">
+                                                </span>
+                                                <span className="text-[10px] text-muted-foreground truncate leading-none mt-0.5">
                                                     @{user.username}
-                                                </p>
+                                                </span>
                                             </motion.div>
                                         )}
                                     </AnimatePresence>
                                 </button>
                             </DropdownMenuTrigger>
 
-                            {/* Animated User Avatar Tooltip */}
-                            <AnimatePresence>
-                                {collapsed && showUserTooltip && (
-                                    <motion.div
-                                        initial={{ opacity: 0, x: -8, scale: 0.94 }}
-                                        animate={{ opacity: 1, x: 0, scale: 1 }}
-                                        exit={{ opacity: 0, x: -6, scale: 0.94 }}
-                                        transition={{ type: 'spring', damping: 22, stiffness: 420 }}
-                                        className="absolute left-[calc(100%+14px)] top-1/2 -translate-y-1/2 z-50 px-3 py-1.5 text-xs font-semibold text-white bg-zinc-900 border border-zinc-700/80 rounded-lg shadow-2xl whitespace-nowrap pointer-events-none select-none"
-                                    >
-                                        {user.display_name || user.username}
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                            <DropdownMenuContent
-                                side={collapsed ? 'right' : 'top'}
-                                align={collapsed ? 'end' : 'start'}
-                                className={cn(
-                                    'w-56 bg-card/98 backdrop-blur-2xl border border-border shadow-2xl rounded-xl z-50',
-                                    collapsed ? 'ml-3' : 'mb-2 ml-1'
-                                )}
-                            >
-                                <div className="px-3 py-2 border-b border-border mb-1">
-                                    <p className="font-bold text-xs truncate text-foreground">
-                                        {user.display_name || user.username}
-                                    </p>
-                                    <p className="text-[11px] text-muted-foreground truncate">
-                                        @{user.username}
-                                    </p>
+                            <DropdownMenuContent side="right" align="end" className="w-56 ml-2 rounded-2xl p-1.5 shadow-xl border-border/80">
+                                <div className="px-3 py-2 border-b border-border/50 mb-1">
+                                    <p className="font-bold text-xs text-foreground truncate">{user.display_name || user.username}</p>
+                                    <p className="text-[11px] text-muted-foreground truncate">{user.email}</p>
                                 </div>
-
-                                <DropdownMenuItem onClick={() => navigate(`/@${user.username}`)}>
-                                    <UserIcon className="h-4 w-4 mr-2 text-primary" />
-                                    <span>My Profile</span>
+                                <DropdownMenuItem onClick={() => navigate('/profile')} className="rounded-xl text-xs py-2 cursor-pointer">
+                                    <UserIcon className="mr-2 h-4 w-4 text-primary" />
+                                    <span>View Public Profile</span>
                                 </DropdownMenuItem>
-
+                                {(user.role === 'admin' || user.role === 'moderator') && (
+                                    <DropdownMenuItem
+                                        onClick={() => navigate('/admin')}
+                                        className="rounded-xl text-xs py-2 cursor-pointer text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
+                                    >
+                                        <Shield className="mr-2 h-4 w-4" />
+                                        <span>{user.role === 'admin' ? 'Admin Workbench' : 'Moderator Workbench'}</span>
+                                    </DropdownMenuItem>
+                                )}
+                                {user.artist_profile && (
+                                    <DropdownMenuItem
+                                        onClick={() => navigate('/dashboard')}
+                                        className="rounded-xl text-xs py-2 cursor-pointer text-purple-400 hover:text-purple-300 hover:bg-purple-500/10"
+                                    >
+                                        <PenTool className="mr-2 h-4 w-4" />
+                                        <span>Artist Studio</span>
+                                    </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem onClick={() => navigate('/notifications')} className="rounded-xl text-xs py-2 cursor-pointer">
+                                    <Bell className="mr-2 h-4 w-4 text-primary" />
+                                    <span>Notifications</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => navigate('/settings')} className="rounded-xl text-xs py-2 cursor-pointer">
+                                    <Settings className="mr-2 h-4 w-4 text-muted-foreground" />
+                                    <span>Account Settings</span>
+                                </DropdownMenuItem>
+                                {user.role !== 'admin' && user.role !== 'moderator' && (
+                                    <DropdownMenuItem onClick={() => navigate('/support')} className="rounded-xl text-xs py-2 cursor-pointer">
+                                        <LifeBuoy className="mr-2 h-4 w-4 text-purple-400" />
+                                        <span>Support & Tickets</span>
+                                    </DropdownMenuItem>
+                                )}
                                 <DropdownMenuSeparator />
-
-                                <DropdownMenuItem destructive onClick={handleLogout}>
-                                    <LogOut className="h-4 w-4 mr-2" />
+                                <DropdownMenuItem
+                                    onClick={handleLogout}
+                                    className="rounded-xl text-xs py-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 cursor-pointer"
+                                >
+                                    <LogOut className="mr-2 h-4 w-4" />
                                     <span>Sign Out</span>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
+
+                        {/* Animated User Tooltip */}
+                        <AnimatePresence>
+                            {collapsed && showUserTooltip && (
+                                <motion.div
+                                    initial={{ opacity: 0, x: -8, scale: 0.94 }}
+                                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                                    exit={{ opacity: 0, x: -6, scale: 0.94 }}
+                                    transition={{ type: 'spring', damping: 22, stiffness: 420 }}
+                                    className="absolute left-[calc(100%+14px)] top-1/2 -translate-y-1/2 z-50 px-3 py-1.5 text-xs font-semibold text-white bg-zinc-900 border border-zinc-700/80 rounded-lg shadow-2xl whitespace-nowrap pointer-events-none select-none"
+                                >
+                                    {user.display_name || user.username}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 ) : (
-                    <NavItem
-                        icon={UserIcon}
-                        label="Sign In / Register"
-                        path="/"
-                        isActive={false}
-                        collapsed={collapsed}
-                        onClick={(e) => {
-                            e.preventDefault();
-                            openAuthModal('generic');
-                        }}
-                    />
+                    <div className="w-full relative">
+                        <button
+                            onClick={() => openAuthModal('generic')}
+                            className="w-full h-11 flex items-center rounded-xl pl-2 pr-2.5 gap-3 hover:bg-primary/10 text-primary transition-colors cursor-pointer focus:outline-none overflow-hidden"
+                            aria-label="Sign In"
+                        >
+                            <div className="w-6 h-6 flex items-center justify-center shrink-0">
+                                <UserIcon className="h-5 w-5" />
+                            </div>
+                            <AnimatePresence initial={false}>
+                                {!collapsed && (
+                                    <motion.span
+                                        initial={{ opacity: 0, x: -6 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -6 }}
+                                        transition={{ duration: 0.15 }}
+                                        className="text-xs font-bold truncate whitespace-nowrap text-left"
+                                    >
+                                        Sign In
+                                    </motion.span>
+                                )}
+                            </AnimatePresence>
+                        </button>
+                    </div>
                 )}
             </div>
         </motion.aside>

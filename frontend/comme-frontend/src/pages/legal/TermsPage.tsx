@@ -98,7 +98,7 @@ export const TermsPage: React.FC = () => {
                             Need help with a transaction dispute, intellectual property report, or account assistance?
                         </p>
                         <div className="pt-2 border-t border-border/50 text-foreground font-semibold">
-                            Support: <a href="mailto:support@comme.art" className="text-primary underline">support@comme.art</a>
+                            Support: <a href="mailto:aryarega2811@gmail.com" className="text-primary underline">aryarega2811@gmail.com</a>
                         </div>
                     </div>
                 </div>

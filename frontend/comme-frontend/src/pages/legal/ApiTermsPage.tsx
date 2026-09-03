@@ -27,7 +27,7 @@ export const ApiTermsPage: React.FC = () => {
                             Comme does not currently offer an open public developer API for external automated data harvesting or third-party client bots. Access to Comme endpoints is restricted strictly to official first-party web applications and verified creator studio tools.
                         </p>
                         <p className="text-xs text-muted-foreground">
-                            If you are an enterprise partner, educational researcher, or creator tool developer seeking private API access or webhook integration, please reach out to <a href="mailto:developers@comme.art" className="text-primary underline">developers@comme.art</a>.
+                            If you are an enterprise partner, educational researcher, or creator tool developer seeking private API access or webhook integration, please reach out to <a href="mailto:aryarega2811@gmail.com" className="text-primary underline">aryarega2811@gmail.com</a>.
                         </p>
                     </div>
                 </div>
@@ -43,7 +43,7 @@ export const ApiTermsPage: React.FC = () => {
                             Interested in building studio extensions or Discord bot integrations for Comme?
                         </p>
                         <div className="pt-2 border-t border-border/50 text-foreground font-semibold">
-                            Inquiries: <a href="mailto:developers@comme.art" className="text-primary underline">developers@comme.art</a>
+                            Inquiries: <a href="mailto:aryarega2811@gmail.com" className="text-primary underline">aryarega2811@gmail.com</a>
                         </div>
                     </div>
                 </div>

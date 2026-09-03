@@ -12,6 +12,11 @@ export const notificationService = {
         return res.data.data;
     },
 
+    getUnreadCount: async () => {
+        const res = await api.get<ApiResponse<UnreadNotificationCount>>('/notifications/unread-count');
+        return res.data;
+    },
+
     markAsRead: async (id: string | number) => {
         const res = await api.patch<ApiResponse<AppNotification>>(`/notifications/${id}/read`);
         return res.data.data;
@@ -22,6 +27,10 @@ export const notificationService = {
     },
 
     destroy: async (id: string | number) => {
+        await api.delete(`/notifications/${id}`);
+    },
+
+    delete: async (id: string | number) => {
         await api.delete(`/notifications/${id}`);
     },
 };

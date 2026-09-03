@@ -21,6 +21,8 @@ import {
     Loader2,
     CheckCircle2,
     Lock,
+    Sparkles,
+    ExternalLink,
 } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import { commissionOrderApi } from '@/services/commissionService';
@@ -71,6 +73,38 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
         setCopied(true);
         toast.success('Virtual Account number copied to clipboard');
         setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleOpenSnap = async () => {
+        setProcessing(true);
+        try {
+            const payment = await commissionOrderApi.initiatePayment(commission.id);
+            if (
+                payment.snap_token &&
+                typeof (window as unknown as { snap?: { pay: (token: string, cb: unknown) => void } }).snap?.pay === 'function'
+            ) {
+                onClose();
+                (window as unknown as { snap: { pay: (token: string, cb: unknown) => void } }).snap.pay(payment.snap_token, {
+                    onSuccess: () => {
+                        toast.success('Payment captured into Escrow! Commission is now in progress.');
+                        onPaymentSuccess(commission);
+                    },
+                    onPending: () => {
+                        toast.info('Payment pending completion in Midtrans.');
+                    },
+                    onError: () => {
+                        toast.error('Payment cancelled or failed.');
+                    },
+                });
+            } else {
+                toast.error('Could not initialize Midtrans Snap session.');
+            }
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to open Midtrans Snap';
+            toast.error(msg);
+        } finally {
+            setProcessing(false);
+        }
     };
 
     const handleExecutePayment = async () => {
@@ -366,6 +400,29 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
                             </div>
                         )}
 
+                        {/* Sandbox Simulation Helper Banner */}
+                        <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 space-y-2.5">
+                            <div className="flex items-start gap-2.5 text-xs text-foreground/90">
+                                <Sparkles className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                                <div className="space-y-0.5">
+                                    <p className="font-bold text-[11px] text-emerald-400">Midtrans Sandbox Integration</p>
+                                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                        You can open the official Midtrans Snap popup to get real Sandbox VA/QRIS codes for <strong className="text-foreground">simulator.sandbox.midtrans.com</strong>, or simulate instantly below.
+                                    </p>
+                                </div>
+                            </div>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleOpenSnap}
+                                disabled={processing}
+                                className="w-full h-9 rounded-xl font-bold text-xs bg-card hover:bg-muted border-primary/30 text-primary cursor-pointer gap-2"
+                            >
+                                <ExternalLink className="h-3.5 w-3.5" />
+                                Open Official Midtrans Snap Popup (For Simulator Test)
+                            </Button>
+                        </div>
+
                         {/* Action Footer */}
                         <div className="pt-5 border-t border-border flex items-center justify-between gap-3 mt-4">
                             <Button
@@ -385,16 +442,12 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
                                 {processing ? (
                                     <>
                                         <Loader2 className="h-4 w-4 animate-spin" />
-                                        Verifying Payment...
+                                        Verifying &amp; Locking Escrow...
                                     </>
                                 ) : (
                                     <>
                                         <CheckCircle2 className="h-4 w-4" />
-                                        {activeMethod === 'qris'
-                                            ? `Confirm QRIS Payment (${formatPrice(commission.total_price)})`
-                                            : activeMethod === 'va'
-                                            ? `Simulate ${selectedBank.toUpperCase()} Payment`
-                                            : `Pay ${formatPrice(commission.total_price)}`}
+                                        Confirm &amp; Simulate Payment ({formatPrice(commission.total_price)})
                                     </>
                                 )}
                             </Button>

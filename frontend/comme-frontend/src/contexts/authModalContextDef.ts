@@ -8,6 +8,7 @@ export type AuthModalIntent =
     | 'follow'
     | 'message'
     | 'studio'
+    | 'report'
     | 'generic';
 
 export interface AuthModalConfig {

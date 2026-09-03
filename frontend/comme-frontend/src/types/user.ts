@@ -8,7 +8,10 @@ export interface User {
     email: string;
     display_name: string;
     role: UserRole;
+    avatar?: string | null;
     avatar_url?: string | null;
+    banner?: string | null;
+    banner_url?: string | null;
     bio?: string | null;
     email_verified_at: string | null;
     created_at: string;
@@ -19,6 +22,12 @@ export interface User {
     posts_count?: number;
     is_following?: boolean;
     two_factor_enabled?: boolean;
+    is_suspended?: boolean;
+    suspended_at?: string | null;
+    suspension_reason?: string | null;
+    active_warning?: string | null;
+    warning_acknowledged_at?: string | null;
+    has_unacknowledged_warning?: boolean;
 }
 
 export const isArtist = (user?: User | null): boolean => {
