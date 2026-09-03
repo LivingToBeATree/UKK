@@ -38,8 +38,10 @@ export interface CommissionService {
   created_at: string;
   updated_at: string;
   artist_profile?: ArtistProfile;
+  thumbnail_media?: MediaItem | null;
   options?: CommissionOption[];
   media?: MediaItem[];
+  tags?: { id: number; name: string; slug?: string }[];
 }
 
 export type OrderStatus =
@@ -68,6 +70,11 @@ export interface CommissionReview {
   created_at: string;
   updated_at: string;
   user?: User;
+  commission?: {
+    id: number;
+    service?: { id: number; name: string; description?: string } | null;
+    option?: { id: number; title: string } | null;
+  } | null;
 }
 
 export interface CommissionPayment {

@@ -322,6 +322,47 @@ export const CommissionDetailPage: React.FC = () => {
         }
     };
 
+    const handleCheckPaymentStatus = async (silent = false) => {
+        if (!commission) return;
+        if (!silent) setActionLoading(true);
+        try {
+            const updated = await commissionOrderApi.checkPaymentStatus(commission.id);
+            setCommission(updated);
+            if (updated.status === 'in_progress') {
+                toast.success('Payment verified from Midtrans! Commission is now in progress.');
+                refreshData();
+            } else if (!silent) {
+                toast.info('Payment status checked: awaiting payment confirmation.');
+            }
+        } catch (err: unknown) {
+            if (!silent) {
+                const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to verify payment status';
+                toast.error(msg);
+            }
+        } finally {
+            if (!silent) setActionLoading(false);
+        }
+    };
+
+    // Auto-sync payment status with Midtrans when tab gains focus or on interval while awaiting payment
+    useEffect(() => {
+        if (!commission || commission.status !== 'accepted') return;
+
+        const onFocus = () => {
+            handleCheckPaymentStatus(true);
+        };
+        window.addEventListener('focus', onFocus);
+
+        const interval = setInterval(() => {
+            handleCheckPaymentStatus(true);
+        }, 6000);
+
+        return () => {
+            window.removeEventListener('focus', onFocus);
+            clearInterval(interval);
+        };
+    }, [commission?.id, commission?.status]);
+
     const handleInitiatePayment = async () => {
         if (!commission) return;
         setActionLoading(true);
@@ -338,15 +379,16 @@ export const CommissionDetailPage: React.FC = () => {
                 toast.success('Midtrans payment session initialized');
                 (window as unknown as { snap: { pay: (token: string, cb: unknown) => void } }).snap.pay(payment.snap_token, {
                     onSuccess: () => {
-                        toast.success('Payment captured! Commission is now in progress.');
-                        refreshData();
+                        handleCheckPaymentStatus(false);
                     },
                     onPending: () => {
-                        toast.info('Payment pending completion.');
-                        refreshData();
+                        handleCheckPaymentStatus(true);
                     },
                     onError: () => {
-                        toast.error('Payment failed.');
+                        toast.error('Payment failed or cancelled.');
+                    },
+                    onClose: () => {
+                        handleCheckPaymentStatus(true);
                     },
                 });
             } else {
@@ -835,15 +877,27 @@ export const CommissionDetailPage: React.FC = () => {
                             <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-border">
                                 {/* BUYER: Pay with Midtrans (When Status is 'accepted') */}
                                 {isBuyer && commission.status === 'accepted' && (
-                                    <Button
-                                        size="lg"
-                                        onClick={handleInitiatePayment}
-                                        disabled={actionLoading}
-                                        className="gap-2 shadow-lg shadow-primary/25 bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer"
-                                    >
-                                        <CreditCard className="h-4 w-4" />
-                                        Pay with Midtrans ({formatPrice(commission.total_price)})
-                                    </Button>
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <Button
+                                            size="lg"
+                                            onClick={handleInitiatePayment}
+                                            disabled={actionLoading}
+                                            className="gap-2 shadow-lg shadow-primary/25 bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer"
+                                        >
+                                            <CreditCard className="h-4 w-4" />
+                                            Pay with Midtrans ({formatPrice(commission.total_price)})
+                                        </Button>
+                                        <Button
+                                            size="lg"
+                                            variant="outline"
+                                            onClick={() => handleCheckPaymentStatus(false)}
+                                            disabled={actionLoading}
+                                            className="gap-2 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 cursor-pointer font-bold"
+                                        >
+                                            <RefreshCw className={`h-4 w-4 ${actionLoading ? 'animate-spin' : ''}`} />
+                                            Verify Payment Status
+                                        </Button>
+                                    </div>
                                 )}
 
                                 {/* BUYER: Confirm & Release Payout (When Status is 'waiting_for_client') */}

@@ -12,7 +12,10 @@ import {
     ImageIcon,
     ShieldCheck,
     PenTool,
+    Flag,
+    Shield,
 } from 'lucide-react';
+import { ReportModal } from '@/components/modals/ReportModal';
 import { commissionServiceApi, commissionReviewApi, type CommissionReview } from '@/services/commissionService';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/contexts/AuthModalContext';
@@ -37,6 +40,9 @@ export const ServiceDetailPage: React.FC = () => {
     const [selectedAddonIds, setSelectedAddonIds] = useState<number[]>([]);
     const [activeMediaIndex, setActiveMediaIndex] = useState<number>(0);
     const [loading, setLoading] = useState(true);
+
+    // Reporting modal state
+    const [showReportModal, setShowReportModal] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -109,12 +115,46 @@ export const ServiceDetailPage: React.FC = () => {
 
     return (
         <div className="max-w-5xl mx-auto px-4 py-8 pb-16">
-            <Link
-                to="/store"
-                className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground mb-6 transition-colors"
-            >
-                <ArrowLeft className="h-4 w-4" /> Back to Store
-            </Link>
+            <div className="flex items-center justify-between gap-4 mb-6">
+                <Link
+                    to="/store"
+                    className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    <ArrowLeft className="h-4 w-4" /> Back to Store
+                </Link>
+
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                        if (user?.role === 'admin' || user?.role === 'moderator') {
+                            navigate('/admin/reports');
+                            toast.info('Fast-travelled to Moderation Workbench');
+                            return;
+                        }
+                        if (!requireAuth('report')) return;
+                        setShowReportModal(true);
+                    }}
+                    className={`rounded-xl text-xs font-semibold gap-1.5 cursor-pointer ${
+                        user?.role === 'admin' || user?.role === 'moderator'
+                            ? 'text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 border border-purple-500/30'
+                            : 'text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10'
+                    }`}
+                    title={user?.role === 'admin' || user?.role === 'moderator' ? 'Open Moderation Workbench' : 'Report this commission listing'}
+                >
+                    {user?.role === 'admin' || user?.role === 'moderator' ? (
+                        <>
+                            <Shield className="h-3.5 w-3.5 text-purple-400" />
+                            <span>Moderate Listing</span>
+                        </>
+                    ) : (
+                        <>
+                            <Flag className="h-3.5 w-3.5 text-rose-400" />
+                            <span>Report Listing</span>
+                        </>
+                    )}
+                </Button>
+            </div>
 
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid lg:grid-cols-3 gap-8">
                 {/* ── Left Column: Service Details & Showcase ── */}
@@ -185,8 +225,8 @@ export const ServiceDetailPage: React.FC = () => {
 
                         {service.artist_profile?.user && (
                             <Link
-                                to={`/artists/${service.artist_profile_id}`}
-                                className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-purple-400 transition-colors"
+                                to={service.artist_profile.user.username ? `/users/${service.artist_profile.user.username}` : `/artists/${service.artist_profile_id}`}
+                                className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors"
                             >
                                 <Avatar
                                     size="sm"
@@ -195,6 +235,23 @@ export const ServiceDetailPage: React.FC = () => {
                                 />
                                 <span>by {service.artist_profile.user.display_name || service.artist_profile.user.username}</span>
                             </Link>
+                        )}
+
+                        {/* Service Tags */}
+                        {service.tags && service.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 pt-1">
+                                {service.tags.map((t) => (
+                                    <Link key={t.id || t.name} to={`/store?tag=${encodeURIComponent(t.name)}`}>
+                                        <Badge
+                                            variant="secondary"
+                                            className="text-xs font-bold bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all cursor-pointer hover:scale-105"
+                                        >
+                                            <Tag className="h-3 w-3 mr-1" />
+                                            #{t.name}
+                                        </Badge>
+                                    </Link>
+                                ))}
+                            </div>
                         )}
                     </div>
 
@@ -418,18 +475,38 @@ export const ServiceDetailPage: React.FC = () => {
                                 <p className="text-xs text-muted-foreground italic">Please select a service package above</p>
                             )}
 
-                            {Boolean(user && (service.artist_profile?.user_id === user.id || user.artist_profile?.id === service.artist_profile_id)) ? (
-                                <Link to="/dashboard/services" className="w-full block">
-                                    <Button
-                                        className="w-full h-11 rounded-2xl font-bold text-xs bg-secondary hover:bg-muted text-foreground border border-border cursor-pointer shadow-md gap-2"
-                                    >
-                                        <PenTool className="h-4 w-4 text-purple-400" />
-                                        Manage in Artist Studio
-                                    </Button>
-                                </Link>
-                            ) : (
+                            {(() => {
+                                const isOwner = Boolean(
+                                    user &&
+                                    ((service.artist_profile?.user_id && user.id && service.artist_profile.user_id === user.id) ||
+                                     (service.artist_profile?.user?.id && user.id && service.artist_profile.user.id === user.id) ||
+                                     (user.artist_profile?.id && service.artist_profile_id && user.artist_profile.id === service.artist_profile_id))
+                                );
+
+                                if (isOwner) {
+                                    return (
+                                        <Link to="/dashboard/services" className="w-full block">
+                                            <Button
+                                                className="w-full h-11 rounded-2xl font-bold text-xs bg-secondary hover:bg-muted text-foreground border border-border cursor-pointer shadow-md gap-2"
+                                            >
+                                                <PenTool className="h-4 w-4 text-purple-400" />
+                                                Manage in Artist Studio
+                                            </Button>
+                                        </Link>
+                                    );
+                                }
+
+                                return null;
+                            })()}
+
+                            {!Boolean(
+                                user &&
+                                ((service.artist_profile?.user_id && user.id && service.artist_profile.user_id === user.id) ||
+                                 (service.artist_profile?.user?.id && user.id && service.artist_profile.user.id === user.id) ||
+                                 (user.artist_profile?.id && service.artist_profile_id && user.artist_profile.id === service.artist_profile_id))
+                            ) && (
                                 <Button
-                                    className="w-full h-11 rounded-2xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-md gap-2"
+                                    className="w-full h-11 rounded-2xl font-bold text-xs bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shadow-md gap-2"
                                     disabled={!selectedOption || service.status !== 'open'}
                                     onClick={() => {
                                         if (
@@ -460,10 +537,50 @@ export const ServiceDetailPage: React.FC = () => {
                                 <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
                                 <span>100% Escrow &amp; Milestone Protection</span>
                             </div>
+
+                            <div className="text-center pt-2 border-t border-border/40">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (user?.role === 'admin' || user?.role === 'moderator') {
+                                            navigate('/admin/reports');
+                                            toast.info('Fast-travelled to Moderation Workbench');
+                                            return;
+                                        }
+                                        if (!requireAuth('report')) return;
+                                        setShowReportModal(true);
+                                    }}
+                                    className="text-[11px] text-muted-foreground/70 hover:text-rose-400 inline-flex items-center gap-1 transition-colors cursor-pointer"
+                                >
+                                    {user?.role === 'admin' || user?.role === 'moderator' ? (
+                                        <>
+                                            <Shield className="h-3 w-3 text-purple-400" />
+                                            <span className="text-purple-400">Open Moderation Panel</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Flag className="h-3 w-3" />
+                                            <span>Report listing violation</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                         </CardContent>
                     </Card>
                 </div>
             </motion.div>
+
+            {/* Universal Report Modal */}
+            {service && (
+                <ReportModal
+                    isOpen={showReportModal}
+                    onClose={() => setShowReportModal(false)}
+                    reportableType="commission_service"
+                    reportableId={service.id}
+                    targetTitle={service.name}
+                    targetSubtitle={service.artist_profile?.user ? `by @${service.artist_profile.user.username}` : undefined}
+                />
+            )}
         </div>
     );
 };

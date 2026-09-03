@@ -151,6 +151,12 @@ export const commissionOrderApi = {
         const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${commissionId}/payment/simulate`);
         return res.data.data;
     },
+
+    // Check & sync payment status with Midtrans API directly
+    checkPaymentStatus: async (commissionId: number) => {
+        const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${commissionId}/payment/check-status`);
+        return res.data.data;
+    },
 };
 
 // Artist payout account API

@@ -98,6 +98,20 @@ class MidtransService
     }
 
     /**
+     * Queries Midtrans API to retrieve the live transaction status for an order.
+     */
+    public function getTransactionStatus(string $orderId): ?array
+    {
+        try {
+            $statusObj = \Midtrans\Transaction::status($orderId);
+            return json_decode(json_encode($statusObj), true);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning("Midtrans Transaction Status Exception for {$orderId}: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Midtrans's transaction_status doesn't map 1:1 to a simple
      * paid/not-paid — card payments need fraud_status checked too
      * (a 'challenge' means Midtrans's fraud system flagged it for
