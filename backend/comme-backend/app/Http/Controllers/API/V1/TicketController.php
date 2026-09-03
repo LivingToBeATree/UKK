@@ -8,22 +8,51 @@ use App\Models\Ticket;
 use App\Http\Helpers\ApiResponseHelper;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 class TicketController extends Controller
 {
     /**
-     * No store() method or route at all — TicketPolicy::create() is
-     * always false, matching the spec: tickets are created automatically
-     * as a side effect of a Report being escalated, not through a direct
-     * user-facing endpoint. That hookup would live in ReportController,
-     * not here.
+     * Display a listing of tickets. Staff see all tickets with priority/status filters; users see their own.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         Gate::authorize('viewAny', Ticket::class);
 
-        $tickets = Ticket::with(['report', 'assignee'])->latest()->paginate(20);
+        $user = $request->user();
+        $query = Ticket::with(['report.reporter', 'report.reportable', 'assignee', 'messages.user'])->latest();
+
+        if (! $user->isStaff() && ! $user->isAdmin()) {
+            $query->whereHas('report', fn ($q) => $q->where('user_id', $user->id));
+        } else {
+            if ($request->filled('priority')) {
+                $query->where('priority', $request->priority);
+            }
+            if ($request->filled('status')) {
+                if ($request->status === 'closed') {
+                    $query->whereNotNull('closed_at');
+                } elseif ($request->status === 'open') {
+                    $query->whereNull('closed_at');
+                } else {
+                    $query->whereHas('report', fn ($q) => $q->where('status', $request->status));
+                }
+            }
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->whereHas('report', function ($rq) use ($search) {
+                        $rq->where('description', 'ILIKE', "%{$search}%")
+                           ->orWhereHas('reporter', function ($uq) use ($search) {
+                               $uq->where('username', 'ILIKE', "%{$search}%")
+                                  ->orWhere('display_name', 'ILIKE', "%{$search}%");
+                           });
+                    });
+                });
+            }
+        }
+
+        $tickets = $query->paginate(20);
 
         return ApiResponseHelper::paginatedResponse(
             TicketResource::collection($tickets),
@@ -32,22 +61,14 @@ class TicketController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage. (Made them comment)
-     */
-    // public function store(Request $request)
-    // {
-    //     //
-    // }
-
-    /**
-     * Display the specified resource.
+     * Display the specified ticket.
      */
     public function show(Ticket $ticket): JsonResponse
     {
         Gate::authorize('view', $ticket);
 
         return ApiResponseHelper::successResponse(
-            new TicketResource($ticket->load(['report', 'assignee', 'messages.user', 'moderationActions'])),
+            new TicketResource($ticket->load(['report.reporter', 'report.reportable', 'report.handledBy', 'assignee', 'messages.user', 'moderationActions.user'])),
             'Ticket retrieved successfully.',
         );
     }

@@ -176,6 +176,14 @@ class TwoFactorAuthController extends Controller
             );
         }
 
+        if ($user->isSuspended()) {
+            Cache::forget("2fa_challenge_{$request->two_factor_token}");
+            return ApiResponseHelper::errorResponse(
+                '🚫 Account Suspended: Your account has been suspended due to violations of our Community Guidelines. If you believe this is a mistake, contact support.',
+                Response::HTTP_FORBIDDEN
+            );
+        }
+
         $code = trim($request->code);
         $verified = false;
 

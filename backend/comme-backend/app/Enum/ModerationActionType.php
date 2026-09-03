@@ -9,4 +9,5 @@ enum ModerationActionType: string
     case RESTORE_CONTENT = 'restore_content';
     case SUSPEND_USER = 'suspend_user';
     case UNSUSPEND_USER = 'unsuspend_user';
+    case ROLE_CHANGED = 'role_changed';
 }

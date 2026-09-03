@@ -54,7 +54,11 @@ class PaymentController extends Controller
                 ]);
             }
 
-            if (! $payment->snap_token) {
+            if (! $payment->snap_token || str_starts_with($payment->snap_token, 'mock_snap_token_')) {
+                $freshOrderId = 'CMS-'.$lockedCommission->id.'-'.now()->timestamp.'-'.Str::random(8);
+                $payment->update([
+                    'order_id' => $freshOrderId,
+                ]);
                 $payment->update([
                     'snap_token' => $midtransService->createSnapTransaction($payment, $lockedCommission),
                 ]);
@@ -118,6 +122,75 @@ class PaymentController extends Controller
         return ApiResponseHelper::successResponse(
             new \App\Http\Resources\API\V1\CommissionResource($updatedCommission->fresh(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
             'Payment secured in Escrow! Commission is now in progress.'
+        );
+    }
+
+    /**
+     * Check and synchronize live payment status directly with Midtrans Sandbox API.
+     */
+    public function checkStatus(Commission $commission, MidtransService $midtransService): JsonResponse
+    {
+        Gate::authorize('view', $commission);
+
+        $payment = $commission->payments()->latest()->first();
+
+        if (! $payment) {
+            return ApiResponseHelper::errorResponse('No payment record found for this commission.', Response::HTTP_NOT_FOUND);
+        }
+
+        // If already paid, return success immediately
+        if ($payment->status === PaymentStatus::PAID->value || $commission->status === CommissionStatus::IN_PROGRESS) {
+            return ApiResponseHelper::successResponse(
+                new \App\Http\Resources\API\V1\CommissionResource($commission->fresh(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
+                'Payment is already confirmed and secured in Escrow.'
+            );
+        }
+
+        // Query Midtrans API directly for the live status of the order_id
+        $remoteStatus = $midtransService->getTransactionStatus($payment->order_id);
+
+        if (! $remoteStatus) {
+            return ApiResponseHelper::errorResponse('Could not retrieve payment status from Midtrans or transaction is not yet initialized.', Response::HTTP_NOT_FOUND);
+        }
+
+        $mappedStatus = $midtransService->mapStatus(
+            $remoteStatus['transaction_status'] ?? '',
+            $remoteStatus['fraud_status'] ?? null
+        );
+
+        if ($mappedStatus === PaymentStatus::PAID) {
+            $updatedCommission = DB::transaction(function () use ($payment, $commission, $remoteStatus) {
+                $payment->update([
+                    'status' => PaymentStatus::PAID->value,
+                    'paid_at' => now(),
+                    'midtrans_transaction_id' => $remoteStatus['transaction_id'] ?? null,
+                    'payment_type' => $remoteStatus['payment_type'] ?? null,
+                    'raw_response' => $remoteStatus,
+                ]);
+
+                $commission->update(['status' => CommissionStatus::IN_PROGRESS]);
+
+                Notification::create([
+                    'user_id' => $commission->artistProfile->user_id,
+                    'type' => NotificationType::PAYMENT_RECEIVED,
+                    'title' => 'Payment received',
+                    'message' => 'A client has paid for their commission - you can start working on it.',
+                    'notifiable_type' => Commission::class,
+                    'notifiable_id' => $commission->id,
+                ]);
+
+                return $commission;
+            });
+
+            return ApiResponseHelper::successResponse(
+                new \App\Http\Resources\API\V1\CommissionResource($updatedCommission->fresh(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
+                'Payment verified from Midtrans! Commission is now In Progress in Escrow.'
+            );
+        }
+
+        return ApiResponseHelper::successResponse(
+            new \App\Http\Resources\API\V1\CommissionResource($commission->fresh(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
+            'Midtrans payment status: ' . ($remoteStatus['transaction_status'] ?? 'pending')
         );
     }
 

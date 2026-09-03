@@ -78,11 +78,19 @@ class AuthController extends Controller
 
     public function login(LoginRequest $request, AuthService $authService): JsonResponse
     {
-        if (! Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
+        if (! Auth::guard('web')->attempt($request->only('email', 'password'), $request->boolean('remember'))) {
             return ApiResponseHelper::errorResponse('Invalid credentials.', Response::HTTP_UNAUTHORIZED);
         }
 
-        $user = Auth::user();
+        $user = Auth::guard('web')->user();
+
+        if ($user->isSuspended()) {
+            Auth::guard('web')->logout();
+            return ApiResponseHelper::errorResponse(
+                '🚫 Account Suspended: Your account has been suspended due to violations of our Community Guidelines. If you believe this is a mistake, contact support.',
+                Response::HTTP_FORBIDDEN
+            );
+        }
 
         // If Two-Factor Authentication is enabled, require TOTP verification before issuing session
         if ($user->hasTwoFactorEnabled()) {

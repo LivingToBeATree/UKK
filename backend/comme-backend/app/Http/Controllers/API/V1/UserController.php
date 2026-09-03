@@ -20,7 +20,12 @@ class UserController extends Controller
      */
     public function show(string $username): JsonResponse
     {
-        $user = User::where('username', $username)
+        $user = User::where(function ($q) use ($username) {
+            $q->where('username', $username);
+            if (is_numeric($username)) {
+                $q->orWhere('id', (int) $username);
+            }
+        })
             ->with(['artistProfile'])
             ->withCount(['followers', 'following', 'posts'])
             ->firstOrFail();
@@ -144,5 +149,21 @@ class UserController extends Controller
         }
 
         return ApiResponseHelper::successResponse(message: 'Account deleted successfully.');
+    }
+
+    /**
+     * Acknowledge official warning notice.
+     */
+    public function acknowledgeWarning(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $user->update([
+            'warning_acknowledged_at' => now(),
+        ]);
+
+        return ApiResponseHelper::successResponse(
+            new UserResource($user),
+            'Official warning notice acknowledged successfully.'
+        );
     }
 }

@@ -10,5 +10,7 @@ enum ReportReason: string
     case COPYRIGHT = 'copyright';
     case IMPERSONATION = 'impersonation';
     case SCAM = 'scam';
+    case APPEAL = 'appeal';
+    case INQUIRY = 'inquiry';
     case OTHER = 'other';
 }

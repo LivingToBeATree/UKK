@@ -38,11 +38,32 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'role',
         'avatar',
+        'banner',
         'bio',
         'two_factor_secret',
         'two_factor_recovery_codes',
         'two_factor_confirmed_at',
+        'suspended_at',
+        'suspension_reason',
+        'active_warning',
+        'warning_acknowledged_at',
     ];
+
+    /**
+     * Determine if the user's account is currently suspended.
+     */
+    public function isSuspended(): bool
+    {
+        return ! is_null($this->suspended_at);
+    }
+
+    /**
+     * Determine if the user has a pending unacknowledged warning notice.
+     */
+    public function hasUnacknowledgedWarning(): bool
+    {
+        return ! empty($this->active_warning) && is_null($this->warning_acknowledged_at);
+    }
 
     /**
      * The attributes that should be hidden for serialization.

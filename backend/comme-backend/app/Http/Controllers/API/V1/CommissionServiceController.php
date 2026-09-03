@@ -10,6 +10,7 @@ use App\Http\Requests\API\V1\CommissionService\StoreCommissionServiceRequest;
 use App\Http\Requests\API\V1\CommissionService\UpdateCommissionServiceRequest;
 use App\Http\Helpers\ApiResponseHelper;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
@@ -17,13 +18,55 @@ use Illuminate\Support\Facades\Storage;
 class CommissionServiceController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of the resource with tag, search, artist, and status filtering.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         Gate::authorize('viewAny', CommissionService::class);
 
-        $commissionServices = CommissionService::with(['artistProfile.user', 'thumbnailMedia', 'media', 'options.addons', 'tags'])->paginate(20);
+        $query = CommissionService::with(['artistProfile.user', 'thumbnailMedia', 'media', 'options.addons', 'tags'])
+            ->latest();
+
+        // 1. Tag filtering
+        if ($request->filled('tag')) {
+            $tagInput = trim(str_replace('#', '', $request->tag));
+            $tagSlug = \Illuminate\Support\Str::slug($tagInput);
+
+            $query->whereHas('tags', function ($q) use ($tagInput, $tagSlug) {
+                $q->where('slug', $tagSlug)
+                    ->orWhere('name', 'ILIKE', "%{$tagInput}%")
+                    ->orWhere('slug', 'ILIKE', "%{$tagSlug}%");
+            });
+        }
+
+        // 2. Search query across title, description, artist, and tags
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'ILIKE', "%{$search}%")
+                    ->orWhere('description', 'ILIKE', "%{$search}%")
+                    ->orWhereHas('artistProfile.user', function ($uq) use ($search) {
+                        $uq->where('username', 'ILIKE', "%{$search}%")
+                            ->orWhere('display_name', 'ILIKE', "%{$search}%");
+                    })
+                    ->orWhereHas('tags', function ($tq) use ($search) {
+                        $tq->where('name', 'ILIKE', "%{$search}%")
+                            ->orWhere('slug', 'ILIKE', "%{$search}%");
+                    });
+            });
+        }
+
+        // 3. Artist filter
+        if ($request->filled('artist_profile_id')) {
+            $query->where('artist_profile_id', $request->artist_profile_id);
+        }
+
+        // 4. Status filter (open / closed)
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $commissionServices = $query->paginate(20);
 
         return ApiResponseHelper::paginatedResponse(
             CommissionServiceResource::collection($commissionServices),
@@ -94,6 +137,23 @@ class CommissionServiceController extends Controller
                     }
                 }
             }
+        }
+
+        // 3. Process Tags
+        if ($request->has('tags')) {
+            $tagNames = is_array($request->tags) ? $request->tags : explode(',', (string) $request->tags);
+            $tagIds = [];
+            foreach ($tagNames as $name) {
+                $cleanName = trim(str_replace('#', '', (string) $name));
+                if (! empty($cleanName)) {
+                    $tag = \App\Models\Tag::firstOrCreate(
+                        ['name' => $cleanName],
+                        ['slug' => \Illuminate\Support\Str::slug($cleanName)]
+                    );
+                    $tagIds[] = $tag->id;
+                }
+            }
+            $commissionService->tags()->sync($tagIds);
         }
 
         return ApiResponseHelper::successResponse(
@@ -177,9 +237,31 @@ class CommissionServiceController extends Controller
             }
         }
 
+        // Sync tags if provided
+        if ($request->has('tags')) {
+            $tagNames = is_array($request->tags) ? $request->tags : explode(',', (string) $request->tags);
+            $tagIds = [];
+            foreach ($tagNames as $name) {
+                $cleanName = trim(str_replace('#', '', (string) $name));
+                if (! empty($cleanName)) {
+                    $tag = \App\Models\Tag::firstOrCreate(
+                        ['name' => $cleanName],
+                        ['slug' => \Illuminate\Support\Str::slug($cleanName)]
+                    );
+                    $tagIds[] = $tag->id;
+                }
+            }
+            $commissionService->tags()->sync($tagIds);
+        }
+
+        $actor = $request->user();
+        if ($actor) {
+            \App\Services\ModerationSyncService::handleContentUpdated($commissionService, $actor);
+        }
+
         return ApiResponseHelper::successResponse(
             new CommissionServiceResource($commissionService->load(['artistProfile', 'thumbnailMedia', 'media', 'options.addons', 'tags'])),
-            'Commission service updated successfully.',
+            'Commission service updated successfully.'
         );
     }
 
@@ -189,6 +271,11 @@ class CommissionServiceController extends Controller
     public function destroy(CommissionService $commissionService): JsonResponse
     {
         Gate::authorize('delete', $commissionService);
+
+        $actor = request()->user() ?? $commissionService->artistProfile?->user;
+        if ($actor) {
+            \App\Services\ModerationSyncService::handleContentDeleted($commissionService, $actor);
+        }
 
         $commissionService->delete();
 

@@ -22,6 +22,7 @@ class UpdateUserRequest extends FormRequest
             'username' =>['sometimes', 'string', 'max:255', 'alpha_dash', Rule::unique('users', 'username')->ignore($this->user()->id)],
             'display_name' => ['sometimes', 'string', 'max:255'],
             'avatar' => ['sometimes', 'nullable', 'string'],
+            'banner' => ['sometimes', 'nullable', 'string'],
             'bio' => ['sometimes', 'nullable', 'string', 'max:1000'],
 
             // email and role are deliberately absent — email changes need

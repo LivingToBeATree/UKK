@@ -8,7 +8,9 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,6 +27,19 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::policy(\App\Models\Report::class, \App\Policies\ReportPolicy::class);
+        Gate::policy(\App\Models\Ticket::class, \App\Policies\TicketPolicy::class);
+        Gate::policy(\App\Models\TicketMessage::class, \App\Policies\TicketMessagePolicy::class);
+
+        Relation::morphMap([
+            'post' => \App\Models\Post::class,
+            'post_comment' => \App\Models\PostComment::class,
+            'commission_review' => \App\Models\CommissionReview::class,
+            'portfolio' => \App\Models\Portfolio::class,
+            'commission_service' => \App\Models\CommissionService::class,
+            'user' => \App\Models\User::class,
+            'commission' => \App\Models\CommissionOrder::class,
+        ]);
         // Keyed by email+IP together, not just IP — a shared office/campus
         // IP shouldn't lock out everyone just because one person is
         // guessing passwords on one account.

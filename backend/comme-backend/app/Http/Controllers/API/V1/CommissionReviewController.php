@@ -26,7 +26,7 @@ class CommissionReviewController extends Controller
     public function index(ArtistProfile $artistProfile): JsonResponse
     {
         $reviews = $artistProfile->reviews()
-            ->with('user')
+            ->with(['user', 'commission.commissionService', 'commission.commissionOption'])
             ->latest()
             ->paginate(20);
 

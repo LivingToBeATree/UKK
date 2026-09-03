@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Enum\NotificationType;
 use App\Http\Helpers\ApiResponseHelper;
+use App\Http\Resources\API\V1\PostResource;
 use App\Models\Notification as InAppNotification;
 use App\Models\Post;
 use App\Models\PostLike;
@@ -13,6 +14,18 @@ use Illuminate\Support\Facades\Gate;
 
 class PostLikeController extends Controller
 {
+    public function userLikes(Request $request): JsonResponse
+    {
+        $posts = Post::whereIn(
+            'id',
+            $request->user()->postLikes()->select('post_id')
+        )->with(['user', 'portfolio', 'media', 'tags'])->paginate(20);
+
+        return ApiResponseHelper::paginatedResponse(
+            PostResource::collection($posts),
+            'Liked posts retrieved successfully.'
+        );
+    }
     public function toggleLike(Request $request, Post $post): JsonResponse
     {
         Gate::authorize('view', $post);

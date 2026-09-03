@@ -50,6 +50,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile/sessions', [UserController::class, 'getSessions']);
     Route::delete('/profile/sessions/{sessionId}', [UserController::class, 'revokeSession']);
     Route::delete('/account', [UserController::class, 'deleteAccount']);
+    Route::post('/profile/acknowledge-warning', [UserController::class, 'acknowledgeWarning']);
 
     // Two-Factor Authentication Management
     Route::post('/profile/2fa/setup', [TwoFactorAuthController::class, 'setup']);

@@ -42,7 +42,13 @@ class ArtistApplicationController extends Controller
         StoreArtistApplicationRequest $request,
         ArtistApplicationService $service,
     ): JsonResponse {
-        $application = $service->submit($request->user(), $request->validated());
+        $sampleFiles = [];
+        if ($request->hasFile('sample_artworks')) {
+            $uploaded = $request->file('sample_artworks');
+            $sampleFiles = is_array($uploaded) ? $uploaded : [$uploaded];
+        }
+
+        $application = $service->submit($request->user(), $request->validated(), $sampleFiles);
 
         return ApiResponseHelper::successResponse(
             new ArtistApplicationResource($application->load('user')),
