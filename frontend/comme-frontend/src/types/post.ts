@@ -17,6 +17,8 @@ export interface Post {
   portfolio_id?: number | null;
   content: string;
   visibility: PostVisibility;
+  is_taken_down?: boolean;
+  taken_down_reason?: string | null;
   commentable: boolean;
   likes_count: number;
   comments_count: number;
@@ -32,6 +34,8 @@ export interface Post {
     title: string;
     description?: string | null;
     cover_image_url?: string;
+    is_taken_down?: boolean;
+    taken_down_reason?: string | null;
     media?: { id: number; url: string }[];
   } | null;
   tags?: { id: number; name: string }[];

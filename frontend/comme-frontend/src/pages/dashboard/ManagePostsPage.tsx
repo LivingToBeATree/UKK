@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { FileText, Trash2, Plus, Eye } from 'lucide-react';
+import { FileText, Trash2, Plus, Eye, Pencil } from 'lucide-react';
 import { postService } from '@/services/postService';
+import { EditPostModal } from '@/components/modals/EditPostModal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,6 +13,7 @@ import type { Post } from '@/types';
 export const ManagePostsPage: React.FC = () => {
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
+    const [editingPost, setEditingPost] = useState<Post | null>(null);
 
     useEffect(() => {
         const fetch = async () => {
@@ -76,11 +78,24 @@ export const ManagePostsPage: React.FC = () => {
                                 </div>
                                 <div className="flex gap-2 shrink-0">
                                     <Link to={`/posts/${post.id}`}>
-                                        <Button variant="outline" size="icon">
+                                        <Button variant="outline" size="icon" title="View post">
                                             <Eye className="h-4 w-4" />
                                         </Button>
                                     </Link>
-                                    <Button variant="outline" size="icon" onClick={() => handleDelete(post.id)}>
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={() => setEditingPost(post)}
+                                        title="Edit post"
+                                    >
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={() => handleDelete(post.id)}
+                                        title="Delete post"
+                                    >
                                         <Trash2 className="h-4 w-4 text-destructive" />
                                     </Button>
                                 </div>
@@ -89,6 +104,21 @@ export const ManagePostsPage: React.FC = () => {
                     ))
                 )}
             </div>
+
+            {/* Edit Post Modal */}
+            {editingPost && (
+                <EditPostModal
+                    isOpen={Boolean(editingPost)}
+                    onClose={() => setEditingPost(null)}
+                    post={editingPost}
+                    onPostUpdated={(updated) => {
+                        setPosts((prev) =>
+                            prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p))
+                        );
+                        setEditingPost(null);
+                    }}
+                />
+            )}
         </motion.div>
     );
 };

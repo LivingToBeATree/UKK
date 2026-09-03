@@ -22,7 +22,21 @@ import {
     Maximize2,
     Reply,
     ExternalLink,
+    MoreHorizontal,
+    Flag,
+    Shield,
+    ShieldAlert,
+    Pencil,
 } from 'lucide-react';
+import { ReportModal } from '@/components/modals/ReportModal';
+import { AppealTicketModal } from '@/components/modals/AppealTicketModal';
+import { EditPostModal } from '@/components/modals/EditPostModal';
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 import { postService } from '@/services/postService';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/contexts/AuthModalContext';
@@ -37,6 +51,7 @@ import { MarkdownContent } from '@/components/ui/markdown-content';
 import { MediaLightboxModal } from '@/components/ui/MediaLightboxModal';
 import { CustomVideoPlayer } from '@/components/ui/CustomVideoPlayer';
 import { CommentComposer } from '@/components/explore/CommentComposer';
+import { UnavailableContentState } from '@/components/common/UnavailableContentState';
 import type { Post, PostComment } from '@/types';
 
 function formatPostDate(dateStr?: string | null): string {
@@ -330,7 +345,8 @@ const CommentItem: React.FC<{
     onDeleteComment: (commentId: number) => void;
     onReplyAdded: (reply: PostComment, parentId: number) => void;
     deletingCommentId: number | null;
-}> = ({ comment, postId, postAuthorId, onDeleteComment, onReplyAdded, deletingCommentId }) => {
+    onReportComment?: (commentId: number, username?: string) => void;
+}> = ({ comment, postId, postAuthorId, onDeleteComment, onReplyAdded, deletingCommentId, onReportComment }) => {
     const { user } = useAuth();
     const { requireAuth } = useAuthModal();
     const [isLiked, setIsLiked] = useState(Boolean(comment.is_liked));
@@ -371,7 +387,7 @@ const CommentItem: React.FC<{
                     {/* Header: Author Info */}
                     <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-2.5 min-w-0">
-                            <Link to={`/@${comment.user?.username || ''}`}>
+                            <Link to={`/users/${comment.user?.username || ''}`}>
                                 <Avatar
                                     size="sm"
                                     fallback={comment.user?.display_name || comment.user?.username || '?'}
@@ -382,7 +398,7 @@ const CommentItem: React.FC<{
                             <div className="min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
                                     <Link
-                                        to={`/@${comment.user?.username || ''}`}
+                                        to={`/users/${comment.user?.username || ''}`}
                                         className="font-bold text-xs text-foreground hover:text-primary transition-colors truncate"
                                     >
                                         {comment.user?.display_name || comment.user?.username}
@@ -459,19 +475,31 @@ const CommentItem: React.FC<{
                             </button>
                         </div>
 
-                        {/* Bookmark Button */}
-                        <button
-                            type="button"
-                            onClick={handleBookmark}
-                            className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
-                                isBookmarked
-                                    ? 'text-blue-500 bg-blue-500/10'
-                                    : 'text-muted-foreground hover:text-blue-500 hover:bg-secondary/60'
-                            }`}
-                            aria-label="Bookmark comment"
-                        >
-                            <Bookmark className={`h-3.5 w-3.5 ${isBookmarked ? 'fill-blue-500 text-blue-500' : ''}`} />
-                        </button>
+                        {/* Bookmark & Report Buttons */}
+                        <div className="flex items-center gap-1">
+                            <button
+                                type="button"
+                                onClick={handleBookmark}
+                                className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
+                                    isBookmarked
+                                        ? 'text-blue-500 bg-blue-500/10'
+                                        : 'text-muted-foreground hover:text-blue-500 hover:bg-secondary/60'
+                                }`}
+                                aria-label="Bookmark comment"
+                            >
+                                <Bookmark className={`h-3.5 w-3.5 ${isBookmarked ? 'fill-blue-500 text-blue-500' : ''}`} />
+                            </button>
+                            {onReportComment && (
+                                <button
+                                    type="button"
+                                    onClick={() => onReportComment(comment.id, comment.user?.username)}
+                                    className="p-1.5 rounded-xl text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                                    title="Report comment"
+                                >
+                                    <Flag className="h-3.5 w-3.5" />
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </CardContent>
             </Card>
@@ -504,6 +532,7 @@ const CommentItem: React.FC<{
                             onDeleteComment={onDeleteComment}
                             onReplyAdded={onReplyAdded}
                             deletingCommentId={deletingCommentId}
+                            onReportComment={onReportComment}
                         />
                     ))}
                 </div>
@@ -774,21 +803,29 @@ export const PostDetailPage: React.FC = () => {
     const [post, setPost] = useState<Post | null>(null);
     const [comments, setComments] = useState<PostComment[]>([]);
     const [loading, setLoading] = useState(true);
+    const [fetchError, setFetchError] = useState<{ status?: number; message?: string } | null>(null);
     const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null);
     const [copied, setCopied] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
     const [isDeletingPost, setIsDeletingPost] = useState(false);
     const [heroLightboxOpen, setHeroLightboxOpen] = useState(false);
+    const [showPostReportModal, setShowPostReportModal] = useState(false);
+    const [showPostAppealModal, setShowPostAppealModal] = useState(false);
+    const [reportingComment, setReportingComment] = useState<{ id: number; username?: string } | null>(null);
 
     useEffect(() => {
         const fetchPost = async () => {
             try {
                 const data = await postService.show(Number(id));
                 setPost(data);
+                setFetchError(null);
                 const commentsRes = await postService.listComments(Number(id));
                 setComments(commentsRes.data || []);
-            } catch {
-                toast.error('Failed to load post');
+            } catch (err: any) {
+                const status = err?.response?.status;
+                const message = err?.response?.data?.message || err?.message;
+                setFetchError({ status, message });
             } finally {
                 setLoading(false);
             }
@@ -923,22 +960,52 @@ export const PostDetailPage: React.FC = () => {
         );
     }
 
-    if (!post) {
+    const isStaff = user?.role === 'admin' || user?.role === 'moderator';
+    const isOwner = Boolean(user && user.id === post?.user_id);
+
+    // 1. Error state from backend (403 Forbidden or 404 Not Found)
+    if (fetchError || !post) {
+        if (fetchError?.status === 403) {
+            return (
+                <UnavailableContentState
+                    variant="taken_down"
+                    type="post"
+                    title="Post Unavailable"
+                    description="This post is not publicly accessible. It may have been removed or set to private by moderation."
+                />
+            );
+        }
         return (
-            <div className="w-full max-w-2xl mx-auto px-4 py-24 text-center space-y-4">
-                <div className="mx-auto w-16 h-16 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground">
-                    <MessageSquare className="h-8 w-8" />
-                </div>
-                <h2 className="text-xl font-bold text-foreground">Post not found</h2>
-                <p className="text-sm text-muted-foreground">
-                    This post may have been removed by its author or is set to private.
-                </p>
-                <Link to="/explore">
-                    <Button variant="outline" className="mt-2 font-semibold">
-                        <ArrowLeft className="h-4 w-4 mr-2" /> Back to Explore
-                    </Button>
-                </Link>
-            </div>
+            <UnavailableContentState
+                variant="not_found"
+                type="post"
+                title="Post Not Found"
+                description="This post could not be found. It may have been deleted by the author or the link is incorrect."
+            />
+        );
+    }
+
+    // 2. Moderation check for unauthorized regular visitors
+    if (post.is_taken_down && !isStaff && !isOwner) {
+        return (
+            <UnavailableContentState
+                variant="taken_down"
+                type="post"
+                title="Post Taken Down"
+                description="This post was taken down by moderation for violating Comme's Community Guidelines and is hidden from public view."
+            />
+        );
+    }
+
+    // 3. Suspended author check for regular visitors
+    if (post.user?.is_suspended && !isStaff && !isOwner) {
+        return (
+            <UnavailableContentState
+                variant="suspended"
+                type="post"
+                title="Author Account Suspended"
+                description="The author of this post is currently suspended, and their content is temporarily unavailable."
+            />
         );
     }
 
@@ -983,10 +1050,96 @@ export const PostDetailPage: React.FC = () => {
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                 <Card className="rounded-3xl border border-border/80 bg-card overflow-hidden shadow-lg">
                     <CardContent className="p-6 sm:p-8 space-y-6">
+                        {/* Moderation Taken-Down Banner: Staff Control vs Owner Appeal */}
+                        {post.is_taken_down && (
+                            isStaff ? (
+                                <div className="p-4 rounded-2xl bg-purple-950/20 border border-purple-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs shadow-inner">
+                                    <div className="flex items-start sm:items-center gap-3.5 text-purple-200">
+                                        <div className="p-2.5 rounded-xl bg-purple-500/20 text-purple-400 shrink-0 border border-purple-500/30">
+                                            <Shield className="h-5 w-5" />
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span className="font-bold text-purple-300 text-sm">Staff Moderation Notice: Post Taken Down</span>
+                                                <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-black uppercase tracking-wider border border-purple-500/30">
+                                                    Staff View
+                                                </span>
+                                            </div>
+                                            <div className="text-foreground/90 mt-0.5 font-normal">
+                                                Enforcement Reason: <span className="font-semibold text-purple-200">"{post.taken_down_reason || 'Violation of Community Guidelines'}"</span>
+                                            </div>
+                                            <p className="text-[11px] text-muted-foreground mt-0.5">
+                                                This post is locked in private visibility and hidden from public exploration feeds. The owner cannot republish it without staff approval.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+                                        <Link to="/admin/reports" className="w-full sm:w-auto">
+                                            <Button size="sm" className="w-full sm:w-auto rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold gap-1.5 shadow-md">
+                                                <Shield className="h-3.5 w-3.5" /> Reports Desk
+                                            </Button>
+                                        </Link>
+                                    </div>
+                                </div>
+                            ) : isOwner ? (
+                                <div className="p-5 rounded-3xl bg-rose-500/10 border border-rose-500/30 flex flex-col gap-4 text-xs shadow-inner">
+                                    <div className="flex items-start gap-3.5 text-rose-300">
+                                        <div className="p-2.5 rounded-2xl bg-rose-500/20 text-rose-400 shrink-0 border border-rose-500/30">
+                                            <ShieldAlert className="h-6 w-6" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span className="font-bold text-rose-400 text-sm">Post Taken Down by Moderation</span>
+                                                <span className="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 text-[10px] font-black uppercase tracking-wider border border-rose-500/30">
+                                                    Official Notice
+                                                </span>
+                                            </div>
+                                            <div className="text-foreground/90 font-normal">
+                                                Reason: <span className="font-semibold text-rose-200">"{post.taken_down_reason || 'Violation of Community Guidelines'}"</span>
+                                            </div>
+                                            <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                                This post has been hidden from explore and public feeds. You may revise the content to comply with platform standards, open an appeal ticket for staff review, or permanently delete the post (which will resolve all open tickets).
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Action Button Suite */}
+                                    <div className="flex items-center gap-2.5 flex-wrap pt-2 border-t border-rose-500/20">
+                                        <Button
+                                            size="sm"
+                                            onClick={() => setShowEditModal(true)}
+                                            className="rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs gap-1.5 shadow-sm cursor-pointer"
+                                        >
+                                            <Pencil className="h-3.5 w-3.5" />
+                                            <span>Edit &amp; Revise Post</span>
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => setShowPostAppealModal(true)}
+                                            className="rounded-xl border-rose-500/40 text-rose-300 hover:bg-rose-500/20 text-xs font-bold gap-1.5 shadow-sm cursor-pointer"
+                                        >
+                                            <ShieldAlert className="h-3.5 w-3.5" />
+                                            <span>Submit Appeal Ticket</span>
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => setShowDeleteModal(true)}
+                                            className="rounded-xl text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 text-xs font-semibold gap-1.5 cursor-pointer ml-auto"
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                            <span>Delete Post (Auto-Resolve)</span>
+                                        </Button>
+                                    </div>
+                                </div>
+                            ) : null
+                        )}
+
                         {/* 1. Author Header */}
                         <div className="flex items-center justify-between gap-4 pb-4 border-b border-border/60">
                             <div className="flex items-center gap-3.5">
-                                <Link to={`/@${post.user?.username || ''}`} className="cursor-pointer">
+                                <Link to={`/users/${post.user?.username || ''}`} className="cursor-pointer">
                                     <Avatar
                                         size="lg"
                                         fallback={post.user?.display_name || post.user?.username || '?'}
@@ -997,13 +1150,21 @@ export const PostDetailPage: React.FC = () => {
                                 <div>
                                     <div className="flex items-center gap-2">
                                         <Link
-                                            to={`/@${post.user?.username || ''}`}
+                                            to={`/users/${post.user?.username || ''}`}
                                             className="font-bold text-base text-foreground hover:text-primary transition-colors"
                                         >
                                             {post.user?.display_name || post.user?.username}
                                         </Link>
-                                        <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
-                                            {post.user?.artist_profile ? 'Artist' : 'Creator'}
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                            post.user?.role === 'admin'
+                                                ? 'text-rose-400 bg-rose-500/10 border-rose-500/20'
+                                                : post.user?.role === 'moderator'
+                                                ? 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20'
+                                                : post.user?.artist_profile
+                                                ? 'text-amber-400 bg-amber-500/10 border-amber-500/20'
+                                                : 'text-muted-foreground bg-secondary/80 border-border/60'
+                                        }`}>
+                                            {post.user?.role === 'admin' ? 'Admin' : post.user?.role === 'moderator' ? 'Moderator' : post.user?.artist_profile ? 'Artist' : 'User'}
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
@@ -1016,13 +1177,86 @@ export const PostDetailPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Visibility Badge */}
-                            <Badge variant="outline" className="text-xs font-semibold gap-1.5 px-3 py-1">
-                                {post.visibility === 'public' && <Globe className="h-3 w-3 text-emerald-400" />}
-                                {post.visibility === 'followers' && <Users className="h-3 w-3 text-primary" />}
-                                {post.visibility === 'private' && <Lock className="h-3 w-3 text-amber-400" />}
-                                <span className="capitalize">{post.visibility || 'Public'}</span>
-                            </Badge>
+                            {/* Visibility Badge & Post Actions Menu */}
+                            <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-xs font-semibold gap-1.5 px-3 py-1">
+                                    {post.visibility === 'public' && <Globe className="h-3 w-3 text-emerald-400" />}
+                                    {post.visibility === 'followers' && <Users className="h-3 w-3 text-primary" />}
+                                    {post.visibility === 'private' && <Lock className="h-3 w-3 text-amber-400" />}
+                                    <span className="capitalize">{post.visibility || 'Public'}</span>
+                                </Badge>
+
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <button
+                                            type="button"
+                                            className="p-1.5 rounded-xl hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                                            title="More post options"
+                                        >
+                                            <MoreHorizontal className="h-4 w-4" />
+                                        </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-44 rounded-2xl p-1.5">
+                                        <DropdownMenuItem
+                                            onClick={handleShare}
+                                            className="rounded-xl text-xs py-2 cursor-pointer gap-2"
+                                        >
+                                            <Share2 className="h-3.5 w-3.5 text-muted-foreground" />
+                                            <span>Share Link</span>
+                                        </DropdownMenuItem>
+
+                                        {isOwner && (
+                                            <>
+                                                <DropdownMenuItem
+                                                    onClick={() => setShowEditModal(true)}
+                                                    className="rounded-xl text-xs py-2 cursor-pointer gap-2"
+                                                >
+                                                    <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                                                    <span>Edit Post</span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onClick={() => setShowDeleteModal(true)}
+                                                    className="rounded-xl text-xs py-2 cursor-pointer gap-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5 text-rose-400" />
+                                                    <span>Delete Post</span>
+                                                </DropdownMenuItem>
+                                            </>
+                                        )}
+
+                                        {!isOwner && (
+                                            <DropdownMenuItem
+                                                onClick={() => {
+                                                    if (user?.role === 'admin' || user?.role === 'moderator') {
+                                                        navigate('/admin/reports');
+                                                        toast.info('Fast-travelled to Moderation Workbench');
+                                                        return;
+                                                    }
+                                                    if (!requireAuth('report')) return;
+                                                    setShowPostReportModal(true);
+                                                }}
+                                                className={`rounded-xl text-xs py-2 cursor-pointer gap-2 ${
+                                                    user?.role === 'admin' || user?.role === 'moderator'
+                                                        ? 'text-purple-400 hover:text-purple-300 hover:bg-purple-500/10'
+                                                        : 'text-rose-400 hover:text-rose-300 hover:bg-rose-500/10'
+                                                }`}
+                                            >
+                                                {user?.role === 'admin' || user?.role === 'moderator' ? (
+                                                    <>
+                                                        <Shield className="h-3.5 w-3.5 text-purple-400" />
+                                                        <span>Moderate Post</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Flag className="h-3.5 w-3.5 text-rose-400" />
+                                                        <span>Report Post</span>
+                                                    </>
+                                                )}
+                                            </DropdownMenuItem>
+                                        )}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
                         </div>
 
                         {/* ── Hero Artwork Display (For Portfolio / Artwork Posts) ── */}
@@ -1116,14 +1350,15 @@ export const PostDetailPage: React.FC = () => {
                         {post.tags && post.tags.length > 0 && (
                             <div className="flex flex-wrap gap-2 pt-2">
                                 {post.tags.map((t: { id: number; name: string }) => (
-                                    <Badge
-                                        key={t.id || t.name}
-                                        variant="secondary"
-                                        className="text-xs font-bold bg-primary/10 text-primary border border-primary/20"
-                                    >
-                                        <Tag className="h-3 w-3 mr-1" />
-                                        {t.name}
-                                    </Badge>
+                                    <Link key={t.id || t.name} to={`/explore?tag=${encodeURIComponent(t.name)}`}>
+                                        <Badge
+                                            variant="secondary"
+                                            className="text-xs font-bold bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all cursor-pointer hover:scale-105"
+                                        >
+                                            <Tag className="h-3 w-3 mr-1" />
+                                            {t.name}
+                                        </Badge>
+                                    </Link>
                                 ))}
                             </div>
                         )}
@@ -1277,6 +1512,10 @@ export const PostDetailPage: React.FC = () => {
                                     onDeleteComment={handleDeleteComment}
                                     onReplyAdded={handleReplyAdded}
                                     deletingCommentId={deletingCommentId}
+                                    onReportComment={(cId, cUser) => {
+                                        if (!requireAuth('report')) return;
+                                        setReportingComment({ id: cId, username: cUser });
+                                    }}
                                 />
                             ))
                         )}
@@ -1293,6 +1532,94 @@ export const PostDetailPage: React.FC = () => {
                     initialIndex={0}
                 />
             )}
+
+            {/* Report Post Modal */}
+            <ReportModal
+                isOpen={showPostReportModal}
+                onClose={() => setShowPostReportModal(false)}
+                reportableType="post"
+                reportableId={post.id}
+                targetTitle={post.content ? post.content.slice(0, 60) : post.portfolio?.title || `Post #${post.id}`}
+                targetSubtitle={post.user ? `by @${post.user.username}` : undefined}
+            />
+
+            {/* Report Comment Modal */}
+            {reportingComment && (
+                <ReportModal
+                    isOpen={Boolean(reportingComment)}
+                    onClose={() => setReportingComment(null)}
+                    reportableType="post_comment"
+                    reportableId={reportingComment.id}
+                    targetTitle={`Comment #${reportingComment.id}`}
+                    targetSubtitle={reportingComment.username ? `by @${reportingComment.username}` : undefined}
+                />
+            )}
+
+            {/* Moderation Appeal Modal */}
+            <AppealTicketModal
+                isOpen={showPostAppealModal}
+                onClose={() => setShowPostAppealModal(false)}
+                initialType="post"
+                initialId={post.id}
+                initialTitle={post.content ? post.content.slice(0, 60) : post.portfolio?.title || `Post #${post.id}`}
+                initialReason={post.taken_down_reason || 'Violation of Community Guidelines'}
+            />
+
+            {/* Edit Post Modal */}
+            <EditPostModal
+                isOpen={showEditModal}
+                onClose={() => setShowEditModal(false)}
+                post={post}
+                onPostUpdated={(updated) => setPost(updated)}
+                onOpenAppeal={() => setShowPostAppealModal(true)}
+            />
+
+            {/* Delete Post Modal */}
+            <AnimatePresence>
+                {showDeleteModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-card border border-border/80 w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4"
+                        >
+                            <h3 className="text-lg font-bold text-foreground">Delete this post?</h3>
+                            <p className="text-sm text-muted-foreground">
+                                Are you sure you want to delete this post? This action cannot be undone and will permanently remove all associated interactions.
+                            </p>
+                            <div className="flex items-center justify-end gap-3 pt-2">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setShowDeleteModal(false)}
+                                    disabled={isDeletingPost}
+                                    className="rounded-xl cursor-pointer"
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    variant="destructive"
+                                    onClick={handleDeletePost}
+                                    disabled={isDeletingPost}
+                                    className="rounded-xl gap-2 cursor-pointer bg-rose-600 hover:bg-rose-500"
+                                >
+                                    {isDeletingPost ? (
+                                        <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    ) : (
+                                        <Trash2 className="h-4 w-4" />
+                                    )}
+                                    <span>Delete Post</span>
+                                </Button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

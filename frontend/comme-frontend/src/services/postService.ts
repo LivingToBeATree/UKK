@@ -2,9 +2,9 @@ import { api } from './api';
 import type { ApiResponse, Post, PostComment } from '@/types';
 
 export const postService = {
-    // List all posts (paginated)
-    list: async (page = 1) => {
-        const res = await api.get<ApiResponse<Post[]>>('/posts', { params: { page } });
+    // List all posts (paginated with filters)
+    list: async (page = 1, params?: { tag?: string; search?: string; type?: string; user_id?: number; username?: string }) => {
+        const res = await api.get<ApiResponse<Post[]>>('/posts', { params: { page, ...params } });
         return res.data;
     },
 
@@ -61,6 +61,12 @@ export const postService = {
     // Get user's bookmarked posts
     getBookmarks: async (page = 1) => {
         const res = await api.get<ApiResponse<Post[]>>('/me/bookmarks', { params: { page } });
+        return res.data;
+    },
+
+    // Get user's liked posts
+    getLikes: async (page = 1) => {
+        const res = await api.get<ApiResponse<Post[]>>('/me/likes', { params: { page } });
         return res.data;
     },
 

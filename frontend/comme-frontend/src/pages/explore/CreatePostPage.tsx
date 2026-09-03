@@ -694,8 +694,16 @@ export const CreatePostPage: React.FC = () => {
                                                     <span className="font-bold text-sm text-foreground">
                                                         {user?.display_name || user?.username}
                                                     </span>
-                                                    <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
-                                                        {user?.artist_profile ? 'Artist' : 'Creator'}
+                                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                                        user?.role === 'admin'
+                                                            ? 'text-rose-400 bg-rose-500/10 border-rose-500/20'
+                                                            : user?.role === 'moderator'
+                                                            ? 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20'
+                                                            : user?.artist_profile
+                                                            ? 'text-amber-400 bg-amber-500/10 border-amber-500/20'
+                                                            : 'text-muted-foreground bg-secondary/80 border-border/60'
+                                                    }`}>
+                                                        {user?.role === 'admin' ? 'Admin' : user?.role === 'moderator' ? 'Moderator' : user?.artist_profile ? 'Artist' : 'User'}
                                                     </span>
                                                 </div>
                                                 <span className="text-xs text-muted-foreground">@{user?.username}</span>

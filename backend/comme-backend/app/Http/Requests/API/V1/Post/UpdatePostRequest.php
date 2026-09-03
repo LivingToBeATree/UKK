@@ -19,9 +19,13 @@ class UpdatePostRequest extends FormRequest
             'content' => ['sometimes', 'string'],
             'visibility' => ['sometimes', new Enum(PostVisibilityType::class)],
             'commentable' => ['sometimes', 'boolean'],
-
-            // portfolio_id intentionally not editable after creation —
-            // change it by deleting and re-creating the post instead.
+            'portfolio_id' => ['sometimes', 'nullable', 'exists:portfolios,id'],
+            'tags' => ['sometimes', 'nullable'],
+            'tags.*' => ['string', 'max:50'],
+            'media' => ['nullable', 'array', 'max:10'],
+            'media.*' => ['file', 'mimes:jpeg,png,jpg,gif,webp,mp4,mov', 'max:25600'],
+            'delete_media_ids' => ['sometimes', 'nullable'],
+            'delete_media_ids.*' => ['integer'],
         ];
     }
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
     Heart,
@@ -13,16 +13,55 @@ import {
     FileText,
     ChevronLeft,
     ChevronRight,
+    Search,
+    X,
+    TrendingUp,
+    Hash,
+    MoreHorizontal,
+    Flag,
+    Share2,
+    Shield,
+    ShieldAlert,
+    Lock,
+    Pencil,
+    Trash2,
 } from 'lucide-react';
+import { copyToClipboard } from '@/lib/clipboard';
+import { ReportModal } from '@/components/modals/ReportModal';
+import { EditPostModal } from '@/components/modals/EditPostModal';
+import { EditPortfolioModal } from '@/components/modals/EditPortfolioModal';
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 import { postService } from '@/services/postService';
+import { tagService, type TagItem } from '@/services/tagService';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Avatar } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/sonner';
 import { MarkdownContent } from '@/components/ui/markdown-content';
 import type { Post, PaginationMeta } from '@/types';
+
+const DEFAULT_FEATURED_TAGS = [
+    'Anime',
+    'Illustration',
+    'CharacterDesign',
+    'DigitalArt',
+    'Chibi',
+    'VTuber',
+    'ConceptArt',
+    'Fantasy',
+    'PixelArt',
+    'FanArt',
+    'Landscape',
+    '3D',
+];
 
 function formatPostDate(dateStr?: string | null): string {
     if (!dateStr) return '';
@@ -222,36 +261,65 @@ const PostCardMedia: React.FC<{ post: Post }> = ({ post }) => {
 };
 
 export const ExplorePage: React.FC = () => {
-    const { isAuthenticated } = useAuth();
+    const navigate = useNavigate();
+    const { isAuthenticated, user } = useAuth();
     const { requireAuth } = useAuthModal();
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    const initialTag = searchParams.get('tag') || '';
+    const initialSearch = searchParams.get('search') || '';
+
     const [posts, setPosts] = useState<Post[]>([]);
     const [meta, setMeta] = useState<PaginationMeta | null>(null);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [activeCategory, setActiveCategory] = useState<'all' | 'artwork' | 'posts'>('all');
+    const [selectedTag, setSelectedTag] = useState<string>(initialTag);
+    const [searchQuery, setSearchQuery] = useState<string>(initialSearch);
+    const [popularTags, setPopularTags] = useState<TagItem[]>([]);
 
-    const loadMore = async () => {
-        if (!meta || page >= meta.last_page || loading) return;
-        const nextPage = page + 1;
-        setPage(nextPage);
+    // Reporting & Edit modal states
+    const [reportingPost, setReportingPost] = useState<Post | null>(null);
+    const [editingPost, setEditingPost] = useState<Post | null>(null);
+    const [editingPortfolio, setEditingPortfolio] = useState<any | null>(null);
+
+    const handleDeletePost = async (post: Post) => {
+        if (!confirm('Are you sure you want to delete this post?')) return;
         try {
-            setLoading(true);
-            const res = await postService.list(nextPage);
-            setPosts((prev) => [...prev, ...(res.data || [])]);
-            setMeta(res.meta || null);
+            await postService.destroy(post.id);
+            setPosts((prev) => prev.filter((p) => p.id !== post.id));
+            toast.success('Post deleted successfully');
         } catch {
-            toast.error('Failed to load more posts');
-        } finally {
-            setLoading(false);
+            toast.error('Failed to delete post');
         }
     };
 
-    const fetchInitialPosts = async () => {
+    // Fetch popular tags on mount
+    useEffect(() => {
+        tagService.list({ limit: 30 }).then((tags) => {
+            if (tags && tags.length > 0) {
+                setPopularTags(tags);
+            }
+        }).catch(() => {});
+    }, []);
+
+    const fetchPosts = async (targetPage = 1, isLoadMore = false) => {
         try {
             setLoading(true);
-            const res = await postService.list(1);
-            setPosts(res.data || []);
+            const params: Record<string, string> = {};
+            if (selectedTag) params.tag = selectedTag;
+            if (searchQuery.trim()) params.search = searchQuery.trim();
+            if (activeCategory === 'artwork') params.type = 'artwork';
+            if (activeCategory === 'posts') params.type = 'posts';
+
+            const res = await postService.list(targetPage, params);
+            if (isLoadMore) {
+                setPosts((prev) => [...prev, ...(res.data || [])]);
+            } else {
+                setPosts(res.data || []);
+            }
             setMeta(res.meta || null);
+            setPage(targetPage);
         } catch {
             toast.error('Failed to load explore feed');
         } finally {
@@ -259,9 +327,49 @@ export const ExplorePage: React.FC = () => {
         }
     };
 
+    // Refetch when filters or tag changes
     useEffect(() => {
-        fetchInitialPosts();
-    }, []);
+        fetchPosts(1, false);
+    }, [selectedTag, activeCategory]);
+
+    const handleSearchSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        const nextParams = new URLSearchParams(searchParams);
+        if (searchQuery.trim()) {
+            nextParams.set('search', searchQuery.trim());
+        } else {
+            nextParams.delete('search');
+        }
+        setSearchParams(nextParams);
+        fetchPosts(1, false);
+    };
+
+    const handleSelectTag = (tagName: string) => {
+        const nextParams = new URLSearchParams(searchParams);
+        if (selectedTag.toLowerCase() === tagName.toLowerCase()) {
+            setSelectedTag('');
+            nextParams.delete('tag');
+        } else {
+            setSelectedTag(tagName);
+            nextParams.set('tag', tagName);
+        }
+        setSearchParams(nextParams);
+    };
+
+    const handleClearFilters = () => {
+        setSelectedTag('');
+        setSearchQuery('');
+        const nextParams = new URLSearchParams(searchParams);
+        nextParams.delete('tag');
+        nextParams.delete('search');
+        setSearchParams(nextParams);
+        fetchPosts(1, false);
+    };
+
+    const loadMore = async () => {
+        if (!meta || page >= meta.last_page || loading) return;
+        fetchPosts(page + 1, true);
+    };
 
     const handleLike = async (e: React.MouseEvent, postId: number) => {
         e.preventDefault();
@@ -382,6 +490,108 @@ export const ExplorePage: React.FC = () => {
                 )}
             </div>
 
+            {/* Search & Tag Filtering Section */}
+            <div className="space-y-3.5">
+                {/* Search Bar */}
+                <form onSubmit={handleSearchSubmit} className="relative flex items-center gap-2">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search artworks, creator username, or #tags..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-10 pr-10 h-11 rounded-2xl bg-card border-border/80 text-xs sm:text-sm shadow-xs focus-visible:ring-purple-500/40"
+                        />
+                        {searchQuery && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setSearchQuery('');
+                                    const nextParams = new URLSearchParams(searchParams);
+                                    nextParams.delete('search');
+                                    setSearchParams(nextParams);
+                                    fetchPosts(1, false);
+                                }}
+                                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer p-1 rounded-full"
+                            >
+                                <X className="h-3.5 w-3.5" />
+                            </button>
+                        )}
+                    </div>
+                    <Button type="submit" className="h-11 px-5 rounded-2xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-sm">
+                        Search
+                    </Button>
+                </form>
+
+                {/* Trending Tags Bar */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-none">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground px-1.5 shrink-0">
+                        <TrendingUp className="h-3.5 w-3.5 text-purple-500" />
+                        <span className="hidden sm:inline">Tags:</span>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={() => handleSelectTag('')}
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer shrink-0 ${
+                            !selectedTag
+                                ? 'bg-purple-600 text-white shadow-xs'
+                                : 'bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary border border-border/60'
+                        }`}
+                    >
+                        #All
+                    </button>
+
+                    {(popularTags.length > 0 ? popularTags.map((t) => t.name) : DEFAULT_FEATURED_TAGS).map((tagName) => {
+                        const isSelected = selectedTag.toLowerCase() === tagName.toLowerCase();
+                        return (
+                            <button
+                                key={tagName}
+                                type="button"
+                                onClick={() => handleSelectTag(tagName)}
+                                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
+                                    isSelected
+                                        ? 'bg-purple-600 text-white shadow-xs ring-2 ring-purple-400/40'
+                                        : 'bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary border border-border/60'
+                                }`}
+                            >
+                                <Hash className="h-3 w-3 opacity-70" />
+                                {tagName}
+                                {isSelected && <X className="h-3 w-3 ml-0.5" />}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Active Filter Indicators */}
+                {(selectedTag || searchQuery) && (
+                    <div className="flex items-center justify-between gap-3 p-2.5 px-4 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-xs">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-purple-400">Active Filters:</span>
+                            {selectedTag && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-600/20 text-purple-300 border border-purple-500/30 font-semibold font-mono">
+                                    #{selectedTag}
+                                    <button type="button" onClick={() => handleSelectTag(selectedTag)} className="hover:text-white cursor-pointer ml-1">
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                </span>
+                            )}
+                            {searchQuery && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-600/20 text-purple-300 border border-purple-500/30 font-semibold">
+                                    Search: "{searchQuery}"
+                                    <button type="button" onClick={() => { setSearchQuery(''); fetchPosts(1, false); }} className="hover:text-white cursor-pointer ml-1">
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                </span>
+                            )}
+                        </div>
+                        <Button size="xs" variant="ghost" onClick={handleClearFilters} className="text-muted-foreground hover:text-foreground cursor-pointer text-xs h-7">
+                            Clear Filters
+                        </Button>
+                    </div>
+                )}
+            </div>
+
             {/* Category Filter Tabs */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
                 <button
@@ -450,11 +660,20 @@ export const ExplorePage: React.FC = () => {
             ) : filteredPosts.length === 0 ? (
                 <div className="text-center py-20 bg-card rounded-3xl border border-dashed border-border p-8">
                     <Palette className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
-                    <h3 className="text-lg font-bold text-foreground">No artworks or posts found</h3>
+                    <h3 className="text-lg font-bold text-foreground">
+                        {selectedTag ? `No results found for #${selectedTag}` : searchQuery ? `No results found for "${searchQuery}"` : 'No artworks or posts found'}
+                    </h3>
                     <p className="text-xs text-muted-foreground mt-1 mb-6">
-                        Be the first to share your artwork illustration or start a discussion!
+                        {selectedTag || searchQuery ? 'Try clearing your filters or exploring another tag!' : 'Be the first to share your artwork illustration or start a discussion!'}
                     </p>
-                    {isAuthenticated ? (
+                    {selectedTag || searchQuery ? (
+                        <Button
+                            onClick={handleClearFilters}
+                            className="font-bold rounded-2xl bg-purple-600 hover:bg-purple-700 text-white shadow-md cursor-pointer"
+                        >
+                            Clear Filters & Show All
+                        </Button>
+                    ) : isAuthenticated ? (
                         <Link to="/posts/create">
                             <Button className="font-bold rounded-2xl bg-purple-600 hover:bg-purple-700 text-white shadow-md">
                                 <Sparkles className="h-4 w-4 mr-2" /> Create Post
@@ -486,78 +705,201 @@ export const ExplorePage: React.FC = () => {
                                     className="break-inside-avoid mb-4"
                                 >
                                     {isArt ? (
-                                        /* ── 1. Full-Bleed Artwork Card (Edge-to-Edge Showcase with Bottom Gradient) ── */
+                                        /* ── 1. Standardized Artwork Card (Clean Showcase with External Header & Actions) ── */
                                         <Link
                                             to={post.portfolio?.id ? `/portfolio/${post.portfolio.id}` : post.portfolio_id ? `/portfolio/${post.portfolio_id}` : `/posts/${post.id}`}
-                                            className="group relative block rounded-2xl overflow-hidden bg-card border border-border/80 hover:border-purple-500/60 shadow-xs hover:shadow-xl transition-all duration-300 cursor-pointer"
+                                            className="group relative block rounded-2xl overflow-hidden bg-card border border-border/80 hover:border-purple-500/60 shadow-xs hover:shadow-xl transition-all duration-300 cursor-pointer p-3.5 space-y-3"
                                         >
-                                            <div className="relative w-full overflow-hidden">
-                                                <PostCardMedia post={post} />
-
-                                                {/* Bottom Floating Dark Gradient Overlay */}
-                                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-3 sm:p-4 text-white flex flex-col justify-end gap-2 z-20">
-                                                    {/* Artwork Caption / Title */}
-                                                    {post.content && (
-                                                        <p className="text-xs font-semibold text-white/95 line-clamp-2 drop-shadow-md leading-relaxed">
-                                                            {post.content}
-                                                        </p>
-                                                    )}
-
-                                                    {/* Author Row & Glassmorphic Action Buttons */}
-                                                    <div className="flex items-center justify-between gap-2 pt-0.5">
-                                                        <div className="flex items-center gap-2 min-w-0">
-                                                            <Avatar
-                                                                size="sm"
-                                                                fallback={post.user?.display_name || post.user?.username || '?'}
-                                                                src={post.user?.avatar_url}
-                                                                className="h-6 w-6 ring-1 ring-white/30 shrink-0 shadow-xs"
-                                                            />
-                                                            <div className="flex items-center gap-1.5 min-w-0">
-                                                                <span className="text-xs font-bold text-white truncate drop-shadow-sm group-hover:text-purple-300 transition-colors">
-                                                                    {post.user?.display_name || post.user?.username}
-                                                                </span>
-                                                                <span className="text-[9px] font-black text-amber-300 bg-amber-400/20 px-1.5 py-0.2 rounded border border-amber-400/30 shrink-0 backdrop-blur-xs">
-                                                                    Artist
-                                                                </span>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Glassmorphic Actions */}
-                                                        <div className="flex items-center gap-1.5 shrink-0">
-                                                            <button
-                                                                type="button"
-                                                                onClick={(e) => handleLike(e, post.id)}
-                                                                className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full backdrop-blur-md transition-all cursor-pointer ${
-                                                                    post.is_liked
-                                                                        ? 'bg-rose-500/90 text-white font-bold'
-                                                                        : 'bg-black/40 hover:bg-black/60 text-white/90 border border-white/10'
-                                                                }`}
-                                                                aria-label="Like"
-                                                            >
-                                                                <Heart className={`h-3 w-3 ${post.is_liked ? 'fill-white text-white' : ''}`} />
-                                                                <span className="text-[10px]">{post.likes_count || 0}</span>
-                                                            </button>
-
-                                                            <span className="flex items-center gap-1 text-white/90 text-[10px] px-2 py-0.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
-                                                                <MessageSquare className="h-3 w-3" />
-                                                                <span>{post.comments_count || 0}</span>
+                                            {/* Author Header (Outside Top) */}
+                                            <div className="flex items-center justify-between gap-2">
+                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                    <Avatar
+                                                        size="sm"
+                                                        fallback={post.user?.display_name || post.user?.username || '?'}
+                                                        src={post.user?.avatar_url}
+                                                        className="h-7 w-7 shrink-0 ring-1 ring-border shadow-xs"
+                                                    />
+                                                    <div className="min-w-0">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className="text-xs font-bold text-foreground truncate group-hover:text-purple-400 transition-colors">
+                                                                {post.user?.display_name || post.user?.username}
                                                             </span>
-
-                                                            <button
-                                                                type="button"
-                                                                onClick={(e) => handleBookmark(e, post.id)}
-                                                                className={`p-1 rounded-full backdrop-blur-md transition-all cursor-pointer ${
-                                                                    post.is_bookmarked
-                                                                        ? 'bg-blue-500/90 text-white'
-                                                                        : 'bg-black/40 hover:bg-black/60 text-white/90 border border-white/10'
-                                                                }`}
-                                                                aria-label="Bookmark"
-                                                            >
-                                                                <Bookmark className={`h-3 w-3 ${post.is_bookmarked ? 'fill-white text-white' : ''}`} />
-                                                            </button>
+                                                            <span className="text-[9px] font-bold text-amber-400 bg-amber-400/10 px-1.5 py-0.2 rounded border border-amber-400/20 shrink-0">
+                                                                Artist
+                                                            </span>
+                                                            {(post.is_taken_down || post.portfolio?.is_taken_down) && (
+                                                                <span className="text-[9px] font-bold text-rose-400 bg-rose-500/10 px-1.5 py-0.2 rounded border border-rose-500/30 shrink-0 flex items-center gap-0.5">
+                                                                    <ShieldAlert className="h-2.5 w-2.5" /> Taken Down
+                                                                </span>
+                                                            )}
+                                                            {post.visibility === 'private' && !post.is_taken_down && !post.portfolio?.is_taken_down && (
+                                                                <span className="text-[9px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/30 shrink-0 flex items-center gap-0.5">
+                                                                    <Lock className="h-2.5 w-2.5" /> Private
+                                                                </span>
+                                                            )}
                                                         </div>
+                                                        {post.created_at && (
+                                                            <span className="text-[10px] text-muted-foreground block">
+                                                                {formatPostDate(post.created_at)}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
+
+                                                {/* 3-Dots Options Menu */}
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                e.stopPropagation();
+                                                            }}
+                                                            className="p-1 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors cursor-pointer"
+                                                            title="Options"
+                                                        >
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                        </button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" className="w-36 rounded-2xl p-1.5 z-30">
+                                                        <DropdownMenuItem
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                const url = `${window.location.origin}${post.portfolio?.id ? `/portfolio/${post.portfolio.id}` : `/posts/${post.id}`}`;
+                                                                await copyToClipboard(url);
+                                                                toast.success('Link copied to clipboard!');
+                                                            }}
+                                                            className="rounded-xl text-xs py-1.5 cursor-pointer gap-2"
+                                                        >
+                                                            <Share2 className="h-3 w-3 text-muted-foreground" />
+                                                            <span>Share Link</span>
+                                                        </DropdownMenuItem>
+
+                                                        {user && user.id === post.user_id && (
+                                                            <>
+                                                                <DropdownMenuItem
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        if (post.portfolio) {
+                                                                            setEditingPortfolio(post.portfolio);
+                                                                        } else {
+                                                                            setEditingPost(post);
+                                                                        }
+                                                                    }}
+                                                                    className="rounded-xl text-xs py-1.5 cursor-pointer gap-2"
+                                                                >
+                                                                    <Pencil className="h-3 w-3 text-muted-foreground" />
+                                                                    <span>{post.portfolio ? 'Edit Artwork' : 'Edit Post'}</span>
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleDeletePost(post);
+                                                                    }}
+                                                                    className="rounded-xl text-xs py-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 cursor-pointer gap-2"
+                                                                >
+                                                                    <Trash2 className="h-3 w-3" />
+                                                                    <span>Delete</span>
+                                                                </DropdownMenuItem>
+                                                            </>
+                                                        )}
+
+                                                        {(!user || user.id !== post.user_id) && (
+                                                            <DropdownMenuItem
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    if (!requireAuth('report')) return;
+                                                                    setReportingPost(post);
+                                                                }}
+                                                                className="rounded-xl text-xs py-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 cursor-pointer gap-2"
+                                                            >
+                                                                <Flag className="h-3 w-3" />
+                                                                <span>Report</span>
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </div>
+
+                                            {/* Artwork Showcase Media (Clean & Unobstructed) */}
+                                            <div className="relative w-full overflow-hidden rounded-xl bg-black/40 border border-border/60">
+                                                <PostCardMedia post={post} />
+                                            </div>
+
+                                            {/* Artwork Caption / Description */}
+                                            {post.content && (
+                                                <p className="text-xs font-medium text-foreground/90 line-clamp-2 leading-relaxed">
+                                                    {post.content}
+                                                </p>
+                                            )}
+
+                                            {/* Tags */}
+                                            {post.tags && post.tags.length > 0 && (
+                                                <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                                                    {post.tags.slice(0, 3).map((tag) => (
+                                                        <button
+                                                            key={tag.id}
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                e.stopPropagation();
+                                                                handleSelectTag(tag.name);
+                                                            }}
+                                                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full transition-all cursor-pointer ${
+                                                                selectedTag.toLowerCase() === tag.name.toLowerCase()
+                                                                    ? 'bg-purple-600 text-white font-bold shadow-xs'
+                                                                    : 'bg-secondary/70 hover:bg-secondary text-muted-foreground hover:text-foreground border border-border/50'
+                                                            }`}
+                                                        >
+                                                            #{tag.name}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            {/* Action Buttons Row (Outside Bottom) */}
+                                            <div className="flex items-center justify-between pt-2 border-t border-border/40 text-xs">
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => handleLike(e, post.id)}
+                                                        className={`flex items-center gap-1 px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
+                                                            post.is_liked
+                                                                ? 'text-rose-500 font-bold bg-rose-500/10'
+                                                                : 'text-muted-foreground hover:text-rose-500 hover:bg-secondary/60'
+                                                        }`}
+                                                        aria-label="Like"
+                                                    >
+                                                        <Heart
+                                                            className={`h-3.5 w-3.5 ${
+                                                                post.is_liked ? 'fill-rose-500 text-rose-500' : ''
+                                                            }`}
+                                                        />
+                                                        <span className="text-[11px]">{post.likes_count || 0}</span>
+                                                    </button>
+
+                                                    <span className="flex items-center gap-1 text-muted-foreground text-[11px] px-2 py-1 rounded-xl bg-secondary/40">
+                                                        <MessageSquare className="h-3.5 w-3.5" />
+                                                        <span>{post.comments_count || 0}</span>
+                                                    </span>
+                                                </div>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => handleBookmark(e, post.id)}
+                                                    className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
+                                                        post.is_bookmarked
+                                                            ? 'text-blue-500 bg-blue-500/10'
+                                                            : 'text-muted-foreground hover:text-blue-500 hover:bg-secondary/60'
+                                                    }`}
+                                                    aria-label="Bookmark"
+                                                >
+                                                    <Bookmark
+                                                        className={`h-3.5 w-3.5 ${
+                                                            post.is_bookmarked ? 'fill-blue-500 text-blue-500' : ''
+                                                        }`}
+                                                    />
+                                                </button>
                                             </div>
                                         </Link>
                                     ) : (
@@ -580,9 +922,19 @@ export const ExplorePage: React.FC = () => {
                                                             <span className="text-xs font-bold text-foreground truncate group-hover:text-purple-400 transition-colors">
                                                                 {post.user?.display_name || post.user?.username}
                                                             </span>
-                                                            <span className="text-[9px] font-bold text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20 shrink-0">
-                                                                Creator
+                                                            <span className="text-[9px] font-bold text-muted-foreground bg-secondary/80 px-1.5 py-0.2 rounded border border-border/60 shrink-0">
+                                                                {post.user?.role === 'admin' ? 'Admin' : post.user?.role === 'moderator' ? 'Moderator' : post.user?.artist_profile ? 'Artist' : 'User'}
                                                             </span>
+                                                            {(post.is_taken_down || post.portfolio?.is_taken_down) && (
+                                                                <span className="text-[9px] font-bold text-rose-400 bg-rose-500/10 px-1.5 py-0.2 rounded border border-rose-500/30 shrink-0 flex items-center gap-0.5">
+                                                                    <ShieldAlert className="h-2.5 w-2.5" /> Taken Down
+                                                                </span>
+                                                            )}
+                                                            {post.visibility === 'private' && !post.is_taken_down && !post.portfolio?.is_taken_down && (
+                                                                <span className="text-[9px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/30 shrink-0 flex items-center gap-0.5">
+                                                                    <Lock className="h-2.5 w-2.5" /> Private
+                                                                </span>
+                                                            )}
                                                         </div>
                                                         {post.created_at && (
                                                             <span className="text-[10px] text-muted-foreground block">
@@ -591,8 +943,99 @@ export const ExplorePage: React.FC = () => {
                                                         )}
                                                     </div>
                                                 </div>
-                                            </div>
 
+                                                {/* 3-Dots Options Menu */}
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                e.stopPropagation();
+                                                            }}
+                                                            className="p-1 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors cursor-pointer"
+                                                            title="Post options"
+                                                        >
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                        </button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" className="w-36 rounded-2xl p-1.5 z-30">
+                                                        <DropdownMenuItem
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                const url = `${window.location.origin}/posts/${post.id}`;
+                                                                await copyToClipboard(url);
+                                                                toast.success('Link copied to clipboard!');
+                                                            }}
+                                                            className="rounded-xl text-xs py-1.5 cursor-pointer gap-2"
+                                                        >
+                                                            <Share2 className="h-3 w-3 text-muted-foreground" />
+                                                            <span>Share Link</span>
+                                                        </DropdownMenuItem>
+
+                                                        {user && user.id === post.user_id && (
+                                                            <>
+                                                                <DropdownMenuItem
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        if (post.portfolio) {
+                                                                            setEditingPortfolio(post.portfolio);
+                                                                        } else {
+                                                                            setEditingPost(post);
+                                                                        }
+                                                                    }}
+                                                                    className="rounded-xl text-xs py-1.5 cursor-pointer gap-2"
+                                                                >
+                                                                    <Pencil className="h-3 w-3 text-muted-foreground" />
+                                                                    <span>{post.portfolio ? 'Edit Artwork' : 'Edit Post'}</span>
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleDeletePost(post);
+                                                                    }}
+                                                                    className="rounded-xl text-xs py-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 cursor-pointer gap-2"
+                                                                >
+                                                                    <Trash2 className="h-3 w-3" />
+                                                                    <span>Delete</span>
+                                                                </DropdownMenuItem>
+                                                            </>
+                                                        )}
+
+                                                        {(!user || user.id !== post.user_id) && (
+                                                            <DropdownMenuItem
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    if (user?.role === 'admin' || user?.role === 'moderator') {
+                                                                        navigate('/admin/reports');
+                                                                        toast.info('Fast-travelled to Moderation Workbench');
+                                                                        return;
+                                                                    }
+                                                                    if (!requireAuth('report')) return;
+                                                                    setReportingPost(post);
+                                                                }}
+                                                                className={`rounded-xl text-xs py-1.5 cursor-pointer gap-2 ${
+                                                                    user?.role === 'admin' || user?.role === 'moderator'
+                                                                        ? 'text-purple-400 hover:text-purple-300 hover:bg-purple-500/10'
+                                                                        : 'text-rose-400 hover:text-rose-300 hover:bg-rose-500/10'
+                                                                }`}
+                                                            >
+                                                                {user?.role === 'admin' || user?.role === 'moderator' ? (
+                                                                    <>
+                                                                        <Shield className="h-3.5 w-3.5 text-purple-400" />
+                                                                        <span>Moderate Post</span>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <Flag className="h-3.5 w-3.5" />
+                                                                        <span>Report</span>
+                                                                    </>
+                                                                )}
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </div>
                                             {/* Markdown Content */}
                                             {post.content && (
                                                 <div className="py-0.5">
@@ -608,6 +1051,30 @@ export const ExplorePage: React.FC = () => {
                                             {postHasMedia && (
                                                 <div className="pt-0.5">
                                                     <PostCardMedia post={post} />
+                                                </div>
+                                            )}
+
+                                            {/* Discussion Post Tags */}
+                                            {post.tags && post.tags.length > 0 && (
+                                                <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                                                    {post.tags.slice(0, 4).map((tag) => (
+                                                        <button
+                                                            key={tag.id}
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                e.stopPropagation();
+                                                                handleSelectTag(tag.name);
+                                                            }}
+                                                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full transition-all cursor-pointer ${
+                                                                selectedTag.toLowerCase() === tag.name.toLowerCase()
+                                                                    ? 'bg-purple-600 text-white font-bold shadow-xs'
+                                                                    : 'bg-secondary/70 hover:bg-secondary text-muted-foreground hover:text-foreground border border-border/50'
+                                                            }`}
+                                                        >
+                                                            #{tag.name}
+                                                        </button>
+                                                    ))}
                                                 </div>
                                             )}
 
@@ -662,6 +1129,52 @@ export const ExplorePage: React.FC = () => {
                         })}
                     </AnimatePresence>
                 </div>
+            )}
+
+            {/* Universal Report Modal */}
+            {reportingPost && (
+                <ReportModal
+                    isOpen={Boolean(reportingPost)}
+                    onClose={() => setReportingPost(null)}
+                    reportableType="post"
+                    reportableId={reportingPost.id}
+                    targetTitle={reportingPost.content ? reportingPost.content.slice(0, 60) : reportingPost.portfolio?.title || `Post #${reportingPost.id}`}
+                    targetSubtitle={reportingPost.user ? `by @${reportingPost.user.username}` : undefined}
+                />
+            )}
+
+            {/* Edit Post Modal */}
+            {editingPost && (
+                <EditPostModal
+                    isOpen={Boolean(editingPost)}
+                    onClose={() => setEditingPost(null)}
+                    post={editingPost}
+                    onPostUpdated={(updated) => {
+                        setPosts((prev) =>
+                            prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p))
+                        );
+                        setEditingPost(null);
+                    }}
+                />
+            )}
+
+            {/* Edit Portfolio Modal */}
+            {editingPortfolio && (
+                <EditPortfolioModal
+                    isOpen={Boolean(editingPortfolio)}
+                    onClose={() => setEditingPortfolio(null)}
+                    portfolio={editingPortfolio}
+                    onPortfolioUpdated={(updated) => {
+                        setPosts((prev) =>
+                            prev.map((p) =>
+                                p.portfolio_id === updated.id || p.portfolio?.id === updated.id
+                                    ? { ...p, portfolio: { ...p.portfolio, ...updated } }
+                                    : p
+                            )
+                        );
+                        setEditingPortfolio(null);
+                    }}
+                />
             )}
 
             {/* Load More Button */}

@@ -11,7 +11,7 @@ class PostPolicy
 {
     public function before(?User $user, string $ability): ?bool
     {
-        return $user?->isAdmin() ? true : null;
+        return $user?->isStaff() ? true : null;
     }
  
     public function viewAny(?User $user): bool

@@ -16,6 +16,8 @@ class PostResource extends JsonResource
             'user_id' => $this->user_id,
             'content' => $this->content,
             'visibility' => $this->visibility?->value,
+            'is_taken_down' => (bool) $this->is_taken_down,
+            'taken_down_reason' => $this->when($user?->id === $this->user_id || $user?->isStaff(), $this->taken_down_reason),
             'commentable' => $this->commentable,
             'likes_count' => $this->likes()->count(),
             'comments_count' => $this->comments()->count(),

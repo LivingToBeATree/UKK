@@ -10,6 +10,7 @@ Route::get('posts/{post}', [PostController::class, 'show']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('me/bookmarks', [PostBookmarkController::class, 'userBookmarks']);
+    Route::get('me/likes', [PostLikeController::class, 'userLikes']);
     Route::post('posts/{post}/like', [PostLikeController::class, 'toggleLike']);
     Route::post('posts/{post}/bookmark', [PostBookmarkController::class, 'toggleBookmark']);
     Route::post('posts', [PostController::class, 'store']);

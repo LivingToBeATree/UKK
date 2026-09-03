@@ -15,6 +15,8 @@ class Post extends Model
         'portfolio_id',
         'content',
         'visibility',
+        'is_taken_down',
+        'taken_down_reason',
         'commentable',
         'likes_count',
         'comments_count',
@@ -25,6 +27,7 @@ class Post extends Model
     {
         return [
             'visibility' => PostVisibilityType::class,
+            'is_taken_down' => 'boolean',
             'commentable' => 'boolean',
             'likes_count' => 'integer',
             'comments_count' => 'integer',

@@ -29,7 +29,6 @@ import { api } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { toast } from '@/components/ui/sonner';
 import { MarkdownContent } from '@/components/ui/markdown-content';
 import { GifPickerModal } from '@/components/ui/GifPickerModal';
@@ -407,9 +406,17 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
                                 <span className="font-bold text-xs sm:text-sm text-foreground">
                                     {user?.display_name || user?.username}
                                 </span>
-                                <Badge variant="secondary" className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0 rounded border border-primary/20">
-                                    {user?.artist_profile ? 'Artist' : 'Creator'}
-                                </Badge>
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                    user?.role === 'admin'
+                                        ? 'text-rose-400 bg-rose-500/10 border-rose-500/20'
+                                        : user?.role === 'moderator'
+                                        ? 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20'
+                                        : user?.artist_profile
+                                        ? 'text-amber-400 bg-amber-500/10 border-amber-500/20'
+                                        : 'text-muted-foreground bg-secondary/80 border-border/60'
+                                }`}>
+                                    {user?.role === 'admin' ? 'Admin' : user?.role === 'moderator' ? 'Moderator' : user?.artist_profile ? 'Artist' : 'User'}
+                                </span>
                                 <span className="text-[11px] text-muted-foreground hidden sm:inline">@{user?.username}</span>
                             </div>
                         </div>
