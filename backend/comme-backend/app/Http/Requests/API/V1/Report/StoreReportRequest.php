@@ -10,6 +10,7 @@ use App\Models\Post;
 use App\Models\PostComment;
 use App\Models\CommissionReview;
 use App\Models\Portfolio;
+use App\Models\CommissionService;
 use App\Models\User;
 use App\Enum\ReportReason;
 
@@ -20,6 +21,7 @@ class StoreReportRequest extends FormRequest
         'post_comment' => PostComment::class,
         'commission_review' => CommissionReview::class,
         'portfolio' => Portfolio::class,
+        'commission_service' => CommissionService::class,
         'user' => User::class
     ];
 
@@ -63,13 +65,13 @@ class StoreReportRequest extends FormRequest
                 return;
             }
 
-            if ($this->reportable_type === "user" && $target->id === $this->user()->id) {
+            if ($this->reportable_type === "user" && $target->id === $this->user()->id && $this->reason !== ReportReason::APPEAL->value && $this->reason !== ReportReason::INQUIRY->value) {
                 $validator->errors()->add('reportable_id', 'You cannot report yourself.');
 
                 return;
             }
 
-            if (! $this->user()->can('view', $target)) {
+            if (! $this->user()->can('view', $target) && ! ($this->reason === ReportReason::APPEAL->value || $this->reason === ReportReason::INQUIRY->value)) {
                 $validator->errors()->add('reportable_id', 'You cannot report something you do not have access to.');
             }
         });

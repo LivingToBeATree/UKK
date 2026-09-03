@@ -1,26 +1,5 @@
 import { api } from './api';
-import type { ApiResponse } from '@/types';
-
-export interface Ticket {
-    id: number;
-    user_id: number;
-    subject: string;
-    priority: 'low' | 'medium' | 'high';
-    status: 'open' | 'in_progress' | 'closed';
-    created_at: string;
-    updated_at: string;
-    user?: { id: number; username: string; display_name: string; avatar_url?: string | null };
-    messages?: TicketMessage[];
-}
-
-export interface TicketMessage {
-    id: number;
-    ticket_id: number;
-    user_id: number;
-    body: string;
-    created_at: string;
-    user?: { id: number; username: string; display_name: string; avatar_url?: string | null };
-}
+import type { ApiResponse, Ticket, TicketMessage } from '@/types';
 
 export const ticketService = {
     list: async (page = 1, params?: Record<string, string>) => {
@@ -33,13 +12,18 @@ export const ticketService = {
         return res.data.data;
     },
 
-    update: async (id: number, payload: { body: string }) => {
+    update: async (id: number, payload: { priority?: string; assigned_to?: number | null }) => {
         const res = await api.patch<ApiResponse<Ticket>>(`/tickets/${id}`, payload);
         return res.data.data;
     },
 
     close: async (id: number) => {
         const res = await api.patch<ApiResponse<Ticket>>(`/tickets/${id}/close`);
+        return res.data.data;
+    },
+
+    sendMessage: async (ticketId: number, content: string) => {
+        const res = await api.post<ApiResponse<TicketMessage>>(`/tickets/${ticketId}/messages`, { content });
         return res.data.data;
     },
 };

@@ -32,4 +32,9 @@ class ModerationAction extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function staff(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 }

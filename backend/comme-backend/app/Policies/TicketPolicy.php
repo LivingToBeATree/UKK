@@ -15,12 +15,13 @@ class TicketPolicy
  
     public function viewAny(User $user): bool
     {
-        return $user->isStaff();
+        return true;
     }
  
     public function view(User $user, Ticket $ticket): bool
     {
-        return $user->isStaff();
+        return $user->isStaff()
+            || ($ticket->report && $user->id === $ticket->report->user_id);
     }
  
     /**

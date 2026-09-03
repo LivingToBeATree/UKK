@@ -14,6 +14,8 @@ class TicketResource extends JsonResource
             'priority' => $this->priority?->value,
             'assigned_at' => $this->assigned_at,
             'closed_at' => $this->closed_at,
+            'created_at' => $this->created_at?->toISOString(),
+            'updated_at' => $this->updated_at?->toISOString(),
 
             'report' => new ReportResource($this->whenLoaded('report')),
             'assignee' => new UserResource($this->whenLoaded('assignee')),

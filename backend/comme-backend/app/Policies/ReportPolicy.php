@@ -15,7 +15,7 @@ class ReportPolicy
  
     public function viewAny(User $user): bool
     {
-        return $user->isStaff();
+        return true;
     }
  
     /**

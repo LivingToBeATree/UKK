@@ -12,13 +12,18 @@ export const reportService = {
         return res.data.data;
     },
 
-    create: async (payload: { reportable_type: string; reportable_id: number; reason: string }) => {
+    create: async (payload: { reportable_type: string; reportable_id: number; reason: string; description?: string }) => {
         const res = await api.post<ApiResponse<Report>>('/reports', payload);
         return res.data.data;
     },
 
     update: async (id: number, payload: { status: string }) => {
         const res = await api.patch<ApiResponse<Report>>(`/reports/${id}`, payload);
+        return res.data.data;
+    },
+
+    executeAction: async (id: number, payload: { action_type: 'warning' | 'remove_content' | 'restore_content' | 'suspend_user' | 'unsuspend_user'; notes: string }) => {
+        const res = await api.post<ApiResponse<{ report: Report; moderation_action: unknown }>>(`/reports/${id}/action`, payload);
         return res.data.data;
     },
 };

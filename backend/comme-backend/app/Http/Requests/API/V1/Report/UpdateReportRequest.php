@@ -15,7 +15,7 @@ class UpdateReportRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return $this->user()->can('update', $this->route('report'));
+        return $this->user()?->isStaff() ?? false;
     }
 
     public function rules(): array

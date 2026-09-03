@@ -11,7 +11,11 @@ class UpdateTicketRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('update', $this->route('ticket'));
+        $ticket = $this->route('ticket');
+        if (! $ticket instanceof \App\Models\Ticket) {
+            $ticket = \App\Models\Ticket::find($ticket);
+        }
+        return $ticket ? $this->user()->can('update', $ticket) : false;
     }
 
     public function rules(): array
