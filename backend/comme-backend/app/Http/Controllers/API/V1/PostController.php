@@ -138,11 +138,11 @@ class PostController extends Controller
                 break;
             case 'popular':
             case 'most_liked':
-                $query->withCount('likes')->orderByDesc('likes_count')->latest();
+                $query->orderByDesc('likes_count')->latest();
                 break;
             case 'comments':
             case 'most_commented':
-                $query->withCount('comments')->orderByDesc('comments_count')->latest();
+                $query->orderByDesc('comments_count')->latest();
                 break;
             case 'latest':
             default:

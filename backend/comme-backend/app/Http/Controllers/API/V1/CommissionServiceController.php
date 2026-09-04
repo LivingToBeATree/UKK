@@ -67,10 +67,14 @@ class CommissionServiceController extends Controller
 
         // 5. Price filtering
         if ($request->filled('min_price')) {
-            $query->where('price', '>=', (float) $request->min_price);
+            $query->whereHas('options', function ($oq) use ($request) {
+                $oq->where('base_price', '>=', (float) $request->min_price);
+            });
         }
         if ($request->filled('max_price')) {
-            $query->where('price', '<=', (float) $request->max_price);
+            $query->whereHas('options', function ($oq) use ($request) {
+                $oq->where('base_price', '<=', (float) $request->max_price);
+            });
         }
 
         // 6. Sorting / Sort Order
@@ -81,19 +85,23 @@ class CommissionServiceController extends Controller
                 break;
             case 'price_asc':
             case 'price_low':
-                $query->orderBy('price', 'asc');
+                $query->withMin('options', 'base_price')
+                    ->orderBy('options_min_base_price', 'asc');
                 break;
             case 'price_desc':
             case 'price_high':
-                $query->orderBy('price', 'desc');
+                $query->withMax('options', 'base_price')
+                    ->orderBy('options_max_base_price', 'desc');
                 break;
             case 'title_asc':
             case 'name_asc':
             case 'alphabetical':
+            case 'az':
                 $query->orderBy('name', 'asc');
                 break;
             case 'title_desc':
             case 'name_desc':
+            case 'za':
                 $query->orderBy('name', 'desc');
                 break;
             case 'latest':
