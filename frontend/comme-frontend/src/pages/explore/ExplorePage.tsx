@@ -670,10 +670,12 @@ export const ExplorePage: React.FC = () => {
                         }}
                         className="h-8 px-2.5 rounded-lg bg-card border border-border text-xs font-semibold text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500 cursor-pointer shadow-2xs"
                     >
-                        <option value="latest">⚡ Newest First</option>
-                        <option value="popular">🔥 Most Popular</option>
-                        <option value="comments">💬 Most Discussed</option>
-                        <option value="oldest">⏳ Oldest First</option>
+                        <option value="latest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="popular">Most Popular</option>
+                        <option value="comments">Most Discussed</option>
+                        <option value="title_asc">Title (A - Z)</option>
+                        <option value="title_desc">Title (Z - A)</option>
                     </select>
                 </div>
             </div>

@@ -141,12 +141,12 @@ export const ArtistsDirectoryPage: React.FC = () => {
                             }}
                             className="h-8 px-2.5 rounded-lg bg-card border border-border text-xs font-semibold text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer shadow-2xs"
                         >
-                            <option value="newest">⚡ Newest Joined</option>
-                            <option value="rating">⭐ Highest Rated</option>
-                            <option value="reviews">💬 Most Reviews</option>
-                            <option value="name_asc">🔤 Name (A - Z)</option>
-                            <option value="name_desc">🔤 Name (Z - A)</option>
-                            <option value="oldest">⏳ Oldest Members</option>
+                            <option value="newest">Newest Joined</option>
+                            <option value="name_asc">Name (A - Z)</option>
+                            <option value="name_desc">Name (Z - A)</option>
+                            <option value="rating">Highest Rated</option>
+                            <option value="reviews">Most Reviews</option>
+                            <option value="oldest">Oldest Members</option>
                         </select>
                     </div>
                 </div>

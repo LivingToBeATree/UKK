@@ -579,9 +579,9 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
                                         onChange={(e) => setVisibility(e.target.value)}
                                         className="w-full h-9 rounded-xl bg-background border border-border px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                                     >
-                                        <option value="public">🌐 Public (Explore Feed)</option>
-                                        <option value="followers">👥 Followers Only</option>
-                                        <option value="private">🔒 Private (Only Me)</option>
+                                        <option value="public">Public (Explore Feed)</option>
+                                        <option value="followers">Followers Only</option>
+                                        <option value="private">Private (Only Me)</option>
                                     </select>
                                 )}
                             </div>

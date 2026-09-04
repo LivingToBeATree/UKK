@@ -120,6 +120,19 @@ class PostController extends Controller
         // 7. Sort Order
         $sort = $request->get('sort', 'latest');
         switch ($sort) {
+            case 'title_asc':
+            case 'name_asc':
+            case 'alphabetical':
+            case 'az':
+            case 'content_asc':
+                $query->orderBy('content', 'asc');
+                break;
+            case 'title_desc':
+            case 'name_desc':
+            case 'za':
+            case 'content_desc':
+                $query->orderBy('content', 'desc');
+                break;
             case 'oldest':
                 $query->oldest();
                 break;

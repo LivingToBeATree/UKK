@@ -63,6 +63,21 @@ class CommissionController extends Controller
         // Sorting / Sort Order
         $sort = $request->get('sort', 'latest');
         switch ($sort) {
+            case 'title_asc':
+            case 'name_asc':
+            case 'alphabetical':
+            case 'az':
+                $query->join('commission_services', 'commissions.commission_service_id', '=', 'commission_services.id')
+                    ->orderBy('commission_services.name', 'asc')
+                    ->select('commissions.*');
+                break;
+            case 'title_desc':
+            case 'name_desc':
+            case 'za':
+                $query->join('commission_services', 'commissions.commission_service_id', '=', 'commission_services.id')
+                    ->orderBy('commission_services.name', 'desc')
+                    ->select('commissions.*');
+                break;
             case 'oldest':
                 $query->oldest();
                 break;

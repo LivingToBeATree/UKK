@@ -280,12 +280,12 @@ export const StorePage: React.FC = () => {
                             }}
                             className="h-8 px-2.5 rounded-lg bg-card border border-border text-xs font-semibold text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer shadow-2xs"
                         >
-                            <option value="latest">⚡ Newest First</option>
-                            <option value="price_asc">💵 Price: Low to High</option>
-                            <option value="price_desc">💎 Price: High to Low</option>
-                            <option value="title_asc">🔤 Title (A - Z)</option>
-                            <option value="title_desc">🔤 Title (Z - A)</option>
-                            <option value="oldest">⏳ Oldest First</option>
+                            <option value="latest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="title_asc">Title (A - Z)</option>
+                            <option value="title_desc">Title (Z - A)</option>
+                            <option value="price_asc">Price: Low to High</option>
+                            <option value="price_desc">Price: High to Low</option>
                         </select>
                     </div>
                 </div>
