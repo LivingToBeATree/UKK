@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('media/stream/{path}', [MediaStreamController::class, 'stream'])->where('path', '.*');
 
 Route::get('media/{media}', [MediaController::class, 'show']);
+Route::get('media/{media}/download', [MediaController::class, 'download']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('media', [MediaController::class, 'store']);

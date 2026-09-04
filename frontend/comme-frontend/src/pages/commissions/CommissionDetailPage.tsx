@@ -28,6 +28,7 @@ import { commissionOrderApi, commissionReviewApi } from '@/services/commissionSe
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { formatPrice, formatDateSafe, formatDateTimeSafe } from '@/utils/format';
+import { downloadFile } from '@/lib/download';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -875,16 +876,14 @@ export const CommissionDetailPage: React.FC = () => {
                                                                         <p className="text-[11px] font-medium truncate text-foreground">{item.file_name || 'Deliverable'}</p>
                                                                         {item.size && <p className="text-[9px] text-muted-foreground">{formatFileSize(item.size)}</p>}
                                                                     </div>
-                                                                    <a
-                                                                        href={item.url}
-                                                                        target="_blank"
-                                                                        rel="noopener noreferrer"
-                                                                        download={item.file_name || 'deliverable'}
-                                                                        className="h-7 w-7 rounded-lg bg-secondary hover:bg-muted text-foreground flex items-center justify-center shrink-0 transition-colors cursor-pointer"
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => downloadFile(item.url, item.file_name || 'deliverable')}
+                                                                        className="h-7 w-7 rounded-lg bg-secondary hover:bg-muted text-foreground flex items-center justify-center shrink-0 transition-all cursor-pointer hover:scale-105 active:scale-95"
                                                                         title="Download deliverable"
                                                                     >
                                                                         <Download className="h-3.5 w-3.5" />
-                                                                    </a>
+                                                                    </button>
                                                                 </div>
                                                             </div>
                                                         );
@@ -1395,16 +1394,12 @@ export const CommissionDetailPage: React.FC = () => {
                                                 {otherMedia.length > 0 && (
                                                     <div className="space-y-1.5 pt-1">
                                                         {otherMedia.map((mediaItem, idx) => (
-                                                            <a
+                                                            <div
                                                                 key={mediaItem.id || idx}
-                                                                href={mediaItem.url}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                download={mediaItem.file_name || 'attachment'}
                                                                 className={`flex items-center gap-2 p-2 rounded-xl border transition-all text-xs ${
                                                                     isMe
-                                                                        ? 'bg-primary-foreground/10 border-primary-foreground/20 hover:bg-primary-foreground/20 text-primary-foreground'
-                                                                        : 'bg-card border-border hover:bg-secondary text-foreground'
+                                                                        ? 'bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground'
+                                                                        : 'bg-card border-border text-foreground'
                                                                 }`}
                                                             >
                                                                 <div className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">
@@ -1416,8 +1411,19 @@ export const CommissionDetailPage: React.FC = () => {
                                                                         <p className="text-[10px] opacity-75">{formatFileSize(mediaItem.size)}</p>
                                                                     )}
                                                                 </div>
-                                                                <Download className="h-4 w-4 shrink-0 opacity-80" />
-                                                            </a>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => downloadFile(mediaItem.url, mediaItem.file_name || 'attachment')}
+                                                                    className={`p-1.5 rounded-lg transition-all cursor-pointer hover:scale-105 active:scale-95 ${
+                                                                        isMe
+                                                                            ? 'hover:bg-primary-foreground/20 text-primary-foreground'
+                                                                            : 'hover:bg-secondary text-foreground'
+                                                                    }`}
+                                                                    title="Download attachment"
+                                                                >
+                                                                    <Download className="h-4 w-4 shrink-0 opacity-80" />
+                                                                </button>
+                                                            </div>
                                                         ))}
                                                     </div>
                                                 )}

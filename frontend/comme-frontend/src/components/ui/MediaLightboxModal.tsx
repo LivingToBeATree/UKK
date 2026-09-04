@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, ChevronLeft, ChevronRight, Video, ExternalLink } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Video, ExternalLink, Download } from 'lucide-react';
 import { CustomVideoPlayer } from '@/components/ui/CustomVideoPlayer';
+import { downloadFile } from '@/lib/download';
 import type { MediaItem } from '@/types/post';
 
 export interface MediaLightboxModalProps {
@@ -120,14 +121,23 @@ export const MediaLightboxModal: React.FC<MediaLightboxModalProps> = ({
                     </div>
 
                     <div className="flex items-center gap-2">
-                        {/* Download / Open original */}
+                        {/* Download media button */}
+                        <button
+                            type="button"
+                            onClick={() => downloadFile(currentMedia.url, currentMedia.file_name || 'media')}
+                            className="h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95"
+                            title="Download original file"
+                        >
+                            <Download className="h-4 w-4" />
+                        </button>
+
+                        {/* Open original in new tab */}
                         <a
                             href={currentMedia.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            download={currentMedia.file_name || 'media'}
-                            className="h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
-                            title="Open original media"
+                            className="h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95"
+                            title="Open original media in new tab"
                         >
                             <ExternalLink className="h-4 w-4" />
                         </a>
@@ -136,7 +146,7 @@ export const MediaLightboxModal: React.FC<MediaLightboxModalProps> = ({
                         <button
                             type="button"
                             onClick={onClose}
-                            className="h-10 w-10 rounded-full bg-white/10 hover:bg-destructive text-white flex items-center justify-center transition-colors cursor-pointer hover:scale-105"
+                            className="h-10 w-10 rounded-full bg-white/10 hover:bg-destructive text-white flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95"
                             title="Close (Esc)"
                         >
                             <X className="h-5 w-5" />

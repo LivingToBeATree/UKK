@@ -74,6 +74,21 @@ class MediaController extends Controller
     }
 
     /**
+     * Download the specified media file directly as an attachment.
+     */
+    public function download(Media $media)
+    {
+        if (!$media->file_path || !Storage::disk('public')->exists($media->file_path)) {
+            return ApiResponseHelper::errorResponse('File not found in storage.', Response::HTTP_NOT_FOUND);
+        }
+
+        $fullPath = Storage::disk('public')->path($media->file_path);
+        $downloadName = $media->file_name ?: basename($media->file_path);
+
+        return response()->download($fullPath, $downloadName);
+    }
+
+    /**
      * Remove the specified media from storage.
      * Strictly authorized via MediaPolicy: only the owner or an admin can delete.
      */
