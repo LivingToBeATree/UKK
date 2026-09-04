@@ -878,7 +878,11 @@ export const CommissionDetailPage: React.FC = () => {
                                                                     </div>
                                                                     <button
                                                                         type="button"
-                                                                        onClick={() => downloadFile(item.url, item.file_name || 'deliverable')}
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            e.preventDefault();
+                                                                            downloadFile(item.url, item.file_name || 'deliverable');
+                                                                        }}
                                                                         className="h-7 w-7 rounded-lg bg-secondary hover:bg-muted text-foreground flex items-center justify-center shrink-0 transition-all cursor-pointer hover:scale-105 active:scale-95"
                                                                         title="Download deliverable"
                                                                     >
@@ -1413,7 +1417,11 @@ export const CommissionDetailPage: React.FC = () => {
                                                                 </div>
                                                                 <button
                                                                     type="button"
-                                                                    onClick={() => downloadFile(mediaItem.url, mediaItem.file_name || 'attachment')}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        e.preventDefault();
+                                                                        downloadFile(mediaItem.url, mediaItem.file_name || 'attachment');
+                                                                    }}
                                                                     className={`p-1.5 rounded-lg transition-all cursor-pointer hover:scale-105 active:scale-95 ${
                                                                         isMe
                                                                             ? 'hover:bg-primary-foreground/20 text-primary-foreground'

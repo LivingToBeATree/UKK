@@ -124,7 +124,11 @@ export const MediaLightboxModal: React.FC<MediaLightboxModalProps> = ({
                         {/* Download media button */}
                         <button
                             type="button"
-                            onClick={() => downloadFile(currentMedia.url, currentMedia.file_name || 'media')}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                downloadFile(currentMedia.url, currentMedia.file_name || 'media');
+                            }}
                             className="h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95"
                             title="Download original file"
                         >

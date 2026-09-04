@@ -115,6 +115,8 @@ class PostController extends Controller
                         });
                 }
             });
+        }
+
         // 7. Sort Order
         $sort = $request->get('sort', 'latest');
         switch ($sort) {
