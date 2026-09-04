@@ -8,19 +8,84 @@ use App\Http\Requests\API\V1\ArtistProfile\UpdateArtistProfileRequest;
 use App\Http\Resources\API\V1\ArtistProfileResource;
 use App\Http\Helpers\ApiResponseHelper;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 
 class ArtistProfileController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of the resource with search, tag, and sort order support.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         Gate::authorize("viewAny", ArtistProfile::class);
 
-        $artistProfiles = ArtistProfile::with('user')->paginate(20);
+        $query = ArtistProfile::with(['user', 'services', 'portfolios.thumbnailMedia']);
+
+        // Exclude suspended users
+        $query->whereHas('user', function ($uq) {
+            $uq->whereNull('suspended_at');
+        });
+
+        // Search query across artist username, display_name, bio, location, skills
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('bio', 'ILIKE', "%{$search}%")
+                  ->orWhere('location', 'ILIKE', "%{$search}%")
+                  ->orWhere('skills', 'ILIKE', "%{$search}%")
+                  ->orWhereHas('user', function ($uq) use ($search) {
+                      $uq->where('username', 'ILIKE', "%{$search}%")
+                        ->orWhere('display_name', 'ILIKE', "%{$search}%");
+                  });
+            });
+        }
+
+        // Tag / skill filter
+        if ($request->filled('tag')) {
+            $tag = trim(str_replace('#', '', $request->tag));
+            $query->where(function ($q) use ($tag) {
+                $q->where('skills', 'ILIKE', "%{$tag}%")
+                  ->orWhere('bio', 'ILIKE', "%{$tag}%")
+                  ->orWhereHas('services.tags', function ($tq) use ($tag) {
+                      $tq->where('name', 'ILIKE', "%{$tag}%")
+                         ->orWhere('slug', 'ILIKE', "%{$tag}%");
+                  });
+            });
+        }
+
+        // Sorting / Sort Order
+        $sort = $request->get('sort', 'newest');
+        switch ($sort) {
+            case 'oldest':
+                $query->oldest();
+                break;
+            case 'name_asc':
+            case 'alphabetical':
+                $query->join('users', 'artist_profiles.user_id', '=', 'users.id')
+                      ->orderBy('users.display_name', 'asc')
+                      ->select('artist_profiles.*');
+                break;
+            case 'name_desc':
+                $query->join('users', 'artist_profiles.user_id', '=', 'users.id')
+                      ->orderBy('users.display_name', 'desc')
+                      ->select('artist_profiles.*');
+                break;
+            case 'reviews':
+                $query->withCount('reviews')->orderByDesc('reviews_count');
+                break;
+            case 'rating':
+                $query->withAvg('reviews', 'rating')->orderByDesc('reviews_avg_rating');
+                break;
+            case 'newest':
+            case 'latest':
+            default:
+                $query->latest();
+                break;
+        }
+
+        $artistProfiles = $query->paginate(20);
 
         return ApiResponseHelper::paginatedResponse(
             ArtistProfileResource::collection($artistProfiles),

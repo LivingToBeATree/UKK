@@ -96,8 +96,8 @@ export const artistApplicationApi = {
 
 // Portfolios
 export const portfolioApi = {
-    list: async (page = 1) => {
-        const res = await api.get<ApiResponse<Portfolio[]>>('/portfolios', { params: { page } });
+    list: async (page = 1, params?: Record<string, unknown>) => {
+        const res = await api.get<ApiResponse<Portfolio[]>>('/portfolios', { params: { page, ...params } });
         return res.data;
     },
 

@@ -49,9 +49,43 @@ class CommissionController extends Controller
             $query->where('status', $request->query('status'));
         }
 
+        // Search query across client notes, service title, and counterpart username
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('client_notes', 'ILIKE', "%{$search}%")
+                  ->orWhereHas('commissionService', fn ($sq) => $sq->where('name', 'ILIKE', "%{$search}%"))
+                  ->orWhereHas('user', fn ($uq) => $uq->where('username', 'ILIKE', "%{$search}%")->orWhere('display_name', 'ILIKE', "%{$search}%"))
+                  ->orWhereHas('artistProfile.user', fn ($uq) => $uq->where('username', 'ILIKE', "%{$search}%")->orWhere('display_name', 'ILIKE', "%{$search}%"));
+            });
+        }
+
+        // Sorting / Sort Order
+        $sort = $request->get('sort', 'latest');
+        switch ($sort) {
+            case 'oldest':
+                $query->oldest();
+                break;
+            case 'price_desc':
+                $query->orderByDesc('total_price');
+                break;
+            case 'price_asc':
+                $query->orderBy('total_price', 'asc');
+                break;
+            case 'deadline_asc':
+                $query->orderByRaw('deadline IS NULL, deadline ASC');
+                break;
+            case 'deadline_desc':
+                $query->orderByRaw('deadline IS NULL, deadline DESC');
+                break;
+            case 'latest':
+            default:
+                $query->latest();
+                break;
+        }
+
         $commissions = $query
             ->with(['commissionService', 'commissionOption.addons', 'artistProfile.user', 'user'])
-            ->latest()
             ->paginate(20);
 
         return ApiResponseHelper::paginatedResponse(

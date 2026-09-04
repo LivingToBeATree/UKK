@@ -24,8 +24,7 @@ class PostController extends Controller
         $user = $request->user();
         $isStaff = $user && ($user->isStaff() || $user->isAdmin());
 
-        $query = Post::with(['user', 'portfolio.media', 'portfolio.thumbnailMedia', 'media', 'tags'])
-            ->latest();
+        $query = Post::with(['user', 'portfolio.media', 'portfolio.thumbnailMedia', 'media', 'tags']);
 
         // 1. Exclude taken-down posts and posts from suspended authors (except for staff, or the post's own author)
         if (! $isStaff) {
@@ -116,6 +115,24 @@ class PostController extends Controller
                         });
                 }
             });
+        // 7. Sort Order
+        $sort = $request->get('sort', 'latest');
+        switch ($sort) {
+            case 'oldest':
+                $query->oldest();
+                break;
+            case 'popular':
+            case 'most_liked':
+                $query->withCount('likes')->orderByDesc('likes_count')->latest();
+                break;
+            case 'comments':
+            case 'most_commented':
+                $query->withCount('comments')->orderByDesc('comments_count')->latest();
+                break;
+            case 'latest':
+            default:
+                $query->latest();
+                break;
         }
 
         $posts = $query->paginate(20);

@@ -26,7 +26,7 @@ class PortfolioController extends Controller
         $user = $request->user();
         $isStaff = $user && ($user->isStaff() || $user->isAdmin());
 
-        $query = Portfolio::with(['artistProfile.user', 'thumbnailMedia', 'media', 'tags'])->latest();
+        $query = Portfolio::with(['artistProfile.user', 'thumbnailMedia', 'media', 'tags']);
 
         // 1. Exclude taken-down portfolios and suspended artists from public views (except staff or artist owner)
         if (! $isStaff) {
@@ -82,6 +82,28 @@ class PortfolioController extends Controller
         // Hide private artworks unless viewed by artist owner or staff
         if (! $isStaff && ! $isArtistOwner) {
             $query->where('visibility', \App\Enum\CommissionVisibility::PUBLIC);
+        }
+
+        // Sorting / Sort Order
+        $sort = $request->get('sort', 'latest');
+        switch ($sort) {
+            case 'oldest':
+                $query->oldest();
+                break;
+            case 'title_asc':
+            case 'alphabetical':
+                $query->orderBy('title', 'asc');
+                break;
+            case 'title_desc':
+                $query->orderBy('title', 'desc');
+                break;
+            case 'starred':
+                $query->orderByDesc('starred')->latest();
+                break;
+            case 'latest':
+            default:
+                $query->latest();
+                break;
         }
 
         $portfolios = $query->paginate(20);

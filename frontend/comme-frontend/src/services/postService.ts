@@ -2,8 +2,8 @@ import { api } from './api';
 import type { ApiResponse, Post, PostComment } from '@/types';
 
 export const postService = {
-    // List all posts (paginated with filters)
-    list: async (page = 1, params?: { tag?: string; search?: string; type?: string; user_id?: number; username?: string }) => {
+    // List all posts (paginated with filters & sort order)
+    list: async (page = 1, params?: { tag?: string; search?: string; type?: string; user_id?: number; username?: string; sort?: string }) => {
         const res = await api.get<ApiResponse<Post[]>>('/posts', { params: { page, ...params } });
         return res.data;
     },

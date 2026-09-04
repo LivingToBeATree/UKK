@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Filter, Hash, X, Sparkles, ShoppingBag } from 'lucide-react';
+import { Search, Filter, Hash, X, Sparkles, ShoppingBag, ArrowUpDown } from 'lucide-react';
 import { commissionServiceApi } from '@/services/commissionService';
 import { tagService, type TagItem } from '@/services/tagService';
 import { Button } from '@/components/ui/button';
@@ -33,6 +33,8 @@ export const StorePage: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const initialTag = searchParams.get('tag') || '';
     const initialSearch = searchParams.get('search') || '';
+    const initialSort = searchParams.get('sort') || 'latest';
+    const initialStatus = searchParams.get('status') || 'all';
 
     const [services, setServices] = useState<CommissionService[]>([]);
     const [meta, setMeta] = useState<PaginationMeta | null>(null);
@@ -40,6 +42,8 @@ export const StorePage: React.FC = () => {
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState(initialSearch);
     const [selectedTag, setSelectedTag] = useState<string>(initialTag);
+    const [sortBy, setSortBy] = useState<string>(initialSort);
+    const [statusFilter, setStatusFilter] = useState<string>(initialStatus);
     const [popularTags, setPopularTags] = useState<TagItem[]>([]);
 
     useEffect(() => {
@@ -56,6 +60,8 @@ export const StorePage: React.FC = () => {
             const params: Record<string, string> = {};
             if (search.trim()) params.search = search.trim();
             if (selectedTag) params.tag = selectedTag;
+            if (statusFilter && statusFilter !== 'all') params.status = statusFilter;
+            if (sortBy && sortBy !== 'latest') params.sort = sortBy;
 
             const res = await commissionServiceApi.list(targetPage, params);
             if (isLoadMore) {
@@ -74,7 +80,7 @@ export const StorePage: React.FC = () => {
 
     useEffect(() => {
         fetchServices(1, false);
-    }, [selectedTag]);
+    }, [selectedTag, statusFilter, sortBy]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -199,33 +205,90 @@ export const StorePage: React.FC = () => {
                     })}
                 </div>
 
-                {/* Active Filter Indicator */}
-                {(selectedTag || search) && (
-                    <div className="flex items-center justify-between gap-3 p-2.5 px-4 rounded-2xl bg-primary/10 border border-primary/20 text-xs">
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-bold text-primary">Active Filters:</span>
-                            {selectedTag && (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30 font-semibold font-mono">
-                                    #{selectedTag}
-                                    <button type="button" onClick={() => handleSelectTag(selectedTag)} className="hover:text-foreground cursor-pointer ml-1">
-                                        <X className="h-3 w-3" />
-                                    </button>
-                                </span>
-                            )}
-                            {search && (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30 font-semibold">
-                                    Search: "{search}"
-                                    <button type="button" onClick={() => { setSearch(''); fetchServices(1, false); }} className="hover:text-foreground cursor-pointer ml-1">
-                                        <X className="h-3 w-3" />
-                                    </button>
-                                </span>
-                            )}
-                        </div>
-                        <Button size="xs" variant="ghost" onClick={handleClearFilters} className="text-muted-foreground hover:text-foreground cursor-pointer text-xs h-7">
-                            Clear Filters
-                        </Button>
+                {/* Status Tabs & Sort Order Bar */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-border/60 pt-3">
+                    {/* Status Tabs */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setStatusFilter('all');
+                                const nextParams = new URLSearchParams(searchParams);
+                                nextParams.delete('status');
+                                setSearchParams(nextParams);
+                            }}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                statusFilter === 'all'
+                                    ? 'bg-primary text-primary-foreground shadow-xs'
+                                    : 'bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary border border-border/60'
+                            }`}
+                        >
+                            All Status
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setStatusFilter('open');
+                                const nextParams = new URLSearchParams(searchParams);
+                                nextParams.set('status', 'open');
+                                setSearchParams(nextParams);
+                            }}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                statusFilter === 'open'
+                                    ? 'bg-emerald-600 text-white shadow-xs'
+                                    : 'bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary border border-border/60'
+                            }`}
+                        >
+                            🟢 Open Slots
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setStatusFilter('closed');
+                                const nextParams = new URLSearchParams(searchParams);
+                                nextParams.set('status', 'closed');
+                                setSearchParams(nextParams);
+                            }}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                statusFilter === 'closed'
+                                    ? 'bg-rose-600 text-white shadow-xs'
+                                    : 'bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary border border-border/60'
+                            }`}
+                        >
+                            🔴 Closed
+                        </button>
                     </div>
-                )}
+
+                    {/* Sort Order Selector */}
+                    <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 bg-secondary/40 p-1 rounded-xl border border-border/60">
+                        <span className="text-[11px] font-bold text-muted-foreground pl-2 flex items-center gap-1.5">
+                            <ArrowUpDown className="h-3.5 w-3.5 text-primary" />
+                            Sort:
+                        </span>
+                        <select
+                            value={sortBy}
+                            onChange={(e) => {
+                                const nextSort = e.target.value;
+                                setSortBy(nextSort);
+                                const nextParams = new URLSearchParams(searchParams);
+                                if (nextSort !== 'latest') {
+                                    nextParams.set('sort', nextSort);
+                                } else {
+                                    nextParams.delete('sort');
+                                }
+                                setSearchParams(nextParams);
+                            }}
+                            className="h-8 px-2.5 rounded-lg bg-card border border-border text-xs font-semibold text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer shadow-2xs"
+                        >
+                            <option value="latest">⚡ Newest First</option>
+                            <option value="price_asc">💵 Price: Low to High</option>
+                            <option value="price_desc">💎 Price: High to Low</option>
+                            <option value="title_asc">🔤 Title (A - Z)</option>
+                            <option value="title_desc">🔤 Title (Z - A)</option>
+                            <option value="oldest">⏳ Oldest First</option>
+                        </select>
+                    </div>
+                </div>
             </div>
 
             {/* Service Grid */}

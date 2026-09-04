@@ -25,6 +25,7 @@ import {
     Lock,
     Pencil,
     Trash2,
+    ArrowUpDown,
 } from 'lucide-react';
 import { copyToClipboard } from '@/lib/clipboard';
 import { ReportModal } from '@/components/modals/ReportModal';
@@ -268,6 +269,7 @@ export const ExplorePage: React.FC = () => {
 
     const initialTag = searchParams.get('tag') || '';
     const initialSearch = searchParams.get('search') || '';
+    const initialSort = searchParams.get('sort') || 'latest';
 
     const [posts, setPosts] = useState<Post[]>([]);
     const [meta, setMeta] = useState<PaginationMeta | null>(null);
@@ -276,6 +278,7 @@ export const ExplorePage: React.FC = () => {
     const [activeCategory, setActiveCategory] = useState<'all' | 'artwork' | 'posts'>('all');
     const [selectedTag, setSelectedTag] = useState<string>(initialTag);
     const [searchQuery, setSearchQuery] = useState<string>(initialSearch);
+    const [sortBy, setSortBy] = useState<string>(initialSort);
     const [popularTags, setPopularTags] = useState<TagItem[]>([]);
 
     // Reporting & Edit modal states
@@ -311,6 +314,7 @@ export const ExplorePage: React.FC = () => {
             if (searchQuery.trim()) params.search = searchQuery.trim();
             if (activeCategory === 'artwork') params.type = 'artwork';
             if (activeCategory === 'posts') params.type = 'posts';
+            if (sortBy && sortBy !== 'latest') params.sort = sortBy;
 
             const res = await postService.list(targetPage, params);
             if (isLoadMore) {
@@ -327,10 +331,10 @@ export const ExplorePage: React.FC = () => {
         }
     };
 
-    // Refetch when filters or tag changes
+    // Refetch when filters, category, or sort changes
     useEffect(() => {
         fetchPosts(1, false);
-    }, [selectedTag, activeCategory]);
+    }, [selectedTag, activeCategory, sortBy]);
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -592,55 +596,86 @@ export const ExplorePage: React.FC = () => {
                 )}
             </div>
 
-            {/* Category Filter Tabs */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-                <button
-                    type="button"
-                    onClick={() => setActiveCategory('all')}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                        activeCategory === 'all'
-                            ? 'bg-purple-600 text-white shadow-sm'
-                            : 'bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary border border-border/60'
-                    }`}
-                >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    All
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-background/20 font-semibold">
-                        {posts.length}
-                    </span>
-                </button>
+            {/* Category Filter Tabs & Sort Order Bar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/60 pb-3">
+                {/* Category Filter Tabs */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+                    <button
+                        type="button"
+                        onClick={() => setActiveCategory('all')}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                            activeCategory === 'all'
+                                ? 'bg-purple-600 text-white shadow-sm'
+                                : 'bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary border border-border/60'
+                        }`}
+                    >
+                        <Sparkles className="h-3.5 w-3.5" />
+                        All
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-background/20 font-semibold">
+                            {posts.length}
+                        </span>
+                    </button>
 
-                <button
-                    type="button"
-                    onClick={() => setActiveCategory('artwork')}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                        activeCategory === 'artwork'
-                            ? 'bg-purple-600 text-white shadow-sm'
-                            : 'bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary border border-border/60'
-                    }`}
-                >
-                    <Palette className="h-3.5 w-3.5" />
-                    Artwork Showcase
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-background/20 font-semibold">
-                        {artworkCount}
-                    </span>
-                </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveCategory('artwork')}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                            activeCategory === 'artwork'
+                                ? 'bg-purple-600 text-white shadow-sm'
+                                : 'bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary border border-border/60'
+                        }`}
+                    >
+                        <Palette className="h-3.5 w-3.5" />
+                        Artwork Showcase
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-background/20 font-semibold">
+                            {artworkCount}
+                        </span>
+                    </button>
 
-                <button
-                    type="button"
-                    onClick={() => setActiveCategory('posts')}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                        activeCategory === 'posts'
-                            ? 'bg-purple-600 text-white shadow-sm'
-                            : 'bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary border border-border/60'
-                    }`}
-                >
-                    <FileText className="h-3.5 w-3.5" />
-                    Discussions
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-background/20 font-semibold">
-                        {postsCount}
+                    <button
+                        type="button"
+                        onClick={() => setActiveCategory('posts')}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                            activeCategory === 'posts'
+                                ? 'bg-purple-600 text-white shadow-sm'
+                                : 'bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary border border-border/60'
+                        }`}
+                    >
+                        <FileText className="h-3.5 w-3.5" />
+                        Discussions
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-background/20 font-semibold">
+                            {postsCount}
+                        </span>
+                    </button>
+                </div>
+
+                {/* Sort Order Selector */}
+                <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 bg-secondary/40 p-1 rounded-xl border border-border/60">
+                    <span className="text-[11px] font-bold text-muted-foreground pl-2 flex items-center gap-1.5">
+                        <ArrowUpDown className="h-3.5 w-3.5 text-purple-400" />
+                        Sort:
                     </span>
-                </button>
+                    <select
+                        value={sortBy}
+                        onChange={(e) => {
+                            const nextSort = e.target.value;
+                            setSortBy(nextSort);
+                            const nextParams = new URLSearchParams(searchParams);
+                            if (nextSort !== 'latest') {
+                                nextParams.set('sort', nextSort);
+                            } else {
+                                nextParams.delete('sort');
+                            }
+                            setSearchParams(nextParams);
+                        }}
+                        className="h-8 px-2.5 rounded-lg bg-card border border-border text-xs font-semibold text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500 cursor-pointer shadow-2xs"
+                    >
+                        <option value="latest">⚡ Newest First</option>
+                        <option value="popular">🔥 Most Popular</option>
+                        <option value="comments">💬 Most Discussed</option>
+                        <option value="oldest">⏳ Oldest First</option>
+                    </select>
+                </div>
             </div>
 
             {/* Masonry Feed */}

@@ -24,8 +24,7 @@ class CommissionServiceController extends Controller
     {
         Gate::authorize('viewAny', CommissionService::class);
 
-        $query = CommissionService::with(['artistProfile.user', 'thumbnailMedia', 'media', 'options.addons', 'tags'])
-            ->latest();
+        $query = CommissionService::with(['artistProfile.user', 'thumbnailMedia', 'media', 'options.addons', 'tags']);
 
         // 1. Tag filtering
         if ($request->filled('tag')) {
@@ -62,8 +61,45 @@ class CommissionServiceController extends Controller
         }
 
         // 4. Status filter (open / closed)
-        if ($request->filled('status')) {
+        if ($request->filled('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
+        }
+
+        // 5. Price filtering
+        if ($request->filled('min_price')) {
+            $query->where('price', '>=', (float) $request->min_price);
+        }
+        if ($request->filled('max_price')) {
+            $query->where('price', '<=', (float) $request->max_price);
+        }
+
+        // 6. Sorting / Sort Order
+        $sort = $request->get('sort', 'latest');
+        switch ($sort) {
+            case 'oldest':
+                $query->oldest();
+                break;
+            case 'price_asc':
+            case 'price_low':
+                $query->orderBy('price', 'asc');
+                break;
+            case 'price_desc':
+            case 'price_high':
+                $query->orderBy('price', 'desc');
+                break;
+            case 'title_asc':
+            case 'name_asc':
+            case 'alphabetical':
+                $query->orderBy('name', 'asc');
+                break;
+            case 'title_desc':
+            case 'name_desc':
+                $query->orderBy('name', 'desc');
+                break;
+            case 'latest':
+            default:
+                $query->latest();
+                break;
         }
 
         $commissionServices = $query->paginate(20);
