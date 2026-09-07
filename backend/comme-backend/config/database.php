@@ -87,7 +87,13 @@ return [
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DB_URL'),
-            'host' => env('DB_HOST', '127.0.0.1'),
+            'host' => (function () {
+                $h = env('DB_HOST', '127.0.0.1');
+                if (str_contains($h, ':') && !str_starts_with($h, '/') && !str_contains($h, '127.0.0.1') && !str_contains($h, 'localhost')) {
+                    return '/cloudsql/' . $h;
+                }
+                return $h;
+            })(),
             'port' => env('DB_PORT', '5432'),
             'database' => env('DB_DATABASE', 'laravel'),
             'username' => env('DB_USERNAME', 'root'),

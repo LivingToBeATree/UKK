@@ -18,12 +18,14 @@ return [
     |
     */
 
-    'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
+    'stateful' => array_map(function ($domain) {
+        return preg_replace('#^https?://#', '', trim($domain));
+    }, explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
         '%s%s',
         'localhost,localhost:5173,localhost:3000,127.0.0.1,127.0.0.1:5173,127.0.0.1:8000,::1',
         Sanctum::currentApplicationUrlWithPort(),
         // Sanctum::currentRequestHost(),
-    ))),
+    )))),
 
     /*
     |--------------------------------------------------------------------------
