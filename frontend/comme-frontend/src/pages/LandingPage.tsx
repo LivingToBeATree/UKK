@@ -1,11 +1,12 @@
 import React from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { motion, type Variants } from 'motion/react';
-import { ArrowRight, ArrowUpRight, Palette, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Palette, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { useAuthModal } from '@/contexts/AuthModalContext';
 import { Navbar } from '@/components/Navbar';
+import { ForArtistsCta } from '@/components/ForArtistsCta';
+import { PublicFooter } from '@/components/PublicFooter';
 
 const heroReveal: Variants = {
     hidden: { opacity: 0, y: 16 },
@@ -52,7 +53,6 @@ const gallery = [
 
 export const LandingPage: React.FC = () => {
     const { isAuthenticated, isLoading, user } = useAuth();
-    const { requireAuth } = useAuthModal();
 
     if (isLoading) return null;
 
@@ -196,63 +196,12 @@ export const LandingPage: React.FC = () => {
                 </section>
 
                 {/* ── For artists ── */}
-                <section className="border-t border-border">
-                    <div className="max-w-5xl mx-auto px-6 sm:px-8 py-16 sm:py-20">
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center rounded-2xl bg-foreground text-background p-8 sm:p-12">
-                            <div className="lg:col-span-8 space-y-3">
-                                <div className="inline-flex items-center gap-2 text-xs font-medium text-background/70">
-                                    <Sparkles className="h-3.5 w-3.5" /> For artists
-                                </div>
-                                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Set your own packages. Get paid on delivery.</h2>
-                                <p className="text-sm text-background/70 max-w-md leading-relaxed">
-                                    Build tiered commission options, manage a portfolio, and message clients directly — payouts go straight to your bank once a commission is confirmed.
-                                </p>
-                            </div>
-                            <div className="lg:col-span-4 flex lg:justify-end">
-                                {isAuthenticated ? (
-                                    <Link to={user?.artist_profile ? '/dashboard' : '/apply-artist'}>
-                                        <Button size="lg" variant="secondary">
-                                            {user?.artist_profile ? 'Go to studio' : 'Apply as an artist'}
-                                            <ArrowRight className="h-4 w-4 ml-2" />
-                                        </Button>
-                                    </Link>
-                                ) : (
-                                    <Button
-                                        size="lg"
-                                        variant="secondary"
-                                        onClick={() => requireAuth('studio')}
-                                    >
-                                        Get started <ArrowRight className="h-4 w-4 ml-2" />
-                                    </Button>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </section>
+                <ForArtistsCta />
             </main>
 
             {/* ── Landing Footer ── */}
-            <footer className="border-t border-border py-8 px-6 sm:px-8 bg-background">
-                <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-2.5">
-                        <img
-                            src="/Comme_Wordmark.svg"
-                            alt="Comme"
-                            className="h-5 w-auto object-contain opacity-80"
-                        />
-                        <span>© {new Date().getFullYear()} Comme Platform. All rights reserved.</span>
-                    </div>
+            <PublicFooter />
 
-                    <div className="flex items-center gap-6">
-                        <Link to="/explore" className="hover:text-foreground transition-colors">Explore</Link>
-                        <Link to="/store" className="hover:text-foreground transition-colors">Store</Link>
-                        <Link to="/license" className="hover:text-foreground transition-colors">License</Link>
-                        <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
-                        <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
-                        <Link to="/escrow-terms" className="hover:text-foreground transition-colors">Escrow</Link>
-                    </div>
-                </div>
-            </footer>
         </div>
     );
 };

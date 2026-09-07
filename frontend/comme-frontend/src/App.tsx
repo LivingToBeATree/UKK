@@ -9,6 +9,8 @@ import { useIsMobile } from '@/hooks/useMediaQuery';
 import { SidebarRail } from '@/components/SidebarRail';
 import { MobileHeader, MobileBottomNav, MobileDrawer } from '@/components/MobileNav';
 import { Navbar } from '@/components/Navbar';
+import { ForArtistsCta } from '@/components/ForArtistsCta';
+import { PublicFooter } from '@/components/PublicFooter';
 import { Toaster } from '@/components/ui/sonner';
 import { WarningNoticeModal } from '@/components/modals/WarningNoticeModal';
 import { useAuth } from '@/hooks/useAuth';
@@ -48,6 +50,8 @@ function AppLayout() {
                 <main className="flex-1 flex flex-col min-h-screen w-full">
                     <AppRoutes />
                 </main>
+                <ForArtistsCta />
+                <PublicFooter />
                 <Toaster />
                 <WarningNoticeModal />
             </div>
