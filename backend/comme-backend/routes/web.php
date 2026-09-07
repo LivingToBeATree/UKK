@@ -19,6 +19,21 @@ Route::withoutMiddleware([
     Route::get('/errors', function () {
         return view('errors');
     });
+
+    Route::get('/migrate-deploy', function () {
+        try {
+            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+            return response()->json([
+                'status' => 'SUCCESS',
+                'output' => \Illuminate\Support\Facades\Artisan::output(),
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => 'ERROR',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    });
 });
 
 // Direct storage file provider with full CORS support and fallback for development & production

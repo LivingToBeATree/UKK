@@ -74,6 +74,14 @@ php artisan storage:link --force || true
 
 # Run migrations if RUN_MIGRATIONS=true
 if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
+    echo "==> Waiting for database connection..."
+    for i in $(seq 1 20); do
+        if php artisan db:monitor >/dev/null 2>&1; then
+            echo "==> Database connection established."
+            break
+        fi
+        sleep 1
+    done
     echo "==> Running database migrations..."
     php artisan migrate --force || echo "Warning: Migration failed, continuing startup..."
 fi
