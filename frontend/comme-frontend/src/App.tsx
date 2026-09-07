@@ -47,7 +47,7 @@ function AppLayout() {
         return (
             <div className="min-h-screen bg-background text-foreground flex flex-col font-sans transition-colors duration-200 overflow-x-clip">
                 <Navbar />
-                <main className="flex-1 flex flex-col min-h-screen w-full">
+                <main className="flex-1 flex flex-col w-full">
                     <AppRoutes />
                 </main>
                 <ForArtistsCta />
@@ -57,6 +57,29 @@ function AppLayout() {
             </div>
         );
     }
+
+    // Routes where public discovery CTA and footer are retained for authenticated users
+    const isPublicBrowseRoute = (() => {
+        const publicPrefixes = [
+            '/explore',
+            '/store',
+            '/artists',
+            '/escrow-terms',
+            '/terms',
+            '/privacy',
+            '/license',
+            '/posts',
+        ];
+        const privateExactOrPrefix = [
+            '/posts/create',
+            '/store/manage',
+            '/store/create',
+        ];
+        if (privateExactOrPrefix.some((p) => location.pathname.startsWith(p))) {
+            return false;
+        }
+        return publicPrefixes.some((prefix) => location.pathname === prefix || location.pathname.startsWith(`${prefix}/`));
+    })();
 
     return (
         <div className="min-h-screen bg-background text-foreground flex flex-col font-sans transition-colors duration-200 overflow-x-clip">
@@ -78,10 +101,15 @@ function AppLayout() {
                 transition={{ type: 'spring', damping: 28, stiffness: 320 }}
                 className="flex-1 flex flex-col min-w-0 w-full overflow-x-clip pb-16 md:pb-0"
             >
-                <Navbar />
-                <main className="flex-1 flex flex-col min-h-screen w-full">
+                <main className="flex-1 flex flex-col w-full">
                     <AppRoutes />
                 </main>
+                {isPublicBrowseRoute && (
+                    <>
+                        <ForArtistsCta />
+                        <PublicFooter />
+                    </>
+                )}
             </motion.div>
 
             {/* Mobile Bottom Navigation Bar (Visible on Mobile Only) */}
