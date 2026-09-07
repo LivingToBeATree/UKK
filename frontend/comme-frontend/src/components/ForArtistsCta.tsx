@@ -1,13 +1,17 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 
 export const ForArtistsCta: React.FC = () => {
-    const { isAuthenticated, user } = useAuth();
+    const { isAuthenticated } = useAuth();
     const { requireAuth } = useAuthModal();
+
+    // Logged in user should not have the "For artists" promotional CTA card
+    if (isAuthenticated) {
+        return null;
+    }
 
     return (
         <section className="border-t border-border mt-auto w-full bg-background">
@@ -23,22 +27,13 @@ export const ForArtistsCta: React.FC = () => {
                         </p>
                     </div>
                     <div className="lg:col-span-4 flex lg:justify-end">
-                        {isAuthenticated ? (
-                            <Link to={user?.artist_profile ? '/dashboard' : '/apply-artist'}>
-                                <Button size="lg" variant="secondary">
-                                    {user?.artist_profile ? 'Go to studio' : 'Apply as an artist'}
-                                    <ArrowRight className="h-4 w-4 ml-2" />
-                                </Button>
-                            </Link>
-                        ) : (
-                            <Button
-                                size="lg"
-                                variant="secondary"
-                                onClick={() => requireAuth('studio')}
-                            >
-                                Get started <ArrowRight className="h-4 w-4 ml-2" />
-                            </Button>
-                        )}
+                        <Button
+                            size="lg"
+                            variant="secondary"
+                            onClick={() => requireAuth('studio')}
+                        >
+                            Get started <ArrowRight className="h-4 w-4 ml-2" />
+                        </Button>
                     </div>
                 </div>
             </div>
