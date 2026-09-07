@@ -41,6 +41,11 @@ class ArtistProfile extends Model
         return $this->hasMany(CommissionService::class);
     }
 
+    public function services(): HasMany
+    {
+        return $this->commissionServices();
+    }
+
     public function commissions(): HasMany
     {
         return $this->hasMany(Commission::class);

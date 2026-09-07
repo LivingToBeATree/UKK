@@ -21,7 +21,7 @@ class ArtistProfileController extends Controller
     {
         Gate::authorize("viewAny", ArtistProfile::class);
 
-        $query = ArtistProfile::with(['user', 'services', 'portfolios.thumbnailMedia']);
+        $query = ArtistProfile::with(['user', 'commissionServices', 'portfolios.thumbnailMedia']);
 
         // Exclude suspended users
         $query->whereHas('user', function ($uq) {
@@ -48,7 +48,7 @@ class ArtistProfileController extends Controller
             $query->where(function ($q) use ($tag) {
                 $q->where('skills', 'ILIKE', "%{$tag}%")
                   ->orWhere('bio', 'ILIKE', "%{$tag}%")
-                  ->orWhereHas('services.tags', function ($tq) use ($tag) {
+                  ->orWhereHas('commissionServices.tags', function ($tq) use ($tag) {
                       $tq->where('name', 'ILIKE', "%{$tag}%")
                          ->orWhere('slug', 'ILIKE', "%{$tag}%");
                   });
