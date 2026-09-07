@@ -11,9 +11,11 @@ import { MobileHeader, MobileBottomNav, MobileDrawer } from '@/components/Mobile
 import { Navbar } from '@/components/Navbar';
 import { Toaster } from '@/components/ui/sonner';
 import { WarningNoticeModal } from '@/components/modals/WarningNoticeModal';
+import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from 'react-router-dom';
 
 function AppLayout() {
+    const { isAuthenticated } = useAuth();
     const { collapsed } = useSidebar();
     const isMobile = useIsMobile();
     const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
@@ -32,6 +34,20 @@ function AppLayout() {
         return (
             <div className="min-h-screen bg-background text-foreground font-sans transition-colors duration-200">
                 <AppRoutes />
+                <Toaster />
+                <WarningNoticeModal />
+            </div>
+        );
+    }
+
+    // Public / Guest layout: Unauthenticated users navigate with the top Navbar instead of the sidebar rail
+    if (!isAuthenticated) {
+        return (
+            <div className="min-h-screen bg-background text-foreground flex flex-col font-sans transition-colors duration-200 overflow-x-clip">
+                <Navbar />
+                <main className="flex-1 flex flex-col min-h-screen w-full">
+                    <AppRoutes />
+                </main>
                 <Toaster />
                 <WarningNoticeModal />
             </div>

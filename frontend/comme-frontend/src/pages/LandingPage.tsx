@@ -1,10 +1,11 @@
 import React from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { motion, type Variants } from 'motion/react';
-import { ArrowRight, ArrowUpRight, Palette, ShieldCheck, Sparkles, Compass, Store, Layers } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Palette, ShieldCheck, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/contexts/AuthModalContext';
+import { Navbar } from '@/components/Navbar';
 
 const heroReveal: Variants = {
     hidden: { opacity: 0, y: 16 },
@@ -51,7 +52,7 @@ const gallery = [
 
 export const LandingPage: React.FC = () => {
     const { isAuthenticated, isLoading, user } = useAuth();
-    const { requireAuth, openAuthModal } = useAuthModal();
+    const { requireAuth } = useAuthModal();
 
     if (isLoading) return null;
 
@@ -61,58 +62,9 @@ export const LandingPage: React.FC = () => {
 
     return (
         <div className="min-h-screen w-full bg-background text-foreground flex flex-col justify-between">
-            {/* ── Standalone Marketing Navbar (No internal sidebar on landing) ── */}
-            <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur-xl">
-                <div className="max-w-6xl mx-auto px-6 sm:px-8 h-16 flex items-center justify-between gap-4">
-                    {/* Brand */}
-                    <Link to="/" className="inline-flex items-center">
-                        <img
-                            src="/Comme_Wordmark.svg"
-                            alt="Comme"
-                            className="h-7 sm:h-8 w-auto object-contain"
-                        />
-                    </Link>
+            {/* ── Standalone Marketing Navbar ── */}
+            <Navbar />
 
-                    {/* Navigation Links */}
-                    <nav className="hidden md:flex items-center gap-6 text-xs font-semibold text-muted-foreground">
-                        <Link to="/explore" className="hover:text-foreground transition-colors flex items-center gap-1.5">
-                            <Compass className="h-3.5 w-3.5" />
-                            <span>Artwork Feed</span>
-                        </Link>
-                        <Link to="/store" className="hover:text-foreground transition-colors flex items-center gap-1.5">
-                            <Store className="h-3.5 w-3.5" />
-                            <span>Commission Store</span>
-                        </Link>
-                        <Link to="/artists" className="hover:text-foreground transition-colors flex items-center gap-1.5">
-                            <Layers className="h-3.5 w-3.5" />
-                            <span>Artists Directory</span>
-                        </Link>
-                        <Link to="/escrow-terms" className="hover:text-foreground transition-colors flex items-center gap-1.5">
-                            <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-                            <span>Escrow Protection</span>
-                        </Link>
-                    </nav>
-
-                    {/* Right Action Controls */}
-                    <div className="flex items-center gap-2.5">
-                        {isAuthenticated ? (
-                            <Link to={user?.artist_profile ? '/dashboard' : '/explore'}>
-                                <Button size="sm" className="font-semibold text-xs h-9">
-                                    {user?.artist_profile ? 'Go to Studio' : 'Launch Feed'}
-                                </Button>
-                            </Link>
-                        ) : (
-                            <Button
-                                size="sm"
-                                onClick={() => openAuthModal('generic')}
-                                className="font-semibold text-xs h-9"
-                            >
-                                Log In
-                            </Button>
-                        )}
-                    </div>
-                </div>
-            </header>
 
             {/* ── Main Marketing Body ── */}
             <main className="flex-1">
