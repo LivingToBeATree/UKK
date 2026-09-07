@@ -2,16 +2,23 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::withoutMiddleware([
+    \Illuminate\Session\Middleware\StartSession::class,
+    \Illuminate\Cookie\Middleware\EncryptCookies::class,
+    \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+    \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
+])->group(function () {
+    Route::get('/', function () {
+        return view('welcome');
+    });
 
-Route::get('/explore', function () {
-    return view('explore');
-});
+    Route::get('/explore', function () {
+        return view('explore');
+    });
 
-Route::get('/errors', function () {
-    return view('errors');
+    Route::get('/errors', function () {
+        return view('errors');
+    });
 });
 
 // Direct storage file provider with full CORS support and fallback for development & production
