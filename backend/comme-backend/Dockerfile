@@ -39,19 +39,24 @@ WORKDIR /var/www/html
 COPY . /var/www/html
 
 # Install Composer dependencies
-RUN composer install --optimize-autoloader --no-interaction --prefer-dist
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
 # Copy configuration files
 COPY docker/nginx.conf /etc/nginx/http.d/default.conf
 COPY docker/supervisord.conf /etc/supervisord.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 
-RUN chmod +x /usr/local/bin/entrypoint.sh
-
-# Set storage and bootstrap cache permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+# Ensure executable permissions and create required directories
+RUN chmod +x /usr/local/bin/entrypoint.sh \
+    && mkdir -p /run/nginx /var/log/nginx /var/lib/nginx/tmp \
+        /var/www/html/storage/framework/cache/data \
+        /var/www/html/storage/framework/sessions \
+        /var/www/html/storage/framework/views \
+        /var/www/html/storage/app/public \
+        /var/www/html/bootstrap/cache \
+    && chown -R www-data:www-data /var/www/html /run/nginx /var/log/nginx /var/lib/nginx \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-EXPOSE 8000
+EXPOSE 8080
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

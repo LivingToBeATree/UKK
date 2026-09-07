@@ -1,6 +1,7 @@
 steps:
-  # Step 1: Build Docker Image
+  # Step 1: Build Backend Docker Image
   - name: 'gcr.io/cloud-builders/docker'
+    dir: 'backend/comme-backend'
     args:
       - 'build'
       - '-t'
@@ -9,7 +10,7 @@ steps:
       - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/comme-backend:latest'
       - '.'
 
-  # Step 2: Push Docker Image to Artifact Registry
+  # Step 2: Push Backend Docker Image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
@@ -27,10 +28,11 @@ steps:
       - '--region=${_REGION}'
       - '--platform=managed'
       - '--allow-unauthenticated'
+      - '--port=8080'
 
 substitutions:
-  _REGION: 'asia-southeast2' # Default: Jakarta (or us-central1)
-  _REPO_NAME: 'comme-repo'
+  _REGION: 'asia-southeast2'
+  _REPO_NAME: 'cloud-run-source-deploy'
   _SERVICE_NAME: 'comme-backend'
 
 images:
