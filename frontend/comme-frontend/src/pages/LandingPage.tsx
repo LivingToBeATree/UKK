@@ -5,8 +5,6 @@ import { ArrowRight, ArrowUpRight, Palette, ShieldCheck, Sparkles, Compass, Stor
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/contexts/AuthModalContext';
-import { ModeToggle } from '@/components/mode-toggle';
-import { ColorThemeToggle } from '@/components/color-theme-toggle';
 
 const heroReveal: Variants = {
     hidden: { opacity: 0, y: 16 },
@@ -67,16 +65,13 @@ export const LandingPage: React.FC = () => {
             <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur-xl">
                 <div className="max-w-6xl mx-auto px-6 sm:px-8 h-16 flex items-center justify-between gap-4">
                     {/* Brand */}
-                    <div className="flex items-center gap-2.5">
+                    <Link to="/" className="inline-flex items-center">
                         <img
-                            src="/Comme_Emblem.svg"
+                            src="/Comme_Wordmark.svg"
                             alt="Comme"
-                            className="h-7 w-7 object-contain"
+                            className="h-7 sm:h-8 w-auto object-contain"
                         />
-                        <span className="font-extrabold text-base tracking-tight text-foreground">
-                            COMME
-                        </span>
-                    </div>
+                    </Link>
 
                     {/* Navigation Links */}
                     <nav className="hidden md:flex items-center gap-6 text-xs font-semibold text-muted-foreground">
@@ -100,9 +95,6 @@ export const LandingPage: React.FC = () => {
 
                     {/* Right Action Controls */}
                     <div className="flex items-center gap-2.5">
-                        <ColorThemeToggle />
-                        <ModeToggle />
-
                         {isAuthenticated ? (
                             <Link to={user?.artist_profile ? '/dashboard' : '/explore'}>
                                 <Button size="sm" className="font-semibold text-xs h-9">
@@ -110,21 +102,13 @@ export const LandingPage: React.FC = () => {
                                 </Button>
                             </Link>
                         ) : (
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => openAuthModal('generic')}
-                                    className="font-semibold text-xs h-9"
-                                >
-                                    Log In
-                                </Button>
-                                <Link to="/explore">
-                                    <Button size="sm" className="font-semibold text-xs h-9">
-                                        Explore App
-                                    </Button>
-                                </Link>
-                            </div>
+                            <Button
+                                size="sm"
+                                onClick={() => openAuthModal('generic')}
+                                className="font-semibold text-xs h-9"
+                            >
+                                Log In
+                            </Button>
                         )}
                     </div>
                 </div>
@@ -298,11 +282,11 @@ export const LandingPage: React.FC = () => {
             {/* ── Landing Footer ── */}
             <footer className="border-t border-border py-8 px-6 sm:px-8 bg-background">
                 <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5">
                         <img
-                            src="/Comme_Emblem.svg"
+                            src="/Comme_Wordmark.svg"
                             alt="Comme"
-                            className="h-5 w-5 object-contain"
+                            className="h-5 w-auto object-contain opacity-80"
                         />
                         <span>© {new Date().getFullYear()} Comme Platform. All rights reserved.</span>
                     </div>
