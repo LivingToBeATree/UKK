@@ -82,6 +82,8 @@ if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
         fi
         sleep 1
     done
+    echo "==> Synchronizing existing database schema..."
+    php artisan migrate:sync-existing || true
     echo "==> Running database migrations..."
     php artisan migrate --force || echo "Warning: Migration failed, continuing startup..."
 fi

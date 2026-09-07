@@ -22,15 +22,22 @@ Route::withoutMiddleware([
 
     Route::get('/migrate-deploy', function () {
         try {
+            \Illuminate\Support\Facades\Artisan::call('migrate:sync-existing');
+            $syncOutput = \Illuminate\Support\Facades\Artisan::output();
+
             \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+            $migrateOutput = \Illuminate\Support\Facades\Artisan::output();
+
             return response()->json([
                 'status' => 'SUCCESS',
-                'output' => \Illuminate\Support\Facades\Artisan::output(),
+                'sync_output' => $syncOutput,
+                'migrate_output' => $migrateOutput,
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'status' => 'ERROR',
                 'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ], 500);
         }
     });
