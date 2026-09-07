@@ -233,13 +233,14 @@ export const StorePage: React.FC = () => {
                                 nextParams.set('status', 'open');
                                 setSearchParams(nextParams);
                             }}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                                 statusFilter === 'open'
                                     ? 'bg-emerald-600 text-white shadow-xs'
                                     : 'bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary border border-border/60'
                             }`}
                         >
-                            🟢 Open Slots
+                            <span className="h-2 w-2 rounded-full bg-emerald-400 shrink-0" />
+                            <span>Open Slots</span>
                         </button>
                         <button
                             type="button"
@@ -249,13 +250,14 @@ export const StorePage: React.FC = () => {
                                 nextParams.set('status', 'closed');
                                 setSearchParams(nextParams);
                             }}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                                 statusFilter === 'closed'
                                     ? 'bg-rose-600 text-white shadow-xs'
                                     : 'bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary border border-border/60'
                             }`}
                         >
-                            🔴 Closed
+                            <span className="h-2 w-2 rounded-full bg-rose-400 shrink-0" />
+                            <span>Closed</span>
                         </button>
                     </div>
 
