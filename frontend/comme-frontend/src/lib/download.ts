@@ -1,5 +1,5 @@
 import { toast } from 'sonner';
-import { api } from '@/services/api';
+import { api, getApiBaseUrl } from '@/services/api';
 
 interface DownloadOptions {
     showToast?: boolean;
@@ -107,7 +107,7 @@ export async function downloadFile(
 
     // Strategy 3: Hidden iframe / forced attachment link
     try {
-        const rawBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+        const rawBaseUrl = getApiBaseUrl();
         const downloadEndpoint = `${rawBaseUrl.replace(/\/+$/, '')}/media/download-file?url=${encodeURIComponent(url)}&name=${encodeURIComponent(fileName)}`;
 
         const hiddenIframe = document.createElement('iframe');

@@ -13,7 +13,7 @@ RUN npm ci
 COPY . .
 
 # Pass build-time environment variable for Vite
-ARG VITE_API_URL
+ARG VITE_API_URL="https://comme-backend-861966182598.asia-southeast2.run.app/api"
 ENV VITE_API_URL=$VITE_API_URL
 
 # Build production bundle

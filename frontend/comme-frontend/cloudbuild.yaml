@@ -4,6 +4,8 @@ steps:
     dir: 'frontend/comme-frontend'
     args:
       - 'build'
+      - '--build-arg'
+      - 'VITE_API_URL=${_VITE_API_URL}'
       - '-t'
       - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/comme-frontend:$COMMIT_SHA'
       - '-t'
@@ -33,6 +35,7 @@ substitutions:
   _REGION: 'asia-southeast2'
   _REPO_NAME: 'cloud-run-source-deploy'
   _SERVICE_NAME: 'comme-frontend'
+  _VITE_API_URL: 'https://comme-backend-861966182598.asia-southeast2.run.app/api'
 
 images:
   - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/comme-frontend:$COMMIT_SHA'

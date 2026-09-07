@@ -2,7 +2,19 @@ import axios from 'axios';
 
 axios.defaults.withCredentials = true;
 
-const rawBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+export const getApiBaseUrl = (): string => {
+    const envUrl = import.meta.env.VITE_API_URL;
+    if (envUrl && !envUrl.includes('localhost:8000')) {
+        return envUrl;
+    }
+    // If running in browser on a deployed Cloud Run domain
+    if (typeof window !== 'undefined' && window.location.hostname.includes('.run.app')) {
+        return 'https://comme-backend-861966182598.asia-southeast2.run.app/api';
+    }
+    return envUrl || 'http://localhost:8000/api';
+};
+
+const rawBaseUrl = getApiBaseUrl();
 const backendRootUrl = rawBaseUrl.replace(/\/api\/?$/, '');
 
 export const api = axios.create({
