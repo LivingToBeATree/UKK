@@ -421,6 +421,13 @@ class CommissionController extends Controller
 
     public function updateDeadline(UpdateCommissionDeadlineRequest $request, Commission $commission): JsonResponse
     {
+        if (is_null($commission->deadline)) {
+            return ApiResponseHelper::errorResponse(
+                'This commission has a flexible deadline. Deadline cannot be modified directly.',
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
         $commission->update($request->validated());
 
         return ApiResponseHelper::successResponse(
@@ -431,6 +438,13 @@ class CommissionController extends Controller
 
     public function proposeDeadline(ProposeCommissionDeadlineRequest $request, Commission $commission): JsonResponse
     {
+        if (is_null($commission->deadline)) {
+            return ApiResponseHelper::errorResponse(
+                'This commission has a flexible deadline. Deadline extensions cannot be requested for flexible orders.',
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
         $commission->update([
             'proposed_deadline' => $request->validated('proposed_deadline'),
             'deadline_proposal_note' => $request->validated('note'),
@@ -438,7 +452,7 @@ class CommissionController extends Controller
 
         return ApiResponseHelper::successResponse(
             new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review'])),
-            'Deadline extension proposal submitted to the client.'
+            'Deadline proposal submitted successfully.'
         );
     }
 

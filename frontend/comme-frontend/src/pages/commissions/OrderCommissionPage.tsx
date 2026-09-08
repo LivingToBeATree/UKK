@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
@@ -15,17 +15,21 @@ import {
     UploadCloud,
     Loader2,
     AlertCircle,
+    Calendar,
+    Clock,
 } from 'lucide-react';
 import { commissionOrderApi } from '@/services/commissionService';
 import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { DatePicker } from '@/components/ui/date-picker';
 import { toast } from '@/components/ui/sonner';
 import { formatPrice } from '@/utils/format';
 import { MediaLightboxModal } from '@/components/ui/MediaLightboxModal';
+import { cn } from '@/lib/utils';
 import type { CommissionService, CommissionOption, CommissionAddon } from '@/types';
 
 const formatFileSize = (bytes?: number) => {
@@ -56,6 +60,30 @@ export const OrderCommissionPage: React.FC = () => {
     const [description, setDescription] = useState('');
     const [submitting, setSubmitting] = useState(false);
 
+    // Deadline preference state: flexible (default) or specific date
+    const [deadlineType, setDeadlineType] = useState<'flexible' | 'specific'>('flexible');
+    const [deadline, setDeadline] = useState<string>('');
+
+    const suggestedDeadline = useMemo(() => {
+        if (!selectedOption?.duration_days) return '';
+        const date = new Date();
+        date.setDate(date.getDate() + Number(selectedOption.duration_days));
+        return date.toISOString().split('T')[0];
+    }, [selectedOption?.duration_days]);
+
+    const minDeadlineDate = useMemo(() => {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        return tomorrow.toISOString().split('T')[0];
+    }, []);
+
+    const handleSelectDeadlineType = (type: 'flexible' | 'specific') => {
+        setDeadlineType(type);
+        if (type === 'specific' && !deadline && suggestedDeadline) {
+            setDeadline(suggestedDeadline);
+        }
+    };
+
     // Visual references attachment state
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [filePreviews, setFilePreviews] = useState<{ file: File; url: string; isImage: boolean; name: string; size: number }[]>([]);
@@ -68,7 +96,7 @@ export const OrderCommissionPage: React.FC = () => {
 
     if (!service || !selectedOption) {
         return (
-            <div className="max-w-2xl mx-auto px-4 py-20 text-center space-y-4">
+            <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-20 text-center space-y-4">
                 <p className="text-muted-foreground font-semibold">No service selected. Please choose a service and package first.</p>
                 <Link to="/store">
                     <Button variant="outline" className="rounded-xl">Browse Store</Button>
@@ -81,7 +109,7 @@ export const OrderCommissionPage: React.FC = () => {
 
     if (isOwnService) {
         return (
-            <div className="max-w-2xl mx-auto px-4 py-20 text-center space-y-4">
+            <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-20 text-center space-y-4">
                 <AlertCircle className="h-12 w-12 text-amber-400 mx-auto" />
                 <h2 className="text-xl font-bold">Cannot Order Own Commission</h2>
                 <p className="text-sm text-muted-foreground">You are the artist of this service listing and cannot submit a commission order to yourself.</p>
@@ -156,6 +184,11 @@ export const OrderCommissionPage: React.FC = () => {
             return;
         }
 
+        if (deadlineType === 'specific' && !deadline) {
+            toast.error('Please select an expected delivery deadline date, or choose Flexible.');
+            return;
+        }
+
         setSubmitting(true);
         const toastId = toast.loading('Submitting commission request...');
 
@@ -169,6 +202,11 @@ export const OrderCommissionPage: React.FC = () => {
                 formData.append('addon_ids[]', String(id));
             });
             formData.append('description', description.trim());
+
+            if (deadlineType === 'specific' && deadline) {
+                formData.append('deadline', deadline);
+            }
+
             selectedFiles.forEach((file) => {
                 formData.append('attachments[]', file);
             });
@@ -187,10 +225,13 @@ export const OrderCommissionPage: React.FC = () => {
     };
 
     return (
-        <div className="max-w-2xl mx-auto px-4 py-8 pb-16">
+        <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-8 pb-16">
             <Link
                 to={`/store/${service.id}`}
-                className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground mb-6 transition-colors"
+                className={cn(
+                    buttonVariants({ variant: 'ghost', size: 'sm' }),
+                    'gap-2 text-muted-foreground hover:text-foreground mb-6 -ml-2'
+                )}
             >
                 <ArrowLeft className="h-4 w-4" /> Back to Service Details
             </Link>
@@ -201,207 +242,343 @@ export const OrderCommissionPage: React.FC = () => {
                         <Sparkles className="h-6 w-6 text-purple-400" /> Confirm Commission Order
                     </h1>
                     <p className="text-xs text-muted-foreground mt-1">
-                        Review your chosen package, selected add-ons, and provide your project reference details.
+                        Review your chosen package, set your delivery deadline preference, and provide your project reference details.
                     </p>
                 </div>
 
-                {/* ── Order Summary Card ── */}
-                <Card className="rounded-3xl border-border/80 bg-card/60 shadow-xs overflow-hidden">
-                    <CardContent className="p-6 space-y-4">
-                        <div>
-                            <h2 className="font-bold text-base text-foreground">{service.name}</h2>
-                            <div className="flex items-center gap-2 mt-1">
-                                <Badge variant="secondary" className="font-bold text-[10px] bg-purple-500/15 text-purple-300 border border-purple-500/30 gap-1">
-                                    <Layers className="h-3 w-3" /> {selectedOption.title}
-                                </Badge>
-                                <span className="font-mono text-xs text-muted-foreground">
-                                    {formatPrice(basePrice)}
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Itemized Add-ons */}
-                        {selectedAddons.length > 0 && (
-                            <div className="pt-3 border-t border-border/60 space-y-2">
-                                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                                    <Tag className="h-3.5 w-3.5 text-purple-400" /> Selected Add-ons ({selectedAddons.length})
-                                </p>
-                                <div className="space-y-1.5">
-                                    {selectedAddons.map((ad) => (
-                                        <div
-                                            key={ad.id || ad.title}
-                                            className="flex items-center justify-between text-xs text-muted-foreground"
-                                        >
-                                            <span>+ {ad.title}</span>
-                                            <span className="font-mono font-semibold text-foreground">
-                                                +{formatPrice(ad.additional_price)}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Grand Total */}
-                        <div className="flex items-baseline justify-between pt-3 border-t border-border/60">
-                            <div>
-                                <span className="text-xs font-bold text-foreground">Total Expected Payment</span>
-                                <p className="text-[10px] text-muted-foreground">Held securely in Escrow until completion</p>
-                            </div>
-                            <span className="text-2xl font-black font-mono text-emerald-400">
-                                {formatPrice(finalTotal)}
-                            </span>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* ── Commission Description & Visual References ── */}
-                <Card className="rounded-3xl border-border/80 bg-card/60 shadow-xs overflow-hidden">
-                    <CardContent className="p-6">
-                        <form onSubmit={handleSubmit} className="space-y-5">
-                            <div className="space-y-2">
+                <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    {/* ── Left Column: Preferences & Form Details (7 or 8 cols) ── */}
+                    <div className="lg:col-span-7 xl:col-span-8 space-y-6">
+                        {/* 1. Deadline Preference Card */}
+                        <Card className="rounded-3xl border-border/80 bg-card/60 shadow-xs overflow-hidden">
+                            <CardContent className="p-6 space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor="description" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                                        Commission Request &amp; Visual References <span className="text-rose-400">*</span>
+                                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                        <Calendar className="h-4 w-4 text-purple-400" />
+                                        Delivery Deadline Preference
                                     </Label>
+                                    {selectedOption?.duration_days && (
+                                        <span className="text-[11px] text-muted-foreground flex items-center gap-1 font-mono">
+                                            <Clock className="h-3 w-3 text-amber-400" />
+                                            Standard turnaround: {selectedOption.duration_days} days
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {/* Option 1: Flexible */}
                                     <button
                                         type="button"
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="inline-flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 font-bold transition-colors cursor-pointer"
+                                        onClick={() => handleSelectDeadlineType('flexible')}
+                                        className={cn(
+                                            'p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between space-y-2',
+                                            deadlineType === 'flexible'
+                                                ? 'border-purple-500 bg-purple-500/10 ring-1 ring-purple-500/30 shadow-xs'
+                                                : 'border-border/80 bg-card/40 hover:bg-secondary/40 hover:border-purple-500/30'
+                                        )}
                                     >
-                                        <Paperclip className="h-3.5 w-3.5" /> Attach References
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-bold text-xs text-foreground flex items-center gap-2">
+                                                <span
+                                                    className={cn(
+                                                        'w-3.5 h-3.5 rounded-full border flex items-center justify-center',
+                                                        deadlineType === 'flexible'
+                                                            ? 'border-purple-500 bg-purple-600'
+                                                            : 'border-border/80'
+                                                    )}
+                                                >
+                                                    {deadlineType === 'flexible' && (
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                                                    )}
+                                                </span>
+                                                Flexible (No fixed deadline)
+                                            </span>
+                                            <Badge variant="secondary" className="text-[10px] bg-secondary/80 text-muted-foreground font-medium">
+                                                Recommended
+                                            </Badge>
+                                        </div>
+                                        <p className="text-[11px] text-muted-foreground pl-5.5 leading-relaxed">
+                                            Artist works at their standard comfortable pace. No deadline extension requests required.
+                                        </p>
+                                    </button>
+
+                                    {/* Option 2: Specific Target Date */}
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSelectDeadlineType('specific')}
+                                        className={cn(
+                                            'p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between space-y-2',
+                                            deadlineType === 'specific'
+                                                ? 'border-purple-500 bg-purple-500/10 ring-1 ring-purple-500/30 shadow-xs'
+                                                : 'border-border/80 bg-card/40 hover:bg-secondary/40 hover:border-purple-500/30'
+                                        )}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-bold text-xs text-foreground flex items-center gap-2">
+                                                <span
+                                                    className={cn(
+                                                        'w-3.5 h-3.5 rounded-full border flex items-center justify-center',
+                                                        deadlineType === 'specific'
+                                                            ? 'border-purple-500 bg-purple-600'
+                                                            : 'border-border/80'
+                                                    )}
+                                                >
+                                                    {deadlineType === 'specific' && (
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                                                    )}
+                                                </span>
+                                                Specific Target Deadline
+                                            </span>
+                                        </div>
+                                        <p className="text-[11px] text-muted-foreground pl-5.5 leading-relaxed">
+                                            Specify an agreed delivery target for events, birthdays, or project schedules.
+                                        </p>
                                     </button>
                                 </div>
 
-                                <Textarea
-                                    id="description"
-                                    placeholder="Describe your character concept, preferred poses, color palette, background atmosphere, or paste reference images directly (Ctrl+V)..."
-                                    value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
-                                    onPaste={handlePaste}
-                                    rows={5}
-                                    required
-                                    className="rounded-2xl bg-secondary/40 border-border/80 text-xs leading-relaxed"
-                                />
-                            </div>
+                                {deadlineType === 'specific' && (
+                                    <div className="pt-3 border-t border-border/60 space-y-3">
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                            <Label className="text-xs font-semibold text-foreground">
+                                                Select Target Delivery Date
+                                            </Label>
+                                            {suggestedDeadline && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setDeadline(suggestedDeadline)}
+                                                    className="text-[11px] text-purple-400 hover:text-purple-300 font-semibold cursor-pointer underline-offset-2 hover:underline"
+                                                >
+                                                    Suggested: {selectedOption?.duration_days} days ({suggestedDeadline})
+                                                </button>
+                                            )}
+                                        </div>
+                                        <DatePicker
+                                            value={deadline}
+                                            onChange={setDeadline}
+                                            minDate={minDeadlineDate}
+                                            placeholder="Choose expected completion deadline..."
+                                        />
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
 
-                            {/* Reference Attachments Upload & Preview Tray */}
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider font-mono">
-                                        Attached Visual References ({filePreviews.length})
-                                    </span>
-                                    <span className="text-[10px] text-muted-foreground">
-                                        Images, PSDs, PDFs, ZIPs (Max 50MB each)
-                                    </span>
+                        {/* 2. Commission Request & Visual References Card */}
+                        <Card className="rounded-3xl border-border/80 bg-card/60 shadow-xs overflow-hidden">
+                            <CardContent className="p-6 space-y-5">
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <Label htmlFor="description" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                                            Commission Request &amp; Visual References <span className="text-rose-400">*</span>
+                                        </Label>
+                                        <button
+                                            type="button"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className="inline-flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 font-bold transition-colors cursor-pointer"
+                                        >
+                                            <Paperclip className="h-3.5 w-3.5" /> Attach References
+                                        </button>
+                                    </div>
+
+                                    <Textarea
+                                        id="description"
+                                        placeholder="Describe your character concept, preferred poses, color palette, background atmosphere, or paste reference images directly (Ctrl+V)..."
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}
+                                        onPaste={handlePaste}
+                                        rows={6}
+                                        required
+                                        className="rounded-2xl bg-secondary/40 border-border/80 text-xs leading-relaxed"
+                                    />
                                 </div>
 
-                                {/* Hidden input */}
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    onChange={(e) => {
-                                        if (e.target.files) handleFilesSelect(e.target.files);
-                                    }}
-                                    multiple
-                                    accept="image/*,.png,.jpg,.jpeg,.gif,.webp,.pdf,.zip,.psd,.clip"
-                                    className="hidden"
-                                />
-
-                                {filePreviews.length > 0 ? (
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                                        {filePreviews.map((preview, idx) => (
-                                            <div
-                                                key={idx}
-                                                className="relative group rounded-2xl overflow-hidden border border-border/80 bg-secondary/30 p-2 flex flex-col justify-between space-y-2"
-                                            >
-                                                {preview.isImage ? (
-                                                    <div
-                                                        onClick={() => openLightbox(idx)}
-                                                        className="relative h-24 w-full rounded-xl overflow-hidden bg-black/30 cursor-pointer group-hover:opacity-90 transition-opacity"
-                                                    >
-                                                        <img
-                                                            src={preview.url}
-                                                            alt={preview.name}
-                                                            className="h-full w-full object-cover"
-                                                        />
-                                                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                                                            <Maximize2 className="h-4 w-4 drop-shadow" />
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <div className="h-24 w-full rounded-xl bg-primary/10 text-primary flex flex-col items-center justify-center p-2 text-center">
-                                                        <FileText className="h-8 w-8 mb-1" />
-                                                        <span className="text-[10px] uppercase font-mono font-bold">Document</span>
-                                                    </div>
-                                                )}
-
-                                                <div className="flex items-center justify-between gap-1 text-[11px] px-0.5">
-                                                    <div className="min-w-0 flex-1">
-                                                        <p className="font-semibold truncate text-foreground">{preview.name}</p>
-                                                        <p className="text-[10px] text-muted-foreground">{formatFileSize(preview.size)}</p>
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleRemoveFile(idx)}
-                                                        className="h-6 w-6 rounded-full bg-rose-500/80 hover:bg-rose-600 text-white flex items-center justify-center shrink-0 cursor-pointer transition-colors"
-                                                        title="Remove reference"
-                                                    >
-                                                        <X className="h-3 w-3" />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-
-                                        {/* Add more tile */}
-                                        {filePreviews.length < 10 && (
-                                            <button
-                                                type="button"
-                                                onClick={() => fileInputRef.current?.click()}
-                                                className="h-full min-h-[120px] rounded-2xl border-2 border-dashed border-border/80 hover:border-purple-500/50 hover:bg-purple-500/5 flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:text-purple-400 transition-all cursor-pointer p-3"
-                                            >
-                                                <UploadCloud className="h-6 w-6" />
-                                                <span className="text-xs font-bold">+ Add More</span>
-                                            </button>
-                                        )}
+                                {/* Reference Attachments Upload & Preview Tray */}
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider font-mono">
+                                            Attached Visual References ({filePreviews.length})
+                                        </span>
+                                        <span className="text-[10px] text-muted-foreground">
+                                            Images, PSDs, PDFs, ZIPs (Max 50MB each)
+                                        </span>
                                     </div>
-                                ) : (
-                                    <div
-                                        onClick={() => fileInputRef.current?.click()}
-                                        onDragOver={(e) => e.preventDefault()}
-                                        onDrop={(e) => {
-                                            e.preventDefault();
-                                            if (e.dataTransfer.files) handleFilesSelect(e.dataTransfer.files);
+
+                                    {/* Hidden input */}
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={(e) => {
+                                            if (e.target.files) handleFilesSelect(e.target.files);
                                         }}
-                                        className="rounded-2xl border-2 border-dashed border-border/80 hover:border-purple-500/50 bg-secondary/20 hover:bg-purple-500/5 p-5 text-center cursor-pointer transition-all space-y-2"
-                                    >
-                                        <div className="h-10 w-10 rounded-2xl bg-purple-500/10 text-purple-400 flex items-center justify-center mx-auto">
-                                            <UploadCloud className="h-5 w-5" />
+                                        multiple
+                                        accept="image/*,.png,.jpg,.jpeg,.gif,.webp,.pdf,.zip,.psd,.clip"
+                                        className="hidden"
+                                    />
+
+                                    {filePreviews.length > 0 ? (
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                                            {filePreviews.map((preview, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    className="relative group rounded-2xl overflow-hidden border border-border/80 bg-secondary/30 p-2 flex flex-col justify-between space-y-2"
+                                                >
+                                                    {preview.isImage ? (
+                                                        <div
+                                                            onClick={() => openLightbox(idx)}
+                                                            className="relative h-24 w-full rounded-xl overflow-hidden bg-black/30 cursor-pointer group-hover:opacity-90 transition-opacity"
+                                                        >
+                                                            <img
+                                                                src={preview.url}
+                                                                alt={preview.name}
+                                                                className="h-full w-full object-cover"
+                                                            />
+                                                            <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                                                                <Maximize2 className="h-4 w-4 drop-shadow" />
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="h-24 w-full rounded-xl bg-primary/10 text-primary flex flex-col items-center justify-center p-2 text-center">
+                                                            <FileText className="h-8 w-8 mb-1" />
+                                                            <span className="text-[10px] uppercase font-mono font-bold">Document</span>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="flex items-center justify-between gap-1 text-[11px] px-0.5">
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="font-semibold truncate text-foreground">{preview.name}</p>
+                                                            <p className="text-[10px] text-muted-foreground">{formatFileSize(preview.size)}</p>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveFile(idx)}
+                                                            className="h-6 w-6 rounded-full bg-rose-500/80 hover:bg-rose-600 text-white flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                                                            title="Remove reference"
+                                                        >
+                                                            <X className="h-3 w-3" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+
+                                            {/* Add more tile */}
+                                            {filePreviews.length < 10 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                    className="h-full min-h-[120px] rounded-2xl border-2 border-dashed border-border/80 hover:border-purple-500/50 hover:bg-purple-500/5 flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:text-purple-400 transition-all cursor-pointer p-3"
+                                                >
+                                                    <UploadCloud className="h-6 w-6" />
+                                                    <span className="text-xs font-bold">+ Add More</span>
+                                                </button>
+                                            )}
                                         </div>
-                                        <div>
-                                            <p className="text-xs font-bold text-foreground">Click to upload reference media or drag &amp; drop</p>
-                                            <p className="text-[11px] text-muted-foreground mt-0.5">Character sheets, moodboards, color swatches (or paste with Ctrl+V)</p>
+                                    ) : (
+                                        <div
+                                            onClick={() => fileInputRef.current?.click()}
+                                            onDragOver={(e) => e.preventDefault()}
+                                            onDrop={(e) => {
+                                                e.preventDefault();
+                                                if (e.dataTransfer.files) handleFilesSelect(e.dataTransfer.files);
+                                            }}
+                                            className="rounded-2xl border-2 border-dashed border-border/80 hover:border-purple-500/50 bg-secondary/20 hover:bg-purple-500/5 p-6 text-center cursor-pointer transition-all space-y-2"
+                                        >
+                                            <div className="h-10 w-10 rounded-2xl bg-purple-500/10 text-purple-400 flex items-center justify-center mx-auto">
+                                                <UploadCloud className="h-5 w-5" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-bold text-foreground">Click to upload reference media or drag &amp; drop</p>
+                                                <p className="text-[11px] text-muted-foreground mt-0.5">Character sheets, moodboards, color swatches (or paste with Ctrl+V)</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* ── Right Column: Sticky Order Summary & Submission (5 or 4 cols) ── */}
+                    <div className="lg:col-span-5 xl:col-span-4 sticky top-20 space-y-4">
+                        <Card className="rounded-3xl border-border/80 bg-card/70 backdrop-blur-md shadow-lg overflow-hidden">
+                            <CardContent className="p-6 space-y-5">
+                                <div className="pb-3 border-b border-border/60">
+                                    <h2 className="font-bold text-base text-foreground truncate">{service.name}</h2>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <Badge variant="secondary" className="font-bold text-[10px] bg-purple-500/15 text-purple-300 border border-purple-500/30 gap-1">
+                                            <Layers className="h-3 w-3" /> {selectedOption.title}
+                                        </Badge>
+                                        <span className="font-mono text-xs text-muted-foreground">
+                                            {formatPrice(basePrice)}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Itemized Add-ons */}
+                                {selectedAddons.length > 0 && (
+                                    <div className="space-y-2 pb-3 border-b border-border/60">
+                                        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                                            <Tag className="h-3.5 w-3.5 text-purple-400" /> Selected Add-ons ({selectedAddons.length})
+                                        </p>
+                                        <div className="space-y-1.5">
+                                            {selectedAddons.map((ad) => (
+                                                <div
+                                                    key={ad.id || ad.title}
+                                                    className="flex items-center justify-between text-xs text-muted-foreground"
+                                                >
+                                                    <span className="truncate pr-2">+ {ad.title}</span>
+                                                    <span className="font-mono font-semibold text-foreground shrink-0">
+                                                        +{formatPrice(ad.additional_price)}
+                                                    </span>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
                                 )}
-                            </div>
 
-                            <Button
-                                type="submit"
-                                className="w-full h-11 rounded-2xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-md gap-2"
-                                disabled={submitting}
-                            >
-                                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                                {submitting ? 'Submitting Request...' : 'Submit Commission Request'}
-                            </Button>
+                                {/* Target Delivery Summary */}
+                                <div className="space-y-1.5 py-1 text-xs">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-muted-foreground flex items-center gap-1.5">
+                                            <Calendar className="h-3.5 w-3.5 text-purple-400" /> Target Delivery
+                                        </span>
+                                        <span className="font-semibold text-foreground font-mono">
+                                            {deadlineType === 'specific' && deadline ? deadline : 'Flexible'}
+                                        </span>
+                                    </div>
+                                    {selectedOption?.duration_days && (
+                                        <p className="text-[10px] text-muted-foreground text-right">
+                                            Standard turnaround: ~{selectedOption.duration_days} days
+                                        </p>
+                                    )}
+                                </div>
 
-                            <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground pt-1">
-                                <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-                                <span>No upfront payment charged until the artist accepts your request</span>
-                            </div>
-                        </form>
-                    </CardContent>
-                </Card>
+                                {/* Grand Total */}
+                                <div className="flex items-baseline justify-between pt-3 border-t border-border/60">
+                                    <div>
+                                        <span className="text-xs font-bold text-foreground">Total Expected Payment</span>
+                                        <p className="text-[10px] text-muted-foreground">Held securely in Escrow</p>
+                                    </div>
+                                    <span className="text-2xl font-black font-mono text-emerald-400">
+                                        {formatPrice(finalTotal)}
+                                    </span>
+                                </div>
+
+                                <Button
+                                    type="submit"
+                                    className="w-full h-12 rounded-2xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-md gap-2"
+                                    disabled={submitting}
+                                >
+                                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                                    {submitting ? 'Submitting Request...' : 'Submit Commission Request'}
+                                </Button>
+
+                                <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground pt-1">
+                                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+                                    <span>No upfront payment charged until artist accepts</span>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </form>
             </motion.div>
 
             {/* Lightbox Modal for Visual References Preview */}

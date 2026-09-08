@@ -1176,8 +1176,8 @@ export const CommissionDetailPage: React.FC = () => {
                                     </Dialog>
                                 )}
 
-                                {/* ARTIST: Propose New Deadline */}
-                                {isArtistUser && !['completed', 'cancelled', 'declined', 'pending'].includes(commission.status) && (
+                                {/* ARTIST: Propose New Deadline (Only if an explicit deadline was set, not flexible) */}
+                                {isArtistUser && Boolean(commission.deadline) && !['completed', 'cancelled', 'declined', 'pending'].includes(commission.status) && (
                                     <Dialog open={deadlineModalOpen} onOpenChange={setDeadlineModalOpen}>
                                         <DialogTrigger asChild>
                                             <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer">
