@@ -1,7 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { ExternalLink } from 'lucide-react';
+import { getApiBaseUrl } from '@/services/api';
 
 export const Footer: React.FC = () => {
+    const apiBase = getApiBaseUrl().replace(/\/api\/?$/, '');
+
     return (
         <footer className="w-full border-t border-border/70 bg-card/40 backdrop-blur-sm mt-auto">
             <div className="max-w-[1440px] mx-auto px-6 sm:px-12 py-12 lg:py-16">
@@ -39,6 +43,11 @@ export const Footer: React.FC = () => {
                                     Artists Directory
                                 </Link>
                             </li>
+                            <li>
+                                <Link to="/bookmarks" className="hover:text-foreground transition-colors">
+                                    Saved Bookmarks
+                                </Link>
+                            </li>
                         </ul>
                     </div>
 
@@ -61,27 +70,57 @@ export const Footer: React.FC = () => {
                                     Creator Settings
                                 </Link>
                             </li>
+                            <li>
+                                <Link to="/support" className="hover:text-foreground transition-colors">
+                                    Support &amp; Help Desk
+                                </Link>
+                            </li>
                         </ul>
                     </div>
 
-                    {/* Column 3: Platform */}
+                    {/* Column 3: Platform & API */}
                     <div className="space-y-3">
                         <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">Platform</h4>
                         <ul className="space-y-2 text-xs text-muted-foreground">
                             <li>
-                                <span className="text-muted-foreground/80 hover:text-foreground cursor-pointer transition-colors">
+                                <Link to="/escrow-terms" className="hover:text-foreground transition-colors">
                                     Escrow Protection
-                                </span>
+                                </Link>
                             </li>
                             <li>
-                                <span className="text-muted-foreground/80 hover:text-foreground cursor-pointer transition-colors">
+                                <Link to="/terms" className="hover:text-foreground transition-colors">
                                     Terms of Service
-                                </span>
+                                </Link>
                             </li>
                             <li>
-                                <span className="text-muted-foreground/80 hover:text-foreground cursor-pointer transition-colors">
+                                <Link to="/privacy" className="hover:text-foreground transition-colors">
                                     Privacy Policy
-                                </span>
+                                </Link>
+                            </li>
+                            <li>
+                                <Link to="/cookies" className="hover:text-foreground transition-colors">
+                                    Cookie Policy
+                                </Link>
+                            </li>
+                            <li>
+                                <Link to="/license" className="hover:text-foreground transition-colors">
+                                    Commercial License
+                                </Link>
+                            </li>
+                            <li>
+                                <Link to="/api-terms" className="hover:text-foreground transition-colors">
+                                    API Terms
+                                </Link>
+                            </li>
+                            <li>
+                                <a
+                                    href={`${apiBase}/explore`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="hover:text-foreground transition-colors inline-flex items-center gap-1 text-purple-400 font-medium"
+                                >
+                                    API Explorer <ExternalLink className="h-3 w-3" />
+                                </a>
                             </li>
                         </ul>
                     </div>
