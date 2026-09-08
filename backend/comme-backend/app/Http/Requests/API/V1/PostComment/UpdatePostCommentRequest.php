@@ -12,6 +12,13 @@ class UpdatePostCommentRequest extends FormRequest
         return $this->user()->can('update', $this->route('comment'));
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('body') && ! $this->has('content')) {
+            $this->merge(['content' => $this->input('body')]);
+        }
+    }
+
     /**
      * Only content is editable — post_id and parent_comment_id are fixed
      * at creation, same reasoning as Post's portfolio_id being locked

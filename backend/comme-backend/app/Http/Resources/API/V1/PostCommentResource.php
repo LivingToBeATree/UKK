@@ -14,6 +14,7 @@ class PostCommentResource extends JsonResource
         return [
             'id' => $this->id,
             'post_id' => $this->post_id,
+            'user_id' => $this->user_id,
             'content' => $this->content,
             'body' => $this->content,
             'parent_comment_id' => $this->parent_comment_id,

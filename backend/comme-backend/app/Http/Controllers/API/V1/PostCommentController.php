@@ -88,6 +88,8 @@ class PostCommentController extends Controller
      */
     public function update(UpdatePostCommentRequest $request, PostComment $comment): JsonResponse
     {
+        Gate::authorize('update', $comment);
+
         $comment->update($request->validated());
 
         return ApiResponseHelper::successResponse(

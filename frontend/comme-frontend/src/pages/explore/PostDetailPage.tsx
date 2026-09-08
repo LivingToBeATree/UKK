@@ -338,22 +338,50 @@ const ScrollableCommentMediaGallery: React.FC<{
     );
 };
 
-// ── Interactive Comment Item with Replies, Likes & Bookmarks ──
+// ── Interactive Comment Item with Replies, Likes, Bookmarks, Editing & Reporting ──
 const CommentItem: React.FC<{
     comment: PostComment;
     postId: number | string;
     postAuthorId?: number;
     onDeleteComment: (commentId: number) => void;
+    onUpdateComment: (commentId: number, newContent: string) => Promise<void>;
     onReplyAdded: (reply: PostComment, parentId: number) => void;
     deletingCommentId: number | null;
-    onReportComment?: (commentId: number, username?: string) => void;
-}> = ({ comment, postId, postAuthorId, onDeleteComment, onReplyAdded, deletingCommentId, onReportComment }) => {
+    onReportComment?: (commentId: number, username?: string, content?: string) => void;
+}> = ({
+    comment,
+    postId,
+    postAuthorId,
+    onDeleteComment,
+    onUpdateComment,
+    onReplyAdded,
+    deletingCommentId,
+    onReportComment,
+}) => {
     const { user } = useAuth();
     const { requireAuth } = useAuthModal();
     const [isLiked, setIsLiked] = useState(Boolean(comment.is_liked));
     const [likesCount, setLikesCount] = useState(comment.likes_count || 0);
     const [isBookmarked, setIsBookmarked] = useState(Boolean(comment.is_bookmarked));
     const [showReplyComposer, setShowReplyComposer] = useState(false);
+
+    // Edit state
+    const [isEditing, setIsEditing] = useState(false);
+    const [editContent, setEditContent] = useState(comment.content || comment.body || '');
+    const [isSavingEdit, setIsSavingEdit] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+    useEffect(() => {
+        setEditContent(comment.content || comment.body || '');
+    }, [comment.content, comment.body]);
+
+    const isOwner = Boolean(
+        user && (
+            user.id === comment.user_id ||
+            (comment.user?.id && user.id === comment.user.id) ||
+            user.role === 'admin'
+        )
+    );
 
     const { cleanText, mediaList } = extractCommentMedia(comment.content || comment.body || '');
 
@@ -381,11 +409,27 @@ const CommentItem: React.FC<{
         }
     };
 
+    const handleSaveEdit = async () => {
+        if (!editContent.trim()) {
+            toast.error('Comment cannot be empty');
+            return;
+        }
+        setIsSavingEdit(true);
+        try {
+            await onUpdateComment(comment.id, editContent.trim());
+            setIsEditing(false);
+        } catch {
+            // Error toast handled in parent
+        } finally {
+            setIsSavingEdit(false);
+        }
+    };
+
     return (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-2">
             <Card className="rounded-2xl border border-border/70 bg-card/85 shadow-2xs hover:border-border transition-colors">
                 <CardContent className="p-4 sm:p-5 space-y-3">
-                    {/* Header: Author Info */}
+                    {/* Header: Author Info & Owner Controls */}
                     <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-2.5 min-w-0">
                             <Link to={`/users/${comment.user?.username || ''}`}>
@@ -412,36 +456,133 @@ const CommentItem: React.FC<{
                                     <span className="text-[11px] text-muted-foreground">
                                         {formatPostDate(comment.created_at)}
                                     </span>
+                                    {comment.updated_at && comment.updated_at !== comment.created_at && (
+                                        <span className="text-[10px] text-muted-foreground/70 italic">
+                                            (edited)
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         </div>
 
-                        {/* Delete Comment for Comment Owner or Admin */}
-                        {user && (user.id === comment.user_id || user.role === 'admin') && (
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => onDeleteComment(comment.id)}
-                                disabled={deletingCommentId === comment.id}
-                                className="h-7 w-7 p-0 text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 rounded-lg cursor-pointer shrink-0"
-                                title="Delete comment"
-                            >
-                                <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
+                        {/* Owner Controls: Edit & Delete */}
+                        {isOwner && !isEditing && (
+                            <div className="flex items-center gap-1 shrink-0">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setIsEditing(true)}
+                                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg cursor-pointer transition-colors"
+                                    title="Edit comment"
+                                >
+                                    <Pencil className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setShowDeleteConfirm(true)}
+                                    disabled={deletingCommentId === comment.id}
+                                    className="h-7 w-7 p-0 text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 rounded-lg cursor-pointer transition-colors"
+                                    title="Delete comment"
+                                >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                            </div>
                         )}
                     </div>
 
-                    {/* Clean Text Content */}
-                    {cleanText && (
-                        <div className="pt-0.5">
-                            <MarkdownContent content={cleanText} variant="comment" className="text-foreground/90 leading-relaxed text-xs sm:text-sm font-medium" />
+                    {/* Delete Confirmation Banner */}
+                    {showDeleteConfirm && (
+                        <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between gap-3 text-xs animate-in fade-in duration-200">
+                            <span className="text-rose-300 font-medium">Delete this comment?</span>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                    className="h-7 px-2.5 text-xs rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => {
+                                        setShowDeleteConfirm(false);
+                                        onDeleteComment(comment.id);
+                                    }}
+                                    disabled={deletingCommentId === comment.id}
+                                    className="h-7 px-3 text-xs font-bold rounded-lg bg-rose-600 hover:bg-rose-700 text-white cursor-pointer shadow-xs"
+                                >
+                                    {deletingCommentId === comment.id ? 'Deleting...' : 'Delete'}
+                                </Button>
+                            </div>
                         </div>
                     )}
 
-                    {/* Extracted Media Gallery formatted like Post Media */}
-                    {mediaList.length > 0 && (
-                        <ScrollableCommentMediaGallery mediaList={mediaList} />
+                    {/* Content: Edit Mode or Standard Display */}
+                    {isEditing ? (
+                        <div className="space-y-2.5 pt-1">
+                            <textarea
+                                value={editContent}
+                                onChange={(e) => setEditContent(e.target.value)}
+                                rows={3}
+                                className="w-full resize-none rounded-xl p-3 text-xs sm:text-sm bg-secondary/30 border border-border/80 focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground"
+                                placeholder="Edit your comment..."
+                                maxLength={2000}
+                                autoFocus
+                            />
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="text-[11px] text-muted-foreground">{editContent.length}/2000</span>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                            setEditContent(comment.content || comment.body || '');
+                                            setIsEditing(false);
+                                        }}
+                                        disabled={isSavingEdit}
+                                        className="h-7 px-3 text-xs rounded-xl cursor-pointer"
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        onClick={handleSaveEdit}
+                                        disabled={isSavingEdit || !editContent.trim()}
+                                        className="h-7 px-3.5 text-xs font-bold rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-xs cursor-pointer gap-1.5"
+                                    >
+                                        {isSavingEdit ? (
+                                            <div className="h-3 w-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        ) : (
+                                            <Check className="h-3.5 w-3.5" />
+                                        )}
+                                        <span>Save</span>
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            {/* Clean Text Content */}
+                            {cleanText && (
+                                <div className="pt-0.5">
+                                    <MarkdownContent content={cleanText} variant="comment" className="text-foreground/90 leading-relaxed text-xs sm:text-sm font-medium" />
+                                </div>
+                            )}
+
+                            {/* Extracted Media Gallery formatted like Post Media */}
+                            {mediaList.length > 0 && (
+                                <ScrollableCommentMediaGallery mediaList={mediaList} />
+                            )}
+                        </>
                     )}
 
                     {/* Comment Interactive Actions Row */}
@@ -493,9 +634,10 @@ const CommentItem: React.FC<{
                             {onReportComment && (
                                 <button
                                     type="button"
-                                    onClick={() => onReportComment(comment.id, comment.user?.username)}
+                                    onClick={() => onReportComment(comment.id, comment.user?.username, comment.content || comment.body)}
                                     className="p-1.5 rounded-xl text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
                                     title="Report comment"
+                                    aria-label="Report comment"
                                 >
                                     <Flag className="h-3.5 w-3.5" />
                                 </button>
@@ -531,6 +673,7 @@ const CommentItem: React.FC<{
                             postId={postId}
                             postAuthorId={postAuthorId}
                             onDeleteComment={onDeleteComment}
+                            onUpdateComment={onUpdateComment}
                             onReplyAdded={onReplyAdded}
                             deletingCommentId={deletingCommentId}
                             onReportComment={onReportComment}
@@ -815,7 +958,7 @@ export const PostDetailPage: React.FC = () => {
     const [heroLightboxOpen, setHeroLightboxOpen] = useState(false);
     const [showPostReportModal, setShowPostReportModal] = useState(false);
     const [showPostAppealModal, setShowPostAppealModal] = useState(false);
-    const [reportingComment, setReportingComment] = useState<{ id: number; username?: string } | null>(null);
+    const [reportingComment, setReportingComment] = useState<{ id: number; username?: string; content?: string } | null>(null);
 
     useEffect(() => {
         const fetchPost = async () => {
@@ -932,6 +1075,36 @@ export const PostDetailPage: React.FC = () => {
                 ...c,
                 replies: c.replies ? deleteCommentFromTree(c.replies, commentId) : [],
             }));
+    };
+
+    const updateCommentInTree = (list: PostComment[], updated: PostComment): PostComment[] => {
+        return list.map((c) => {
+            if (c.id === updated.id) {
+                return {
+                    ...c,
+                    ...updated,
+                    replies: c.replies || updated.replies || [],
+                };
+            }
+            if (c.replies && c.replies.length > 0) {
+                return {
+                    ...c,
+                    replies: updateCommentInTree(c.replies, updated),
+                };
+            }
+            return c;
+        });
+    };
+
+    const handleUpdateComment = async (commentId: number, newContent: string) => {
+        try {
+            const updated = await postService.updateComment(commentId, newContent);
+            setComments((prev: PostComment[]) => updateCommentInTree(prev, updated));
+            toast.success('Comment updated');
+        } catch {
+            toast.error('Failed to update comment');
+            throw new Error('Failed to update comment');
+        }
     };
 
     const handleDeleteComment = async (commentId: number) => {
@@ -1513,11 +1686,12 @@ export const PostDetailPage: React.FC = () => {
                                     postId={post.id}
                                     postAuthorId={post.user_id}
                                     onDeleteComment={handleDeleteComment}
+                                    onUpdateComment={handleUpdateComment}
                                     onReplyAdded={handleReplyAdded}
                                     deletingCommentId={deletingCommentId}
-                                    onReportComment={(cId, cUser) => {
+                                    onReportComment={(cId, cUser, cContent) => {
                                         if (!requireAuth('report')) return;
-                                        setReportingComment({ id: cId, username: cUser });
+                                        setReportingComment({ id: cId, username: cUser, content: cContent });
                                     }}
                                 />
                             ))
@@ -1553,7 +1727,13 @@ export const PostDetailPage: React.FC = () => {
                     onClose={() => setReportingComment(null)}
                     reportableType="post_comment"
                     reportableId={reportingComment.id}
-                    targetTitle={`Comment #${reportingComment.id}`}
+                    targetTitle={
+                        reportingComment.content
+                            ? (reportingComment.content.length > 50
+                                ? reportingComment.content.slice(0, 50) + '...'
+                                : reportingComment.content)
+                            : `Comment #${reportingComment.id}`
+                    }
                     targetSubtitle={reportingComment.username ? `by @${reportingComment.username}` : undefined}
                 />
             )}
