@@ -16,8 +16,8 @@ mkdir -p /run/nginx \
          /var/www/html/storage/app/public \
          /var/www/html/bootstrap/cache
 
-chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /run/nginx /var/log/nginx /var/lib/nginx
-chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /run/nginx /var/log/nginx /var/lib/nginx 2>/dev/null || true
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
 
 # Write clean default.conf for Nginx listening on ${PORT}
 cat <<EOF > /etc/nginx/http.d/default.conf

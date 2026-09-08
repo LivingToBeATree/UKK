@@ -29,11 +29,15 @@ steps:
       - '--platform=managed'
       - '--allow-unauthenticated'
       - '--port=8080'
+      - '--execution-environment=gen2'
+      - '--add-volume=name=media-storage,type=cloud-storage,bucket=${_BUCKET_NAME}'
+      - '--add-volume-mount=volume=media-storage,mount-path=/var/www/html/storage/app/public'
 
 substitutions:
   _REGION: 'asia-southeast2'
   _REPO_NAME: 'cloud-run-source-deploy'
   _SERVICE_NAME: 'comme-backend'
+  _BUCKET_NAME: 'comme_bucket'
 
 images:
   - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/comme-backend:$COMMIT_SHA'
