@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import {
     Calendar as CalendarIcon,
     ChevronLeft,
@@ -38,6 +39,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+    const popoverRef = useRef<HTMLDivElement>(null);
+    const [popoverPos, setPopoverPos] = useState<{ top: number; left: number } | null>(null);
 
     // Initial display month/year based on value or current date
     const initialDate = value ? new Date(value + 'T00:00:00') : new Date();
@@ -55,10 +58,45 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         }
     }, [value]);
 
-    // Close popover when clicking outside
+    const updatePosition = useCallback(() => {
+        if (!containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+        const popoverHeight = 360;
+        const popoverWidth = 310;
+
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const spaceAbove = rect.top;
+        const openUpwards = spaceBelow < popoverHeight && spaceAbove > spaceBelow;
+
+        let left = rect.left;
+        if (left + popoverWidth > window.innerWidth - 16) {
+            left = Math.max(16, window.innerWidth - popoverWidth - 16);
+        }
+
+        setPopoverPos({
+            top: openUpwards ? Math.max(16, rect.top - popoverHeight - 8) : rect.bottom + 8,
+            left: Math.max(16, left),
+        });
+    }, []);
+
+    const handleToggleOpen = () => {
+        if (disabled) return;
+        if (!isOpen) {
+            updatePosition();
+            setIsOpen(true);
+        } else {
+            setIsOpen(false);
+        }
+    };
+
+    // Close popover when clicking outside or pressing escape, and update position on scroll/resize
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+            const target = e.target as Node;
+            if (
+                containerRef.current && !containerRef.current.contains(target) &&
+                popoverRef.current && !popoverRef.current.contains(target)
+            ) {
                 setIsOpen(false);
             }
         };
@@ -67,14 +105,19 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         };
 
         if (isOpen) {
+            updatePosition();
             document.addEventListener('mousedown', handleClickOutside);
             document.addEventListener('keydown', handleKeyDown);
+            window.addEventListener('resize', updatePosition);
+            window.addEventListener('scroll', updatePosition, true);
         }
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
             document.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('resize', updatePosition);
+            window.removeEventListener('scroll', updatePosition, true);
         };
-    }, [isOpen]);
+    }, [isOpen, updatePosition]);
 
     const handlePrevMonth = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -157,7 +200,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         <div className={`relative w-full ${className}`} ref={containerRef}>
             {/* Trigger input */}
             <div
-                onClick={() => !disabled && setIsOpen(!isOpen)}
+                onClick={handleToggleOpen}
                 className={`flex items-center justify-between gap-2.5 px-3.5 py-2.5 rounded-2xl border transition-all text-xs cursor-pointer select-none ${
                     disabled
                         ? 'bg-muted/40 text-muted-foreground border-border cursor-not-allowed opacity-60'
@@ -191,8 +234,17 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             </div>
 
             {/* Custom Dark Popover Calendar */}
-            {isOpen && (
-                <div className="absolute top-full left-0 mt-2 z-50 w-[310px] rounded-3xl border border-border/80 bg-zinc-950/95 backdrop-blur-xl p-4 shadow-2xl animate-in fade-in-0 zoom-in-95 duration-150">
+            {isOpen && popoverPos && createPortal(
+                <div
+                    ref={popoverRef}
+                    style={{
+                        position: 'fixed',
+                        top: `${popoverPos.top}px`,
+                        left: `${popoverPos.left}px`,
+                        zIndex: 9999,
+                    }}
+                    className="w-[310px] rounded-3xl border border-border/80 bg-zinc-950/95 backdrop-blur-xl p-4 shadow-2xl animate-in fade-in-0 zoom-in-95 duration-150"
+                >
                     {/* Header Controls */}
                     <div className="flex items-center justify-between pb-3 border-b border-border/60">
                         <Button
@@ -341,7 +393,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                             Today
                         </button>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

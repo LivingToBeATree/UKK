@@ -250,7 +250,7 @@ export const OrderCommissionPage: React.FC = () => {
                     {/* ── Left Column: Preferences & Form Details (7 or 8 cols) ── */}
                     <div className="lg:col-span-7 xl:col-span-8 space-y-6">
                         {/* 1. Deadline Preference Card */}
-                        <Card className="rounded-3xl border-border/80 bg-card/60 shadow-xs overflow-hidden">
+                        <Card className="rounded-3xl border-border/80 bg-card/60 shadow-xs">
                             <CardContent className="p-6 space-y-4">
                                 <div className="flex items-center justify-between">
                                     <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
