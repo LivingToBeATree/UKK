@@ -13,6 +13,7 @@ import { ForArtistsCta } from '@/components/ForArtistsCta';
 import { PublicFooter } from '@/components/PublicFooter';
 import { Toaster } from '@/components/ui/sonner';
 import { WarningNoticeModal } from '@/components/modals/WarningNoticeModal';
+import { DynamicTitleUpdater } from '@/components/DynamicTitleUpdater';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from 'react-router-dom';
 
@@ -35,6 +36,7 @@ function AppLayout() {
     if (isFullScreenRoute) {
         return (
             <div className="min-h-screen bg-background text-foreground font-sans transition-colors duration-200">
+                <DynamicTitleUpdater />
                 <AppRoutes />
                 <Toaster />
                 <WarningNoticeModal />
@@ -46,6 +48,7 @@ function AppLayout() {
     if (!isAuthenticated) {
         return (
             <div className="min-h-screen bg-background text-foreground flex flex-col font-sans transition-colors duration-200 overflow-x-clip">
+                <DynamicTitleUpdater />
                 <Navbar />
                 <main className="flex-1 flex flex-col w-full">
                     <AppRoutes />
@@ -63,6 +66,7 @@ function AppLayout() {
 
     return (
         <div className="min-h-screen bg-background text-foreground flex flex-col font-sans transition-colors duration-200 overflow-x-clip">
+            <DynamicTitleUpdater />
             {/* Desktop Fixed Left Expandable Rail (Hidden on Mobile) */}
             <div className="hidden md:block">
                 <SidebarRail />

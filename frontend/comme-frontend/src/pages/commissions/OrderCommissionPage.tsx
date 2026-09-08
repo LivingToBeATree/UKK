@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { commissionOrderApi } from '@/services/commissionService';
 import { useAuth } from '@/hooks/useAuth';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -59,6 +60,8 @@ export const OrderCommissionPage: React.FC = () => {
 
     const [description, setDescription] = useState('');
     const [submitting, setSubmitting] = useState(false);
+
+    useDocumentTitle(service ? `Order — ${service.name}` : 'Order Commission');
 
     // Deadline preference state: flexible (default) or specific date
     const [deadlineType, setDeadlineType] = useState<'flexible' | 'specific'>('flexible');

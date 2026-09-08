@@ -20,6 +20,7 @@ import { ReportModal } from '@/components/modals/ReportModal';
 import { commissionServiceApi, commissionReviewApi, type CommissionReview } from '@/services/commissionService';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/contexts/AuthModalContext';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +42,8 @@ export const ServiceDetailPage: React.FC = () => {
     const [selectedAddonIds, setSelectedAddonIds] = useState<number[]>([]);
     const [activeMediaIndex, setActiveMediaIndex] = useState<number>(0);
     const [loading, setLoading] = useState(true);
+
+    useDocumentTitle(service?.name || null);
 
     // Reporting modal state
     const [showReportModal, setShowReportModal] = useState(false);

@@ -35,6 +35,7 @@ import { AppealTicketModal } from '@/components/modals/AppealTicketModal';
 import { EditPortfolioModal } from '@/components/modals/EditPortfolioModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/contexts/AuthModalContext';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { portfolioApi } from '@/services/artistService';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -251,6 +252,8 @@ export const PortfolioDetailPage: React.FC = () => {
     const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState<{ status?: number; message?: string } | null>(null);
+
+    useDocumentTitle(portfolio?.title || null);
 
     // Lightbox state
     const [lightboxOpen, setLightboxOpen] = useState(false);

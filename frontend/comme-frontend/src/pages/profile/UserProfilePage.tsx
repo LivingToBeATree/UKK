@@ -27,6 +27,7 @@ import {
 import { ReportModal } from '@/components/modals/ReportModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/contexts/AuthModalContext';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { followApi, portfolioApi, artistProfileApi, type Portfolio } from '@/services/artistService';
 import { commissionServiceApi, commissionReviewApi, type CommissionReview } from '@/services/commissionService';
 import { userService } from '@/services/userService';
@@ -101,6 +102,11 @@ export const UserProfilePage: React.FC = () => {
     const [following, setFollowing] = useState(false);
     const [followersCount, setFollowersCount] = useState(0);
     const [loading, setLoading] = useState(true);
+
+    const profileTitle = user
+        ? (user.display_name ? `${user.display_name} (@${user.username})` : `@${user.username}`)
+        : (cleanUsername ? `@${cleanUsername}` : null);
+    useDocumentTitle(profileTitle);
 
     // Upload state
     const [uploadingAvatar, setUploadingAvatar] = useState(false);

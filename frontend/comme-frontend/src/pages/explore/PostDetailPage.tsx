@@ -40,6 +40,7 @@ import {
 import { postService } from '@/services/postService';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/contexts/AuthModalContext';
+import { useDocumentTitle, slugToTitle } from '@/hooks/useDocumentTitle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
@@ -804,6 +805,8 @@ export const PostDetailPage: React.FC = () => {
     const [comments, setComments] = useState<PostComment[]>([]);
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState<{ status?: number; message?: string } | null>(null);
+
+    useDocumentTitle(post ? (post.portfolio?.title || (post.slug ? slugToTitle(post.slug) : null) || `Artwork #${post.id}`) : null);
     const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null);
     const [copied, setCopied] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);

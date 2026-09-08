@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { commissionOrderApi, commissionReviewApi } from '@/services/commissionService';
 import { useAuth } from '@/hooks/useAuth';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { formatPrice, formatDateSafe, formatDateTimeSafe } from '@/utils/format';
@@ -73,6 +74,11 @@ export const CommissionDetailPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
+
+    const commissionTitle = commission
+        ? `Order #${commission.id} — ${commission.commission_service?.name || 'Commission'}`
+        : (id ? `Order #${id}` : null);
+    useDocumentTitle(commissionTitle);
 
     // Messages auto-scroll ref
     const messagesEndRef = useRef<HTMLDivElement>(null);
