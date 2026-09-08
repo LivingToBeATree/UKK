@@ -822,7 +822,13 @@ export const CommissionDetailPage: React.FC = () => {
                                     <p className="text-muted-foreground flex items-center gap-1.5 font-medium">
                                         <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> Escrow Status
                                     </p>
-                                    <p className="font-bold mt-1 text-emerald-400">
+                                    <p className={`font-bold mt-1 ${
+                                        commission.status === 'cancelled'
+                                            ? (commission.payment?.status === 'refunded' || commission.payments?.some(p => p.status === 'refunded')
+                                                ? 'text-rose-400'
+                                                : 'text-muted-foreground')
+                                            : 'text-emerald-400'
+                                    }`}>
                                         {commission.status === 'pending'
                                             ? 'Awaiting Acceptance'
                                             : commission.status === 'accepted'
@@ -830,10 +836,13 @@ export const CommissionDetailPage: React.FC = () => {
                                             : ['in_progress', 'waiting_for_client', 'revision'].includes(commission.status)
                                             ? 'Secured in Escrow'
                                             : commission.status === 'cancelled'
-                                            ? 'Cancelled / Refunded'
+                                            ? (commission.payment?.status === 'refunded' || commission.payments?.some(p => p.status === 'refunded')
+                                                ? 'Escrow Refunded'
+                                                : 'Cancelled (No Charge)')
                                             : 'Released / Settled'}
                                     </p>
-                                    {['in_progress', 'waiting_for_client', 'revision', 'completed'].includes(commission.status) && (
+                                    {((['in_progress', 'waiting_for_client', 'revision', 'completed'].includes(commission.status)) ||
+                                      (commission.status === 'cancelled' && (commission.payment?.status === 'refunded' || commission.payment?.status === 'paid' || commission.payments?.some(p => p.status === 'refunded' || p.status === 'paid')))) && (
                                         <button
                                             type="button"
                                             onClick={() => setReceiptModalOpen(true)}
@@ -995,23 +1004,38 @@ export const CommissionDetailPage: React.FC = () => {
                             )}
 
                             {/* Cancelled Commission Banner */}
-                            {commission.status === 'cancelled' && (
-                                <div className="p-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 space-y-1.5 text-xs">
-                                    <p className="font-bold text-rose-400 flex items-center gap-1.5">
-                                        <XCircle className="h-4 w-4" /> This Commission Has Been Cancelled
-                                    </p>
-                                    <p className="text-muted-foreground">
-                                        {commission.cancellation_requested_by
-                                            ? `This order was cancelled upon mutual request.`
-                                            : `This order has been cancelled.`}
-                                    </p>
-                                    {commission.cancellation_reason && (
-                                        <p className="text-xs text-muted-foreground">
-                                            <span className="font-semibold text-rose-300">Reason:</span> {commission.cancellation_reason}
+                            {commission.status === 'cancelled' && (() => {
+                                const hasRefund = commission.payment?.status === 'refunded' || commission.payments?.some(p => p.status === 'refunded');
+                                return (
+                                    <div className="p-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 space-y-2 text-xs">
+                                        <div className="flex items-center justify-between">
+                                            <p className="font-bold text-rose-400 flex items-center gap-1.5">
+                                                <XCircle className="h-4 w-4" /> This Commission Has Been Cancelled
+                                            </p>
+                                            {hasRefund && (
+                                                <Badge variant="rose" className="font-mono text-[10px] font-bold">
+                                                    Escrow Refunded
+                                                </Badge>
+                                            )}
+                                        </div>
+                                        <p className="text-muted-foreground">
+                                            {commission.cancellation_requested_by
+                                                ? `This order was cancelled upon mutual request.`
+                                                : `This order has been cancelled.`}
+                                            {hasRefund && (
+                                                <span className="block mt-1 text-emerald-400 font-medium">
+                                                    A full refund of {formatPrice(commission.total_price)} has been credited back to the client.
+                                                </span>
+                                            )}
                                         </p>
-                                    )}
-                                </div>
-                            )}
+                                        {commission.cancellation_reason && (
+                                            <p className="text-xs text-muted-foreground">
+                                                <span className="font-semibold text-rose-300">Reason:</span> {commission.cancellation_reason}
+                                            </p>
+                                        )}
+                                    </div>
+                                );
+                            })()}
 
                             {/* Brief Description */}
                             {commission.description && (
@@ -1132,8 +1156,9 @@ export const CommissionDetailPage: React.FC = () => {
 
                             {/* Actions */}
                             <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-border">
-                                {/* BOTH: Show Receipt (When Paid / In-Progress or Completed) */}
-                                {['in_progress', 'waiting_for_client', 'revision', 'completed'].includes(commission.status) && (
+                                {/* BOTH: Show Receipt (When Paid, In-Progress, Completed, or Refunded) */}
+                                {(['in_progress', 'waiting_for_client', 'revision', 'completed'].includes(commission.status) ||
+                                  (commission.status === 'cancelled' && (commission.payment?.status === 'refunded' || commission.payment?.status === 'paid' || commission.payments?.some(p => p.status === 'refunded' || p.status === 'paid')))) && (
                                     <Button
                                         size="sm"
                                         variant="outline"

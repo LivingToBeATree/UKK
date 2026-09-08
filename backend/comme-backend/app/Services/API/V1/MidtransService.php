@@ -131,4 +131,37 @@ class MidtransService
             default => PaymentStatus::FAILED,
         };
     }
+
+    /**
+     * Attempts to refund a settled transaction via Midtrans API.
+     */
+    public function refundTransaction(string $orderId, float $amount, string $reason): ?array
+    {
+        try {
+            $params = [
+                'refund_key' => 'ref-' . time() . '-' . \Illuminate\Support\Str::random(6),
+                'amount' => (int) $amount,
+                'reason' => $reason,
+            ];
+            $response = \Midtrans\Transaction::refund($orderId, $params);
+            return json_decode(json_encode($response), true);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning("Midtrans Refund Exception for {$orderId}: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Attempts to cancel a pending transaction via Midtrans API.
+     */
+    public function cancelTransaction(string $orderId): ?array
+    {
+        try {
+            $response = \Midtrans\Transaction::cancel($orderId);
+            return json_decode(json_encode($response), true);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning("Midtrans Cancel Exception for {$orderId}: " . $e->getMessage());
+            return null;
+        }
+    }
 }

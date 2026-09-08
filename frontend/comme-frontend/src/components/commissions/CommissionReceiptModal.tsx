@@ -10,6 +10,7 @@ import {
     Lock,
     X,
     Sparkles,
+    RotateCcw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -55,6 +56,7 @@ export const CommissionReceiptModal: React.FC<CommissionReceiptModalProps> = ({
 
     const isEscrowSecured = ['in_progress', 'waiting_for_client', 'revision'].includes(commission.status);
     const isCompleted = commission.status === 'completed';
+    const isRefunded = commission.status === 'cancelled' && (activePayment?.status === 'refunded' || commission.payments?.some(p => p.status === 'refunded'));
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
@@ -91,12 +93,12 @@ export const CommissionReceiptModal: React.FC<CommissionReceiptModalProps> = ({
                 className="relative w-full max-w-2xl bg-zinc-950 border border-border/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[90vh]"
             >
                 {/* Decorative Top Accent Bar */}
-                <div className="h-2 bg-gradient-to-r from-purple-500 via-emerald-400 to-amber-400 shrink-0" />
+                <div className={`h-2 bg-gradient-to-r ${isRefunded ? 'from-rose-500 via-amber-400 to-rose-400' : 'from-purple-500 via-emerald-400 to-amber-400'} shrink-0`} />
 
                 {/* Modal Header Actions (Screen Only) */}
                 <div className="p-4 sm:p-6 pb-0 flex items-center justify-between gap-3 shrink-0 no-print">
                     <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest font-mono">
-                        <Receipt className="h-4 w-4 text-emerald-400" /> Official Escrow Receipt
+                        <Receipt className={`h-4 w-4 ${isRefunded ? 'text-rose-400' : 'text-emerald-400'}`} /> {isRefunded ? 'Cancelled & Refunded Receipt' : 'Official Escrow Receipt'}
                     </div>
                     <div className="flex items-center gap-2">
                         <Button
@@ -124,10 +126,10 @@ export const CommissionReceiptModal: React.FC<CommissionReceiptModalProps> = ({
                         <div className="space-y-1">
                             <div className="flex items-center gap-2">
                                 <span className="font-black text-xl tracking-tight text-foreground font-mono">
-                                    COM<span className="text-emerald-400">ME</span>
+                                    COM<span className={isRefunded ? 'text-rose-400' : 'text-emerald-400'}>ME</span>
                                 </span>
-                                <Badge variant="teal" className="text-[10px] gap-1 py-0.5">
-                                    <ShieldCheck className="h-3 w-3" /> VERIFIED ESCROW
+                                <Badge variant={isRefunded ? 'rose' : 'teal'} className="text-[10px] gap-1 py-0.5">
+                                    {isRefunded ? <RotateCcw className="h-3 w-3" /> : <ShieldCheck className="h-3 w-3" />} {isRefunded ? 'ESCROW REFUNDED' : 'VERIFIED ESCROW'}
                                 </Badge>
                             </div>
                             <p className="text-xs text-muted-foreground">
@@ -150,13 +152,17 @@ export const CommissionReceiptModal: React.FC<CommissionReceiptModalProps> = ({
 
                         <div className="text-left sm:text-right space-y-1">
                             <span className="text-[10px] text-muted-foreground block uppercase font-mono tracking-wider font-semibold">
-                                Total Paid &amp; Protected
+                                {isRefunded ? 'Escrow Deposit Refunded' : 'Total Paid & Protected'}
                             </span>
-                            <span className="text-2xl sm:text-3xl font-black text-emerald-400 font-mono block">
+                            <span className={`text-2xl sm:text-3xl font-black font-mono block ${isRefunded ? 'text-rose-400' : 'text-emerald-400'}`}>
                                 {formatPrice(commission.total_price)}
                             </span>
                             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
-                                {isCompleted ? (
+                                {isRefunded ? (
+                                    <span className="text-rose-400 flex items-center gap-1 font-mono">
+                                        <RotateCcw className="h-3.5 w-3.5" /> Order Cancelled &amp; Refunded
+                                    </span>
+                                ) : isCompleted ? (
                                     <span className="text-emerald-400 flex items-center gap-1 font-mono">
                                         <CheckCircle2 className="h-3.5 w-3.5" /> Order Completed &amp; Settled
                                     </span>
@@ -291,19 +297,46 @@ export const CommissionReceiptModal: React.FC<CommissionReceiptModalProps> = ({
                                         {formatPrice(commission.total_price)}
                                     </span>
                                 </div>
+                                {isRefunded && (
+                                    <>
+                                        <div className="pt-1.5 flex items-center justify-between text-sm font-bold text-rose-400">
+                                            <span className="flex items-center gap-1">
+                                                <RotateCcw className="h-3.5 w-3.5" /> Full Escrow Refund Credited
+                                            </span>
+                                            <span className="text-base font-mono font-black">
+                                                -{formatPrice(commission.total_price)}
+                                            </span>
+                                        </div>
+                                        <div className="pt-1.5 border-t border-border/40 flex items-center justify-between text-xs font-semibold text-muted-foreground">
+                                            <span>Net Settled Amount</span>
+                                            <span className="font-mono text-foreground font-bold">Rp 0</span>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
 
                     {/* Escrow Terms & Assurance Notice */}
-                    <div className="p-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/5 space-y-1.5 text-xs">
-                        <p className="font-bold text-emerald-400 flex items-center gap-1.5">
-                            <ShieldCheck className="h-4 w-4" /> COMME Escrow Purchase Protection
-                        </p>
-                        <p className="text-muted-foreground leading-relaxed text-[11px]">
-                            Payment has been captured into COMME Escrow. The illustrator will only receive the payout after you review and approve the delivered artwork, or after the 7-day inspection window has passed. You retain the right to request revisions under your selected package terms.
-                        </p>
-                    </div>
+                    {isRefunded ? (
+                        <div className="p-4 rounded-2xl border border-rose-500/25 bg-rose-500/5 space-y-1.5 text-xs">
+                            <p className="font-bold text-rose-400 flex items-center gap-1.5">
+                                <RotateCcw className="h-4 w-4" /> Escrow Refund Processed
+                            </p>
+                            <p className="text-muted-foreground leading-relaxed text-[11px]">
+                                This commission order was mutually cancelled. The full escrow deposit of <span className="text-foreground font-bold font-mono">{formatPrice(commission.total_price)}</span> has been credited back to the client. No payout was disbursed to the creator.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="p-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/5 space-y-1.5 text-xs">
+                            <p className="font-bold text-emerald-400 flex items-center gap-1.5">
+                                <ShieldCheck className="h-4 w-4" /> COMME Escrow Purchase Protection
+                            </p>
+                            <p className="text-muted-foreground leading-relaxed text-[11px]">
+                                Payment has been captured into COMME Escrow. The illustrator will only receive the payout after you review and approve the delivered artwork, or after the 7-day inspection window has passed. You retain the right to request revisions under your selected package terms.
+                            </p>
+                        </div>
+                    )}
 
                     {/* Transaction Audit History (if payments exist) */}
                     {commission.payments && commission.payments.length > 0 && (

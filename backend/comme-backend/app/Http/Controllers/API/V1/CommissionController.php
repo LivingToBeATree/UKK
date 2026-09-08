@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Enum\CommissionStatus;
+use App\Enum\PaymentStatus;
+use App\Services\API\V1\MidtransService;
 use App\Http\Requests\API\V1\Commission\StoreCommissionRequest;
 use App\Http\Requests\API\V1\Commission\UpdateCommissionDeadlineRequest;
 use App\Http\Requests\API\V1\Commission\ProposeCommissionDeadlineRequest;
@@ -413,14 +415,38 @@ class CommissionController extends Controller
         );
     }
 
-    public function cancel(Commission $commission): JsonResponse
+    public function cancel(Commission $commission, MidtransService $midtransService): JsonResponse
     {
         Gate::authorize('cancel', $commission);
+
+        // Cancel any pending payment attempts
+        $pendingPayments = $commission->payments()
+            ->where('status', PaymentStatus::PENDING->value)
+            ->get();
+        foreach ($pendingPayments as $pending) {
+            $midtransService->cancelTransaction($pending->order_id);
+            $pending->update(['status' => PaymentStatus::CANCELLED->value]);
+        }
+
+        // Check if there was an escrow payment paid
+        $paidPayment = $commission->payments()
+            ->where('status', PaymentStatus::PAID->value)
+            ->latest()
+            ->first();
+
+        if ($paidPayment) {
+            $midtransService->refundTransaction(
+                $paidPayment->order_id,
+                (float) $paidPayment->gross_amount,
+                'Commission cancelled'
+            );
+            $paidPayment->update(['status' => PaymentStatus::REFUNDED->value]);
+        }
 
         $commission->update(['status' => CommissionStatus::CANCELLED]);
 
         return ApiResponseHelper::successResponse(
-            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review'])),
+            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review', 'payment', 'payments'])),
             'Commission cancelled successfully.'
         );
     }
@@ -469,40 +495,102 @@ class CommissionController extends Controller
         );
     }
 
-    public function acceptCancellation(Commission $commission): JsonResponse
+    public function acceptCancellation(Commission $commission, MidtransService $midtransService): JsonResponse
     {
         Gate::authorize('acceptCancellation', $commission);
+
+        $requesterId = $commission->cancellation_requested_by;
+        $acceptor = auth()->user();
+
+        // Check if there is an escrow payment that was already PAID
+        $paidPayment = $commission->payments()
+            ->where('status', PaymentStatus::PAID->value)
+            ->latest()
+            ->first();
+
+        $wasRefunded = false;
+        $refundAmount = 0.0;
+        if ($paidPayment) {
+            $refundAmount = (float) $paidPayment->gross_amount;
+            $midtransResponse = $midtransService->refundTransaction(
+                $paidPayment->order_id,
+                $refundAmount,
+                $commission->cancellation_reason ?: 'Mutual cancellation agreement'
+            );
+
+            $paidPayment->update([
+                'status' => PaymentStatus::REFUNDED->value,
+                'raw_response' => array_merge($paidPayment->raw_response ?? [], [
+                    'refund_result' => [
+                        'refunded_at' => now()->toISOString(),
+                        'amount' => $refundAmount,
+                        'reason' => $commission->cancellation_reason ?: 'Mutual cancellation',
+                        'gateway_response' => $midtransResponse,
+                    ],
+                ]),
+            ]);
+            $wasRefunded = true;
+        }
+
+        // Also cancel any pending payment attempts
+        $pendingPayments = $commission->payments()
+            ->where('status', PaymentStatus::PENDING->value)
+            ->get();
+        foreach ($pendingPayments as $pending) {
+            $midtransService->cancelTransaction($pending->order_id);
+            $pending->update(['status' => PaymentStatus::CANCELLED->value]);
+        }
 
         $commission->update([
             'status' => CommissionStatus::CANCELLED,
         ]);
 
-        $requesterId = $commission->cancellation_requested_by;
-        $acceptor = auth()->user();
+        $formattedRefund = 'Rp ' . number_format($refundAmount, 0, ',', '.');
 
+        // Post notice in workspace chat
+        $chatNotice = $wasRefunded
+            ? "[Cancellation & Escrow Refund] The cancellation request was accepted by {$acceptor->display_name}. Full escrow payment of {$formattedRefund} has been refunded to the client."
+            : "[Cancellation Accepted] The cancellation request was accepted by {$acceptor->display_name}. This commission order has been officially cancelled.";
+
+        \App\Models\CommissionMessage::create([
+            'commission_id' => $commission->id,
+            'sender_id' => $acceptor->id,
+            'recipient_id' => $requesterId,
+            'message' => $chatNotice,
+            'message_type' => \App\Enum\MessageType::SYSTEM,
+        ]);
+
+        // Send notifications
         if ($requesterId && $requesterId !== $acceptor->id) {
+            $notifMessage = $wasRefunded
+                ? "Your cancellation request for Commission #{$commission->id} was accepted. A full escrow refund of {$formattedRefund} has been processed back to your account."
+                : "Your cancellation request for Commission #{$commission->id} was accepted. The commission is now cancelled.";
+
             \App\Models\Notification::create([
                 'user_id' => $requesterId,
                 'type' => \App\Enum\NotificationType::SYSTEM,
-                'title' => 'Cancellation Accepted',
-                'message' => "Your cancellation request for Commission #{$commission->id} was accepted. The commission is now cancelled.",
+                'title' => $wasRefunded ? 'Cancellation & Refund Processed' : 'Cancellation Accepted',
+                'message' => $notifMessage,
                 'notifiable_type' => Commission::class,
                 'notifiable_id' => $commission->id,
             ]);
         }
 
-        // Post notice in workspace chat
-        \App\Models\CommissionMessage::create([
-            'commission_id' => $commission->id,
-            'sender_id' => $acceptor->id,
-            'recipient_id' => $requesterId,
-            'message' => "[Cancellation Accepted] The cancellation request was accepted by {$acceptor->display_name}. This commission order has been officially cancelled.",
-            'message_type' => \App\Enum\MessageType::SYSTEM,
-        ]);
+        // If the acceptor was the artist and buyer was refunded, also notify buyer if not requester
+        if ($wasRefunded && $commission->user_id !== $requesterId) {
+            \App\Models\Notification::create([
+                'user_id' => $commission->user_id,
+                'type' => \App\Enum\NotificationType::SYSTEM,
+                'title' => 'Escrow Refund Processed',
+                'message' => "Commission #{$commission->id} was cancelled. A full escrow refund of {$formattedRefund} has been returned to you.",
+                'notifiable_type' => Commission::class,
+                'notifiable_id' => $commission->id,
+            ]);
+        }
 
         return ApiResponseHelper::successResponse(
-            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'cancellationRequester', 'messages', 'review'])),
-            'Commission cancellation accepted.'
+            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'cancellationRequester', 'messages', 'review', 'payment', 'payments'])),
+            $wasRefunded ? 'Commission cancelled and escrow refund processed.' : 'Commission cancellation accepted.'
         );
     }
 

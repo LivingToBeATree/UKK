@@ -3,11 +3,13 @@
 namespace Tests\Feature;
 
 use App\Enum\CommissionStatus;
+use App\Enum\PaymentStatus;
 use App\Enum\PayoutStatus;
 use App\Models\ArtistPayoutAccount;
 use App\Models\ArtistProfile;
 use App\Models\Commission;
 use App\Models\CommissionOption;
+use App\Models\CommissionPayment;
 use App\Models\CommissionPayout;
 use App\Models\CommissionService;
 use App\Models\User;
@@ -701,6 +703,15 @@ class CommissionLifecyclePayoutTest extends TestCase
         $commission = $this->createCommissionInWaitingState();
         $this->assertEquals(CommissionStatus::WAITING_FOR_CLIENT, $commission->status);
 
+        // Simulate that this commission was previously paid via escrow
+        $payment = CommissionPayment::create([
+            'commission_id' => $commission->id,
+            'order_id' => "COMM-REFUND-{$commission->id}",
+            'gross_amount' => 500000,
+            'status' => PaymentStatus::PAID,
+            'snap_token' => 'mock-token',
+        ]);
+
         // 1. Client requests cancellation with valid reason
         $this->actingAs($this->buyerUser);
         $res = $this->postJson("/api/commissions/{$commission->id}/request-cancellation", [
@@ -738,5 +749,8 @@ class CommissionLifecyclePayoutTest extends TestCase
             ->assertOk();
         $commission->refresh();
         $this->assertEquals(CommissionStatus::CANCELLED, $commission->status);
+
+        // Assert that the escrow payment has been refunded to the client
+        $this->assertEquals(PaymentStatus::REFUNDED, $payment->fresh()->status);
     }
 }
