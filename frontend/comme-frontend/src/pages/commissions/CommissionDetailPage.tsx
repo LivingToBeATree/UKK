@@ -550,14 +550,51 @@ export const CommissionDetailPage: React.FC = () => {
     if (loading) {
         return (
             <div className={`w-full max-w-[1440px] mx-auto space-y-6 ${isInsideDashboard ? '' : 'px-4 sm:px-8 lg:px-12 py-6 sm:py-8'}`}>
-                <Skeleton className="h-8 w-48" />
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="flex items-center justify-between gap-4">
+                    <Skeleton className="h-8 w-44 rounded-xl" />
+                    <Skeleton className="h-6 w-28 rounded-full" />
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     <div className="lg:col-span-7 space-y-6">
-                        <Skeleton className="h-64 w-full rounded-2xl" />
-                        <Skeleton className="h-44 w-full rounded-2xl" />
+                        <Card className="overflow-hidden border border-border bg-card/80 p-6 space-y-6">
+                            <div className="space-y-2">
+                                <Skeleton className="h-7 w-2/3 rounded-xl" />
+                                <Skeleton className="h-4 w-40 rounded-md" />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-border">
+                                <div className="p-3.5 rounded-2xl border border-border bg-secondary/30 flex items-center gap-3">
+                                    <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+                                    <div className="space-y-1.5 flex-1">
+                                        <Skeleton className="h-3 w-16" />
+                                        <Skeleton className="h-4 w-28" />
+                                    </div>
+                                </div>
+                                <div className="p-3.5 rounded-2xl border border-border bg-secondary/30 flex items-center gap-3">
+                                    <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+                                    <div className="space-y-1.5 flex-1">
+                                        <Skeleton className="h-3 w-16" />
+                                        <Skeleton className="h-4 w-28" />
+                                    </div>
+                                </div>
+                            </div>
+                        </Card>
+                        <Card className="border border-border bg-card/80 p-6 space-y-4">
+                            <Skeleton className="h-5 w-36 rounded-md" />
+                            <Skeleton className="h-24 w-full rounded-xl" />
+                        </Card>
                     </div>
                     <div className="lg:col-span-5">
-                        <Skeleton className="h-[480px] w-full rounded-2xl" />
+                        <Card className="border border-border bg-card/80 p-6 space-y-4">
+                            <div className="flex items-center gap-2 pb-3 border-b border-border">
+                                <Skeleton className="h-5 w-36 rounded-md" />
+                            </div>
+                            <div className="space-y-3 py-4">
+                                <Skeleton className="h-14 w-3/4 rounded-2xl" />
+                                <Skeleton className="h-14 w-2/3 rounded-2xl ml-auto" />
+                                <Skeleton className="h-14 w-4/5 rounded-2xl" />
+                            </div>
+                            <Skeleton className="h-11 w-full rounded-xl" />
+                        </Card>
                     </div>
                 </div>
             </div>
