@@ -35,9 +35,11 @@ return new class extends Migration
 
         // Backfill existing CommissionServices
         try {
-            CommissionService::whereNull('slug')->chunkById(100, function ($services) {
+            CommissionService::with('artistProfile.user')->chunkById(100, function ($services) {
                 foreach ($services as $service) {
-                    $base = Str::slug($service->name ?: 'service');
+                    $username = $service->artistProfile?->user?->username ?? '';
+                    $source = trim("{$username} {$service->name}");
+                    $base = Str::slug($source ?: 'service');
                     $base = Str::limit($base, 100, '');
                     $slug = $base;
                     $counter = 1;
@@ -55,9 +57,11 @@ return new class extends Migration
 
         // Backfill existing Portfolios
         try {
-            Portfolio::whereNull('slug')->chunkById(100, function ($portfolios) {
+            Portfolio::with('artistProfile.user')->chunkById(100, function ($portfolios) {
                 foreach ($portfolios as $portfolio) {
-                    $base = Str::slug($portfolio->title ?: 'artwork');
+                    $username = $portfolio->artistProfile?->user?->username ?? '';
+                    $source = trim("{$username} {$portfolio->title}");
+                    $base = Str::slug($source ?: 'artwork');
                     $base = Str::limit($base, 100, '');
                     $slug = $base;
                     $counter = 1;
@@ -75,10 +79,12 @@ return new class extends Migration
 
         // Backfill existing Posts
         try {
-            Post::whereNull('slug')->chunkById(100, function ($posts) {
+            Post::with('user')->chunkById(100, function ($posts) {
                 foreach ($posts as $post) {
+                    $username = $post->user?->username ?? '';
                     $snippet = $post->content ? Str::words($post->content, 6, '') : "post-{$post->id}";
-                    $base = Str::slug($snippet ?: "post-{$post->id}");
+                    $source = trim("{$username} {$snippet}");
+                    $base = Str::slug($source ?: "post-{$post->id}");
                     $base = Str::limit($base, 100, '');
                     $slug = $base;
                     $counter = 1;

@@ -30,7 +30,9 @@ class Post extends Model
 
     public function getSlugSource(): string
     {
-        return (string) ($this->content ? Str::words($this->content, 6, '') : "post-{$this->id}");
+        $username = $this->user?->username ?? '';
+        $snippet = $this->content ? Str::words($this->content, 6, '') : "post-{$this->id}";
+        return trim("{$username} {$snippet}");
     }
 
     protected function casts(): array

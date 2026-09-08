@@ -27,7 +27,8 @@ class Portfolio extends Model
 
     public function getSlugSource(): string
     {
-        return (string) $this->title;
+        $username = $this->artistProfile?->user?->username ?? '';
+        return trim("{$username} {$this->title}");
     }
 
     protected function casts(): array

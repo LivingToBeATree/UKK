@@ -25,7 +25,8 @@ class CommissionService extends Model
 
     public function getSlugSource(): string
     {
-        return (string) $this->name;
+        $username = $this->artistProfile?->user?->username ?? '';
+        return trim("{$username} {$this->name}");
     }
 
     protected function casts(): array

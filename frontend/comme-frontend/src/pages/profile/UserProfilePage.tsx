@@ -299,13 +299,57 @@ export const UserProfilePage: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="max-w-6xl mx-auto p-4 sm:p-8 space-y-6">
-                <Skeleton className="h-56 w-full rounded-3xl" />
-                <div className="flex gap-4 items-center px-4">
-                    <Skeleton className="h-24 w-24 rounded-2xl" />
-                    <div className="space-y-2">
-                        <Skeleton className="h-6 w-48 rounded-lg" />
-                        <Skeleton className="h-4 w-32 rounded-lg" />
+            <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-8 space-y-6">
+                {/* Profile Card Skeleton matching exact Card structure */}
+                <Card className="overflow-hidden border border-border/80 bg-card rounded-3xl shadow-sm">
+                    {/* Header Banner Skeleton */}
+                    <div className="h-48 sm:h-64 bg-muted/40 animate-pulse relative" />
+
+                    <CardContent className="p-6 sm:p-8 pt-0 relative">
+                        {/* Avatar & Action Row Skeleton */}
+                        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 -mt-16 sm:-mt-20 mb-6">
+                            <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+                                <Skeleton className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl border-4 border-card ring-2 ring-primary/20 shrink-0" />
+                                <div className="space-y-2 pb-1">
+                                    <div className="flex items-center gap-2">
+                                        <Skeleton className="h-7 w-48 rounded-xl" />
+                                        <Skeleton className="h-5 w-16 rounded-full" />
+                                    </div>
+                                    <Skeleton className="h-4 w-32 rounded-lg" />
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <Skeleton className="h-10 w-28 rounded-xl" />
+                                <Skeleton className="h-10 w-10 rounded-xl" />
+                            </div>
+                        </div>
+
+                        {/* Bio & Details Skeleton */}
+                        <div className="space-y-2 pt-2 border-t border-border/40">
+                            <Skeleton className="h-4 w-3/4 rounded-lg" />
+                            <Skeleton className="h-4 w-1/2 rounded-lg" />
+                        </div>
+
+                        {/* Social & Stats Row Skeleton */}
+                        <div className="flex flex-wrap gap-4 pt-4 mt-2">
+                            <Skeleton className="h-5 w-24 rounded-lg" />
+                            <Skeleton className="h-5 w-32 rounded-lg" />
+                            <Skeleton className="h-5 w-20 rounded-lg" />
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Tabs & Content Grid Skeleton */}
+                <div className="space-y-4">
+                    <div className="flex gap-2 border-b border-border/40 pb-3">
+                        <Skeleton className="h-10 w-28 rounded-xl" />
+                        <Skeleton className="h-10 w-28 rounded-xl" />
+                        <Skeleton className="h-10 w-28 rounded-xl" />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pt-2">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <Skeleton key={i} className="aspect-square rounded-2xl" />
+                        ))}
                     </div>
                 </div>
             </div>
@@ -347,7 +391,7 @@ export const UserProfilePage: React.FC = () => {
         <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6"
+            className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-8 space-y-6"
         >
             {user.is_suspended && (
                 <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-3 text-xs text-amber-300">

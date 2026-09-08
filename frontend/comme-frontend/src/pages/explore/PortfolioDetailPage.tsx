@@ -322,7 +322,7 @@ export const PortfolioDetailPage: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="w-full max-w-5xl mx-auto px-4 sm:px-8 py-8 space-y-6">
+            <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-8 space-y-6">
                 <div className="h-6 w-36 bg-muted/60 rounded-xl animate-pulse" />
                 <div className="h-96 w-full rounded-3xl bg-muted/40 animate-pulse" />
                 <div className="h-48 w-full rounded-3xl bg-muted/30 animate-pulse" />
@@ -425,7 +425,7 @@ export const PortfolioDetailPage: React.FC = () => {
     };
 
     return (
-        <div className="w-full max-w-5xl mx-auto px-4 sm:px-8 py-8 space-y-8">
+        <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-8 space-y-8">
             {/* Navigation */}
             <div>
                 <Link
