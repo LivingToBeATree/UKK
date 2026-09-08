@@ -391,7 +391,7 @@ export const SettingsPage: React.FC = () => {
 
             {/* ── Right Content Area (Independently Scrollable) ── */}
             <main className="flex-1 min-w-0 h-full md:h-screen p-6 sm:p-10 lg:p-14 overflow-y-auto">
-                <div className="max-w-6xl">
+                <div className="max-w-[1440px] w-full">
                     {/* Active Section Header */}
                 <div className="mb-8 space-y-2 border-b border-border/60 pb-6">
                     <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground">

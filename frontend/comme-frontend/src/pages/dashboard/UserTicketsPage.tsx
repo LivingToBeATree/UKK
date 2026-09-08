@@ -154,7 +154,7 @@ export const UserTicketsPage: React.FC = () => {
     });
 
     return (
-        <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-8 space-y-6">
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 pb-12">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

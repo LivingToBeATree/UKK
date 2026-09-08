@@ -71,7 +71,7 @@ export const MyCommissionsPage: React.FC = () => {
     const statusFilters = ['', 'pending', 'accepted', 'in_progress', 'completed', 'cancelled'];
 
     return (
-        <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+        <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-8 space-y-6">
             <div className="border-b border-border/80 pb-6">
                 <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2.5">
                     <Layers className="h-8 w-8 text-primary" />

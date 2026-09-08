@@ -29,7 +29,7 @@ export const BookmarksPage: React.FC = () => {
     }, []);
 
     return (
-        <div className="max-w-2xl mx-auto px-4 py-8">
+        <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-8 space-y-6">
             <div className="mb-8">
                 <h1 className="text-2xl font-bold flex items-center gap-2">
                     <Bookmark className="h-6 w-6" /> Bookmarks

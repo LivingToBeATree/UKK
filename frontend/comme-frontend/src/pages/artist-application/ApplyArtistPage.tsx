@@ -362,9 +362,9 @@ export const ApplyArtistPage: React.FC = () => {
     }
 
     return (
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10">
+        <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-8 sm:py-12 space-y-10">
             {/* ── Top Hero Banner ── */}
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-4 max-w-3xl mx-auto">
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-4 max-w-4xl mx-auto">
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-semibold backdrop-blur-md">
                     <Sparkles className="h-3.5 w-3.5" />
                     <span>Comme Creator Program</span>
@@ -376,12 +376,12 @@ export const ApplyArtistPage: React.FC = () => {
                     Turn Your Art into Income with <span className="text-primary">Escrow Security</span>
                 </h1>
 
-                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed max-w-2xl mx-auto">
                     Join Comme's curated roster of illustrators, VTuber riggers, and concept artists. Receive upfront escrow guarantees, structured milestone chat, and seamless Midtrans payouts.
                 </p>
 
                 {/* 3 Value Pillars */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 max-w-4xl mx-auto">
                     <div className="p-3.5 rounded-2xl border border-border/70 bg-card/60 backdrop-blur-md flex items-center gap-3 text-left">
                         <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                             <ShieldCheck className="h-5 w-5" />
