@@ -26,7 +26,8 @@ import {
 } from 'lucide-react';
 import { commissionOrderApi, commissionReviewApi } from '@/services/commissionService';
 import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { formatPrice, formatDateSafe, formatDateTimeSafe } from '@/utils/format';
 import { downloadFile } from '@/lib/download';
 import { Card, CardContent } from '@/components/ui/card';
@@ -548,7 +549,7 @@ export const CommissionDetailPage: React.FC = () => {
 
     if (loading) {
         return (
-            <div className={`w-full max-w-7xl mx-auto space-y-6 ${isInsideDashboard ? '' : 'px-4 sm:px-6 lg:px-8 py-6 sm:py-8'}`}>
+            <div className={`w-full max-w-[1440px] mx-auto space-y-6 ${isInsideDashboard ? '' : 'px-4 sm:px-8 lg:px-12 py-6 sm:py-8'}`}>
                 <Skeleton className="h-8 w-48" />
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     <div className="lg:col-span-7 space-y-6">
@@ -569,22 +570,27 @@ export const CommissionDetailPage: React.FC = () => {
                 <AlertCircle className="h-10 w-10 text-rose-500 mx-auto" />
                 <h2 className="text-xl font-bold">Commission Not Found</h2>
                 <p className="text-sm text-muted-foreground">The commission order does not exist or you do not have permission to view it.</p>
-                <Link to={isArtistUser ? "/dashboard/commissions" : "/commissions"}>
-                    <Button variant="outline">
-                        {isArtistUser ? "Back to Studio Order Queue" : "Back to My Orders"}
-                    </Button>
+                <Link
+                    to={isArtistUser ? "/dashboard/commissions" : "/commissions"}
+                    className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'gap-2 text-muted-foreground hover:text-foreground')}
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    {isArtistUser ? "Back to Studio Order Queue" : "Back to My Orders"}
                 </Link>
             </div>
         );
     }
 
     return (
-        <div className={`w-full max-w-7xl mx-auto space-y-6 pb-16 ${isInsideDashboard ? '' : 'px-4 sm:px-6 lg:px-8 py-6 sm:py-8'}`}>
+        <div className={`w-full max-w-[1440px] mx-auto space-y-6 pb-16 ${isInsideDashboard ? '' : 'px-4 sm:px-8 lg:px-12 py-6 sm:py-8'}`}>
             {/* Header Navigation */}
             <div className="flex items-center justify-between gap-4">
                 <Link
                     to={isArtistUser ? "/dashboard/commissions" : "/commissions"}
-                    className="inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-xl border border-border bg-card/80 hover:bg-secondary text-muted-foreground hover:text-foreground transition-all shadow-xs"
+                    className={cn(
+                        buttonVariants({ variant: 'ghost', size: 'sm' }),
+                        'gap-2 text-muted-foreground hover:text-foreground'
+                    )}
                 >
                     <ArrowLeft className="h-4 w-4" /> {isArtistUser ? "Back to Studio Order Queue" : "Back to My Orders"}
                 </Link>
