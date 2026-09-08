@@ -21,10 +21,10 @@ return [
     'stateful' => array_map(function ($domain) {
         return preg_replace('#^https?://#', '', trim($domain));
     }, explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
-        '%s%s',
-        'localhost,localhost:5173,localhost:3000,127.0.0.1,127.0.0.1:5173,127.0.0.1:8000,::1',
+        '%s%s%s',
+        'localhost,localhost:5173,localhost:3000,127.0.0.1,127.0.0.1:5173,127.0.0.1:8000,::1,comme-frontend-861966182598.asia-southeast2.run.app',
         Sanctum::currentApplicationUrlWithPort(),
-        // Sanctum::currentRequestHost(),
+        env('FRONTEND_URL') ? ','.preg_replace('#^https?://#', '', (string) env('FRONTEND_URL')) : ''
     )))),
 
     /*

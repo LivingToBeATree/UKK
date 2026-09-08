@@ -213,6 +213,8 @@ class TwoFactorAuthController extends Controller
 
         $authService->rememberDevice($user, $authService->hashDevice($user, $request), $request);
 
+        $user->token = $user->createToken('auth_token')->plainTextToken;
+
         return ApiResponseHelper::successResponse(
             new UserResource($user),
             'Signed in successfully with two-factor authentication.',

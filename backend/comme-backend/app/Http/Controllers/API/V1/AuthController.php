@@ -69,6 +69,8 @@ class AuthController extends Controller
 
         $authService->rememberDevice($user, $authService->hashDevice($user, $request), $request);
 
+        $user->token = $user->createToken('auth_token')->plainTextToken;
+
         return ApiResponseHelper::successResponse(
             new UserResource($user),
             'Registered successfully.',
@@ -125,11 +127,17 @@ class AuthController extends Controller
             ));
         }
 
+        $user->token = $user->createToken('auth_token')->plainTextToken;
+
         return ApiResponseHelper::successResponse(new UserResource($user), 'Logged in successfully.');
     }
 
     public function logout(Request $request): JsonResponse
     {
+        if ($request->user() && method_exists($request->user(), 'currentAccessToken')) {
+            $request->user()->currentAccessToken()?->delete();
+        }
+
         Auth::guard('web')->logout();
 
         if ($request->hasSession()) {

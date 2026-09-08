@@ -21,6 +21,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             } catch {
                 setUser(null);
                 localStorage.removeItem('comme_user');
+                localStorage.removeItem('comme_token');
             } finally {
                 setIsLoading(false);
             }
@@ -36,6 +37,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return res;
         }
         const loggedInUser = res as User;
+        if (loggedInUser?.token) {
+            localStorage.setItem('comme_token', loggedInUser.token);
+        }
         setUser(loggedInUser);
         localStorage.setItem('comme_user', JSON.stringify(loggedInUser));
         return loggedInUser;
@@ -47,6 +51,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             two_factor_token: token,
             code,
         });
+        if (loggedInUser?.token) {
+            localStorage.setItem('comme_token', loggedInUser.token);
+        }
         setUser(loggedInUser);
         localStorage.setItem('comme_user', JSON.stringify(loggedInUser));
         return loggedInUser;
@@ -55,6 +62,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Confirm Registration OTP
     const confirmRegistration = async (email: string, code: string) => {
         const newUser = await authService.confirmRegistration({ email, code });
+        if (newUser?.token) {
+            localStorage.setItem('comme_token', newUser.token);
+        }
         setUser(newUser);
         localStorage.setItem('comme_user', JSON.stringify(newUser));
     };
@@ -66,6 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } finally {
             setUser(null);
             localStorage.removeItem('comme_user');
+            localStorage.removeItem('comme_token');
         }
     };
 
@@ -78,6 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch {
             setUser(null);
             localStorage.removeItem('comme_user');
+            localStorage.removeItem('comme_token');
         }
     };
 

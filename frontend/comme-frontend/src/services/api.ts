@@ -43,8 +43,15 @@ export const initCsrf = async () => {
     return csrfPromise;
 };
 
-// Request Interceptor: Ensure CSRF cookie is initialized before mutating requests
+// Request Interceptor: Ensure CSRF cookie is initialized before mutating requests and attach Bearer token if present
 api.interceptors.request.use(async (config) => {
+    if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('comme_token');
+        if (token && !config.headers.Authorization) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+    }
+
     const method = config.method?.toLowerCase() || '';
     if (['post', 'put', 'patch', 'delete'].includes(method)) {
         try {
@@ -56,15 +63,24 @@ api.interceptors.request.use(async (config) => {
     return config;
 });
 
-// Response Interceptor: Clean storage on 401 without hijacking public route navigation
+// Response Interceptor: Automatically store bearer tokens and clean storage on 401
 api.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        if (typeof window !== 'undefined') {
+            const token = response.data?.data?.token;
+            if (token && typeof token === 'string') {
+                localStorage.setItem('comme_token', token);
+            }
+        }
+        return response;
+    },
     (error) => {
         if (error.response?.status === 419) {
             csrfPromise = null;
         }
-        if (error.response?.status === 401) {
+        if (error.response?.status === 401 && typeof window !== 'undefined') {
             localStorage.removeItem('comme_user');
+            localStorage.removeItem('comme_token');
         }
         return Promise.reject(error);
     }
