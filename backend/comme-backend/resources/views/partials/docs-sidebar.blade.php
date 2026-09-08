@@ -92,17 +92,17 @@
             </div>
         </div>
 
-        <!-- Artist Applications -->
+        <!-- Artist Applications & Studio -->
         <div class="nav-group">
             <div class="nav-group-toggle">
                 <div class="nav-group-label">
                     <div class="nav-group-icon" style="background: rgba(245, 170, 2, 0.12);">
                         <img src="{{ asset('icons/SVGs/Paint/paint-tray-white.svg') }}" class="icon-themed" alt="" />
                     </div>
-                    <span class="nav-group-title">Artist Applications</span>
+                    <span class="nav-group-title">Artist & Studio</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span class="nav-group-count">5</span>
+                    <span class="nav-group-count">7</span>
                     <span class="nav-group-chevron">▶</span>
                 </div>
             </div>
@@ -112,6 +112,8 @@
                 <a href="{{ url('/') }}#get-api-artist-applications" class="nav-link link-get nav-page-link" data-page="/" data-hash="get-api-artist-applications"><span class="method-pill method-get">GET</span> /artist-applications</a>
                 <a href="{{ url('/') }}#post-api-artist-applications-approve" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-artist-applications-approve"><span class="method-pill method-post">POST</span> .../{id}/approve</a>
                 <a href="{{ url('/') }}#post-api-artist-applications-reject" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-artist-applications-reject"><span class="method-pill method-post">POST</span> .../{id}/reject</a>
+                <a href="{{ url('/') }}#get-api-artist-profiles-id" class="nav-link link-get nav-page-link" data-page="/" data-hash="get-api-artist-profiles-id"><span class="method-pill method-get">GET</span> /artist-profiles/{id}</a>
+                <a href="{{ url('/') }}#put-api-artist-profiles-id" class="nav-link link-put nav-page-link" data-page="/" data-hash="put-api-artist-profiles-id"><span class="method-pill method-put">PUT</span> /artist-profiles/{id}</a>
             </div>
         </div>
 
@@ -125,7 +127,7 @@
                     <span class="nav-group-title">Commissions</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span class="nav-group-count">7</span>
+                    <span class="nav-group-count">13</span>
                     <span class="nav-group-chevron">▶</span>
                 </div>
             </div>
@@ -134,9 +136,16 @@
                 <a href="{{ url('/') }}#post-api-commission-services" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-commission-services"><span class="method-pill method-post">POST</span> /commission-services</a>
                 <a href="{{ url('/') }}#get-api-commissions" class="nav-link link-get nav-page-link" data-page="/" data-hash="get-api-commissions"><span class="method-pill method-get">GET</span> /commissions</a>
                 <a href="{{ url('/') }}#post-api-commissions" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-commissions"><span class="method-pill method-post">POST</span> /commissions</a>
-                <a href="{{ url('/') }}#patch-api-commissions-status" class="nav-link link-patch nav-page-link" data-page="/" data-hash="patch-api-commissions-status"><span class="method-pill method-patch">PATCH</span> /{id}/status</a>
-                <a href="{{ url('/') }}#post-api-commission-revisions" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-commission-revisions"><span class="method-pill method-post">POST</span> /commission-revisions</a>
-                <a href="{{ url('/') }}#post-api-commission-reviews" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-commission-reviews"><span class="method-pill method-post">POST</span> /commission-reviews</a>
+                <a href="{{ url('/') }}#post-api-commissions-accept" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-commissions-accept"><span class="method-pill method-post">POST</span> /{id}/accept</a>
+                <a href="{{ url('/') }}#post-api-commissions-decline" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-commissions-decline"><span class="method-pill method-post">POST</span> /{id}/decline</a>
+                <a href="{{ url('/') }}#post-api-commissions-deliver" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-commissions-deliver"><span class="method-pill method-post">POST</span> /{id}/deliver</a>
+                <a href="{{ url('/') }}#post-api-commissions-confirm" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-commissions-confirm"><span class="method-pill method-post">POST</span> /{id}/confirm</a>
+                <a href="{{ url('/') }}#post-api-commission-revisions" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-commission-revisions"><span class="method-pill method-post">POST</span> /{id}/request-revision</a>
+                <a href="{{ url('/') }}#post-api-commission-request-cancellation" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-commission-request-cancellation"><span class="method-pill method-post">POST</span> .../request-cancellation</a>
+                <a href="{{ url('/') }}#post-api-commission-accept-cancellation" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-commission-accept-cancellation"><span class="method-pill method-post">POST</span> .../accept-cancellation</a>
+                <a href="{{ url('/') }}#post-api-commission-decline-cancellation" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-commission-decline-cancellation"><span class="method-pill method-post">POST</span> .../decline-cancellation</a>
+                <a href="{{ url('/') }}#patch-api-commissions-status" class="nav-link link-patch nav-page-link" data-page="/" data-hash="patch-api-commissions-status"><span class="method-pill method-patch">PATCH</span> /{id}/cancel</a>
+                <a href="{{ url('/') }}#post-api-commission-reviews" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-commission-reviews"><span class="method-pill method-post">POST</span> /{id}/reviews</a>
             </div>
         </div>
 
@@ -208,23 +217,26 @@
             </div>
         </div>
 
-        <!-- Payments -->
+        <!-- Payments & Escrow Payouts -->
         <div class="nav-group">
             <div class="nav-group-toggle">
                 <div class="nav-group-label">
                     <div class="nav-group-icon" style="background: rgba(2, 245, 168, 0.12);">
                         <img src="{{ asset('icons/SVGs/Card/card-white.svg') }}" class="icon-themed" alt="" />
                     </div>
-                    <span class="nav-group-title">Payments</span>
+                    <span class="nav-group-title">Payments & Escrow</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span class="nav-group-count">2</span>
+                    <span class="nav-group-count">5</span>
                     <span class="nav-group-chevron">▶</span>
                 </div>
             </div>
             <div class="nav-group-items">
                 <a href="{{ url('/') }}#post-api-payments-token" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-payments-token"><span class="method-pill method-post">POST</span> /{id}/payment-token</a>
-                <a href="{{ url('/') }}#post-api-webhooks-midtrans" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-webhooks-midtrans"><span class="method-pill method-post">POST</span> /webhooks/midtrans</a>
+                <a href="{{ url('/') }}#get-api-me-payout-account" class="nav-link link-get nav-page-link" data-page="/" data-hash="get-api-me-payout-account"><span class="method-pill method-get">GET</span> /me/payout-account</a>
+                <a href="{{ url('/') }}#put-api-me-payout-account" class="nav-link link-put nav-page-link" data-page="/" data-hash="put-api-me-payout-account"><span class="method-pill method-put">PUT</span> /me/payout-account</a>
+                <a href="{{ url('/') }}#post-api-midtrans-webhook" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-midtrans-webhook"><span class="method-pill method-post">POST</span> /midtrans/webhook</a>
+                <a href="{{ url('/') }}#post-api-midtrans-iris-webhook" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-midtrans-iris-webhook"><span class="method-pill method-post">POST</span> /midtrans/iris-webhook</a>
             </div>
         </div>
 

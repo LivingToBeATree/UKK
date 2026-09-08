@@ -100,4 +100,42 @@
             </table>
         </div>
     </div>
+
+    <!-- GET /api/artist-profiles/{id} -->
+    <div class="endpoint-card" id="get-api-artist-profiles-id">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-get">GET</span>
+                <span>/api/artist-profiles/{id}</span>
+            </div>
+            <span class="auth-badge">Public</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Retrieves the public artist studio profile, including master commission availability status, biography, ratings summary, and verified social handles.</p>
+        </div>
+    </div>
+
+    <!-- PUT /api/artist-profiles/{id} -->
+    <div class="endpoint-card" id="put-api-artist-profiles-id">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-put">PUT</span>
+                <span>/api/artist-profiles/{id}</span>
+            </div>
+            <span class="auth-badge">Artist Profile Owner</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Updates studio settings and public profile customization. Regulates master commission availability across the entire marketplace.</p>
+            <table class="param-table">
+                <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="param-name">commission_status</span> <span class="param-optional">opt</span></td><td><span class="param-type">string</span></td><td>Master availability: <code>open</code> (available), <code>busy</code> (waitlist only), or <code>closed</code> (orders paused).</td></tr>
+                    <tr><td><span class="param-name">bio</span> <span class="param-optional">opt</span></td><td><span class="param-type">string</span></td><td>Studio specialty, working style, and commission terms.</td></tr>
+                    <tr><td><span class="param-name">website</span> <span class="param-optional">opt</span></td><td><span class="param-type">url</span></td><td>Personal website or agency portfolio link.</td></tr>
+                    <tr><td><span class="param-name">portfolio_url</span> <span class="param-optional">opt</span></td><td><span class="param-type">url</span></td><td>External portfolio link (ArtStation, Behance, Carrd).</td></tr>
+                    <tr><td><span class="param-name">social_links</span> <span class="param-optional">opt</span></td><td><span class="param-type">object</span></td><td>Social media handles (e.g. <code>{"twitter": "@handle", "artstation": "user", "instagram": "@user"}</code>).</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </section>

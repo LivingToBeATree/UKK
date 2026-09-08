@@ -88,4 +88,22 @@
             </p>
         </div>
     </div>
+
+    <!-- Escrow Refund & Scheduled Automation Guide -->
+    <div style="margin-top: 32px; padding: 24px; background: rgba(2, 245, 168, 0.04); border: 1px solid rgba(2, 245, 168, 0.2); border-radius: 12px;">
+        <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+            <img src="{{ asset('icons/SVGs/Shield/shield-white.svg') }}" class="icon-themed" style="width: 18px; height: 18px;" alt="" />
+            Escrow Protection, Automated Refunds & Digital Receipts
+        </h3>
+        <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px;">
+            When orders are mutually cancelled or cancelled while paid, funds held in escrow are immediately refunded to the buyer via the Midtrans direct refund API (with local ledger fallback). A permanent immutable digital receipt record (<code>REC-COM-{id}-{hash}</code>) tracks the refund timestamp, reason, and settlement audit logs.
+        </p>
+
+        <h4 style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">Artisan Scheduled Commands</h4>
+        <ul style="font-size: 13px; color: var(--text-secondary); line-height: 1.6; padding-left: 20px;">
+            <li><code>php artisan commissions:auto-release</code> &mdash; Automatically releases escrow payouts to creator bank accounts 7 days after review delivery if unconfirmed.</li>
+            <li><code>php artisan commissions:reconcile-payouts</code> &mdash; Polls Iris payout status for pending disbursements to resolve transient network drops.</li>
+            <li><code>php artisan commissions:retry-payouts</code> &mdash; Safely retries failed bank disbursements up to 3 attempts before flagging for staff audit.</li>
+        </ul>
+    </div>
 </section>

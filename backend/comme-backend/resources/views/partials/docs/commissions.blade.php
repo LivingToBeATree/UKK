@@ -77,6 +77,130 @@
         </div>
     </div>
 
+    <!-- POST /api/commissions/{id}/accept -->
+    <div class="endpoint-card" id="post-api-commissions-accept">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/commissions/{id}/accept</span>
+            </div>
+            <span class="auth-badge">Assigned Artist</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Artist accepts a pending commission order. Transitions order status to <code>accepted</code> and alerts the buyer.</p>
+        </div>
+    </div>
+
+    <!-- POST /api/commissions/{id}/decline -->
+    <div class="endpoint-card" id="post-api-commissions-decline">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/commissions/{id}/decline</span>
+            </div>
+            <span class="auth-badge">Assigned Artist</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Artist declines a pending commission order. Transitions status to <code>declined</code> with optional reason notes.</p>
+        </div>
+    </div>
+
+    <!-- POST /api/commissions/{id}/deliver -->
+    <div class="endpoint-card" id="post-api-commissions-deliver">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/commissions/{id}/deliver</span>
+            </div>
+            <span class="auth-badge">Assigned Artist</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Artist delivers completed artwork files and attachments. Transitions order status to <code>review</code> and initiates buyer review period.</p>
+        </div>
+    </div>
+
+    <!-- POST /api/commissions/{id}/confirm -->
+    <div class="endpoint-card" id="post-api-commissions-confirm">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/commissions/{id}/confirm</span>
+            </div>
+            <span class="auth-badge">Commission Buyer</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Buyer approves delivered artwork. Transitions status to <code>completed</code> and schedules automatic escrow payout release to artist.</p>
+        </div>
+    </div>
+
+    <!-- POST /api/commissions/{id}/request-revision -->
+    <div class="endpoint-card" id="post-api-commission-revisions">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/commissions/{id}/request-revision</span>
+            </div>
+            <span class="auth-badge">Commission Buyer</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Buyer requests revisions during the review period. Increments revision counter and returns status to <code>in_progress</code>.</p>
+            <table class="param-table">
+                <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="param-name">notes</span> <span class="param-required">req</span></td><td><span class="param-type">string</span></td><td>Specific feedback or changes requested.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- POST /api/commissions/{id}/request-cancellation -->
+    <div class="endpoint-card" id="post-api-commission-request-cancellation">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/commissions/{id}/request-cancellation</span>
+            </div>
+            <span class="auth-badge">Order Participants</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Initiates mutual cancellation request when an order is active (<code>accepted</code>, <code>in_progress</code>, or <code>review</code>). Flags order with pending cancellation and notifies counterparty.</p>
+            <table class="param-table">
+                <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="param-name">reason</span> <span class="param-required">req</span></td><td><span class="param-type">string</span></td><td>Reason for requesting order cancellation.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- POST /api/commissions/{id}/accept-cancellation -->
+    <div class="endpoint-card" id="post-api-commission-accept-cancellation">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/commissions/{id}/accept-cancellation</span>
+            </div>
+            <span class="auth-badge">Counterparty</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Accepts mutual cancellation request. Marks order as <code>cancelled</code>. <strong>If payment was completed in escrow, automatically triggers a Midtrans API refund to buyer and updates payment status to <code>refunded</code>.</strong></p>
+        </div>
+    </div>
+
+    <!-- POST /api/commissions/{id}/decline-cancellation -->
+    <div class="endpoint-card" id="post-api-commission-decline-cancellation">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/commissions/{id}/decline-cancellation</span>
+            </div>
+            <span class="auth-badge">Counterparty</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Declines mutual cancellation request and resumes active order progress under original terms.</p>
+        </div>
+    </div>
+
     <!-- PATCH /api/commissions/{id}/cancel -->
     <div class="endpoint-card" id="patch-api-commissions-status">
         <div class="endpoint-header">
@@ -87,21 +211,7 @@
             <span class="auth-badge">Order Participants</span>
         </div>
         <div class="endpoint-body">
-            <p style="font-size: 14px; color: var(--text-secondary);">Cancels the commission. Can be called by either buyer or artist depending on commission status.</p>
-        </div>
-    </div>
-
-    <!-- POST /api/commissions/{id}/revisions -->
-    <div class="endpoint-card" id="post-api-commission-revisions">
-        <div class="endpoint-header">
-            <div class="endpoint-path">
-                <span class="method-pill method-post">POST</span>
-                <span>/api/commissions/{id}/revisions</span>
-            </div>
-            <span class="auth-badge">Order Participants</span>
-        </div>
-        <div class="endpoint-body">
-            <p style="font-size: 14px; color: var(--text-secondary);">Submits a revision request or deliverable on the commission. Tracks revision count against the max allowed.</p>
+            <p style="font-size: 14px; color: var(--text-secondary);">Direct cancellation for <code>pending</code> orders (or orders where both parties have agreed). Automatically reverses escrow payment if already settled.</p>
         </div>
     </div>
 
