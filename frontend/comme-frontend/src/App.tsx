@@ -58,7 +58,9 @@ function AppLayout() {
         );
     }
 
-    // Authenticated App Workspace: Clean layout with SidebarRail (no guest footer or marketing CTA)
+    // Show footer across app pages (excluding full-screen admin & artist studio workbenches)
+    const shouldShowFooter = !location.pathname.startsWith('/admin') && !location.pathname.startsWith('/dashboard');
+
     return (
         <div className="min-h-screen bg-background text-foreground flex flex-col font-sans transition-colors duration-200 overflow-x-clip">
             {/* Desktop Fixed Left Expandable Rail (Hidden on Mobile) */}
@@ -82,6 +84,7 @@ function AppLayout() {
                 <main className="flex-1 flex flex-col w-full">
                     <AppRoutes />
                 </main>
+                {shouldShowFooter && <PublicFooter />}
             </motion.div>
 
             {/* Mobile Bottom Navigation Bar (Visible on Mobile Only) */}
