@@ -58,29 +58,7 @@ function AppLayout() {
         );
     }
 
-    // Routes where public discovery CTA and footer are retained for authenticated users
-    const isPublicBrowseRoute = (() => {
-        const publicPrefixes = [
-            '/explore',
-            '/store',
-            '/artists',
-            '/escrow-terms',
-            '/terms',
-            '/privacy',
-            '/license',
-            '/posts',
-        ];
-        const privateExactOrPrefix = [
-            '/posts/create',
-            '/store/manage',
-            '/store/create',
-        ];
-        if (privateExactOrPrefix.some((p) => location.pathname.startsWith(p))) {
-            return false;
-        }
-        return publicPrefixes.some((prefix) => location.pathname === prefix || location.pathname.startsWith(`${prefix}/`));
-    })();
-
+    // Authenticated App Workspace: Clean layout with SidebarRail (no guest footer or marketing CTA)
     return (
         <div className="min-h-screen bg-background text-foreground flex flex-col font-sans transition-colors duration-200 overflow-x-clip">
             {/* Desktop Fixed Left Expandable Rail (Hidden on Mobile) */}
@@ -104,12 +82,6 @@ function AppLayout() {
                 <main className="flex-1 flex flex-col w-full">
                     <AppRoutes />
                 </main>
-                {isPublicBrowseRoute && (
-                    <>
-                        <ForArtistsCta />
-                        <PublicFooter />
-                    </>
-                )}
             </motion.div>
 
             {/* Mobile Bottom Navigation Bar (Visible on Mobile Only) */}
