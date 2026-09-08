@@ -19,7 +19,7 @@ import { toast } from '@/components/ui/sonner';
 import type { CommissionStatus } from '@/types';
 
 export const ArtistStudioSettingsPage: React.FC = () => {
-    const { user } = useAuth();
+    const { user, refreshUser } = useAuth();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
@@ -45,7 +45,7 @@ export const ArtistStudioSettingsPage: React.FC = () => {
                 const profile = await artistProfileApi.show(artistProfileId);
                 setStatus(profile.commission_status || 'open');
                 setBio(profile.bio || '');
-                setPortfolioUrl(profile.portfolio_url || '');
+                setPortfolioUrl(profile.portfolio_url || (profile as any).website || '');
 
                 const links = profile.social_links as any;
                 if (typeof links === 'object' && links !== null) {
@@ -76,12 +76,16 @@ export const ArtistStudioSettingsPage: React.FC = () => {
                 commission_status: status,
                 bio: bio.trim(),
                 portfolio_url: portfolioUrl.trim(),
+                website: portfolioUrl.trim(),
                 social_links: {
                     twitter: twitter.trim(),
                     artstation: artstation.trim(),
                     instagram: instagram.trim(),
                 },
             });
+            if (refreshUser) {
+                await refreshUser();
+            }
             toast.success('Studio settings saved successfully!');
         } catch {
             toast.error('Failed to save studio settings');

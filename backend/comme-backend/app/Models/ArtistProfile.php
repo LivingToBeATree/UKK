@@ -13,6 +13,7 @@ class ArtistProfile extends Model
         'bio',
         'banner',
         'commission_open',
+        'commission_status',
         'website',
         'social_links',
     ];
@@ -74,6 +75,6 @@ class ArtistProfile extends Model
     // Helpers
     public function isOpen(): bool
     {
-        return $this->commission_open;
+        return $this->commission_status !== 'closed' && $this->commission_open;
     }
 }

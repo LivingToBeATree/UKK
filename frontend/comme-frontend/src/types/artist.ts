@@ -8,6 +8,8 @@ export interface ArtistProfile {
     bio?: string | null;
     banner?: string | null;
     commission_status: CommissionStatus;
+    commission_open?: boolean;
+    website?: string | null;
     portfolio_url?: string | null;
     social_links?: string[] | Record<string, string> | null;
     rating_avg?: number;

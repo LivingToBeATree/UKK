@@ -130,7 +130,21 @@ class ArtistProfileController extends Controller
      */
     public function update(UpdateArtistProfileRequest $request, ArtistProfile $artistProfile): JsonResponse
     {
-        $artistProfile->update($request->validated());
+        $data = $request->validated();
+
+        // Map portfolio_url alias to website column
+        if (array_key_exists('portfolio_url', $data) && !array_key_exists('website', $data)) {
+            $data['website'] = $data['portfolio_url'];
+        }
+
+        // Keep commission_open and commission_status synchronized
+        if (isset($data['commission_status'])) {
+            $data['commission_open'] = $data['commission_status'] !== 'closed';
+        } elseif (isset($data['commission_open'])) {
+            $data['commission_status'] = $data['commission_open'] ? 'open' : 'closed';
+        }
+
+        $artistProfile->update($data);
 
         return ApiResponseHelper::successResponse(
             new ArtistProfileResource($artistProfile->load('user')),

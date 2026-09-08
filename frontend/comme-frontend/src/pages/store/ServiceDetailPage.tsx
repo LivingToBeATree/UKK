@@ -14,6 +14,7 @@ import {
     PenTool,
     Flag,
     Shield,
+    XCircle,
 } from 'lucide-react';
 import { ReportModal } from '@/components/modals/ReportModal';
 import { commissionServiceApi, commissionReviewApi, type CommissionReview } from '@/services/commissionService';
@@ -293,17 +294,55 @@ export const ServiceDetailPage: React.FC = () => {
                         </div>
 
                         {service.artist_profile?.user && (
-                            <Link
-                                to={service.artist_profile.user.username ? `/users/${service.artist_profile.user.username}` : `/artists/${service.artist_profile_id}`}
-                                className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors"
-                            >
-                                <Avatar
-                                    size="sm"
-                                    src={service.artist_profile.user.avatar_url}
-                                    fallback={service.artist_profile.user.display_name || service.artist_profile.user.username}
-                                />
-                                <span>by {service.artist_profile.user.display_name || service.artist_profile.user.username}</span>
-                            </Link>
+                            <div className="flex flex-wrap items-center gap-3 pt-0.5">
+                                <Link
+                                    to={service.artist_profile.user.username ? `/users/${service.artist_profile.user.username}` : `/artists/${service.artist_profile_id}`}
+                                    className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors"
+                                >
+                                    <Avatar
+                                        size="sm"
+                                        src={service.artist_profile.user.avatar_url}
+                                        fallback={service.artist_profile.user.display_name || service.artist_profile.user.username}
+                                    />
+                                    <span>by <span className="font-bold text-foreground hover:underline">{service.artist_profile.user.display_name || service.artist_profile.user.username}</span></span>
+                                </Link>
+
+                                {(() => {
+                                    const st = service.artist_profile.commission_status || (service.artist_profile.commission_open ? 'open' : 'closed');
+                                    if (st === 'busy') {
+                                        return (
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                                                Waitlist Only
+                                            </span>
+                                        );
+                                    }
+                                    if (st === 'closed') {
+                                        return (
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
+                                                Studio Closed
+                                            </span>
+                                        );
+                                    }
+                                    return (
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                                            Artist Accepting Orders
+                                        </span>
+                                    );
+                                })()}
+                            </div>
+                        )}
+
+                        {/* Studio Bio Snippet */}
+                        {service.artist_profile?.bio && (
+                            <div className="p-3 rounded-xl bg-muted/30 border border-border/50 text-xs text-muted-foreground leading-relaxed">
+                                <span className="font-bold text-[11px] block uppercase font-mono tracking-wider text-purple-400 mb-0.5">
+                                    Artist Studio Specialty
+                                </span>
+                                {service.artist_profile.bio}
+                            </div>
                         )}
 
                         {/* Service Tags */}
@@ -574,33 +613,61 @@ export const ServiceDetailPage: React.FC = () => {
                                  (service.artist_profile?.user?.id && user.id && service.artist_profile.user.id === user.id) ||
                                  (user.artist_profile?.id && service.artist_profile_id && user.artist_profile.id === service.artist_profile_id))
                             ) && (
-                                <Button
-                                    className="w-full h-11 rounded-2xl font-bold text-xs bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shadow-md gap-2"
-                                    disabled={!selectedOption || service.status !== 'open'}
-                                    onClick={() => {
-                                        const targetServiceParam = service?.slug || serviceId;
-                                        if (
-                                            !requireAuth({
-                                                intent: 'commission',
-                                                redirectUrl: `/store/${targetServiceParam}/order`,
-                                            })
-                                        ) {
-                                            return;
-                                        }
-                                        navigate(`/store/${targetServiceParam}/order`, {
-                                            state: {
-                                                service,
-                                                selectedOption,
-                                                selectedAddonIds,
-                                                selectedAddons,
-                                                grandTotal,
-                                            },
-                                        });
-                                    }}
-                                >
-                                    <ShoppingCart className="h-4 w-4" />
-                                    {service.status === 'open' ? 'Proceed to Order' : 'Service Currently Closed'}
-                                </Button>
+                                <div className="space-y-3">
+                                    {service.artist_profile?.commission_status === 'closed' && (
+                                        <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-medium space-y-1">
+                                            <p className="font-bold flex items-center gap-1.5">
+                                                <XCircle className="h-4 w-4" /> Artist Studio Closed
+                                            </p>
+                                            <p className="text-[11px] text-muted-foreground">
+                                                This creator is temporarily not accepting new commission orders.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {service.artist_profile?.commission_status === 'busy' && (
+                                        <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-medium space-y-1">
+                                            <p className="font-bold flex items-center gap-1.5">
+                                                <Clock className="h-4 w-4" /> Waitlist / High Queue
+                                            </p>
+                                            <p className="text-[11px] text-muted-foreground">
+                                                This artist's queue is busy. New orders will be queued or waitlisted.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    <Button
+                                        className="w-full h-11 rounded-2xl font-bold text-xs bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shadow-md gap-2"
+                                        disabled={!selectedOption || service.status !== 'open' || service.artist_profile?.commission_status === 'closed'}
+                                        onClick={() => {
+                                            const targetServiceParam = service?.slug || serviceId;
+                                            if (
+                                                !requireAuth({
+                                                    intent: 'commission',
+                                                    redirectUrl: `/store/${targetServiceParam}/order`,
+                                                })
+                                            ) {
+                                                return;
+                                            }
+                                            navigate(`/store/${targetServiceParam}/order`, {
+                                                state: {
+                                                    service,
+                                                    selectedOption,
+                                                    selectedAddonIds,
+                                                    selectedAddons,
+                                                    grandTotal,
+                                                },
+                                            });
+                                        }}
+                                    >
+                                        <ShoppingCart className="h-4 w-4" />
+                                        {service.artist_profile?.commission_status === 'closed'
+                                            ? 'Artist Studio Closed'
+                                            : service.status === 'open'
+                                            ? 'Proceed to Order'
+                                            : 'Service Currently Closed'}
+                                    </Button>
+                                </div>
                             )}
 
                             <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">

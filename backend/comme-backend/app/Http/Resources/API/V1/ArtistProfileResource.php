@@ -24,8 +24,10 @@ class ArtistProfileResource extends JsonResource
             'bio' => $this->bio,
             'banner' => $this->banner,
             'website' => $this->website,
-            'social_links' => $this->social_links,
-            'commission_open' => $this->commission_open,
+            'portfolio_url' => $this->website,
+            'social_links' => $this->social_links ?? [],
+            'commission_open' => (bool) $this->commission_open,
+            'commission_status' => $this->commission_status ?? ($this->commission_open ? 'open' : 'closed'),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
 

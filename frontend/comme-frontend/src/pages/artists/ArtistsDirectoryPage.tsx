@@ -199,10 +199,31 @@ export const ArtistsDirectoryPage: React.FC = () => {
                                             )}
                                         </div>
                                         <div className="flex items-center gap-2 flex-wrap justify-center pt-1">
-                                            <Badge variant={artist.commission_status === 'open' ? 'default' : 'secondary'} className="text-[10px] capitalize flex items-center gap-1.5">
-                                                <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${artist.commission_status === 'open' ? 'bg-emerald-400' : 'bg-rose-400'}`} />
-                                                <span>{artist.commission_status === 'open' ? 'Open' : 'Closed'}</span>
-                                            </Badge>
+                                            {(() => {
+                                                const st = artist.commission_status || (artist.commission_open ? 'open' : 'closed');
+                                                if (st === 'open') {
+                                                    return (
+                                                        <Badge variant="default" className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 font-bold">
+                                                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                                                            <span>Open</span>
+                                                        </Badge>
+                                                    );
+                                                }
+                                                if (st === 'busy') {
+                                                    return (
+                                                        <Badge variant="secondary" className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-1.5 font-bold">
+                                                            <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" />
+                                                            <span>Waitlist</span>
+                                                        </Badge>
+                                                    );
+                                                }
+                                                return (
+                                                    <Badge variant="secondary" className="text-[10px] bg-rose-500/10 text-rose-400 border border-rose-500/30 flex items-center gap-1.5 font-bold">
+                                                        <span className="h-1.5 w-1.5 rounded-full bg-rose-400 shrink-0" />
+                                                        <span>Closed</span>
+                                                    </Badge>
+                                                );
+                                            })()}
                                             {artist.rating_avg ? (
                                                 <span className="flex items-center gap-1 text-xs font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20">
                                                     <Star className="h-3 w-3 fill-current" />

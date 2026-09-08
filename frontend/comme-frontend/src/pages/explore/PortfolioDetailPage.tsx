@@ -543,12 +543,26 @@ export const PortfolioDetailPage: React.FC = () => {
                                         <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
                                             Artist
                                         </span>
-                                        {artist?.commission_status === 'open' && (
-                                            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 flex items-center gap-1">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                                                Open for Orders
-                                            </span>
-                                        )}
+                                        {(() => {
+                                            const st = artist?.commission_status || (artist?.commission_open ? 'open' : 'closed');
+                                            if (st === 'open') {
+                                                return (
+                                                    <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 flex items-center gap-1">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                                        Open for Orders
+                                                    </span>
+                                                );
+                                            }
+                                            if (st === 'busy') {
+                                                return (
+                                                    <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 flex items-center gap-1">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                                                        Waitlist Only
+                                                    </span>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
                                     </div>
                                     <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                                         <span>@{artistUser?.username || 'artist'}</span>

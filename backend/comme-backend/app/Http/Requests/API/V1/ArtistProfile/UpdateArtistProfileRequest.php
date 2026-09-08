@@ -24,8 +24,10 @@ class UpdateArtistProfileRequest extends FormRequest
             'bio' => ['sometimes', 'nullable', 'string', 'max:1000'],
             'banner' => ['sometimes', 'nullable', 'string'],
             'website' => ['sometimes', 'nullable', 'url', 'max:255'],
+            'portfolio_url' => ['sometimes', 'nullable', 'url', 'max:255'],
             'social_links' => ['sometimes', 'nullable', 'array'],
             'commission_open' => ['sometimes', 'boolean'],
+            'commission_status' => ['sometimes', 'string', 'in:open,busy,closed'],
         ];
     }
 }

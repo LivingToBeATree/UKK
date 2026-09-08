@@ -107,7 +107,31 @@ export const ArtistProfilePage: React.FC = () => {
                                 <p className="text-sm text-muted-foreground">@{profile.user?.username}</p>
                                 {profile.bio && <p className="text-sm mt-3 leading-relaxed">{profile.bio}</p>}
                                 <div className="flex items-center gap-4 mt-4 justify-center sm:justify-start">
-                                    <Badge variant="secondary">{profile.commission_status}</Badge>
+                                    {(() => {
+                                        const st = profile.commission_status || ((profile as any).commission_open ? 'open' : 'closed');
+                                        if (st === 'open') {
+                                            return (
+                                                <Badge variant="default" className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 font-bold">
+                                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                                                    Open for Commissions
+                                                </Badge>
+                                            );
+                                        }
+                                        if (st === 'busy') {
+                                            return (
+                                                <Badge variant="secondary" className="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-1.5 font-bold">
+                                                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" />
+                                                    Waitlist Only
+                                                </Badge>
+                                            );
+                                        }
+                                        return (
+                                            <Badge variant="secondary" className="text-xs bg-rose-500/10 text-rose-400 border border-rose-500/30 flex items-center gap-1.5 font-bold">
+                                                <span className="h-1.5 w-1.5 rounded-full bg-rose-400 shrink-0" />
+                                                Commissions Closed
+                                            </Badge>
+                                        );
+                                    })()}
                                     {profile.rating_avg && (
                                         <span className="flex items-center gap-1 text-sm text-amber-400">
                                             <Star className="h-4 w-4 fill-current" />
