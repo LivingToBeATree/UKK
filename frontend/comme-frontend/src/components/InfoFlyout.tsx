@@ -11,7 +11,6 @@ import {
     Palette,
     Compass,
     FileText,
-    Bookmark,
     HelpCircle,
     Zap,
     Code2,
@@ -166,12 +165,6 @@ export const InfoFlyout: React.FC<{ collapsed: boolean }> = ({ collapsed }) => {
                                         <Link to="/commissions" onClick={() => setIsOpen(false)} className="hover:text-foreground transition-colors flex items-center gap-1.5 py-1">
                                             <FileText className="h-3 w-3 text-muted-foreground" />
                                             <span>My Orders</span>
-                                        </Link>
-                                    </li>
-                                    <li>
-                                        <Link to="/bookmarks" onClick={() => setIsOpen(false)} className="hover:text-foreground transition-colors flex items-center gap-1.5 py-1">
-                                            <Bookmark className="h-3 w-3 text-muted-foreground" />
-                                            <span>Saved Bookmarks</span>
                                         </Link>
                                     </li>
                                 </ul>

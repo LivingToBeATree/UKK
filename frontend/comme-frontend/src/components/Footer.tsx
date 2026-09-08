@@ -43,11 +43,6 @@ export const Footer: React.FC = () => {
                                     Artists Directory
                                 </Link>
                             </li>
-                            <li>
-                                <Link to="/bookmarks" className="hover:text-foreground transition-colors">
-                                    Saved Bookmarks
-                                </Link>
-                            </li>
                         </ul>
                     </div>
 

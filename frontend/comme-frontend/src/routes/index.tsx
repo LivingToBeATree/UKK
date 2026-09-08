@@ -44,7 +44,6 @@ import { CommissionDetailPage } from '@/pages/commissions/CommissionDetailPage';
 // User Dashboard
 import { SettingsPage } from '@/pages/settings/SettingsPage';
 import { NotificationsPage } from '@/pages/notifications/NotificationsPage';
-import { BookmarksPage } from '@/pages/bookmarks/BookmarksPage';
 import { UserTicketsPage } from '@/pages/dashboard/UserTicketsPage';
 import { ApplyArtistPage } from '@/pages/artist-application/ApplyArtistPage';
 import { ApplicationStatusPage } from '@/pages/artist-application/ApplicationStatusPage';
@@ -134,7 +133,7 @@ export function AppRoutes() {
                 {/* User dashboard */}
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
-                <Route path="/bookmarks" element={<BookmarksPage />} />
+                <Route path="/bookmarks" element={<Navigate to="/profile?tab=bookmarks" replace />} />
                 <Route path="/support" element={<UserTicketsPage />} />
                 <Route path="/tickets" element={<Navigate to="/support" replace />} />
                 <Route path="/dashboard/tickets" element={<Navigate to="/support" replace />} />

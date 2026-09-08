@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
     Palette,
@@ -50,6 +50,7 @@ export const UserProfilePage: React.FC = () => {
     const { user: currentUser, refreshUser } = useAuth();
     const { requireAuth } = useAuthModal();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
 
     // Extract handle or id from params or pathname
     const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
@@ -383,9 +384,13 @@ export const UserProfilePage: React.FC = () => {
     const bannerUrl = user.banner || user.banner_url || artistProfile?.banner;
     const avatarUrl = user.avatar || user.avatar_url;
 
-    const defaultTab = artistProfile
-        ? (services.length > 0 ? 'services' : portfolios.length > 0 ? 'portfolio' : 'posts')
-        : (userPosts.length > 0 ? 'posts' : isOwnProfile && likedPosts.length > 0 ? 'likes' : 'about');
+    const urlTab = searchParams.get('tab');
+    const validTabs = ['services', 'portfolio', 'reviews', 'posts', 'likes', 'bookmarks', 'about'];
+    const defaultTab = (urlTab && validTabs.includes(urlTab))
+        ? urlTab
+        : (artistProfile
+            ? (services.length > 0 ? 'services' : portfolios.length > 0 ? 'portfolio' : 'posts')
+            : (userPosts.length > 0 ? 'posts' : isOwnProfile && likedPosts.length > 0 ? 'likes' : 'about'));
 
     return (
         <motion.div
@@ -708,7 +713,7 @@ export const UserProfilePage: React.FC = () => {
             </Card>
 
             {/* Profile Tabbed Showcase */}
-            <Tabs defaultValue={defaultTab} className="space-y-6">
+            <Tabs key={`${user.id}-${urlTab || 'default'}`} defaultValue={defaultTab} className="space-y-6">
                 <TabsList className="bg-muted/40 p-1 rounded-2xl border border-border/60 flex-wrap h-auto gap-1">
                     {artistProfile && (
                         <>
