@@ -384,12 +384,30 @@ export const PortfolioDetailPage: React.FC = () => {
     const allMediaList = portfolio.media && portfolio.media.length > 0 ? portfolio.media : [];
 
     // 1. Main Artwork Piece (first media item / thumbnail / cover)
-    const mainArtwork =
+    interface ArtworkMediaItem {
+        id: number;
+        url: string;
+        file_name?: string;
+        media_type?: string;
+        mime_type?: string;
+    }
+
+    const mainArtwork: ArtworkMediaItem | null =
         allMediaList[0] ||
-        ((portfolio as any).thumbnail_media
-            ? { id: 0, url: (portfolio as any).thumbnail_media.url, media_type: 'image' }
+        (portfolio.thumbnail_media
+            ? {
+                  id: portfolio.thumbnail_media.id || 0,
+                  url: portfolio.thumbnail_media.url,
+                  file_name: portfolio.thumbnail_media.file_name || portfolio.title,
+                  media_type: 'image',
+              }
             : portfolio.cover_image_url
-            ? { id: 0, url: portfolio.cover_image_url, media_type: 'image' }
+            ? {
+                  id: 0,
+                  url: portfolio.cover_image_url,
+                  file_name: portfolio.title,
+                  media_type: 'image',
+              }
             : null);
 
     // 2. Additional Process Media & Timelapses (all media from index 1 onwards)
@@ -750,14 +768,29 @@ export const PortfolioDetailPage: React.FC = () => {
             <MediaLightboxModal
                 isOpen={lightboxOpen}
                 onClose={() => setLightboxOpen(false)}
-                mediaList={allMediaList.map((m) => ({
-                    id: m.id,
-                    url: m.url,
-                    file_name: m.file_name,
-                    media_type: m.media_type || (isVideoMedia(m) ? 'video' : 'image'),
-                    isVideo: isVideoMedia(m),
-                    isGif: isGifMedia(m),
-                }))}
+                mediaList={
+                    allMediaList.length > 0
+                        ? allMediaList.map((m) => ({
+                              id: m.id,
+                              url: m.url,
+                              file_name: m.file_name,
+                              media_type: m.media_type || (isVideoMedia(m) ? 'video' : 'image'),
+                              isVideo: isVideoMedia(m),
+                              isGif: isGifMedia(m),
+                          }))
+                        : mainArtwork
+                        ? [
+                              {
+                                  id: mainArtwork.id,
+                                  url: mainArtwork.url,
+                                  file_name: mainArtwork.file_name || portfolio.title,
+                                  media_type: mainArtwork.media_type || (isVideoMedia(mainArtwork) ? 'video' : 'image'),
+                                  isVideo: isVideoMedia(mainArtwork),
+                                  isGif: isGifMedia(mainArtwork),
+                              },
+                          ]
+                        : []
+                }
                 initialIndex={lightboxIndex}
             />
 
