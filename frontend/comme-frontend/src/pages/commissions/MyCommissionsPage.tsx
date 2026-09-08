@@ -174,7 +174,7 @@ export const MyCommissionsPage: React.FC = () => {
                 ) : (
                     commissions.map((commission) => (
                         <motion.div key={commission.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}>
-                            <Link to={`/commissions/${commission.id}`}>
+                            <Link to={`/commissions/${commission.slug || commission.id}`}>
                                 <Card className="hover:border-primary/40 transition-all hover:-translate-y-0.5 rounded-2xl bg-card border-border/80">
                                     <CardContent className="p-5 flex items-center justify-between gap-4">
                                         <div className="flex-1 min-w-0">

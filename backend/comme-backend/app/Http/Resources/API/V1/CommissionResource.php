@@ -11,6 +11,7 @@ class CommissionResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'slug' => $this->slug,
             'commission_service_id' => $this->commission_service_id,
             'commission_option_id' => $this->commission_option_id,
             'artist_profile_id' => $this->artist_profile_id,

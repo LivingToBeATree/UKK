@@ -129,9 +129,20 @@ export const CommissionDetailPage: React.FC = () => {
     // If an artist accesses the standalone /commissions/:id route, seamlessly redirect to /dashboard/commissions/:id for the sidebar
     useEffect(() => {
         if (commission && isArtistUser && location.pathname.startsWith('/commissions/')) {
-            navigate(`/dashboard/commissions/${commission.id}`, { replace: true });
+            navigate(`/dashboard/commissions/${commission.slug || commission.id}`, { replace: true });
         }
     }, [commission, isArtistUser, location.pathname, navigate]);
+
+    // If accessed via numeric ID, seamlessly update the address bar to the clean slug URL
+    useEffect(() => {
+        if (commission?.slug && id && String(id) !== String(commission.slug)) {
+            const isDashboard = location.pathname.startsWith('/dashboard/');
+            const newPath = isDashboard
+                ? `/dashboard/commissions/${commission.slug}`
+                : `/commissions/${commission.slug}`;
+            navigate(newPath, { replace: true });
+        }
+    }, [commission?.slug, id, location.pathname, navigate]);
 
     // Auto-scroll chat to bottom on new messages
     useEffect(() => {
@@ -236,8 +247,8 @@ export const CommissionDetailPage: React.FC = () => {
     const refreshData = async () => {
         if (!id) return;
         try {
-            const data = await commissionOrderApi.show(Number(id));
-            const msgRes = await commissionOrderApi.getMessages(Number(id));
+            const data = await commissionOrderApi.show(id);
+            const msgRes = await commissionOrderApi.getMessages(id);
             setCommission(data);
             setMessages(msgRes.data);
         } catch {
@@ -250,8 +261,8 @@ export const CommissionDetailPage: React.FC = () => {
         const load = async () => {
             if (!id) return;
             try {
-                const data = await commissionOrderApi.show(Number(id));
-                const msgRes = await commissionOrderApi.getMessages(Number(id));
+                const data = await commissionOrderApi.show(id);
+                const msgRes = await commissionOrderApi.getMessages(id);
                 if (isMounted) {
                     setCommission(data);
                     setMessages(msgRes.data);

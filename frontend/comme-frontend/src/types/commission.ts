@@ -122,6 +122,7 @@ export interface CommissionAddonSelection {
 
 export interface CommissionOrder {
   id: number;
+  slug?: string;
   commission_service_id: number;
   commission_option_id?: number | null;
   artist_profile_id: number;

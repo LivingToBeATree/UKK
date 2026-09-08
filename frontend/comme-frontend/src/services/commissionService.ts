@@ -52,7 +52,7 @@ export const commissionOrderApi = {
         return res.data;
     },
 
-    show: async (id: number) => {
+    show: async (id: number | string) => {
         const res = await api.get<ApiResponse<CommissionOrder>>(`/commissions/${id}`);
         return res.data.data;
     },
@@ -69,43 +69,43 @@ export const commissionOrderApi = {
         return res.data.data;
     },
 
-    update: async (id: number, payload: { status?: string; description?: string }) => {
+    update: async (id: number | string, payload: { status?: string; description?: string }) => {
         const res = await api.patch<ApiResponse<CommissionOrder>>(`/commissions/${id}`, payload);
         return res.data.data;
     },
 
-    cancel: async (id: number) => {
+    cancel: async (id: number | string) => {
         const res = await api.patch<ApiResponse<CommissionOrder>>(`/commissions/${id}/cancel`);
         return res.data.data;
     },
 
-    updateDeadline: async (id: number, deadline: string) => {
+    updateDeadline: async (id: number | string, deadline: string) => {
         const res = await api.patch<ApiResponse<CommissionOrder>>(`/commissions/${id}/deadline`, { deadline });
         return res.data.data;
     },
 
-    proposeDeadline: async (id: number, payload: { proposed_deadline: string; note?: string }) => {
+    proposeDeadline: async (id: number | string, payload: { proposed_deadline: string; note?: string }) => {
         const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${id}/propose-deadline`, payload);
         return res.data.data;
     },
 
-    acceptDeadline: async (id: number) => {
+    acceptDeadline: async (id: number | string) => {
         const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${id}/accept-deadline`);
         return res.data.data;
     },
 
-    declineDeadline: async (id: number) => {
+    declineDeadline: async (id: number | string) => {
         const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${id}/decline-deadline`);
         return res.data.data;
     },
 
     // Messages within a commission
-    getMessages: async (commissionId: number, page = 1) => {
+    getMessages: async (commissionId: number | string, page = 1) => {
         const res = await api.get<ApiResponse<CommissionMessage[]>>(`/commissions/${commissionId}/messages`, { params: { page } });
         return res.data;
     },
 
-    sendMessage: async (commissionId: number, payload: FormData | { message: string }) => {
+    sendMessage: async (commissionId: number | string, payload: FormData | { message: string }) => {
         const headers = payload instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {};
         const res = await api.post<ApiResponse<CommissionMessage>>(`/commissions/${commissionId}/messages`, payload, {
             headers,
@@ -113,47 +113,47 @@ export const commissionOrderApi = {
         return res.data.data;
     },
 
-    accept: async (id: number) => {
+    accept: async (id: number | string) => {
         const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${id}/accept`);
         return res.data.data;
     },
 
-    decline: async (id: number) => {
+    decline: async (id: number | string) => {
         const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${id}/decline`);
         return res.data.data;
     },
 
-    deliver: async (id: number, data?: FormData) => {
+    deliver: async (id: number | string, data?: FormData) => {
         const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${id}/deliver`, data, {
             headers: data instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : undefined,
         });
         return res.data.data;
     },
 
-    confirm: async (id: number) => {
+    confirm: async (id: number | string) => {
         const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${id}/confirm`);
         return res.data.data;
     },
 
-    requestRevision: async (id: number) => {
+    requestRevision: async (id: number | string) => {
         const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${id}/request-revision`);
         return res.data.data;
     },
 
     // Payment initiation with Midtrans Snap
-    initiatePayment: async (commissionId: number) => {
+    initiatePayment: async (commissionId: number | string) => {
         const res = await api.post<ApiResponse<CommissionPayment>>(`/commissions/${commissionId}/payment`);
         return res.data.data;
     },
 
     // Sandbox / Local test simulation
-    simulatePayment: async (commissionId: number) => {
+    simulatePayment: async (commissionId: number | string) => {
         const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${commissionId}/payment/simulate`);
         return res.data.data;
     },
 
     // Check & sync payment status with Midtrans API directly
-    checkPaymentStatus: async (commissionId: number) => {
+    checkPaymentStatus: async (commissionId: number | string) => {
         const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${commissionId}/payment/check-status`);
         return res.data.data;
     },
@@ -184,7 +184,7 @@ export const commissionReviewApi = {
     },
 
     create: async (
-        commissionId: number,
+        commissionId: number | string,
         payload: { rating: number; title?: string; comment: string; recommended?: boolean }
     ) => {
         const res = await api.post<ApiResponse<CommissionReview>>(`/commissions/${commissionId}/reviews`, {

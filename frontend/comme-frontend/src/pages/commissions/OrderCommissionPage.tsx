@@ -215,7 +215,7 @@ export const OrderCommissionPage: React.FC = () => {
 
             toast.dismiss(toastId);
             toast.success('Commission request submitted to the artist!');
-            navigate(`/commissions/${order.id}`);
+            navigate(`/commissions/${order.slug || order.id}`);
         } catch {
             toast.dismiss(toastId);
             toast.error('Failed to submit commission request');

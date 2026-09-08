@@ -7,10 +7,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use App\Enum\CommissionStatus;
+use App\Traits\HasSlug;
 
 class Commission extends Model
 {
+    use HasSlug;
+
     protected $fillable = [
+        'slug',
         'commission_service_id',
         'commission_option_id',
         'artist_profile_id',
@@ -102,5 +106,12 @@ class Commission extends Model
     public function revisions(): HasMany
     {
         return $this->hasMany(CommissionRevision::class);
+    }
+
+    public function getSlugSource(): string
+    {
+        $buyer = $this->user?->username ?? User::where('id', $this->user_id)->value('username') ?? 'order';
+        $service = $this->commissionService?->name ?? CommissionService::where('id', $this->commission_service_id)->value('name') ?? 'commission';
+        return "{$buyer}-{$service}";
     }
 }
