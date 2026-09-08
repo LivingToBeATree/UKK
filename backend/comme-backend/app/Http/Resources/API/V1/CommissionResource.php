@@ -39,6 +39,8 @@ class CommissionResource extends JsonResource
             'review' => new CommissionReviewResource($this->whenLoaded('review')),
             'messages' => CommissionMessageResource::collection($this->whenLoaded('messages')),
             'addons_selections' => $this->whenLoaded('addonsSelections'),
+            'payment' => new PaymentResource($this->whenLoaded('payment')),
+            'payments' => PaymentResource::collection($this->whenLoaded('payments')),
             'payout' => $this->whenLoaded('payout', function () {
                 return [
                     'id' => $this->payout->id,

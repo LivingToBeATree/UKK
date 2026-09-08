@@ -24,6 +24,7 @@ import {
     Lock,
     UploadCloud,
     FileCheck,
+    Receipt,
 } from 'lucide-react';
 import { commissionOrderApi, commissionReviewApi } from '@/services/commissionService';
 import { useAuth } from '@/hooks/useAuth';
@@ -41,6 +42,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { MediaLightboxModal } from '@/components/ui/MediaLightboxModal';
 import { DatePicker } from '@/components/ui/date-picker';
 import { MidtransPaymentModal } from '@/components/ui/MidtransPaymentModal';
+import { CommissionReceiptModal } from '@/components/commissions/CommissionReceiptModal';
 import {
     Dialog,
     DialogTrigger,
@@ -122,6 +124,9 @@ export const CommissionDetailPage: React.FC = () => {
     // Cancellation Dialog state
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
     const [cancelReason, setCancelReason] = useState('');
+
+    // Receipt Modal state
+    const [receiptModalOpen, setReceiptModalOpen] = useState(false);
 
     const isBuyer = Boolean(commission && user && commission.user_id === user.id);
     const isArtistUser = Boolean(
@@ -822,10 +827,21 @@ export const CommissionDetailPage: React.FC = () => {
                                             ? 'Awaiting Acceptance'
                                             : commission.status === 'accepted'
                                             ? 'Ready for Payment'
-                                            : commission.status === 'in_progress'
+                                            : ['in_progress', 'waiting_for_client', 'revision'].includes(commission.status)
                                             ? 'Secured in Escrow'
+                                            : commission.status === 'cancelled'
+                                            ? 'Cancelled / Refunded'
                                             : 'Released / Settled'}
                                     </p>
+                                    {['in_progress', 'waiting_for_client', 'revision', 'completed'].includes(commission.status) && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setReceiptModalOpen(true)}
+                                            className="text-[11px] text-emerald-400 hover:text-emerald-300 font-bold underline-offset-2 hover:underline cursor-pointer flex items-center gap-1 mt-1.5 font-mono"
+                                        >
+                                            <Receipt className="h-3 w-3" /> View Receipt
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 
@@ -1116,6 +1132,18 @@ export const CommissionDetailPage: React.FC = () => {
 
                             {/* Actions */}
                             <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-border">
+                                {/* BOTH: Show Receipt (When Paid / In-Progress or Completed) */}
+                                {['in_progress', 'waiting_for_client', 'revision', 'completed'].includes(commission.status) && (
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setReceiptModalOpen(true)}
+                                        className="gap-2 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 cursor-pointer font-bold shadow-xs"
+                                    >
+                                        <Receipt className="h-4 w-4 text-emerald-400" /> Show Receipt
+                                    </Button>
+                                )}
+
                                 {/* BUYER: Pay with Midtrans (When Status is 'accepted') */}
                                 {isBuyer && commission.status === 'accepted' && (
                                     <div className="flex flex-wrap items-center gap-3">
@@ -1841,6 +1869,15 @@ export const CommissionDetailPage: React.FC = () => {
                         setCommission(updated);
                         refreshData();
                     }}
+                />
+            )}
+
+            {/* Commission Purchase Receipt & History Modal */}
+            {commission && (
+                <CommissionReceiptModal
+                    open={receiptModalOpen}
+                    onClose={() => setReceiptModalOpen(false)}
+                    commission={commission}
                 />
             )}
         </div>

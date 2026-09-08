@@ -230,7 +230,7 @@ class CommissionController extends Controller
 
         return ApiResponseHelper::successResponse(
             new CommissionResource(
-                $commission->load(['commissionService', 'commissionOption.addons', 'artistProfile.user', 'user', 'messages.user', 'review', 'addonsSelections', 'payout'])
+                $commission->load(['commissionService', 'commissionOption.addons', 'artistProfile.user', 'user', 'messages.user', 'review', 'addonsSelections', 'payout', 'payment', 'payments'])
             ),
             'Commission retrieved successfully.',
         );
@@ -245,7 +245,7 @@ class CommissionController extends Controller
 
         return ApiResponseHelper::successResponse(
             new CommissionResource(
-                $commission->load(['commissionService', 'commissionOption.addons', 'artistProfile.user', 'user', 'messages.user', 'review', 'addonsSelections', 'payout'])
+                $commission->load(['commissionService', 'commissionOption.addons', 'artistProfile.user', 'user', 'messages.user', 'review', 'addonsSelections', 'payout', 'payment', 'payments'])
             ),
             'Commission updated successfully.'
         );

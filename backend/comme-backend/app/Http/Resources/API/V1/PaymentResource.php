@@ -19,10 +19,11 @@ class PaymentResource extends JsonResource
             'id' => $this->id,
             'order_id' => $this->order_id,
             'snap_token' => $this->snap_token,
-            'status' => $this->status?->value,
+            'status' => $this->status?->value ?? $this->status,
             'payment_type' => $this->payment_type,
             'gross_amount' => (float) $this->gross_amount,
-            'paid_at' => $this->paid_at,
+            'paid_at' => $this->paid_at instanceof \DateTimeInterface ? $this->paid_at->toISOString() : ($this->paid_at ? (string) $this->paid_at : null),
+            'created_at' => $this->created_at?->toISOString(),
         ];
     }
 }

@@ -78,17 +78,20 @@ export interface CommissionReview {
   } | null;
 }
 
+export type PaymentStatusType = 'pending' | 'paid' | 'failed' | 'cancelled' | 'expired' | 'refunded';
+
 export interface CommissionPayment {
   id: number;
-  commission_id: number;
+  commission_id?: number;
   order_id: string;
-  status: string;
+  status: PaymentStatusType | string;
   gross_amount: number;
   snap_token?: string | null;
   payment_type?: string | null;
   settlement_time?: string | null;
-  created_at: string;
-  updated_at: string;
+  paid_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface CommissionPayout {
@@ -148,6 +151,7 @@ export interface CommissionOrder {
   user?: User;
   messages?: CommissionMessage[];
   review?: CommissionReview | null;
+  payment?: CommissionPayment | null;
   payments?: CommissionPayment[];
   payout?: CommissionPayout | null;
   addons_selections?: CommissionAddonSelection[];
