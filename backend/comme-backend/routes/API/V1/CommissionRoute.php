@@ -24,6 +24,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('commissions/{commission}/cancel', [CommissionController::class, 'cancel'])
         ->name('commissions.cancel');
 
+    Route::post('commissions/{commission}/request-cancellation', [CommissionController::class, 'requestCancellation'])
+        ->name('commissions.request-cancellation');
+
+    Route::post('commissions/{commission}/accept-cancellation', [CommissionController::class, 'acceptCancellation'])
+        ->name('commissions.accept-cancellation');
+
+    Route::post('commissions/{commission}/decline-cancellation', [CommissionController::class, 'declineCancellation'])
+        ->name('commissions.decline-cancellation');
+
     Route::patch('commissions/{commission}/deadline', [CommissionController::class, 'updateDeadline'])
         ->name('commissions.update-deadline');
 

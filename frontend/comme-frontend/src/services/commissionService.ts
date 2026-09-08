@@ -79,6 +79,21 @@ export const commissionOrderApi = {
         return res.data.data;
     },
 
+    requestCancellation: async (id: number | string, payload: { reason: string }) => {
+        const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${id}/request-cancellation`, payload);
+        return res.data.data;
+    },
+
+    acceptCancellation: async (id: number | string) => {
+        const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${id}/accept-cancellation`);
+        return res.data.data;
+    },
+
+    declineCancellation: async (id: number | string) => {
+        const res = await api.post<ApiResponse<CommissionOrder>>(`/commissions/${id}/decline-cancellation`);
+        return res.data.data;
+    },
+
     updateDeadline: async (id: number | string, deadline: string) => {
         const res = await api.patch<ApiResponse<CommissionOrder>>(`/commissions/${id}/deadline`, { deadline });
         return res.data.data;

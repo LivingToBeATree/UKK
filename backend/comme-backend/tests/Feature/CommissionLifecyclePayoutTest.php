@@ -695,4 +695,48 @@ class CommissionLifecyclePayoutTest extends TestCase
         $this->assertNotNull($payout->completed_at);
         $this->assertEquals(1, CommissionPayout::where('commission_id', $commission->id)->count(), 'Guaranteed zero duplicate payouts');
     }
+
+    public function test_mutual_cancellation_flow(): void
+    {
+        $commission = $this->createCommissionInWaitingState();
+        $this->assertEquals(CommissionStatus::WAITING_FOR_CLIENT, $commission->status);
+
+        // 1. Client requests cancellation with valid reason
+        $this->actingAs($this->buyerUser);
+        $res = $this->postJson("/api/commissions/{$commission->id}/request-cancellation", [
+            'reason' => 'Need to cancel due to unexpected emergency.',
+        ]);
+        $res->assertOk();
+        $commission->refresh();
+        $this->assertEquals($this->buyerUser->id, $commission->cancellation_requested_by);
+        $this->assertEquals('Need to cancel due to unexpected emergency.', $commission->cancellation_reason);
+        $this->assertNotNull($commission->cancellation_requested_at);
+
+        // 2. Client cannot accept their own cancellation request
+        $this->postJson("/api/commissions/{$commission->id}/accept-cancellation")
+            ->assertForbidden();
+
+        // 3. Artist declines the cancellation request
+        $this->actingAs($this->artistUser);
+        $this->postJson("/api/commissions/{$commission->id}/decline-cancellation")
+            ->assertOk();
+        $commission->refresh();
+        $this->assertNull($commission->cancellation_requested_by);
+        $this->assertNull($commission->cancellation_reason);
+        $this->assertEquals(CommissionStatus::WAITING_FOR_CLIENT, $commission->status);
+
+        // 4. Artist requests cancellation
+        $this->postJson("/api/commissions/{$commission->id}/request-cancellation", [
+            'reason' => 'Unable to complete required revisions in time.',
+        ])->assertOk();
+        $commission->refresh();
+        $this->assertEquals($this->artistUser->id, $commission->cancellation_requested_by);
+
+        // 5. Client accepts cancellation
+        $this->actingAs($this->buyerUser);
+        $this->postJson("/api/commissions/{$commission->id}/accept-cancellation")
+            ->assertOk();
+        $commission->refresh();
+        $this->assertEquals(CommissionStatus::CANCELLED, $commission->status);
+    }
 }

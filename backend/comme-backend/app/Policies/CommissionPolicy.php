@@ -115,6 +115,41 @@ class CommissionPolicy
             || $user->id === $commission->artistProfile->user_id;
     }
 
+    public function requestCancellation(User $user, Commission $commission): bool
+    {
+        $statusVal = $commission->status instanceof \App\Enum\CommissionStatus 
+            ? $commission->status->value 
+            : (string) $commission->status;
+
+        return ($user->id === $commission->user_id || $user->id === $commission->artistProfile?->user_id)
+            && in_array($statusVal, ['accepted', 'in_progress', 'waiting_for_client', 'revision'])
+            && is_null($commission->cancellation_requested_by);
+    }
+
+    public function acceptCancellation(User $user, Commission $commission): bool
+    {
+        if (!$commission->cancellation_requested_by) {
+            return false;
+        }
+
+        $isCounterpart = ($commission->cancellation_requested_by === $commission->user_id)
+            ? $user->id === $commission->artistProfile?->user_id
+            : $user->id === $commission->user_id;
+
+        return $isCounterpart || $user->isStaff();
+    }
+
+    public function declineCancellation(User $user, Commission $commission): bool
+    {
+        if (!$commission->cancellation_requested_by) {
+            return false;
+        }
+
+        return $user->id === $commission->user_id
+            || $user->id === $commission->artistProfile?->user_id
+            || $user->isStaff();
+    }
+
     /**
      * Never delete directly — cancellation preserves commission history
      * instead.

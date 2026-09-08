@@ -28,6 +28,9 @@ class Commission extends Model
         'review_deadline',
         'completed_at',
         'total_price',
+        'cancellation_requested_by',
+        'cancellation_reason',
+        'cancellation_requested_at',
     ];
 
     protected function casts(): array
@@ -40,6 +43,7 @@ class Commission extends Model
             'delivered_at' => 'datetime',
             'review_deadline' => 'datetime',
             'completed_at' => 'datetime',
+            'cancellation_requested_at' => 'datetime',
         ];
     }
 
@@ -61,6 +65,11 @@ class Commission extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function cancellationRequester(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cancellation_requested_by');
     }
 
     public function messages(): HasMany

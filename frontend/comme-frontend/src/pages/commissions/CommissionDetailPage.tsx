@@ -12,6 +12,7 @@ import {
     Clock,
     Sparkles,
     AlertCircle,
+    AlertTriangle,
     RefreshCw,
     MessageSquare,
     Paperclip,
@@ -118,6 +119,10 @@ export const CommissionDetailPage: React.FC = () => {
     const [paymentModalOpen, setPaymentModalOpen] = useState(false);
     const [paymentOrderId, setPaymentOrderId] = useState<string | undefined>(undefined);
 
+    // Cancellation Dialog state
+    const [cancelModalOpen, setCancelModalOpen] = useState(false);
+    const [cancelReason, setCancelReason] = useState('');
+
     const isBuyer = Boolean(commission && user && commission.user_id === user.id);
     const isArtistUser = Boolean(
         commission &&
@@ -125,6 +130,13 @@ export const CommissionDetailPage: React.FC = () => {
         (commission.artist_profile?.user_id === user.id ||
             user.artist_profile?.id === commission.artist_profile_id)
     );
+
+    const isCancellationRequester = Boolean(
+        commission?.cancellation_requested_by &&
+        user &&
+        commission.cancellation_requested_by === user.id
+    );
+    const counterpartLabel = isBuyer ? 'Illustrator' : 'Client';
 
     // If an artist accesses the standalone /commissions/:id route, seamlessly redirect to /dashboard/commissions/:id for the sidebar
     useEffect(() => {
@@ -318,6 +330,58 @@ export const CommissionDetailPage: React.FC = () => {
             toast.success('Commission cancelled');
         } catch {
             toast.error('Failed to cancel commission');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleRequestCancellation = async () => {
+        if (!commission || !cancelReason.trim()) return;
+        setActionLoading(true);
+        try {
+            const updated = await commissionOrderApi.requestCancellation(commission.slug || commission.id, {
+                reason: cancelReason.trim(),
+            });
+            setCommission(updated);
+            setCancelModalOpen(false);
+            setCancelReason('');
+            toast.success('Cancellation request submitted to the other party.');
+            refreshData();
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to submit cancellation request';
+            toast.error(msg);
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleAcceptCancellation = async () => {
+        if (!commission) return;
+        setActionLoading(true);
+        try {
+            const updated = await commissionOrderApi.acceptCancellation(commission.slug || commission.id);
+            setCommission(updated);
+            toast.success('Cancellation request accepted. Commission is now cancelled.');
+            refreshData();
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to accept cancellation';
+            toast.error(msg);
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleDeclineCancellation = async () => {
+        if (!commission) return;
+        setActionLoading(true);
+        try {
+            const updated = await commissionOrderApi.declineCancellation(commission.slug || commission.id);
+            setCommission(updated);
+            toast.success('Cancellation request declined/withdrawn. Commission remains active.');
+            refreshData();
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to decline cancellation';
+            toast.error(msg);
         } finally {
             setActionLoading(false);
         }
@@ -644,8 +708,8 @@ export const CommissionDetailPage: React.FC = () => {
                 </Link>
                 <div className="flex items-center gap-2">
                     <span className="text-xs font-mono text-muted-foreground hidden sm:inline-block">Order #COM-{commission.id}</span>
-                    <Badge variant={commission.status === 'completed' ? 'teal' : commission.status === 'in_progress' ? 'purple' : 'gold'}>
-                        Status: {commission.status.replace('_', ' ').toUpperCase()}
+                    <Badge variant={commission.status === 'completed' ? 'teal' : commission.status === 'in_progress' ? 'purple' : commission.status === 'cancelled' || commission.status === 'declined' ? 'rose' : 'gold'}>
+                        Status: {commission.status.replace(/_/g, ' ').toUpperCase()}
                     </Badge>
                 </div>
             </div>
@@ -836,6 +900,100 @@ export const CommissionDetailPage: React.FC = () => {
                                             {formatDateSafe(commission.proposed_deadline, { dateStyle: 'medium' })}
                                         </span>. Awaiting client's review.
                                     </p>
+                                </div>
+                            )}
+
+                            {/* Counterpart: Pending Cancellation Request Banner */}
+                            {commission.cancellation_requested_by && !isCancellationRequester && commission.status !== 'cancelled' && (
+                                <div className="p-4 sm:p-5 rounded-2xl border border-rose-500/40 bg-rose-500/10 backdrop-blur-md space-y-3">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="space-y-0.5">
+                                            <p className="font-bold text-sm text-rose-400 flex items-center gap-2">
+                                                <AlertTriangle className="h-4 w-4 text-rose-400" /> Cancellation Requested by {counterpartLabel}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                The {counterpartLabel.toLowerCase()} has submitted a request to cancel this commission.
+                                            </p>
+                                        </div>
+                                        <Badge variant="rose" className="shrink-0 font-mono text-[10px]">
+                                            Cancellation Pending
+                                        </Badge>
+                                    </div>
+
+                                    {commission.cancellation_reason && (
+                                        <div className="p-3 rounded-xl bg-black/20 border border-rose-500/20 text-xs text-foreground/90 space-y-1">
+                                            <p className="font-bold text-[11px] text-rose-300 uppercase tracking-wider font-mono">Stated Reason:</p>
+                                            <p className="italic leading-relaxed">{commission.cancellation_reason}</p>
+                                        </div>
+                                    )}
+
+                                    <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                                        <Button
+                                            size="sm"
+                                            variant="destructive"
+                                            onClick={handleAcceptCancellation}
+                                            disabled={actionLoading}
+                                            className="gap-1.5 font-bold cursor-pointer shadow-md shadow-rose-600/20"
+                                        >
+                                            <CheckCircle2 className="h-4 w-4" /> Accept & Cancel Order
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={handleDeclineCancellation}
+                                            disabled={actionLoading}
+                                            className="cursor-pointer border-border hover:bg-muted"
+                                        >
+                                            Decline & Keep Order
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Requester: Pending Cancellation Banner */}
+                            {commission.cancellation_requested_by && isCancellationRequester && commission.status !== 'cancelled' && (
+                                <div className="p-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 space-y-2 text-xs">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <p className="font-bold text-amber-300 flex items-center gap-1.5">
+                                            <AlertTriangle className="h-4 w-4 text-amber-400" /> You Requested Cancellation
+                                        </p>
+                                        <Button
+                                            size="xs"
+                                            variant="outline"
+                                            onClick={handleDeclineCancellation}
+                                            disabled={actionLoading}
+                                            className="text-muted-foreground hover:text-foreground cursor-pointer"
+                                        >
+                                            Withdraw Request
+                                        </Button>
+                                    </div>
+                                    <p className="text-muted-foreground">
+                                        You requested to cancel this order. Awaiting response from the {counterpartLabel.toLowerCase()}.
+                                    </p>
+                                    {commission.cancellation_reason && (
+                                        <div className="p-2.5 rounded-xl bg-black/20 border border-amber-500/20 text-xs text-foreground/80 italic">
+                                            "{commission.cancellation_reason}"
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Cancelled Commission Banner */}
+                            {commission.status === 'cancelled' && (
+                                <div className="p-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 space-y-1.5 text-xs">
+                                    <p className="font-bold text-rose-400 flex items-center gap-1.5">
+                                        <XCircle className="h-4 w-4" /> This Commission Has Been Cancelled
+                                    </p>
+                                    <p className="text-muted-foreground">
+                                        {commission.cancellation_requested_by
+                                            ? `This order was cancelled upon mutual request.`
+                                            : `This order has been cancelled.`}
+                                    </p>
+                                    {commission.cancellation_reason && (
+                                        <p className="text-xs text-muted-foreground">
+                                            <span className="font-semibold text-rose-300">Reason:</span> {commission.cancellation_reason}
+                                        </p>
+                                    )}
                                 </div>
                             )}
 
@@ -1234,6 +1392,66 @@ export const CommissionDetailPage: React.FC = () => {
                                         </DialogContent>
                                     </Dialog>
                                 )}
+
+                                {/* BOTH: Request Cancellation (When Active status and no pending cancellation request) */}
+                                {(isBuyer || isArtistUser) &&
+                                    ['accepted', 'in_progress', 'waiting_for_client', 'revision'].includes(commission.status) &&
+                                    !commission.cancellation_requested_by && (
+                                        <Dialog open={cancelModalOpen} onOpenChange={setCancelModalOpen}>
+                                            <DialogTrigger asChild>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/10 cursor-pointer font-medium"
+                                                >
+                                                    <AlertTriangle className="h-3.5 w-3.5 text-destructive" /> Request Cancellation
+                                                </Button>
+                                            </DialogTrigger>
+                                            <DialogContent className="max-w-md">
+                                                <DialogHeader>
+                                                    <DialogTitle className="flex items-center gap-2 text-destructive">
+                                                        <AlertTriangle className="h-5 w-5" /> Request Commission Cancellation
+                                                    </DialogTitle>
+                                                    <DialogDescription>
+                                                        Because this commission is currently active, cancellation requires approval from the {counterpartLabel.toLowerCase()}.
+                                                    </DialogDescription>
+                                                </DialogHeader>
+                                                <div className="space-y-3 py-3">
+                                                    <div className="space-y-1.5">
+                                                        <Label className="text-xs font-bold text-foreground">Reason for Cancellation</Label>
+                                                        <Textarea
+                                                            placeholder="Please provide clear reasons why you need to cancel this order..."
+                                                            rows={4}
+                                                            value={cancelReason}
+                                                            onChange={(e) => setCancelReason(e.target.value)}
+                                                        />
+                                                        <p className="text-[11px] text-muted-foreground">
+                                                            This reason will be shared with the {counterpartLabel.toLowerCase()} and logged in the order workspace history.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <DialogFooter className="gap-2 sm:gap-0">
+                                                    <Button
+                                                        variant="outline"
+                                                        onClick={() => setCancelModalOpen(false)}
+                                                        disabled={actionLoading}
+                                                        className="cursor-pointer"
+                                                    >
+                                                        Keep Order
+                                                    </Button>
+                                                    <Button
+                                                        variant="destructive"
+                                                        onClick={handleRequestCancellation}
+                                                        disabled={actionLoading || !cancelReason.trim()}
+                                                        className="font-bold cursor-pointer gap-1.5"
+                                                    >
+                                                        {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <AlertTriangle className="h-4 w-4" />}
+                                                        Submit Cancellation Request
+                                                    </Button>
+                                                </DialogFooter>
+                                            </DialogContent>
+                                        </Dialog>
+                                    )}
                             </div>
                         </CardContent>
                     </Card>

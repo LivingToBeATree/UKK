@@ -138,6 +138,10 @@ export interface CommissionOrder {
   total_price: number;
   created_at: string;
   updated_at: string;
+  cancellation_requested_by?: number | null;
+  cancellation_reason?: string | null;
+  cancellation_requested_at?: string | null;
+  cancellation_requester?: User | null;
   commission_service?: CommissionService;
   commission_option?: CommissionOption;
   artist_profile?: ArtistProfile;

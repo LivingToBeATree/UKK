@@ -425,6 +425,138 @@ class CommissionController extends Controller
         );
     }
 
+    public function requestCancellation(Request $request, Commission $commission): JsonResponse
+    {
+        Gate::authorize('requestCancellation', $commission);
+
+        $validated = $request->validate([
+            'reason' => 'required|string|min:5|max:1000',
+        ]);
+
+        $commission->update([
+            'cancellation_requested_by' => $request->user()->id,
+            'cancellation_reason' => $validated['reason'],
+            'cancellation_requested_at' => now(),
+        ]);
+
+        $counterpartId = ($request->user()->id === $commission->user_id)
+            ? $commission->artistProfile?->user_id
+            : $commission->user_id;
+
+        if ($counterpartId) {
+            \App\Models\Notification::create([
+                'user_id' => $counterpartId,
+                'type' => \App\Enum\NotificationType::SYSTEM,
+                'title' => 'Cancellation Requested',
+                'message' => "{$request->user()->display_name} has requested to cancel Commission #{$commission->id}: \"{$validated['reason']}\"",
+                'notifiable_type' => Commission::class,
+                'notifiable_id' => $commission->id,
+            ]);
+        }
+
+        // Post notice in workspace chat
+        \App\Models\CommissionMessage::create([
+            'commission_id' => $commission->id,
+            'sender_id' => $request->user()->id,
+            'recipient_id' => $counterpartId,
+            'message' => "[Cancellation Request] " . $request->user()->display_name . " requested to cancel this order.\nReason: " . $validated['reason'],
+            'message_type' => \App\Enum\MessageType::SYSTEM,
+        ]);
+
+        return ApiResponseHelper::successResponse(
+            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'cancellationRequester', 'messages', 'review'])),
+            'Cancellation request submitted successfully.'
+        );
+    }
+
+    public function acceptCancellation(Commission $commission): JsonResponse
+    {
+        Gate::authorize('acceptCancellation', $commission);
+
+        $commission->update([
+            'status' => CommissionStatus::CANCELLED,
+        ]);
+
+        $requesterId = $commission->cancellation_requested_by;
+        $acceptor = auth()->user();
+
+        if ($requesterId && $requesterId !== $acceptor->id) {
+            \App\Models\Notification::create([
+                'user_id' => $requesterId,
+                'type' => \App\Enum\NotificationType::SYSTEM,
+                'title' => 'Cancellation Accepted',
+                'message' => "Your cancellation request for Commission #{$commission->id} was accepted. The commission is now cancelled.",
+                'notifiable_type' => Commission::class,
+                'notifiable_id' => $commission->id,
+            ]);
+        }
+
+        // Post notice in workspace chat
+        \App\Models\CommissionMessage::create([
+            'commission_id' => $commission->id,
+            'sender_id' => $acceptor->id,
+            'recipient_id' => $requesterId,
+            'message' => "[Cancellation Accepted] The cancellation request was accepted by {$acceptor->display_name}. This commission order has been officially cancelled.",
+            'message_type' => \App\Enum\MessageType::SYSTEM,
+        ]);
+
+        return ApiResponseHelper::successResponse(
+            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'cancellationRequester', 'messages', 'review'])),
+            'Commission cancellation accepted.'
+        );
+    }
+
+    public function declineCancellation(Commission $commission): JsonResponse
+    {
+        Gate::authorize('declineCancellation', $commission);
+
+        $currentUser = auth()->user();
+        $requesterId = $commission->cancellation_requested_by;
+        $isRequester = $currentUser->id === $requesterId;
+
+        $commission->update([
+            'cancellation_requested_by' => null,
+            'cancellation_reason' => null,
+            'cancellation_requested_at' => null,
+        ]);
+
+        if (!$isRequester && $requesterId) {
+            \App\Models\Notification::create([
+                'user_id' => $requesterId,
+                'type' => \App\Enum\NotificationType::SYSTEM,
+                'title' => 'Cancellation Request Declined',
+                'message' => "{$currentUser->display_name} declined your cancellation request. The commission remains active.",
+                'notifiable_type' => Commission::class,
+                'notifiable_id' => $commission->id,
+            ]);
+
+            \App\Models\CommissionMessage::create([
+                'commission_id' => $commission->id,
+                'sender_id' => $currentUser->id,
+                'recipient_id' => $requesterId,
+                'message' => "[Cancellation Request Declined] {$currentUser->display_name} declined the cancellation request. The order remains active.",
+                'message_type' => \App\Enum\MessageType::SYSTEM,
+            ]);
+        } else {
+            $counterpartId = ($currentUser->id === $commission->user_id)
+                ? $commission->artistProfile?->user_id
+                : $commission->user_id;
+
+            \App\Models\CommissionMessage::create([
+                'commission_id' => $commission->id,
+                'sender_id' => $currentUser->id,
+                'recipient_id' => $counterpartId,
+                'message' => "[Cancellation Request Withdrawn] {$currentUser->display_name} withdrew their cancellation request.",
+                'message_type' => \App\Enum\MessageType::SYSTEM,
+            ]);
+        }
+
+        return ApiResponseHelper::successResponse(
+            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'cancellationRequester', 'messages', 'review'])),
+            $isRequester ? 'Cancellation request withdrawn.' : 'Cancellation request declined.'
+        );
+    }
+
     public function updateDeadline(UpdateCommissionDeadlineRequest $request, Commission $commission): JsonResponse
     {
         if (is_null($commission->deadline)) {
