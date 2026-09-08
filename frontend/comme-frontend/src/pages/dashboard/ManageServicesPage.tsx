@@ -176,7 +176,7 @@ export const ManageServicesPage: React.FC = () => {
 
                                     {/* Action buttons */}
                                     <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                                        <Link to={`/store/${svc.id}`} target="_blank" rel="noopener noreferrer">
+                                        <Link to={`/store/${svc.slug || svc.id}`} target="_blank" rel="noopener noreferrer">
                                             <Button
                                                 variant="ghost"
                                                 size="sm"

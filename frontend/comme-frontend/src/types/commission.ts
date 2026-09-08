@@ -29,6 +29,7 @@ export interface CommissionOption {
 
 export interface CommissionService {
   id: number;
+  slug?: string;
   artist_profile_id: number;
   thumbnail_media_id?: number | null;
   name: string;
@@ -72,7 +73,7 @@ export interface CommissionReview {
   user?: User;
   commission?: {
     id: number;
-    service?: { id: number; name: string; description?: string } | null;
+    service?: { id: number; name: string; description?: string; slug?: string } | null;
     option?: { id: number; title: string } | null;
   } | null;
 }

@@ -118,7 +118,13 @@ class CommissionController extends Controller
      */
     public function store(StoreCommissionRequest $request): JsonResponse
     {
-        $service = CommissionService::with('artistProfile')->findOrFail($request->commission_service_id);
+        $serviceIdOrSlug = $request->commission_service_id;
+        $service = CommissionService::with('artistProfile')
+            ->where(function ($q) use ($serviceIdOrSlug) {
+                $q->where('slug', $serviceIdOrSlug)
+                    ->orWhere('id', is_numeric($serviceIdOrSlug) ? (int) $serviceIdOrSlug : 0);
+            })
+            ->firstOrFail();
 
         if ($service->artistProfile?->user_id === $request->user()->id || $service->artist_profile_id === $request->user()->artistProfile?->id) {
             return ApiResponseHelper::errorResponse(

@@ -9,7 +9,7 @@ export const postService = {
     },
 
     // Get single post
-    show: async (id: number) => {
+    show: async (id: number | string) => {
         const res = await api.get<ApiResponse<Post>>(`/posts/${id}`);
         return res.data.data;
     },
@@ -37,7 +37,7 @@ export const postService = {
     },
 
     // Toggle like
-    toggleLike: async (postId: number) => {
+    toggleLike: async (postId: number | string) => {
         const res = await api.post<ApiResponse<{ liked?: boolean; is_liked?: boolean; likes_count: number }>>(`/posts/${postId}/like`);
         const data = res.data.data;
         return {
@@ -48,7 +48,7 @@ export const postService = {
     },
 
     // Toggle bookmark
-    toggleBookmark: async (postId: number) => {
+    toggleBookmark: async (postId: number | string) => {
         const res = await api.post<ApiResponse<{ bookmarked?: boolean; is_bookmarked?: boolean; bookmarks_count: number }>>(`/posts/${postId}/bookmark`);
         const data = res.data.data;
         return {
@@ -71,13 +71,13 @@ export const postService = {
     },
 
     // List comments for a post
-    listComments: async (postId: number, page = 1) => {
+    listComments: async (postId: number | string, page = 1) => {
         const res = await api.get<ApiResponse<PostComment[]>>(`/posts/${postId}/comments`, { params: { page } });
         return res.data;
     },
 
     // Create comment or reply
-    createComment: async (postId: number, body: string, parentCommentId?: number) => {
+    createComment: async (postId: number | string, body: string, parentCommentId?: number) => {
         const payload: Record<string, any> = {
             content: body,
             body: body,

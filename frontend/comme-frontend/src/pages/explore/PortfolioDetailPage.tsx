@@ -283,7 +283,7 @@ export const PortfolioDetailPage: React.FC = () => {
             if (!id) return;
             setLoading(true);
             try {
-                const data = await portfolioApi.show(Number(id));
+                const data = await portfolioApi.show(id);
                 setPortfolio(data);
                 setFetchError(null);
             } catch (err: any) {

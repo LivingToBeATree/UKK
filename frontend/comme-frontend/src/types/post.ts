@@ -13,6 +13,7 @@ export interface MediaItem {
 
 export interface Post {
   id: number;
+  slug?: string;
   user_id: number;
   portfolio_id?: number | null;
   content: string;
@@ -31,6 +32,7 @@ export interface Post {
   media?: MediaItem[];
   portfolio?: {
     id: number;
+    slug?: string;
     title: string;
     description?: string | null;
     cover_image_url?: string;

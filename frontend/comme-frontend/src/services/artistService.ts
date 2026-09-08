@@ -101,7 +101,7 @@ export const portfolioApi = {
         return res.data;
     },
 
-    show: async (id: number) => {
+    show: async (id: number | string) => {
         const res = await api.get<ApiResponse<Portfolio>>(`/portfolios/${id}`);
         return res.data.data;
     },

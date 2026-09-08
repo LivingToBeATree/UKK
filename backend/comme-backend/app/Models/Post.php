@@ -7,13 +7,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use App\Enum\PostVisibilityType;
+use App\Traits\HasSlug;
+use Illuminate\Support\Str;
 
 class Post extends Model
 {
+    use HasSlug;
+
     protected $fillable = [
         'user_id',
         'portfolio_id',
         'content',
+        'slug',
         'visibility',
         'is_taken_down',
         'taken_down_reason',
@@ -22,6 +27,11 @@ class Post extends Model
         'comments_count',
         'bookmarks_count',
     ];
+
+    public function getSlugSource(): string
+    {
+        return (string) ($this->content ? Str::words($this->content, 6, '') : "post-{$this->id}");
+    }
 
     protected function casts(): array
     {

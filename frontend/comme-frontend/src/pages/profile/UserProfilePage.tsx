@@ -749,7 +749,7 @@ export const UserProfilePage: React.FC = () => {
                                                         {formatPrice(price)}
                                                     </span>
                                                 </div>
-                                                <Link to={`/store/${svc.id}`}>
+                                                <Link to={`/store/${svc.slug || svc.id}`}>
                                                     <Button size="sm" className="rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90">
                                                         View Tier
                                                     </Button>
@@ -851,7 +851,7 @@ export const UserProfilePage: React.FC = () => {
                                                         </span>
                                                         {rev.commission?.service && (
                                                             <Link
-                                                                to={`/store/${rev.commission.service.id}`}
+                                                                to={`/store/${rev.commission.service.slug || rev.commission.service.id}`}
                                                                 className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-primary bg-primary/10 hover:bg-primary/20 px-2 py-0.5 rounded-md border border-primary/20 transition-colors"
                                                             >
                                                                 <Layers className="h-2.5 w-2.5" />
@@ -918,7 +918,7 @@ export const UserProfilePage: React.FC = () => {
                                 return (
                                     <Link
                                         key={post.id}
-                                        to={`/posts/${post.id}`}
+                                        to={`/posts/${post.slug || post.id}`}
                                         className="group block rounded-3xl overflow-hidden border border-border/80 hover:border-primary/50 bg-card transition-all shadow-xs"
                                     >
                                         <div className="aspect-video bg-muted/30 relative overflow-hidden flex items-center justify-center">
@@ -965,7 +965,7 @@ export const UserProfilePage: React.FC = () => {
                                     return (
                                         <Link
                                             key={post.id}
-                                            to={`/posts/${post.id}`}
+                                            to={`/posts/${post.slug || post.id}`}
                                             className="group block rounded-3xl overflow-hidden border border-border/80 hover:border-primary/50 bg-card transition-all shadow-xs"
                                         >
                                             <div className="aspect-video bg-muted/30 relative overflow-hidden flex items-center justify-center">
@@ -1017,7 +1017,7 @@ export const UserProfilePage: React.FC = () => {
                                     return (
                                         <Link
                                             key={post.id}
-                                            to={`/posts/${post.id}`}
+                                            to={`/posts/${post.slug || post.id}`}
                                             className="group block rounded-3xl overflow-hidden border border-border/80 hover:border-primary/50 bg-card transition-all shadow-xs"
                                         >
                                             <div className="aspect-video bg-muted/30 relative overflow-hidden flex items-center justify-center">

@@ -77,7 +77,7 @@ export const ManagePostsPage: React.FC = () => {
                                     </p>
                                 </div>
                                 <div className="flex gap-2 shrink-0">
-                                    <Link to={`/posts/${post.id}`}>
+                                    <Link to={`/posts/${post.slug || post.id}`}>
                                         <Button variant="outline" size="icon" title="View post">
                                             <Eye className="h-4 w-4" />
                                         </Button>

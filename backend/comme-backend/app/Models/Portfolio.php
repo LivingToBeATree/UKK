@@ -7,19 +7,28 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use App\Enum\CommissionVisibility;
+use App\Traits\HasSlug;
 
 class Portfolio extends Model
 {
+    use HasSlug;
+
     protected $fillable = [
         'artist_profile_id',
         'thumbnail_media_id',
         'title',
+        'slug',
         'description',
         'visibility',
         'is_taken_down',
         'taken_down_reason',
         'starred',
     ];
+
+    public function getSlugSource(): string
+    {
+        return (string) $this->title;
+    }
 
     protected function casts(): array
     {

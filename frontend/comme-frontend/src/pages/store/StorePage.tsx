@@ -340,7 +340,7 @@ export const StorePage: React.FC = () => {
                                     exit={{ opacity: 0 }}
                                     transition={{ duration: 0.2 }}
                                 >
-                                    <Link to={`/store/${service.id}`} className="block h-full group">
+                                    <Link to={`/store/${service.slug || service.id}`} className="block h-full group">
                                         <Card className="h-full rounded-2xl hover:border-primary/50 transition-all duration-300 hover:-translate-y-1 overflow-hidden bg-card border-border/80 shadow-xs hover:shadow-xl flex flex-col justify-between">
                                             <div>
                                                 {/* Thumbnail Image */}

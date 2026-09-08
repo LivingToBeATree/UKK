@@ -47,7 +47,7 @@ export const ServiceDetailPage: React.FC = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const svc = await commissionServiceApi.show(Number(serviceId));
+                const svc = await commissionServiceApi.show(serviceId!);
                 setService(svc);
                 if (svc.options && svc.options.length > 0) {
                     setSelectedOption(svc.options[0]);
@@ -578,15 +578,16 @@ export const ServiceDetailPage: React.FC = () => {
                                     className="w-full h-11 rounded-2xl font-bold text-xs bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shadow-md gap-2"
                                     disabled={!selectedOption || service.status !== 'open'}
                                     onClick={() => {
+                                        const targetServiceParam = service?.slug || serviceId;
                                         if (
                                             !requireAuth({
                                                 intent: 'commission',
-                                                redirectUrl: `/store/${serviceId}/order`,
+                                                redirectUrl: `/store/${targetServiceParam}/order`,
                                             })
                                         ) {
                                             return;
                                         }
-                                        navigate(`/store/${serviceId}/order`, {
+                                        navigate(`/store/${targetServiceParam}/order`, {
                                             state: {
                                                 service,
                                                 selectedOption,

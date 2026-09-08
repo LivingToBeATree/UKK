@@ -47,6 +47,7 @@ export interface ArtistApplication {
 
 export interface Portfolio {
     id: number;
+    slug?: string;
     artist_profile_id?: number;
     title: string;
     description?: string | null;

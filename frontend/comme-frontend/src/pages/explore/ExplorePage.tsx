@@ -744,7 +744,7 @@ export const ExplorePage: React.FC = () => {
                                     {isArt ? (
                                         /* ── 1. Standardized Artwork Card (Clean Showcase with External Header & Actions) ── */
                                         <Link
-                                            to={post.portfolio?.id ? `/portfolio/${post.portfolio.id}` : post.portfolio_id ? `/portfolio/${post.portfolio_id}` : `/posts/${post.id}`}
+                                            to={post.portfolio ? `/portfolio/${post.portfolio.slug || post.portfolio.id}` : post.portfolio_id ? `/portfolio/${post.portfolio_id}` : `/posts/${post.slug || post.id}`}
                                             className="group relative block rounded-2xl overflow-hidden bg-card border border-border/80 hover:border-purple-500/60 shadow-xs hover:shadow-xl transition-all duration-300 cursor-pointer p-3.5 space-y-3"
                                         >
                                             {/* Author Header (Outside Top) */}
@@ -802,7 +802,8 @@ export const ExplorePage: React.FC = () => {
                                                         <DropdownMenuItem
                                                             onClick={async (e) => {
                                                                 e.stopPropagation();
-                                                                const url = `${window.location.origin}${post.portfolio?.id ? `/portfolio/${post.portfolio.id}` : `/posts/${post.id}`}`;
+                                                                const targetPath = post.portfolio ? `/portfolio/${post.portfolio.slug || post.portfolio.id}` : post.portfolio_id ? `/portfolio/${post.portfolio_id}` : `/posts/${post.slug || post.id}`;
+                                                                const url = `${window.location.origin}${targetPath}`;
                                                                 await copyToClipboard(url);
                                                                 toast.success('Link copied to clipboard!');
                                                             }}
@@ -942,7 +943,7 @@ export const ExplorePage: React.FC = () => {
                                     ) : (
                                         /* ── 2. Discussion Card ── */
                                         <Link
-                                            to={`/posts/${post.id}`}
+                                            to={`/posts/${post.slug || post.id}`}
                                             className="group relative block rounded-2xl overflow-hidden bg-card border border-border/80 hover:border-purple-500/60 shadow-xs hover:shadow-xl transition-all duration-300 cursor-pointer p-4 space-y-3"
                                         >
                                             {/* Author Header */}
@@ -1000,7 +1001,7 @@ export const ExplorePage: React.FC = () => {
                                                         <DropdownMenuItem
                                                             onClick={async (e) => {
                                                                 e.stopPropagation();
-                                                                const url = `${window.location.origin}/posts/${post.id}`;
+                                                                const url = `${window.location.origin}/posts/${post.slug || post.id}`;
                                                                 await copyToClipboard(url);
                                                                 toast.success('Link copied to clipboard!');
                                                             }}

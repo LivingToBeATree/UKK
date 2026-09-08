@@ -227,7 +227,7 @@ export const OrderCommissionPage: React.FC = () => {
     return (
         <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-8 pb-16">
             <Link
-                to={`/store/${service.id}`}
+                to={`/store/${service.slug || service.id}`}
                 className={cn(
                     buttonVariants({ variant: 'ghost', size: 'sm' }),
                     'gap-2 text-muted-foreground hover:text-foreground mb-6 -ml-2'

@@ -51,7 +51,7 @@ export const BookmarksPage: React.FC = () => {
                     <AnimatePresence>
                         {posts.map((post) => (
                             <motion.div key={post.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                                <Link to={`/posts/${post.id}`}>
+                                <Link to={`/posts/${post.slug || post.id}`}>
                                     <Card className="hover:border-primary/30 transition-colors">
                                         <CardContent className="p-5">
                                             <div className="flex items-center gap-3 mb-3">

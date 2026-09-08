@@ -817,10 +817,10 @@ export const PostDetailPage: React.FC = () => {
     useEffect(() => {
         const fetchPost = async () => {
             try {
-                const data = await postService.show(Number(id));
+                const data = await postService.show(id!);
                 setPost(data);
                 setFetchError(null);
-                const commentsRes = await postService.listComments(Number(id));
+                const commentsRes = await postService.listComments(data.id || id!);
                 setComments(commentsRes.data || []);
             } catch (err: any) {
                 const status = err?.response?.status;
@@ -1318,7 +1318,7 @@ export const PostDetailPage: React.FC = () => {
                         {/* Clickable Portfolio Link */}
                         {post.portfolio?.id && (
                             <Link
-                                to={`/portfolio/${post.portfolio.id}`}
+                                to={`/portfolio/${post.portfolio.slug || post.portfolio.id}`}
                                 className="flex items-center gap-3 p-3 rounded-2xl bg-amber-500/5 border border-amber-500/20 hover:border-amber-500/40 hover:bg-amber-500/10 transition-all cursor-pointer group"
                             >
                                 {/* Portfolio thumbnail */}

@@ -152,7 +152,7 @@ export const ArtistProfilePage: React.FC = () => {
                                 <p className="text-muted-foreground col-span-full">No services available</p>
                             ) : (
                                 services.map((svc) => (
-                                    <Link key={svc.id} to={`/store/${svc.id}`}>
+                                    <Link key={svc.id} to={`/store/${svc.slug || svc.id}`}>
                                         <Card className="h-full hover:border-primary/40 transition-colors">
                                             <CardContent className="p-4 space-y-2">
                                                 <h3 className="font-bold text-sm">{svc.name}</h3>
@@ -172,19 +172,21 @@ export const ArtistProfilePage: React.FC = () => {
                                 <p className="text-muted-foreground col-span-full">No portfolio items yet</p>
                             ) : (
                                 portfolios.map((item) => (
-                                    <Card key={item.id} className="overflow-hidden">
-                                        <div className="h-48 bg-muted">
-                                            {item.media && item.media[0] ? (
-                                                <img src={item.media[0].url} alt={item.title} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <div className="flex items-center justify-center h-full text-xs text-muted-foreground">No image</div>
-                                            )}
-                                        </div>
-                                        <CardContent className="p-4">
-                                            <h3 className="font-bold text-sm">{item.title}</h3>
-                                            {item.description && <p className="text-xs text-muted-foreground mt-1">{item.description}</p>}
-                                        </CardContent>
-                                    </Card>
+                                    <Link key={item.id} to={`/portfolio/${item.slug || item.id}`} className="block">
+                                        <Card className="overflow-hidden hover:border-primary/40 transition-colors h-full">
+                                            <div className="h-48 bg-muted">
+                                                {item.media && item.media[0] ? (
+                                                    <img src={item.media[0].url} alt={item.title} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="flex items-center justify-center h-full text-xs text-muted-foreground">No image</div>
+                                                )}
+                                            </div>
+                                            <CardContent className="p-4">
+                                                <h3 className="font-bold text-sm">{item.title}</h3>
+                                                {item.description && <p className="text-xs text-muted-foreground mt-1">{item.description}</p>}
+                                            </CardContent>
+                                        </Card>
+                                    </Link>
                                 ))
                             )}
                         </div>

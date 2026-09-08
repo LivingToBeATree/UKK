@@ -7,17 +7,26 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use App\Enum\ServiceStatus;
+use App\Traits\HasSlug;
 
 class CommissionService extends Model
 {
+    use HasSlug;
+
     protected $fillable = [
         'artist_profile_id',
         'thumbnail_media_id',
         'name',
+        'slug',
         'description',
         'status',
         'alt_text',
     ];
+
+    public function getSlugSource(): string
+    {
+        return (string) $this->name;
+    }
 
     protected function casts(): array
     {

@@ -1040,7 +1040,7 @@ export const ManagePortfolioPage: React.FC = () => {
                             >
                                 {/* Media Container */}
                                 <Link
-                                    to={`/portfolio/${item.id}`}
+                                    to={`/portfolio/${item.slug || item.id}`}
                                     className="h-60 bg-secondary/40 relative overflow-hidden flex items-center justify-center cursor-pointer block"
                                 >
                                     {coverUrl ? (
@@ -1125,7 +1125,7 @@ export const ManagePortfolioPage: React.FC = () => {
 
                                 {/* Content */}
                                 <CardContent className="p-4 flex-1 flex flex-col justify-between space-y-2">
-                                    <Link to={`/portfolio/${item.id}`} className="block group-hover:text-purple-300 transition-colors">
+                                    <Link to={`/portfolio/${item.slug || item.id}`} className="block group-hover:text-purple-300 transition-colors">
                                         <div className="flex items-start justify-between gap-2">
                                             <h3 className="font-bold text-sm text-foreground truncate group-hover:text-purple-300 transition-colors">
                                                 {item.title}
@@ -1161,7 +1161,7 @@ export const ManagePortfolioPage: React.FC = () => {
                                                 <Pencil className="h-3 w-3" /> Edit
                                             </button>
                                             <Link
-                                                to={`/portfolio/${item.id}`}
+                                                to={`/portfolio/${item.slug || item.id}`}
                                                 className="text-purple-400 hover:text-purple-300 font-bold hover:underline"
                                             >
                                                 Details →
