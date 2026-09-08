@@ -19,7 +19,7 @@ export const gifService = {
         query: string = '',
         page: number = 1,
         perPage: number = 24
-    ): Promise<{ results: GifResult[]; hasNext: boolean; total?: number }> => {
+    ): Promise<{ results: GifResult[]; hasNext: boolean; total?: number; message?: string; configured?: boolean }> => {
         try {
             const res = await api.get('/gifs', {
                 params: {
@@ -30,14 +30,21 @@ export const gifService = {
             });
 
             const data = res.data?.data;
+            const message = res.data?.message;
+            const isConfigured = !message || !message.toLowerCase().includes('not configured');
+
             return {
                 results: data?.results || [],
                 hasNext: data?.hasNext ?? false,
+                message,
+                configured: isConfigured,
             };
-        } catch {
+        } catch (err: any) {
             return {
                 results: [],
                 hasNext: false,
+                message: err?.response?.data?.message || err?.message || 'Failed to connect to GIF service',
+                configured: false,
             };
         }
     },

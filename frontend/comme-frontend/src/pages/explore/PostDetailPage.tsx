@@ -341,7 +341,7 @@ const ScrollableCommentMediaGallery: React.FC<{
 // ── Interactive Comment Item with Replies, Likes & Bookmarks ──
 const CommentItem: React.FC<{
     comment: PostComment;
-    postId: number;
+    postId: number | string;
     postAuthorId?: number;
     onDeleteComment: (commentId: number) => void;
     onReplyAdded: (reply: PostComment, parentId: number) => void;
@@ -1487,7 +1487,7 @@ export const PostDetailPage: React.FC = () => {
                 {/* Comment Composer Input */}
                 {post.commentable && (
                     <CommentComposer
-                        postId={Number(id)}
+                        postId={post.id}
                         onCommentAdded={(newComment) => {
                             setComments((prev: PostComment[]) => [newComment, ...prev]);
                             if (post) setPost({ ...post, comments_count: post.comments_count + 1 });
@@ -1510,7 +1510,7 @@ export const PostDetailPage: React.FC = () => {
                                 <CommentItem
                                     key={comment.id}
                                     comment={comment}
-                                    postId={Number(id)}
+                                    postId={post.id}
                                     postAuthorId={post.user_id}
                                     onDeleteComment={handleDeleteComment}
                                     onReplyAdded={handleReplyAdded}

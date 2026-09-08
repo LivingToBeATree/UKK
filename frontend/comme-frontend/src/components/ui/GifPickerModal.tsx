@@ -47,6 +47,7 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
     const [gifs, setGifs] = useState<GifResult[]>([]);
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [isConfigured, setIsConfigured] = useState(true);
 
     const searchTimerRef = useRef<number | null>(null);
 
@@ -56,8 +57,12 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
         setErrorMessage(null);
 
         try {
-            const { results } = await gifService.searchGifs(query, 1, 24);
-            setGifs(results);
+            const res = await gifService.searchGifs(query, 1, 24);
+            setGifs(res.results);
+            setIsConfigured(res.configured ?? true);
+            if (res.configured === false && res.message) {
+                setErrorMessage(res.message);
+            }
         } catch (err: any) {
             setErrorMessage(err.message || 'Failed to fetch GIFs');
             setGifs([]);
@@ -226,8 +231,15 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
                             </div>
                         )}
 
-                        {/* GIFs Grid */}
-                        {gifs.length > 0 ? (
+                        {/* GIFs Grid or State Notice */}
+                        {loading ? (
+                            <div className="py-16 flex flex-col items-center justify-center space-y-3">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                <p className="text-xs text-muted-foreground font-medium">
+                                    {searchQuery ? `Searching GIFs for "${searchQuery}"...` : 'Fetching trending GIFs...'}
+                                </p>
+                            </div>
+                        ) : gifs.length > 0 ? (
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
                                 {gifs.map((gif) => (
                                     <div
@@ -249,16 +261,39 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
                                     </div>
                                 ))}
                             </div>
-                        ) : !loading ? (
+                        ) : !isConfigured ? (
+                            <div className="py-10 text-center space-y-3">
+                                <div className="mx-auto w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                                    <AlertCircle className="h-6 w-6" />
+                                </div>
+                                <div className="space-y-1.5 max-w-md mx-auto">
+                                    <p className="text-sm font-bold text-foreground">
+                                        GIF Service Not Configured on Server
+                                    </p>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        The backend requires a <code className="px-1.5 py-0.5 rounded-md bg-secondary text-primary font-mono text-[11px]">KLIPY_API_KEY</code> environment variable to search GIFs.
+                                    </p>
+                                    <div className="pt-2">
+                                        <Button
+                                            type="button"
+                                            onClick={() => setActiveTab('url')}
+                                            className="h-9 px-4 rounded-xl text-xs font-bold gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer"
+                                        >
+                                            <LinkIcon className="h-3.5 w-3.5" /> Use Direct GIF URL Instead
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
                             <div className="py-12 text-center space-y-2">
                                 <p className="text-sm font-bold text-foreground">
-                                    {searchQuery ? `No GIFs found for "${searchQuery}"` : 'Loading trending GIFs...'}
+                                    {searchQuery ? `No GIFs found for "${searchQuery}"` : 'No trending GIFs available'}
                                 </p>
                                 <p className="text-xs text-muted-foreground max-w-sm mx-auto">
                                     Try searching for other keywords like <em>anime, cat, dance, wow, gg</em>.
                                 </p>
                             </div>
-                        ) : null}
+                        )}
                     </div>
                 )}
 

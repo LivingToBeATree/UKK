@@ -35,7 +35,7 @@ import { GifPickerModal } from '@/components/ui/GifPickerModal';
 import type { PostComment } from '@/types';
 
 interface CommentComposerProps {
-    postId: number;
+    postId: number | string;
     parentCommentId?: number;
     onCommentAdded: (comment: PostComment) => void;
     onCancel?: () => void;
@@ -322,6 +322,10 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!requireAuth('comment')) return;
+        if (!postId || (typeof postId === 'number' && isNaN(postId)) || postId === 'NaN') {
+            toast.error('Invalid post reference.');
+            return;
+        }
         if (!content.trim() && attachedMedia.length === 0) {
             toast.error('Please write a comment or attach an image/GIF');
             return;

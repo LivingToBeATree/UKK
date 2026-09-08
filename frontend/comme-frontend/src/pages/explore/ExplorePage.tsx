@@ -42,6 +42,7 @@ import { tagService, type TagItem } from '@/services/tagService';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 import { Button } from '@/components/ui/button';
+import { Select } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Avatar } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -655,7 +656,7 @@ export const ExplorePage: React.FC = () => {
                         <ArrowUpDown className="h-3.5 w-3.5 text-purple-400" />
                         Sort:
                     </span>
-                    <select
+                    <Select
                         value={sortBy}
                         onChange={(e) => {
                             const nextSort = e.target.value;
@@ -668,7 +669,8 @@ export const ExplorePage: React.FC = () => {
                             }
                             setSearchParams(nextParams);
                         }}
-                        className="h-8 px-2.5 rounded-lg bg-card border border-border text-xs font-semibold text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500 cursor-pointer shadow-2xs"
+                        align="end"
+                        className="h-8 px-2.5 rounded-lg bg-card border border-border text-xs font-semibold text-foreground cursor-pointer shadow-2xs"
                     >
                         <option value="latest">Newest First</option>
                         <option value="oldest">Oldest First</option>
@@ -676,7 +678,7 @@ export const ExplorePage: React.FC = () => {
                         <option value="comments">Most Discussed</option>
                         <option value="title_asc">Title (A - Z)</option>
                         <option value="title_desc">Title (Z - A)</option>
-                    </select>
+                    </Select>
                 </div>
             </div>
 

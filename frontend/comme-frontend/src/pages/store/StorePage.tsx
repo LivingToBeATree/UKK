@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Select } from '@/components/ui/select';
 import { Avatar } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/sonner';
@@ -267,7 +268,7 @@ export const StorePage: React.FC = () => {
                             <ArrowUpDown className="h-3.5 w-3.5 text-primary" />
                             Sort:
                         </span>
-                        <select
+                        <Select
                             value={sortBy}
                             onChange={(e) => {
                                 const nextSort = e.target.value;
@@ -280,7 +281,8 @@ export const StorePage: React.FC = () => {
                                 }
                                 setSearchParams(nextParams);
                             }}
-                            className="h-8 px-2.5 rounded-lg bg-card border border-border text-xs font-semibold text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer shadow-2xs"
+                            align="end"
+                            className="h-8 px-2.5 rounded-lg bg-card border border-border text-xs font-semibold text-foreground cursor-pointer shadow-2xs"
                         >
                             <option value="latest">Newest First</option>
                             <option value="oldest">Oldest First</option>
@@ -288,7 +290,7 @@ export const StorePage: React.FC = () => {
                             <option value="title_desc">Title (Z - A)</option>
                             <option value="price_asc">Price: Low to High</option>
                             <option value="price_desc">Price: High to Low</option>
-                        </select>
+                        </Select>
                     </div>
                 </div>
             </div>

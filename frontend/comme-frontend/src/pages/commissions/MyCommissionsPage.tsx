@@ -6,6 +6,7 @@ import { commissionOrderApi } from '@/services/commissionService';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/sonner';
 import { formatPrice, formatDateSafe } from '@/utils/format';
@@ -133,10 +134,11 @@ export const MyCommissionsPage: React.FC = () => {
                             <ArrowUpDown className="h-3.5 w-3.5 text-primary" />
                             Sort:
                         </span>
-                        <select
+                        <Select
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value)}
-                            className="h-8 px-2.5 rounded-lg bg-card border border-border text-xs font-semibold text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer shadow-2xs"
+                            align="end"
+                            className="h-8 px-2.5 rounded-lg bg-card border border-border text-xs font-semibold text-foreground cursor-pointer shadow-2xs"
                         >
                             <option value="latest">Newest First</option>
                             <option value="oldest">Oldest First</option>
@@ -145,7 +147,7 @@ export const MyCommissionsPage: React.FC = () => {
                             <option value="price_asc">Price: Low to High</option>
                             <option value="price_desc">Price: High to Low</option>
                             <option value="deadline_asc">Soonest Deadline</option>
-                        </select>
+                        </Select>
                     </div>
                 </div>
             </div>
