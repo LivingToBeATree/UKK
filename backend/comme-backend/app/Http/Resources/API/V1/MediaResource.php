@@ -15,12 +15,17 @@ class MediaResource extends JsonResource
             || str_contains($this->mime_type ?? '', 'video')
             || (bool) preg_match('/\.(mp4|webm|mov|mkv)$/i', $this->file_path ?? '');
 
+        $isValidPath = !empty($this->file_path) && $this->file_path !== '0';
+        $url = $isValidPath
+            ? ($isVideo ? url('/api/media/stream/' . $this->file_path) : Storage::disk('public')->url($this->file_path))
+            : null;
+
         return [
             'id' => $this->id,
             'user_id' => $this->user_id,
             'file_name' => $this->file_name,
             'file_path' => $this->file_path,
-            'url' => $isVideo ? url('/api/media/stream/' . $this->file_path) : Storage::disk('public')->url($this->file_path),
+            'url' => $url,
             'media_type' => $mediaType,
             'file_size' => $this->file_size,
             'mime_type' => $this->mime_type,

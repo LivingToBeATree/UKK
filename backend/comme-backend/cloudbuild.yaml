@@ -30,7 +30,7 @@ steps:
       - '--allow-unauthenticated'
       - '--port=8080'
       - '--execution-environment=gen2'
-      - '--add-volume=name=media-storage,type=cloud-storage,bucket=${_BUCKET_NAME}'
+      - '--add-volume=name=media-storage,type=cloud-storage,bucket=${_BUCKET_NAME},mount-options=uid=82;gid=82;file-mode=0777;dir-mode=0777'
       - '--add-volume-mount=volume=media-storage,mount-path=/var/www/html/storage/app/public'
 
 substitutions:

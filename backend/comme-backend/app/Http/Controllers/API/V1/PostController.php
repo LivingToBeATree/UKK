@@ -175,6 +175,13 @@ class PostController extends Controller
         if ($request->hasFile('media')) {
             foreach ($request->file('media') as $index => $file) {
                 $path = $file->store('posts/media', 'public');
+                if (! $path) {
+                    \Illuminate\Support\Facades\Log::error('Failed to store post media file: ' . $file->getClientOriginalName());
+                    return ApiResponseHelper::errorResponse(
+                        'Failed to write file to storage. Please check disk permissions.',
+                        Response::HTTP_INTERNAL_SERVER_ERROR
+                    );
+                }
                 $mime = $file->getClientMimeType();
                 $mediaType = str_starts_with($mime, 'video/') ? \App\Enum\MediaType::VIDEO : \App\Enum\MediaType::IMAGE;
 
@@ -276,6 +283,13 @@ class PostController extends Controller
         if ($request->hasFile('media')) {
             foreach ($request->file('media') as $index => $file) {
                 $path = $file->store('posts/media', 'public');
+                if (! $path) {
+                    \Illuminate\Support\Facades\Log::error('Failed to store post media update: ' . $file->getClientOriginalName());
+                    return ApiResponseHelper::errorResponse(
+                        'Failed to write file to storage. Please check disk permissions.',
+                        Response::HTTP_INTERNAL_SERVER_ERROR
+                    );
+                }
                 $mime = $file->getClientMimeType();
                 $mediaType = str_starts_with($mime, 'video/') ? \App\Enum\MediaType::VIDEO : \App\Enum\MediaType::IMAGE;
 

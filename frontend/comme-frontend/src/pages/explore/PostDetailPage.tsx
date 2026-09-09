@@ -690,9 +690,12 @@ const ScrollableMediaGallery: React.FC<{
     mediaList: NonNullable<Post['media']>;
     attachedPortfolio?: Post['portfolio'];
 }> = ({ mediaList, attachedPortfolio }) => {
+    const validMediaList = (mediaList || []).filter(
+        (m) => m && m.url && !m.url.endsWith('/0') && !m.url.endsWith('/storage/0') && (m as any).file_path !== '0'
+    );
     const scrollContainerRef = React.useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
-    const [canScrollRight, setCanScrollRight] = useState(mediaList.length > 1);
+    const [canScrollRight, setCanScrollRight] = useState(validMediaList.length > 1);
     const [activeIndex, setActiveIndex] = useState(0);
 
     // Lightbox modal state
@@ -751,8 +754,10 @@ const ScrollableMediaGallery: React.FC<{
         }
     };
 
-    if (mediaList.length === 1) {
-        const m = mediaList[0];
+    if (validMediaList.length === 0) return null;
+
+    if (validMediaList.length === 1) {
+        const m = validMediaList[0];
         const isItemVideo =
             m.media_type === 'video' ||
             m.mime_type?.includes('video') ||
@@ -774,6 +779,9 @@ const ScrollableMediaGallery: React.FC<{
                             alt={m.file_name || 'Attached media'}
                             className="w-full h-auto block object-cover rounded-2xl cursor-zoom-in group-hover:brightness-105 transition-all select-none"
                             onClick={() => handleOpenLightbox(0)}
+                            onError={(e) => {
+                                (e.currentTarget as HTMLElement).style.display = 'none';
+                            }}
                         />
                     )}
                     <div className="absolute top-4 left-4 flex items-center gap-2 pointer-events-none z-10">
@@ -1193,8 +1201,11 @@ export const PostDetailPage: React.FC = () => {
         (post.user?.artist_profile && post.media && post.media.length > 0)
     );
 
+    const isValidMedia = (m: any) =>
+        Boolean(m && m.url && !m.url.endsWith('/0') && !m.url.endsWith('/storage/0') && m.file_path !== '0');
+
     // 1. Main Artwork Piece (Shown as Hero Showcase)
-    const mainArtwork = post.portfolio
+    const rawMainArtwork = post.portfolio
         ? ((post.portfolio as any)?.thumbnail_media ||
            post.portfolio.media?.[0] ||
            (post.portfolio.cover_image_url
@@ -1202,13 +1213,19 @@ export const PostDetailPage: React.FC = () => {
                : null))
         : (isArtwork && post.media && post.media.length > 0 ? post.media[0] : null);
 
+    const mainArtwork = isValidMedia(rawMainArtwork) ? rawMainArtwork : null;
+
     // 2. Additional Process Medias & Timelapses (Formatted as Post Medias Beneath)
-    const additionalMedias: any[] = post.portfolio
+    const rawAdditionalMedias: any[] = post.portfolio
         ? [
               ...(post.portfolio.media && post.portfolio.media.length > 1 ? post.portfolio.media.slice(1) : []),
               ...(post.media || []),
           ]
-        : (isArtwork && post.media && post.media.length > 1 ? post.media.slice(1) : (isArtwork ? [] : post.media || []));
+        : (isArtwork
+              ? (post.media && post.media.length > 1 ? post.media.slice(1) : [])
+              : (post.media || []));
+
+    const additionalMedias = rawAdditionalMedias.filter(isValidMedia);
 
     return (
         <div className="w-full max-w-4xl lg:max-w-5xl mx-auto px-4 sm:px-8 py-8 space-y-8">

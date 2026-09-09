@@ -36,6 +36,14 @@ class MediaController extends Controller
         $fileName = Str::uuid() . '.' . $extension;
         $path = $file->storeAs('uploads/' . date('Y/m'), $fileName, 'public');
 
+        if (! $path) {
+            \Illuminate\Support\Facades\Log::error('Failed to store media file: ' . $originalName);
+            return ApiResponseHelper::errorResponse(
+                'Failed to write file to storage. Please check disk permissions.',
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
+
         // Automatically faststart MP4 videos so moov atom is at the front for instant streaming
         if ($mediaType === MediaType::VIDEO && strtolower($extension) === 'mp4') {
             $fullDiskPath = Storage::disk('public')->path($path);

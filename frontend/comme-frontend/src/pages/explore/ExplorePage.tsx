@@ -115,9 +115,17 @@ const PostCardMedia: React.FC<{ post: Post }> = ({ post }) => {
         return [];
     };
 
-    const mediaList = isArtwork
+    const isValidMediaItem = (item: any) => {
+        if (!item || !item.url) return false;
+        if (typeof item.url === 'string' && (item.url.endsWith('/0') || item.url.endsWith('/storage/0'))) return false;
+        if (item.file_path === '0') return false;
+        return true;
+    };
+
+    const rawMediaList = isArtwork
         ? getArtworkMedia()
         : (post.media && post.media.length > 0 ? post.media : []);
+    const mediaList = rawMediaList.filter(isValidMediaItem);
 
     const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -189,6 +197,9 @@ const PostCardMedia: React.FC<{ post: Post }> = ({ post }) => {
                                 isArtwork ? 'w-full h-auto block' : 'max-h-[460px]'
                             }`}
                             loading="lazy"
+                            onError={(e) => {
+                                (e.currentTarget as HTMLElement).style.display = 'none';
+                            }}
                         />
                     )}
                 </motion.div>
@@ -449,7 +460,7 @@ export const ExplorePage: React.FC = () => {
 
     const hasAnyMedia = (p: Post) =>
         Boolean(
-            (p.media && p.media.length > 0) ||
+            (p.media && p.media.some((m) => m && m.url && !m.url.endsWith('/0') && (m as any).file_path !== '0')) ||
             p.portfolio_id ||
             p.portfolio?.id ||
             (p.portfolio as any)?.thumbnail_media?.url ||

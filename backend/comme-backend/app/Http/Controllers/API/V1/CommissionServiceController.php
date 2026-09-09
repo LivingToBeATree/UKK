@@ -137,6 +137,13 @@ class CommissionServiceController extends Controller
             $firstMediaId = null;
             foreach ($request->file('media') as $index => $file) {
                 $path = $file->store('commission_services/media', 'public');
+                if (! $path) {
+                    \Illuminate\Support\Facades\Log::error('Failed to store commission service media: ' . $file->getClientOriginalName());
+                    return ApiResponseHelper::errorResponse(
+                        'Failed to write file to storage. Please check disk permissions.',
+                        Response::HTTP_INTERNAL_SERVER_ERROR
+                    );
+                }
                 $mime = $file->getClientMimeType();
                 $mediaType = str_starts_with($mime, 'video/') ? MediaType::VIDEO : MediaType::IMAGE;
 
@@ -238,6 +245,13 @@ class CommissionServiceController extends Controller
             $currentMaxOrder = $commissionService->media()->max('sort_order') ?? -1;
             foreach ($request->file('media') as $index => $file) {
                 $path = $file->store('commission_services/media', 'public');
+                if (! $path) {
+                    \Illuminate\Support\Facades\Log::error('Failed to store updated commission service media: ' . $file->getClientOriginalName());
+                    return ApiResponseHelper::errorResponse(
+                        'Failed to write file to storage. Please check disk permissions.',
+                        Response::HTTP_INTERNAL_SERVER_ERROR
+                    );
+                }
                 $mime = $file->getClientMimeType();
                 $mediaType = str_starts_with($mime, 'video/') ? MediaType::VIDEO : MediaType::IMAGE;
 
