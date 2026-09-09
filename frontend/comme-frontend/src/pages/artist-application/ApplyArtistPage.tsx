@@ -15,6 +15,7 @@ import {
     HelpCircle,
     ChevronDown,
     ArrowRight,
+    ArrowLeft,
     Loader2,
     Zap,
     BadgeCheck,
@@ -32,6 +33,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/sonner';
 import { MediaLightboxModal } from '@/components/ui/MediaLightboxModal';
 import { formatDateSafe } from '@/utils/format';
@@ -70,7 +72,7 @@ export const ApplyArtistPage: React.FC = () => {
     const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>(['Anime / Manga', 'Character Design']);
     const [primaryPortfolio, setPrimaryPortfolio] = useState('');
     const [additionalPortfolios, setAdditionalPortfolios] = useState<string[]>([]);
-    
+
     // Sample Artwork Uploads (Manual Portfolio)
     const [sampleFiles, setSampleFiles] = useState<File[]>([]);
     const [samplePreviews, setSamplePreviews] = useState<{ file: File; url: string; name: string; size: number }[]>([]);
@@ -265,9 +267,22 @@ export const ApplyArtistPage: React.FC = () => {
 
     if (checkingStatus) {
         return (
-            <div className="max-w-4xl mx-auto px-4 py-20 text-center space-y-4">
-                <Loader2 className="h-8 w-8 text-primary animate-spin mx-auto" />
-                <p className="text-sm text-muted-foreground">Checking creator verification status...</p>
+            <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-8 sm:py-12 space-y-10 animate-in fade-in duration-300">
+                <div className="text-center space-y-4 max-w-4xl mx-auto">
+                    <Skeleton className="h-7 w-48 mx-auto rounded-full" />
+                    <Skeleton className="h-12 w-96 mx-auto rounded-2xl" />
+                    <Skeleton className="h-5 w-full max-w-xl mx-auto rounded-lg" />
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    <div className="lg:col-span-7 space-y-6">
+                        <Skeleton className="h-64 w-full rounded-3xl" />
+                        <Skeleton className="h-72 w-full rounded-3xl" />
+                    </div>
+                    <div className="lg:col-span-5 space-y-6">
+                        <Skeleton className="h-48 w-full rounded-3xl" />
+                        <Skeleton className="h-36 w-full rounded-3xl" />
+                    </div>
+                </div>
             </div>
         );
     }
@@ -275,28 +290,34 @@ export const ApplyArtistPage: React.FC = () => {
     // 1. If user already has an active artist profile
     if (user?.artist_profile) {
         return (
-            <div className="max-w-3xl mx-auto px-4 py-16">
-                <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}>
-                    <Card className="border border-emerald-500/30 bg-emerald-500/5 backdrop-blur-xl p-8 text-center space-y-5 rounded-3xl shadow-2xl">
+            <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-6">
+                <Link
+                    to="/explore"
+                    className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    <ArrowLeft className="h-4 w-4" /> Back to Explore
+                </Link>
+                <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}>
+                    <Card className="border border-emerald-500/30 bg-emerald-500/5 backdrop-blur-xl p-8 sm:p-12 text-center space-y-6 rounded-3xl shadow-2xl max-w-4xl mx-auto">
                         <div className="h-16 w-16 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto shadow-inner">
                             <BadgeCheck className="h-9 w-9" />
                         </div>
-                        <div className="space-y-2">
-                            <h2 className="text-2xl font-black text-foreground tracking-tight">
+                        <div className="space-y-2 max-w-xl mx-auto">
+                            <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
                                 You Are Already a Verified Comme Artist!
                             </h2>
-                            <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
+                            <p className="text-sm text-muted-foreground leading-relaxed">
                                 Your artist profile is active. You can manage your commission services, view incoming order requests, and configure payout accounts from your Creator Studio.
                             </p>
                         </div>
                         <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                             <Link to="/dashboard">
-                                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl gap-2 cursor-pointer shadow-lg shadow-emerald-600/20">
+                                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl h-11 px-6 gap-2 cursor-pointer shadow-lg shadow-emerald-600/20">
                                     <Sparkles className="h-4 w-4" /> Open Artist Studio
                                 </Button>
                             </Link>
                             <Link to="/dashboard/services">
-                                <Button variant="outline" className="rounded-xl cursor-pointer">
+                                <Button variant="outline" className="rounded-2xl h-11 px-6 font-semibold cursor-pointer">
                                     Manage Commission Services
                                 </Button>
                             </Link>
@@ -310,27 +331,33 @@ export const ApplyArtistPage: React.FC = () => {
     // 2. If user already has a pending application
     if (existingApplication && existingApplication.status === 'pending') {
         return (
-            <div className="max-w-3xl mx-auto px-4 py-16">
-                <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}>
-                    <Card className="border border-amber-500/30 bg-amber-500/5 backdrop-blur-xl p-8 text-center space-y-6 rounded-3xl shadow-2xl">
+            <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+                <Link
+                    to="/explore"
+                    className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    <ArrowLeft className="h-4 w-4" /> Back to Explore
+                </Link>
+                <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}>
+                    <Card className="border border-amber-500/30 bg-amber-500/5 backdrop-blur-xl p-8 sm:p-12 text-center space-y-6 rounded-3xl shadow-2xl max-w-4xl mx-auto">
                         <div className="h-16 w-16 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto shadow-inner">
                             <Clock className="h-9 w-9 animate-pulse" />
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-2 max-w-xl mx-auto">
                             <div className="flex items-center justify-center gap-2">
-                                <h2 className="text-2xl font-black text-foreground tracking-tight">
+                                <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
                                     Application Under Review
                                 </h2>
                                 <Badge variant="gold" className="uppercase font-mono text-[10px]">
                                     In Review
                                 </Badge>
                             </div>
-                            <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
+                            <p className="text-sm text-muted-foreground leading-relaxed">
                                 Thank you for applying to become a creator on Comme! Our curator team is reviewing your portfolio submissions. We typically respond within 24 to 48 hours.
                             </p>
                         </div>
 
-                        <div className="p-4 rounded-2xl bg-muted/30 border border-border text-left text-xs max-w-md mx-auto space-y-2">
+                        <div className="p-5 rounded-2xl bg-muted/30 border border-border text-left text-xs sm:text-sm max-w-lg mx-auto space-y-2.5">
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Submitted on:</span>
                                 <span className="font-bold text-foreground font-mono">
@@ -339,18 +366,18 @@ export const ApplyArtistPage: React.FC = () => {
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Portfolio Showcase:</span>
-                                <span className="font-bold text-primary truncate max-w-[200px]">
+                                <span className="font-bold text-primary truncate max-w-[240px]">
                                     {existingApplication.portfolio_links?.[0] ||
-                                     (existingApplication.sample_artworks && existingApplication.sample_artworks.length > 0
-                                         ? `${existingApplication.sample_artworks.length} Uploaded Artwork Samples`
-                                         : 'Submitted')}
+                                        (existingApplication.sample_artworks && existingApplication.sample_artworks.length > 0
+                                            ? `${existingApplication.sample_artworks.length} Uploaded Artwork Samples`
+                                            : 'Submitted')}
                                 </span>
                             </div>
                         </div>
 
                         <div className="flex justify-center gap-3 pt-2">
                             <Link to="/apply-artist/status">
-                                <Button className="bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl gap-2 cursor-pointer">
+                                <Button className="h-11 px-6 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-2xl gap-2 cursor-pointer shadow-lg shadow-amber-600/20">
                                     View Full Application Details <ArrowRight className="h-4 w-4" />
                                 </Button>
                             </Link>
@@ -467,11 +494,10 @@ export const ApplyArtistPage: React.FC = () => {
                                                     key={spec}
                                                     type="button"
                                                     onClick={() => toggleSpecialty(spec)}
-                                                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
-                                                        isSelected
+                                                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${isSelected
                                                             ? 'bg-primary text-primary-foreground border-primary shadow-xs'
                                                             : 'bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted border-border'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {isSelected ? '✓ ' : '+ '}
                                                     {spec}
@@ -797,7 +823,7 @@ export const ApplyArtistPage: React.FC = () => {
                                 {(!agreeTerms || (!primaryPortfolio.trim() && sampleFiles.length === 0) || bio.trim().length < 20) && (
                                     <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 space-y-1.5">
                                         <p className="font-bold text-amber-200 flex items-center gap-1.5">
-                                            <span>⚠️ Required to unlock submission:</span>
+                                            <span>Required to unlock submission:</span>
                                         </p>
                                         <ul className="space-y-1 text-[11px] text-amber-300/90 font-medium">
                                             {bio.trim().length < 20 && (
@@ -947,9 +973,8 @@ export const ApplyArtistPage: React.FC = () => {
                                     >
                                         <span>{item.q}</span>
                                         <ChevronDown
-                                            className={`h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform duration-200 ${
-                                                openFaq === idx ? 'rotate-180 text-primary' : ''
-                                            }`}
+                                            className={`h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform duration-200 ${openFaq === idx ? 'rotate-180 text-primary' : ''
+                                                }`}
                                         />
                                     </button>
                                     <AnimatePresence>
