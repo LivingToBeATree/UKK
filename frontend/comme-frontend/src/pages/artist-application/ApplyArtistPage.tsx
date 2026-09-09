@@ -794,6 +794,34 @@ export const ApplyArtistPage: React.FC = () => {
                                     </div>
                                 </label>
 
+                                {(!agreeTerms || (!primaryPortfolio.trim() && sampleFiles.length === 0) || bio.trim().length < 20) && (
+                                    <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 space-y-1.5">
+                                        <p className="font-bold text-amber-200 flex items-center gap-1.5">
+                                            <span>⚠️ Required to unlock submission:</span>
+                                        </p>
+                                        <ul className="space-y-1 text-[11px] text-amber-300/90 font-medium">
+                                            {bio.trim().length < 20 && (
+                                                <li className="flex items-center gap-1.5">
+                                                    <span className="text-rose-400">✕</span>
+                                                    <span>Artist Bio must be at least 20 characters (currently {bio.trim().length}/20)</span>
+                                                </li>
+                                            )}
+                                            {!primaryPortfolio.trim() && sampleFiles.length === 0 && (
+                                                <li className="flex items-center gap-1.5">
+                                                    <span className="text-rose-400">✕</span>
+                                                    <span>Provide a Portfolio URL (Section 2) OR upload at least 1 sample artwork</span>
+                                                </li>
+                                            )}
+                                            {!agreeTerms && (
+                                                <li className="flex items-center gap-1.5">
+                                                    <span className="text-rose-400">✕</span>
+                                                    <span>Check the terms confirmation checkbox above</span>
+                                                </li>
+                                            )}
+                                        </ul>
+                                    </div>
+                                )}
+
                                 <Button
                                     type="submit"
                                     disabled={
