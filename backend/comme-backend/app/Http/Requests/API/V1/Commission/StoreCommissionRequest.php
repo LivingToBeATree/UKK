@@ -2,11 +2,13 @@
 
 namespace App\Http\Requests\API\V1\Commission;
 
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use App\Models\Commission;
 use App\Models\CommissionOption;
 use App\Enum\ServiceStatus;
+use App\Models\CommissionService;
 
 class StoreCommissionRequest extends FormRequest
 {
@@ -23,8 +25,8 @@ class StoreCommissionRequest extends FormRequest
             // must be 'open' — a closed/draft/paused service fails validation.
             'commission_service_id' => [
                 'required',
-                function (string $attribute, mixed $value, \Closure $fail) {
-                    $service = \App\Models\CommissionService::with('artistProfile')
+                function (string $attribute, mixed $value, Closure $fail) {
+                    $service = CommissionService::with('artistProfile')
                         ->where('status', ServiceStatus::OPEN->value)
                         ->where(function ($q) use ($value) {
                             $q->where('slug', $value)
@@ -49,7 +51,7 @@ class StoreCommissionRequest extends FormRequest
                 // Closures let you validate one field against another —
                 // here, confirming the chosen option actually belongs to
                 // the chosen service, not some unrelated artist's listing.
-                function (string $attribute, mixed $value, \Closure $fail) {
+                function (string $attribute, mixed $value, Closure $fail) {
                     if ($value === null) {
                         return;
                     }
@@ -66,11 +68,11 @@ class StoreCommissionRequest extends FormRequest
             'addon_ids' => ['sometimes', 'nullable', 'array'],
             'addon_ids.*' => ['integer', 'exists:commission_addons,id'],
             'attachments' => ['nullable', 'array', 'max:10'],
-            'attachments.*' => ['file', 'max:51200'],
+            'attachments.*' => ['file', 'max:51200', 'mimes:jpg,jpeg,png,webp,gif,pdf,zip,psd,ai,svg,mp4,mov,avi'],
             'media' => ['nullable', 'array', 'max:10'],
-            'media.*' => ['file', 'max:51200'],
+            'media.*' => ['file', 'max:51200', 'mimes:jpg,jpeg,png,webp,gif,pdf,zip,psd,ai,svg,mp4,mov,avi'],
             'reference_images' => ['nullable', 'array', 'max:10'],
-            'reference_images.*' => ['file', 'max:51200'],
+            'reference_images.*' => ['file', 'max:51200', 'mimes:jpg,jpeg,png,webp,gif,pdf,zip,psd,ai,svg,mp4,mov,avi'],
             // Deliberately no 'total_price', 'status', 'user_id', or
             // 'artist_profile_id' rules here — none of those are ever
             // trusted from client input.
