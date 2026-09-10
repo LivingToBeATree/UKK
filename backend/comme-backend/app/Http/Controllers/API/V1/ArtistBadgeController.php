@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API\V1;
 
+use App\Enum\CommissionStatus;
 use App\Models\Commission;
 use App\Models\User;
 use Illuminate\Http\Response;
@@ -13,18 +14,27 @@ class ArtistBadgeController extends Controller
      */
     public function show(string $username): Response
     {
-        $user = User::where('username', $username)->with('artistProfile')->first();
+        $user = User::whereRaw('LOWER(username) = ?', [strtolower($username)])
+            ->with('artistProfile')
+            ->first();
 
         if (! $user || ! $user->artistProfile) {
             $svg = $this->renderSvgBadge('Comme', 'Artist Not Found', '#EF4444');
-            return response($svg, 404)->header('Content-Type', 'image/svg+xml');
+            return response($svg, 200)
+                ->header('Content-Type', 'image/svg+xml; charset=utf-8')
+                ->header('Cache-Control', 'no-cache')
+                ->header('Access-Control-Allow-Origin', '*');
         }
 
         $profile = $user->artistProfile;
         $status = strtolower($profile->commission_status ?? ($profile->commission_open ? 'open' : 'closed'));
 
-        $activeOrders = Commission::where('artist_id', $profile->id)
-            ->whereIn('status', ['accepted', 'in_progress', 'review'])
+        $activeOrders = Commission::where('artist_profile_id', $profile->id)
+            ->whereIn('status', [
+                CommissionStatus::ACCEPTED->value,
+                CommissionStatus::IN_PROGRESS->value,
+                CommissionStatus::REVISION->value,
+            ])
             ->count();
 
         [$color, $statusLabel] = match ($status) {
@@ -34,7 +44,7 @@ class ArtistBadgeController extends Controller
             ],
             'busy' => [
                 '#F59E0B',
-                "Commissions: BUSY ({$activeOrders} active)"
+                $activeOrders > 0 ? "Commissions: BUSY ({$activeOrders} active)" : 'Commissions: BUSY'
             ],
             default => [
                 '#64748B',
@@ -47,7 +57,8 @@ class ArtistBadgeController extends Controller
 
         return response($svg, 200)
             ->header('Content-Type', 'image/svg+xml; charset=utf-8')
-            ->header('Cache-Control', 'public, max-age=60');
+            ->header('Cache-Control', 'public, max-age=60')
+            ->header('Access-Control-Allow-Origin', '*');
     }
 
     /**
