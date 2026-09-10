@@ -31,6 +31,7 @@ import {
 import { ReportModal } from '@/components/modals/ReportModal';
 import { AppealTicketModal } from '@/components/modals/AppealTicketModal';
 import { EditPostModal } from '@/components/modals/EditPostModal';
+import { TipArtistModal } from '@/components/modals/TipArtistModal';
 import {
     DropdownMenu,
     DropdownMenuTrigger,
@@ -966,6 +967,7 @@ export const PostDetailPage: React.FC = () => {
     const [heroLightboxOpen, setHeroLightboxOpen] = useState(false);
     const [showPostReportModal, setShowPostReportModal] = useState(false);
     const [showPostAppealModal, setShowPostAppealModal] = useState(false);
+    const [showTipModal, setShowTipModal] = useState(false);
     const [reportingComment, setReportingComment] = useState<{ id: number; username?: string; content?: string } | null>(null);
 
     useEffect(() => {
@@ -1588,6 +1590,25 @@ export const PostDetailPage: React.FC = () => {
                                     <Bookmark className={`h-4 w-4 ${post.is_bookmarked ? 'fill-blue-500' : ''}`} />
                                     <span>{post.bookmarks_count} {post.bookmarks_count === 1 ? 'Save' : 'Saves'}</span>
                                 </Button>
+
+                                {post.user?.artist_profile && post.user?.id !== user?.id && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                            if (!user) {
+                                                requireAuth('generic');
+                                                return;
+                                            }
+                                            setShowTipModal(true);
+                                        }}
+                                        className="rounded-xl gap-1.5 font-bold text-xs border-rose-500/30 text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/50 hover:text-rose-300 transition-all cursor-pointer shadow-xs"
+                                    >
+                                        <Heart className="h-3.5 w-3.5 fill-rose-500 text-rose-500" />
+                                        <span>Tip Artist</span>
+                                    </Button>
+                                )}
                             </div>
 
                             <div className="flex items-center gap-2">
@@ -1820,6 +1841,17 @@ export const PostDetailPage: React.FC = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Tip Artist Modal */}
+            {post.user && (
+                <TipArtistModal
+                    open={showTipModal}
+                    onOpenChange={setShowTipModal}
+                    username={post.user.username}
+                    displayName={post.user.display_name}
+                    avatarUrl={post.user.avatar_url}
+                />
+            )}
         </div>
     );
 };

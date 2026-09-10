@@ -23,8 +23,11 @@ import {
     Maximize2,
     Flag,
     ShieldAlert,
+    Code2,
 } from 'lucide-react';
 import { ReportModal } from '@/components/modals/ReportModal';
+import { TipArtistModal } from '@/components/modals/TipArtistModal';
+import { EmbedBadgeModal } from '@/components/modals/EmbedBadgeModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -102,6 +105,8 @@ export const UserProfilePage: React.FC = () => {
     const [following, setFollowing] = useState(false);
     const [followersCount, setFollowersCount] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [showTipModal, setShowTipModal] = useState(false);
+    const [showEmbedModal, setShowEmbedModal] = useState(false);
 
     const profileTitle = user
         ? (user.display_name ? `${user.display_name} (@${user.username})` : `@${user.username}`)
@@ -587,9 +592,47 @@ export const UserProfilePage: React.FC = () => {
                                             <Sparkles className="h-3.5 w-3.5" /> Become an Artist
                                         </Button>
                                     )}
+                                    {artistProfile && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setShowEmbedModal(true)}
+                                            className="rounded-xl text-xs font-semibold gap-1.5 border-border/80 hover:bg-secondary cursor-pointer"
+                                        >
+                                            <Code2 className="h-3.5 w-3.5 text-primary" /> Embed Badge
+                                        </Button>
+                                    )}
                                 </>
                             ) : (
                                 <>
+                                    {artistProfile && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                                if (!currentUser) {
+                                                    requireAuth('generic');
+                                                    return;
+                                                }
+                                                setShowTipModal(true);
+                                            }}
+                                            className="rounded-xl text-xs font-semibold gap-1.5 border-rose-500/30 text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/50 hover:text-rose-300 transition-all cursor-pointer shadow-xs"
+                                        >
+                                            <Heart className="h-3.5 w-3.5 fill-rose-500 text-rose-500" /> Tip Artist
+                                        </Button>
+                                    )}
+
+                                    {artistProfile && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setShowEmbedModal(true)}
+                                            className="rounded-xl text-xs font-semibold gap-1.5 border-border/80 hover:bg-secondary cursor-pointer"
+                                        >
+                                            <Code2 className="h-3.5 w-3.5 text-primary" /> Embed Badge
+                                        </Button>
+                                    )}
+
                                     <Button
                                         size="sm"
                                         variant={following ? 'outline' : 'default'}
@@ -1287,6 +1330,28 @@ export const UserProfilePage: React.FC = () => {
                     reportableId={user.id}
                     targetTitle={user.display_name || user.username}
                     targetSubtitle={`@${user.username}`}
+                />
+            )}
+
+            {/* Tip Artist Modal */}
+            {artistProfile && user && (
+                <TipArtistModal
+                    open={showTipModal}
+                    onOpenChange={setShowTipModal}
+                    username={user.username}
+                    displayName={user.display_name}
+                    avatarUrl={user.avatar_url}
+                />
+            )}
+
+            {/* Embed Badge Modal */}
+            {artistProfile && user && (
+                <EmbedBadgeModal
+                    open={showEmbedModal}
+                    onOpenChange={setShowEmbedModal}
+                    username={user.username}
+                    profileId={artistProfile.id}
+                    displayName={user.display_name}
                 />
             )}
         </motion.div>

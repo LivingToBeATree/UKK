@@ -23,6 +23,7 @@ import {
     RotateCcw,
     Clock,
     ShoppingBag,
+    Heart,
     Plus,
     User as UserIcon,
     LifeBuoy,
@@ -31,6 +32,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { Badge } from '@/components/ui/badge';
+import { toast } from '@/components/ui/sonner';
 import {
     getRecentSpotlightItems,
     saveRecentSpotlightItem,
@@ -130,6 +132,7 @@ const getIconFor = (iconKey?: string): React.ComponentType<{ className?: string 
         case 'Sun': return Sun;
         case 'Moon': return Moon;
         case 'Plus': return Plus;
+        case 'Heart': return Heart;
         default: return Clock;
     }
 };
@@ -397,6 +400,17 @@ export const CommandPalette: React.FC = () => {
         ] : []),
 
         // Quick Actions
+        {
+            id: 'tip-jar',
+            title: 'Creator Tip Jar (Send Micro-Donation)',
+            description: 'Support verified artists with quick tips via Midtrans Snap (Coffee, Art Supplies, Pizza)',
+            icon: Heart,
+            category: 'Actions',
+            action: () => handleExecute(() => {
+                navigate('/artists');
+                toast.info('Visit any artist profile or artwork post to tip them!');
+            }, { id: 'action:tip-jar', title: 'Creator Tip Jar (Send Micro-Donation)', iconKey: 'Heart' }),
+        },
         {
             id: 'toggle-theme',
             title: `Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`,
