@@ -35,6 +35,11 @@ interface CommandItem {
     external?: boolean;
 }
 
+export const openCommandPalette = () => {
+    window.dispatchEvent(new CustomEvent('open-command-palette'));
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }));
+};
+
 export const CommandPalette: React.FC = () => {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
@@ -44,7 +49,7 @@ export const CommandPalette: React.FC = () => {
     const { user, logout, isAuthenticated } = useAuth();
     const { theme, setTheme } = useTheme();
 
-    // Toggle on Ctrl+K or Cmd+K
+    // Toggle on Ctrl+K, Cmd+K, or custom event
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -56,8 +61,14 @@ export const CommandPalette: React.FC = () => {
             }
         };
 
+        const handleCustomOpen = () => setOpen(true);
+
         window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
+        window.addEventListener('open-command-palette', handleCustomOpen);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('open-command-palette', handleCustomOpen);
+        };
     }, []);
 
     // Focus input when opened

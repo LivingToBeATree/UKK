@@ -4,6 +4,7 @@ import { Compass, Store, Layers, ShieldCheck, Menu, X, Search } from 'lucide-rea
 import { Button } from '@/components/ui/button';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 import { AnimatePresence, motion } from 'motion/react';
+import { openCommandPalette } from '@/components/CommandPalette';
 
 export const Navbar: React.FC = () => {
     const { openAuthModal } = useAuthModal();
@@ -76,9 +77,7 @@ export const Navbar: React.FC = () => {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                            window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }));
-                        }}
+                        onClick={openCommandPalette}
                         className="h-8 px-2.5 text-xs text-muted-foreground gap-2 rounded-xl hidden lg:flex border-border/80 hover:text-foreground"
                     >
                         <Search className="h-3.5 w-3.5" />

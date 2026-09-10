@@ -13,6 +13,7 @@ import {
     LogOut,
     LifeBuoy,
     Shield,
+    Search,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/contexts/AuthModalContext';
@@ -20,6 +21,7 @@ import { useSidebar } from '@/hooks/useSidebar';
 import { notificationService } from '@/services/notificationService';
 import { Avatar } from './ui/avatar';
 import { InfoFlyout } from './InfoFlyout';
+import { openCommandPalette } from './CommandPalette';
 import {
     DropdownMenu,
     DropdownMenuTrigger,
@@ -125,6 +127,7 @@ export const SidebarRail: React.FC = () => {
     const { requireAuth, openAuthModal } = useAuthModal();
     const { collapsed, toggleSidebar } = useSidebar();
     const [showLogoTooltip, setShowLogoTooltip] = useState(false);
+    const [showSearchTooltip, setShowSearchTooltip] = useState(false);
     const [showUserTooltip, setShowUserTooltip] = useState(false);
     const [unreadNotifications, setUnreadNotifications] = useState<number | undefined>(undefined);
     const location = useLocation();
@@ -235,6 +238,62 @@ export const SidebarRail: React.FC = () => {
                                 className="absolute left-[calc(100%+14px)] top-1/2 -translate-y-1/2 z-50 px-3 py-1.5 text-xs font-semibold text-white bg-zinc-900 border border-zinc-700/80 rounded-lg shadow-2xl whitespace-nowrap pointer-events-none select-none"
                             >
                                 Expand Sidebar
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+
+                {/* Search / Command Palette Trigger */}
+                <div className="w-full relative">
+                    <button
+                        type="button"
+                        onClick={openCommandPalette}
+                        onMouseEnter={() => setShowSearchTooltip(true)}
+                        onMouseLeave={() => setShowSearchTooltip(false)}
+                        className={`w-full h-11 flex items-center rounded-xl pl-2 pr-2.5 gap-3 transition-colors duration-150 cursor-pointer focus:outline-none overflow-hidden ${
+                            collapsed
+                                ? 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
+                                : 'bg-secondary/40 hover:bg-secondary/80 border border-border/50 hover:border-border text-muted-foreground hover:text-foreground'
+                        }`}
+                        aria-label="Search or jump to (Ctrl+K)"
+                    >
+                        <div className="w-6 h-6 flex items-center justify-center shrink-0">
+                            <Search className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
+                        </div>
+                        <AnimatePresence initial={false}>
+                            {!collapsed && (
+                                <motion.div
+                                    initial={{ opacity: 0, x: -6 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -6 }}
+                                    transition={{ duration: 0.15 }}
+                                    className="flex items-center justify-between flex-1 min-w-0 pr-1"
+                                >
+                                    <span className="text-xs font-semibold truncate text-muted-foreground">
+                                        Search...
+                                    </span>
+                                    <kbd className="text-[10px] font-mono px-1.5 py-0.5 bg-background/90 text-muted-foreground font-semibold rounded border border-border/80 shadow-xs">
+                                        ⌘K
+                                    </kbd>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </button>
+
+                    {/* Animated Collapsed Floating Tooltip Pill */}
+                    <AnimatePresence>
+                        {collapsed && showSearchTooltip && (
+                            <motion.div
+                                initial={{ opacity: 0, x: -8, scale: 0.94 }}
+                                animate={{ opacity: 1, x: 0, scale: 1 }}
+                                exit={{ opacity: 0, x: -6, scale: 0.94 }}
+                                transition={{ type: 'spring', damping: 22, stiffness: 420 }}
+                                className="absolute left-[calc(100%+14px)] top-1/2 -translate-y-1/2 z-50 px-3 py-1.5 text-xs font-semibold text-white bg-zinc-900 border border-zinc-700/80 rounded-lg shadow-2xl whitespace-nowrap pointer-events-none select-none flex items-center gap-2"
+                            >
+                                <span>Search</span>
+                                <kbd className="text-[10px] font-mono px-1 py-0.5 bg-zinc-800 text-zinc-300 rounded border border-zinc-700">
+                                    ⌘K
+                                </kbd>
                             </motion.div>
                         )}
                     </AnimatePresence>

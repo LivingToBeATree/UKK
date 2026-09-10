@@ -16,6 +16,7 @@ import {
     LifeBuoy,
     Settings,
     LogOut,
+    Search,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthModal } from '@/contexts/AuthModalContext';
@@ -23,6 +24,7 @@ import { notificationService } from '@/services/notificationService';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/sonner';
+import { openCommandPalette } from '@/components/CommandPalette';
 
 export const MobileHeader: React.FC<{ onOpenDrawer: () => void }> = ({ onOpenDrawer }) => {
     const { user, isAuthenticated } = useAuth();
@@ -80,8 +82,16 @@ export const MobileHeader: React.FC<{ onOpenDrawer: () => void }> = ({ onOpenDra
                 </Link>
             </div>
 
-            {/* Right: Notifications & Avatar / Sign In */}
+            {/* Right: Search, Notifications & Avatar / Sign In */}
             <div className="flex items-center gap-1.5">
+                <button
+                    type="button"
+                    onClick={openCommandPalette}
+                    className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
+                    aria-label="Search"
+                >
+                    <Search className="h-5 w-5" />
+                </button>
                 {isAuthenticated ? (
                     <>
                         <Link
@@ -276,6 +286,24 @@ export const MobileDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = 
                                     <X className="h-5 w-5" />
                                 </button>
                             </div>
+
+                            {/* Quick Search */}
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    onClose();
+                                    openCommandPalette();
+                                }}
+                                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-secondary/50 border border-border/80 text-muted-foreground text-xs font-medium hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
+                            >
+                                <div className="flex items-center gap-2.5">
+                                    <Search className="h-4 w-4" />
+                                    <span>Search anything...</span>
+                                </div>
+                                <kbd className="text-[10px] font-mono px-1.5 py-0.5 bg-background text-muted-foreground rounded border border-border">
+                                    ⌘K
+                                </kbd>
+                            </button>
 
                             {/* Navigation Links */}
                             <nav className="space-y-1.5">
