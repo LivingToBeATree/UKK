@@ -37,7 +37,10 @@ interface CommandItem {
 
 export const openCommandPalette = () => {
     window.dispatchEvent(new CustomEvent('open-command-palette'));
-    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }));
+};
+
+export const toggleCommandPalette = () => {
+    window.dispatchEvent(new CustomEvent('toggle-command-palette'));
 };
 
 export const CommandPalette: React.FC = () => {
@@ -52,7 +55,7 @@ export const CommandPalette: React.FC = () => {
     // Toggle on Ctrl+K, Cmd+K, or custom event
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+            if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
                 e.preventDefault();
                 setOpen((prev) => !prev);
             }
@@ -62,12 +65,15 @@ export const CommandPalette: React.FC = () => {
         };
 
         const handleCustomOpen = () => setOpen(true);
+        const handleCustomToggle = () => setOpen((prev) => !prev);
 
         window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('open-command-palette', handleCustomOpen);
+        window.addEventListener('toggle-command-palette', handleCustomToggle);
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('open-command-palette', handleCustomOpen);
+            window.removeEventListener('toggle-command-palette', handleCustomToggle);
         };
     }, []);
 
@@ -234,7 +240,7 @@ export const CommandPalette: React.FC = () => {
     return (
         <AnimatePresence>
             {open && (
-                <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 sm:pt-28 px-4">
+                <div className="fixed inset-0 z-[100] flex items-start justify-center pt-20 sm:pt-28 px-4">
                     {/* Backdrop */}
                     <motion.div
                         initial={{ opacity: 0 }}

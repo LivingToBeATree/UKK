@@ -244,12 +244,19 @@ export const SidebarRail: React.FC = () => {
                 </div>
 
                 {/* Search / Command Palette Trigger */}
-                <div className="w-full relative">
+                <div
+                    className="w-full relative"
+                    onMouseEnter={() => setShowSearchTooltip(true)}
+                    onMouseLeave={() => setShowSearchTooltip(false)}
+                >
                     <button
                         type="button"
-                        onClick={openCommandPalette}
-                        onMouseEnter={() => setShowSearchTooltip(true)}
-                        onMouseLeave={() => setShowSearchTooltip(false)}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setShowSearchTooltip(false);
+                            openCommandPalette();
+                        }}
                         className={`w-full h-11 flex items-center rounded-xl pl-2 pr-2.5 gap-3 transition-colors duration-150 cursor-pointer focus:outline-none overflow-hidden ${
                             collapsed
                                 ? 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
@@ -280,7 +287,7 @@ export const SidebarRail: React.FC = () => {
                         </AnimatePresence>
                     </button>
 
-                    {/* Animated Collapsed Floating Tooltip Pill */}
+                    {/* Animated Collapsed Floating Tooltip Pill (Interactive) */}
                     <AnimatePresence>
                         {collapsed && showSearchTooltip && (
                             <motion.div
@@ -288,7 +295,13 @@ export const SidebarRail: React.FC = () => {
                                 animate={{ opacity: 1, x: 0, scale: 1 }}
                                 exit={{ opacity: 0, x: -6, scale: 0.94 }}
                                 transition={{ type: 'spring', damping: 22, stiffness: 420 }}
-                                className="absolute left-[calc(100%+14px)] top-1/2 -translate-y-1/2 z-50 px-3 py-1.5 text-xs font-semibold text-white bg-zinc-900 border border-zinc-700/80 rounded-lg shadow-2xl whitespace-nowrap pointer-events-none select-none flex items-center gap-2"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setShowSearchTooltip(false);
+                                    openCommandPalette();
+                                }}
+                                className="absolute left-[calc(100%+14px)] top-1/2 -translate-y-1/2 z-[60] px-3 py-1.5 text-xs font-semibold text-white bg-zinc-900 border border-zinc-700/80 rounded-lg shadow-2xl whitespace-nowrap cursor-pointer select-none flex items-center gap-2 pointer-events-auto"
                             >
                                 <span>Search</span>
                                 <kbd className="text-[10px] font-mono px-1 py-0.5 bg-zinc-800 text-zinc-300 rounded border border-zinc-700">
