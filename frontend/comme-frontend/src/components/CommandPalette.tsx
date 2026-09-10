@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
     Search,
@@ -19,20 +19,39 @@ import {
     LogOut,
     ArrowRight,
     ExternalLink,
+    History,
+    RotateCcw,
+    Clock,
+    ShoppingBag,
+    Plus,
+    User as UserIcon,
+    LifeBuoy,
+    X,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { Badge } from '@/components/ui/badge';
+import {
+    getRecentSpotlightItems,
+    saveRecentSpotlightItem,
+    removeRecentSpotlightItem,
+    clearRecentSpotlightItems,
+    formatRelativeTime,
+} from '@/utils/spotlightHistory';
 
-interface CommandItem {
+export interface CommandItem {
     id: string;
     title: string;
     description?: string;
     icon: React.ComponentType<{ className?: string }>;
-    category: 'Navigation' | 'Admin & Observability' | 'Actions';
+    category: 'Recent' | 'Navigation' | 'Admin & Observability' | 'Actions';
     action: () => void;
     shortcut?: string;
     external?: boolean;
+    isRecent?: boolean;
+    isJumpBack?: boolean;
+    timeAgo?: string;
+    onRemove?: () => void;
 }
 
 export const openCommandPalette = () => {
@@ -43,14 +62,109 @@ export const toggleCommandPalette = () => {
     window.dispatchEvent(new CustomEvent('toggle-command-palette'));
 };
 
+const getRouteMeta = (pathname: string): { title: string; description?: string; iconKey: string } | null => {
+    if (pathname === '/' || pathname === '/explore') {
+        return { title: 'Explore Marketplace', description: 'Browse artwork and commission services', iconKey: 'Compass' };
+    }
+    if (pathname === '/store') {
+        return { title: 'Commission Store', description: 'Explore artist commission packages', iconKey: 'Store' };
+    }
+    if (pathname.startsWith('/store/')) {
+        return { title: 'Commission Service', description: 'View service details and order form', iconKey: 'Store' };
+    }
+    if (pathname === '/artists') {
+        return { title: 'Artists Directory', description: 'Discover verified artists and studios', iconKey: 'Palette' };
+    }
+    if (pathname === '/commissions') {
+        return { title: 'My Commissions', description: 'Active orders and milestone approvals', iconKey: 'Briefcase' };
+    }
+    if (pathname.startsWith('/commissions/')) {
+        return { title: 'Commission Order Details', description: 'Track milestone progress and deliverables', iconKey: 'Briefcase' };
+    }
+    if (pathname === '/posts/create') {
+        return { title: 'Create Post', description: 'Upload artwork or announce commissions', iconKey: 'Plus' };
+    }
+    if (pathname.startsWith('/posts/')) {
+        return { title: 'Artwork Post', description: 'View artwork, likes, and community comments', iconKey: 'Compass' };
+    }
+    if (pathname === '/notifications') {
+        return { title: 'Notifications', description: 'View recent activity, order alerts, and messages', iconKey: 'Bell' };
+    }
+    if (pathname === '/settings') {
+        return { title: 'Account Settings', description: 'Profile, credentials, and 2FA security', iconKey: 'Settings' };
+    }
+    if (pathname === '/profile') {
+        return { title: 'My Profile', description: 'Manage your portfolio and public showcases', iconKey: 'User' };
+    }
+    if (pathname === '/support') {
+        return { title: 'Help & Support', description: 'Submit or view support tickets', iconKey: 'LifeBuoy' };
+    }
+    if (pathname === '/apply-artist') {
+        return { title: 'Apply as Artist', description: 'Submit creator application and portfolio', iconKey: 'Sparkles' };
+    }
+    if (pathname.startsWith('/dashboard')) {
+        return { title: 'Artist Studio Workbench', description: 'Manage services, slots, and artist earnings', iconKey: 'Sparkles' };
+    }
+    if (pathname.startsWith('/admin')) {
+        return { title: 'Admin Operations', description: 'Platform statistics, user management, and queues', iconKey: 'Shield' };
+    }
+    return null;
+};
+
+const getIconFor = (iconKey?: string): React.ComponentType<{ className?: string }> => {
+    switch (iconKey) {
+        case 'Compass': return Compass;
+        case 'Store': return ShoppingBag;
+        case 'Palette': return Palette;
+        case 'Briefcase': return Briefcase;
+        case 'Bell': return Bell;
+        case 'Settings': return Settings;
+        case 'User': return UserIcon;
+        case 'LifeBuoy': return LifeBuoy;
+        case 'Sparkles': return Sparkles;
+        case 'Shield': return Shield;
+        case 'Users': return Users;
+        case 'FileCheck': return FileCheck;
+        case 'Zap': return Zap;
+        case 'Terminal': return Terminal;
+        case 'Sun': return Sun;
+        case 'Moon': return Moon;
+        case 'Plus': return Plus;
+        default: return Clock;
+    }
+};
+
 export const CommandPalette: React.FC = () => {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
     const [selectedIndex, setSelectedIndex] = useState(0);
+    const [recentsVersion, setRecentsVersion] = useState(0);
     const inputRef = useRef<HTMLInputElement>(null);
     const navigate = useNavigate();
+    const location = useLocation();
     const { user, logout, isAuthenticated } = useAuth();
     const { theme, setTheme } = useTheme();
+
+    // Auto-record routes user navigates to
+    useEffect(() => {
+        const meta = getRouteMeta(location.pathname);
+        if (meta) {
+            saveRecentSpotlightItem({
+                id: `route:${location.pathname}`,
+                title: meta.title,
+                description: meta.description,
+                path: location.pathname,
+                iconKey: meta.iconKey,
+            });
+        }
+    }, [location.pathname]);
+
+    // Listen to updates in recents
+    useEffect(() => {
+        const handleRecentsUpdate = () => setRecentsVersion((v) => v + 1);
+        window.addEventListener('spotlight-recents-updated', handleRecentsUpdate);
+        return () => window.removeEventListener('spotlight-recents-updated', handleRecentsUpdate);
+    }, []);
 
     // Toggle on Ctrl+K, Cmd+K, or custom event
     useEffect(() => {
@@ -86,8 +200,61 @@ export const CommandPalette: React.FC = () => {
         }
     }, [open]);
 
-    // Build available commands based on user role and state
-    const commands: CommandItem[] = [
+    // Execute an item and remember it
+    const handleExecute = (
+        action: () => void,
+        itemMeta?: { id: string; title: string; description?: string; path?: string; iconKey?: string }
+    ) => {
+        if (itemMeta) {
+            saveRecentSpotlightItem(itemMeta);
+        }
+        action();
+        setOpen(false);
+    };
+
+    // 1. Build Recent Items & prioritize the Last Navigated Destination
+    const rawRecents = useMemo(() => {
+        // recentsVersion forces re-render whenever localStorage updates
+        void recentsVersion;
+        return getRecentSpotlightItems();
+    }, [recentsVersion, open, location.pathname]);
+    const activePath = location.pathname;
+    const sortedRecents = [...rawRecents];
+
+    // Promote the last visited page that differs from current page to index 0
+    const jumpBackIndex = sortedRecents.findIndex((item) => item.path && item.path !== activePath);
+    if (jumpBackIndex > 0) {
+        const [jumpBackItem] = sortedRecents.splice(jumpBackIndex, 1);
+        sortedRecents.unshift(jumpBackItem);
+    }
+
+    const recentCommands: CommandItem[] = sortedRecents.slice(0, 4).map((item, idx) => {
+        const isJumpBack = idx === 0 && Boolean(item.path && item.path !== activePath);
+        const IconComponent = isJumpBack ? RotateCcw : getIconFor(item.iconKey);
+
+        return {
+            id: `recent-${item.id}`,
+            title: item.title,
+            description: isJumpBack
+                ? `Jump back to previous page • ${formatRelativeTime(item.timestamp)}`
+                : (item.description ? `${item.description} • ${formatRelativeTime(item.timestamp)}` : formatRelativeTime(item.timestamp)),
+            icon: IconComponent,
+            category: 'Recent',
+            isRecent: true,
+            isJumpBack,
+            timeAgo: formatRelativeTime(item.timestamp),
+            action: () => {
+                if (item.path) {
+                    navigate(item.path);
+                }
+                setOpen(false);
+            },
+            onRemove: () => removeRecentSpotlightItem(item.id),
+        };
+    });
+
+    // 2. Base Navigation and Actions Commands
+    const baseCommands: CommandItem[] = [
         // Navigation
         {
             id: 'explore',
@@ -95,15 +262,23 @@ export const CommandPalette: React.FC = () => {
             description: 'Browse all creator services and commission listings',
             icon: Compass,
             category: 'Navigation',
-            action: () => { navigate('/explore'); setOpen(false); },
+            action: () => handleExecute(() => navigate('/explore'), { id: 'route:/explore', title: 'Explore Marketplace', path: '/explore', iconKey: 'Compass' }),
+        },
+        {
+            id: 'store',
+            title: 'Commission Store',
+            description: 'Browse commission packages, fixed-price gigs, and open slots',
+            icon: ShoppingBag,
+            category: 'Navigation',
+            action: () => handleExecute(() => navigate('/store'), { id: 'route:/store', title: 'Commission Store', path: '/store', iconKey: 'Store' }),
         },
         {
             id: 'artists',
             title: 'Artists Directory',
-            description: 'Discover verified illustrators and studio creators',
+            description: 'Discover verified illustrators, concept artists, and studios',
             icon: Palette,
             category: 'Navigation',
-            action: () => { navigate('/artists'); setOpen(false); },
+            action: () => handleExecute(() => navigate('/artists'), { id: 'route:/artists', title: 'Artists Directory', path: '/artists', iconKey: 'Palette' }),
         },
         ...(isAuthenticated ? [
             {
@@ -112,7 +287,23 @@ export const CommandPalette: React.FC = () => {
                 description: 'Manage active orders, milestone approvals, and deliverables',
                 icon: Briefcase,
                 category: 'Navigation' as const,
-                action: () => { navigate('/commissions'); setOpen(false); },
+                action: () => handleExecute(() => navigate('/commissions'), { id: 'route:/commissions', title: 'My Commissions', path: '/commissions', iconKey: 'Briefcase' }),
+            },
+            {
+                id: 'create-post',
+                title: 'Create Artwork Post',
+                description: 'Upload new portfolio art, WIP snapshots, or commission showcases',
+                icon: Plus,
+                category: 'Navigation' as const,
+                action: () => handleExecute(() => navigate('/posts/create'), { id: 'route:/posts/create', title: 'Create Artwork Post', path: '/posts/create', iconKey: 'Plus' }),
+            },
+            {
+                id: 'profile',
+                title: 'My Profile',
+                description: 'View your public showcase, bio, and commission listings',
+                icon: UserIcon,
+                category: 'Navigation' as const,
+                action: () => handleExecute(() => navigate('/profile'), { id: 'route:/profile', title: 'My Profile', path: '/profile', iconKey: 'User' }),
             },
             {
                 id: 'notifications',
@@ -120,7 +311,7 @@ export const CommandPalette: React.FC = () => {
                 description: 'View unread activity, order alerts, and messages',
                 icon: Bell,
                 category: 'Navigation' as const,
-                action: () => { navigate('/notifications'); setOpen(false); },
+                action: () => handleExecute(() => navigate('/notifications'), { id: 'route:/notifications', title: 'Notifications', path: '/notifications', iconKey: 'Bell' }),
             },
             {
                 id: 'settings',
@@ -128,7 +319,15 @@ export const CommandPalette: React.FC = () => {
                 description: 'Profile settings, 2FA security, and active sessions',
                 icon: Settings,
                 category: 'Navigation' as const,
-                action: () => { navigate('/settings'); setOpen(false); },
+                action: () => handleExecute(() => navigate('/settings'), { id: 'route:/settings', title: 'Account Settings', path: '/settings', iconKey: 'Settings' }),
+            },
+            {
+                id: 'support',
+                title: 'Help & Support',
+                description: 'Submit inquiries or view your active support tickets',
+                icon: LifeBuoy,
+                category: 'Navigation' as const,
+                action: () => handleExecute(() => navigate('/support'), { id: 'route:/support', title: 'Help & Support', path: '/support', iconKey: 'LifeBuoy' }),
             },
         ] : []),
         ...(user?.artist_profile ? [
@@ -138,9 +337,18 @@ export const CommandPalette: React.FC = () => {
                 description: 'Manage your listings, slots, and artist earnings',
                 icon: Sparkles,
                 category: 'Navigation' as const,
-                action: () => { navigate('/dashboard'); setOpen(false); },
+                action: () => handleExecute(() => navigate('/dashboard'), { id: 'route:/dashboard', title: 'Artist Studio Workbench', path: '/dashboard', iconKey: 'Sparkles' }),
             },
-        ] : []),
+        ] : [
+            {
+                id: 'apply-artist',
+                title: 'Apply as Artist',
+                description: 'Submit your creator application to offer commission packages',
+                icon: Sparkles,
+                category: 'Navigation' as const,
+                action: () => handleExecute(() => navigate('/apply-artist'), { id: 'route:/apply-artist', title: 'Apply as Artist', path: '/apply-artist', iconKey: 'Sparkles' }),
+            }
+        ]),
 
         // Admin & Telemetry
         ...(user?.role === 'admin' || user?.role === 'moderator' ? [
@@ -150,7 +358,7 @@ export const CommandPalette: React.FC = () => {
                 description: 'Platform statistics, revenue, and queue metrics',
                 icon: Shield,
                 category: 'Admin & Observability' as const,
-                action: () => { navigate('/admin'); setOpen(false); },
+                action: () => handleExecute(() => navigate('/admin'), { id: 'route:/admin', title: 'Admin Operations', path: '/admin', iconKey: 'Shield' }),
             },
             {
                 id: 'admin-users',
@@ -158,7 +366,7 @@ export const CommandPalette: React.FC = () => {
                 description: 'View accounts, role assignments, and moderation controls',
                 icon: Users,
                 category: 'Admin & Observability' as const,
-                action: () => { navigate('/admin/users'); setOpen(false); },
+                action: () => handleExecute(() => navigate('/admin/users'), { id: 'route:/admin/users', title: 'User Management', path: '/admin/users', iconKey: 'Users' }),
             },
             {
                 id: 'admin-applications',
@@ -166,7 +374,7 @@ export const CommandPalette: React.FC = () => {
                 description: 'Review and approve pending artist portfolios',
                 icon: FileCheck,
                 category: 'Admin & Observability' as const,
-                action: () => { navigate('/admin/applications'); setOpen(false); },
+                action: () => handleExecute(() => navigate('/admin/applications'), { id: 'route:/admin/applications', title: 'Artist Applications Queue', path: '/admin/applications', iconKey: 'FileCheck' }),
             },
             {
                 id: 'pulse',
@@ -174,7 +382,7 @@ export const CommandPalette: React.FC = () => {
                 description: 'Real-time slow queries, request latencies, and cache monitoring',
                 icon: Zap,
                 category: 'Admin & Observability' as const,
-                action: () => { window.open('http://localhost:8000/pulse', '_blank'); setOpen(false); },
+                action: () => handleExecute(() => window.open('/pulse', '_blank'), { id: 'external:pulse', title: 'Laravel Pulse', iconKey: 'Zap' }),
                 external: true,
             },
             {
@@ -183,7 +391,7 @@ export const CommandPalette: React.FC = () => {
                 description: 'Diagnostic logs streaming, stack traces, and search',
                 icon: Terminal,
                 category: 'Admin & Observability' as const,
-                action: () => { window.open('http://localhost:8000/log-viewer', '_blank'); setOpen(false); },
+                action: () => handleExecute(() => window.open('/log-viewer', '_blank'), { id: 'external:log-viewer', title: 'Interactive Log Viewer', iconKey: 'Terminal' }),
                 external: true,
             },
         ] : []),
@@ -212,14 +420,25 @@ export const CommandPalette: React.FC = () => {
         ] : []),
     ];
 
+    // Combine recent + base commands (avoid exact duplicate titles in empty search view)
+    const combinedCommands = [
+        ...recentCommands,
+        ...baseCommands.filter(
+            base => !recentCommands.some(rec => rec.title.toLowerCase() === base.title.toLowerCase())
+        ),
+    ];
+
     // Filter by user query
     const filteredCommands = query.trim() === ''
-        ? commands
-        : commands.filter((cmd) =>
-            cmd.title.toLowerCase().includes(query.toLowerCase()) ||
-            (cmd.description && cmd.description.toLowerCase().includes(query.toLowerCase())) ||
-            cmd.category.toLowerCase().includes(query.toLowerCase())
-        );
+        ? combinedCommands
+        : [...recentCommands, ...baseCommands].filter((cmd) => {
+            const q = query.toLowerCase();
+            return (
+                cmd.title.toLowerCase().includes(q) ||
+                (cmd.description && cmd.description.toLowerCase().includes(q)) ||
+                cmd.category.toLowerCase().includes(q)
+            );
+        });
 
     // Keyboard navigation (Arrow keys + Enter)
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -237,10 +456,12 @@ export const CommandPalette: React.FC = () => {
         }
     };
 
+    const selectedCommand = filteredCommands[selectedIndex];
+
     return (
         <AnimatePresence>
             {open && (
-                <div className="fixed inset-0 z-[100] flex items-start justify-center pt-20 sm:pt-28 px-4">
+                <div className="fixed inset-0 z-[100] flex items-start justify-center pt-16 sm:pt-24 px-4">
                     {/* Backdrop */}
                     <motion.div
                         initial={{ opacity: 0 }}
@@ -256,7 +477,7 @@ export const CommandPalette: React.FC = () => {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -10 }}
                         transition={{ duration: 0.15 }}
-                        className="relative w-full max-w-xl bg-card border border-border/80 shadow-2xl rounded-2xl overflow-hidden z-10 flex flex-col max-h-[75vh]"
+                        className="relative w-full max-w-xl bg-card border border-border/80 shadow-2xl rounded-2xl overflow-hidden z-10 flex flex-col max-h-[78vh]"
                     >
                         {/* Search Input Bar */}
                         <div className="flex items-center px-4 py-3.5 border-b border-border/70 gap-3 bg-muted/20">
@@ -280,7 +501,7 @@ export const CommandPalette: React.FC = () => {
                         </div>
 
                         {/* Commands List */}
-                        <div className="overflow-y-auto p-2 space-y-1">
+                        <div className="overflow-y-auto p-2 space-y-0.5">
                             {filteredCommands.length === 0 ? (
                                 <div className="p-8 text-center text-sm text-muted-foreground">
                                     No commands or pages found matching &ldquo;<span className="text-foreground font-semibold">{query}</span>&rdquo;
@@ -289,54 +510,118 @@ export const CommandPalette: React.FC = () => {
                                 filteredCommands.map((cmd, index) => {
                                     const Icon = cmd.icon;
                                     const isSelected = index === selectedIndex;
+                                    const prevCmd = filteredCommands[index - 1];
+                                    const showHeader = query.trim() === '' && (!prevCmd || prevCmd.category !== cmd.category);
 
                                     return (
-                                        <div
-                                            key={cmd.id}
-                                            onClick={() => cmd.action()}
-                                            onMouseEnter={() => setSelectedIndex(index)}
-                                            className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${
-                                                isSelected
-                                                    ? 'bg-primary text-primary-foreground shadow-sm'
-                                                    : 'hover:bg-muted/60 text-foreground'
-                                            }`}
-                                        >
-                                            <div className="flex items-center gap-3 min-w-0">
-                                                <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${
-                                                    isSelected ? 'bg-primary-foreground/15 text-primary-foreground' : 'bg-muted text-muted-foreground'
-                                                }`}>
-                                                    <Icon className="h-4 w-4" />
+                                        <React.Fragment key={cmd.id}>
+                                            {showHeader && (
+                                                <div className="flex items-center justify-between px-3 pt-3 pb-1 text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground/70 select-none">
+                                                    <span className="flex items-center gap-1.5">
+                                                        {cmd.category === 'Recent' && <History className="h-3 w-3 text-purple-400" />}
+                                                        {cmd.category}
+                                                    </span>
+                                                    {cmd.category === 'Recent' && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                clearRecentSpotlightItems();
+                                                            }}
+                                                            className="text-[10px] font-mono lowercase hover:text-foreground text-muted-foreground/60 transition-colors cursor-pointer hover:underline"
+                                                        >
+                                                            clear
+                                                        </button>
+                                                    )}
                                                 </div>
-                                                <div className="min-w-0">
-                                                    <p className="text-xs font-bold leading-tight truncate">
-                                                        {cmd.title}
-                                                    </p>
-                                                    {cmd.description && (
-                                                        <p className={`text-[11px] truncate mt-0.5 ${
-                                                            isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'
-                                                        }`}>
-                                                            {cmd.description}
+                                            )}
+                                            <div
+                                                onClick={() => cmd.action()}
+                                                onMouseEnter={() => setSelectedIndex(index)}
+                                                className={`group flex items-center justify-between p-2.5 px-3 rounded-xl cursor-pointer transition-all ${
+                                                    isSelected
+                                                        ? 'bg-primary text-primary-foreground shadow-sm'
+                                                        : 'hover:bg-muted/60 text-foreground'
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                    <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                                                        isSelected
+                                                            ? 'bg-primary-foreground/15 text-primary-foreground'
+                                                            : cmd.isJumpBack
+                                                            ? 'bg-purple-500/15 text-purple-400'
+                                                            : 'bg-muted text-muted-foreground'
+                                                    }`}>
+                                                        <Icon className="h-4 w-4" />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-xs font-bold leading-tight truncate flex items-center gap-1.5">
+                                                            {cmd.title}
                                                         </p>
+                                                        {cmd.description && (
+                                                            <p className={`text-[11px] truncate mt-0.5 ${
+                                                                isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'
+                                                            }`}>
+                                                                {cmd.description}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-2 shrink-0 ml-3">
+                                                    {cmd.isJumpBack ? (
+                                                        <Badge
+                                                            variant="outline"
+                                                            className={`text-[9px] uppercase font-mono px-1.5 py-0 border-purple-500/40 ${
+                                                                isSelected ? 'bg-white/20 text-white' : 'bg-purple-500/15 text-purple-400'
+                                                            }`}
+                                                        >
+                                                            Jump Back
+                                                        </Badge>
+                                                    ) : cmd.isRecent ? (
+                                                        <Badge
+                                                            variant="outline"
+                                                            className={`text-[9px] uppercase font-mono px-1.5 py-0 ${
+                                                                isSelected ? 'border-primary-foreground/30 text-primary-foreground' : 'border-border/60 text-muted-foreground'
+                                                            }`}
+                                                        >
+                                                            {cmd.timeAgo || 'Recent'}
+                                                        </Badge>
+                                                    ) : (
+                                                        <Badge
+                                                            variant="outline"
+                                                            className={`text-[9px] uppercase font-mono px-1.5 py-0 ${
+                                                                isSelected ? 'border-primary-foreground/30 text-primary-foreground' : 'border-border/60 text-muted-foreground'
+                                                            }`}
+                                                        >
+                                                            {cmd.category}
+                                                        </Badge>
+                                                    )}
+
+                                                    {cmd.isRecent && cmd.onRemove ? (
+                                                        <button
+                                                            type="button"
+                                                            title="Remove from recents"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                cmd.onRemove?.();
+                                                            }}
+                                                            className={`p-1 rounded-md transition-colors opacity-0 group-hover:opacity-100 ${
+                                                                isSelected
+                                                                    ? 'text-primary-foreground hover:bg-white/20'
+                                                                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                                                            }`}
+                                                        >
+                                                            <X className="h-3 w-3" />
+                                                        </button>
+                                                    ) : cmd.external ? (
+                                                        <ExternalLink className="h-3.5 w-3.5 opacity-70" />
+                                                    ) : (
+                                                        <ArrowRight className={`h-3.5 w-3.5 transition-transform ${isSelected ? 'translate-x-0.5' : 'opacity-40'}`} />
                                                     )}
                                                 </div>
                                             </div>
-
-                                            <div className="flex items-center gap-2 shrink-0 ml-3">
-                                                <Badge
-                                                    variant="outline"
-                                                    className={`text-[9px] uppercase font-mono px-1.5 py-0 ${
-                                                        isSelected ? 'border-primary-foreground/30 text-primary-foreground' : 'border-border/60 text-muted-foreground'
-                                                    }`}
-                                                >
-                                                    {cmd.category}
-                                                </Badge>
-                                                {cmd.external ? (
-                                                    <ExternalLink className="h-3.5 w-3.5 opacity-70" />
-                                                ) : (
-                                                    <ArrowRight className={`h-3.5 w-3.5 transition-transform ${isSelected ? 'translate-x-0.5' : 'opacity-40'}`} />
-                                                )}
-                                            </div>
-                                        </div>
+                                        </React.Fragment>
                                     );
                                 })
                             )}
@@ -345,8 +630,16 @@ export const CommandPalette: React.FC = () => {
                         {/* Footer Tips */}
                         <div className="p-2.5 px-4 bg-muted/40 border-t border-border/60 flex items-center justify-between text-[11px] text-muted-foreground">
                             <div className="flex items-center gap-3">
-                                <span><kbd className="px-1.5 py-0.5 bg-muted rounded border text-[10px]">↑</kbd> <kbd className="px-1.5 py-0.5 bg-muted rounded border text-[10px]">↓</kbd> to navigate</span>
-                                <span><kbd className="px-1.5 py-0.5 bg-muted rounded border text-[10px]">↵</kbd> to select</span>
+                                <span>
+                                    <kbd className="px-1.5 py-0.5 bg-muted rounded border text-[10px]">↑</kbd>{' '}
+                                    <kbd className="px-1.5 py-0.5 bg-muted rounded border text-[10px]">↓</kbd> to navigate
+                                </span>
+                                <span>
+                                    <kbd className="px-1.5 py-0.5 bg-muted rounded border text-[10px]">↵</kbd>{' '}
+                                    {selectedCommand?.isJumpBack
+                                        ? `jump back to ${selectedCommand.title}`
+                                        : 'to select'}
+                                </span>
                             </div>
                             <span className="font-mono text-[10px]">Comme Spotlight</span>
                         </div>
