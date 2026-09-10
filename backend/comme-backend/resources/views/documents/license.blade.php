@@ -197,10 +197,10 @@
 
         <div class="rights-box">
             <div class="rights-title">
-                Scope of Grant: {{ $commission->commercial_use ? 'FULL COMMERCIAL LICENSE' : 'PERSONAL NON-COMMERCIAL USE ONLY' }}
+                Scope of Grant: {{ !empty($hasCommercialRights) ? 'FULL COMMERCIAL LICENSE' : 'PERSONAL NON-COMMERCIAL USE ONLY' }}
             </div>
             <div class="rights-desc">
-                @if($commission->commercial_use)
+                @if(!empty($hasCommercialRights))
                     The licensee is granted a perpetual, worldwide, non-exclusive license to reproduce, distribute, display, and commercially exploit the commissioned artwork for marketing, merchandise, streaming, and business purposes, with author credit where appropriate.
                 @else
                     The licensee is granted non-exclusive rights for personal, non-commercial use (including avatars, personal social media banners, and non-monetized displays). Commercial resale, mass printing, and unauthorized commercial exploitation are strictly prohibited without written consent.

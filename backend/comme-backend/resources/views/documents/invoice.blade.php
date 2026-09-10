@@ -213,27 +213,42 @@
                 <tbody>
                     <tr>
                         <td>
-                            <strong>{{ $commission->title ?: ($commission->service->title ?? 'Custom Artwork Commission') }}</strong>
-                            <div class="item-desc">Commission Order #{{ $commission->id }} • Licensed for {{ $commission->commercial_use ? 'Commercial Use' : 'Personal Use' }}</div>
+                            <strong>{{ $commission->title ?: ($commission->service->name ?? $commission->service->title ?? 'Custom Artwork Commission') }}</strong>
+                            <div class="item-desc">Commission Order #{{ $commission->id }} • Licensed for {{ !empty($hasCommercialRights) ? 'Commercial Use' : 'Personal Use' }}</div>
                         </td>
-                        <td class="amount">Rp {{ number_format($commission->price ?: 0, 0, ',', '.') }}</td>
+                        <td class="amount">Rp {{ number_format($commission->base_price ?: ($commission->total_price ?: 0), 0, ',', '.') }}</td>
                     </tr>
+                    @foreach($commission->addonsSelections as $addon)
+                    <tr>
+                        <td>
+                            <strong>+ {{ $addon->title ?: ($addon->addon->name ?? 'Service Add-on') }}</strong>
+                            <div class="item-desc">Selected Add-on Option</div>
+                        </td>
+                        <td class="amount">Rp {{ number_format($addon->price ?: 0, 0, ',', '.') }}</td>
+                    </tr>
+                    @endforeach
                 </tbody>
             </table>
 
             <div class="summary-grid">
                 <div class="summary-box">
                     <div class="summary-row">
-                        <span>Subtotal</span>
-                        <span>Rp {{ number_format($commission->price ?: 0, 0, ',', '.') }}</span>
+                        <span>Base Price</span>
+                        <span>Rp {{ number_format($commission->base_price ?: ($commission->total_price ?: 0), 0, ',', '.') }}</span>
                     </div>
+                    @if($commission->addonsSelections->isNotEmpty())
+                    <div class="summary-row">
+                        <span>Add-ons Total</span>
+                        <span>Rp {{ number_format($commission->addonsSelections->sum('price'), 0, ',', '.') }}</span>
+                    </div>
+                    @endif
                     <div class="summary-row">
                         <span>Escrow Service Fee</span>
                         <span>Rp 0</span>
                     </div>
                     <div class="summary-row total">
                         <span>Total Paid</span>
-                        <span>Rp {{ number_format($commission->price ?: 0, 0, ',', '.') }}</span>
+                        <span>Rp {{ number_format($commission->total_price ?: 0, 0, ',', '.') }}</span>
                     </div>
                 </div>
             </div>

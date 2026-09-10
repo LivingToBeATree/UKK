@@ -34,7 +34,11 @@ class CommissionDocumentController extends Controller
             );
         }
 
-        $commission->load(['user', 'artistProfile.user', 'service', 'payment', 'payout']);
+        $commission->load(['user', 'artistProfile.user', 'service', 'commissionService', 'addonsSelections', 'payment', 'payout']);
+
+        $hasCommercial = $commission->addonsSelections->contains(function ($addon) {
+            return str_contains(strtolower($addon->title ?? ''), 'commercial');
+        });
 
         // Generate deterministic receipt identifier
         $receiptHash = strtoupper(substr(md5("comme-receipt-{$commission->id}-{$commission->created_at}"), 0, 8));
@@ -44,6 +48,7 @@ class CommissionDocumentController extends Controller
             'commission' => $commission,
             'receiptNumber' => $receiptNumber,
             'user' => $user,
+            'hasCommercialRights' => $hasCommercial,
             'autoPrint' => $request->boolean('print'),
         ]);
     }
@@ -80,7 +85,11 @@ class CommissionDocumentController extends Controller
             );
         }
 
-        $commission->load(['user', 'artistProfile.user', 'service', 'commissionService']);
+        $commission->load(['user', 'artistProfile.user', 'service', 'commissionService', 'addonsSelections']);
+
+        $hasCommercial = $commission->addonsSelections->contains(function ($addon) {
+            return str_contains(strtolower($addon->title ?? ''), 'commercial');
+        });
 
         $licenseHash = strtoupper(substr(sha1("comme-license-{$commission->id}-{$commission->created_at}"), 0, 12));
         $licenseNumber = "LIC-COM-{$commission->id}-{$licenseHash}";
@@ -89,6 +98,7 @@ class CommissionDocumentController extends Controller
             'commission' => $commission,
             'licenseNumber' => $licenseNumber,
             'user' => $user,
+            'hasCommercialRights' => $hasCommercial,
             'autoPrint' => $request->boolean('print'),
         ]);
     }
