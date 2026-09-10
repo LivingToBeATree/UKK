@@ -127,7 +127,7 @@
                     <span class="nav-group-title">Commissions</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span class="nav-group-count">13</span>
+                    <span class="nav-group-count">17</span>
                     <span class="nav-group-chevron">▶</span>
                 </div>
             </div>
@@ -145,6 +145,9 @@
                 <a href="{{ url('/') }}#post-api-commission-accept-cancellation" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-commission-accept-cancellation"><span class="method-pill method-post">POST</span> .../accept-cancellation</a>
                 <a href="{{ url('/') }}#post-api-commission-decline-cancellation" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-commission-decline-cancellation"><span class="method-pill method-post">POST</span> .../decline-cancellation</a>
                 <a href="{{ url('/') }}#patch-api-commissions-status" class="nav-link link-patch nav-page-link" data-page="/" data-hash="patch-api-commissions-status"><span class="method-pill method-patch">PATCH</span> /{id}/cancel</a>
+                <a href="{{ url('/') }}#post-api-commissions-propose-deadline" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-commissions-propose-deadline"><span class="method-pill method-post">POST</span> .../propose-deadline</a>
+                <a href="{{ url('/') }}#post-api-commissions-accept-deadline" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-commissions-accept-deadline"><span class="method-pill method-post">POST</span> .../accept-deadline</a>
+                <a href="{{ url('/') }}#post-api-commissions-decline-deadline" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-commissions-decline-deadline"><span class="method-pill method-post">POST</span> .../decline-deadline</a>
                 <a href="{{ url('/') }}#post-api-commission-reviews" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-commission-reviews"><span class="method-pill method-post">POST</span> /{id}/reviews</a>
             </div>
         </div>
@@ -179,7 +182,7 @@
                     <span class="nav-group-title">Feed & Social</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span class="nav-group-count">8</span>
+                    <span class="nav-group-count">12</span>
                     <span class="nav-group-chevron">▶</span>
                 </div>
             </div>
@@ -189,7 +192,11 @@
                 <a href="{{ url('/') }}#post-api-posts-like" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-posts-like"><span class="method-pill method-post">POST</span> /posts/{id}/like</a>
                 <a href="{{ url('/') }}#post-api-posts-bookmark" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-posts-bookmark"><span class="method-pill method-post">POST</span> /posts/{id}/bookmark</a>
                 <a href="{{ url('/') }}#get-api-me-bookmarks" class="nav-link link-get nav-page-link" data-page="/" data-hash="get-api-me-bookmarks"><span class="method-pill method-get">GET</span> /me/bookmarks</a>
-                <a href="{{ url('/') }}#post-api-post-comments" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-post-comments"><span class="method-pill method-post">POST</span> /post-comments</a>
+                <a href="{{ url('/') }}#get-api-me-likes" class="nav-link link-get nav-page-link" data-page="/" data-hash="get-api-me-likes"><span class="method-pill method-get">GET</span> /me/likes</a>
+                <a href="{{ url('/') }}#get-api-post-comments" class="nav-link link-get nav-page-link" data-page="/" data-hash="get-api-post-comments"><span class="method-pill method-get">GET</span> .../{post}/comments</a>
+                <a href="{{ url('/') }}#post-api-post-comments" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-post-comments"><span class="method-pill method-post">POST</span> .../{post}/comments</a>
+                <a href="{{ url('/') }}#put-api-comments" class="nav-link link-put nav-page-link" data-page="/" data-hash="put-api-comments"><span class="method-pill method-put">PUT</span> /comments/{id}</a>
+                <a href="{{ url('/') }}#delete-api-comments" class="nav-link link-delete nav-page-link" data-page="/" data-hash="delete-api-comments"><span class="method-pill method-delete">DEL</span> /comments/{id}</a>
                 <a href="{{ url('/') }}#post-api-users-follow" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-users-follow"><span class="method-pill method-post">POST</span> /users/{id}/follow</a>
                 <a href="{{ url('/') }}#get-api-users-followers" class="nav-link link-get nav-page-link" data-page="/" data-hash="get-api-users-followers"><span class="method-pill method-get">GET</span> /users/{id}/followers</a>
             </div>
@@ -227,16 +234,41 @@
                     <span class="nav-group-title">Payments & Escrow</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span class="nav-group-count">5</span>
+                    <span class="nav-group-count">8</span>
                     <span class="nav-group-chevron">▶</span>
                 </div>
             </div>
             <div class="nav-group-items">
-                <a href="{{ url('/') }}#post-api-payments-token" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-payments-token"><span class="method-pill method-post">POST</span> /{id}/payment-token</a>
+                <a href="{{ url('/') }}#post-api-commissions-payment" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-commissions-payment"><span class="method-pill method-post">POST</span> /{id}/payment</a>
+                <a href="{{ url('/') }}#post-api-commissions-payment-check-status" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-commissions-payment-check-status"><span class="method-pill method-post">POST</span> .../check-status</a>
+                <a href="{{ url('/') }}#post-api-commissions-payment-simulate" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-commissions-payment-simulate"><span class="method-pill method-post">POST</span> .../simulate</a>
                 <a href="{{ url('/') }}#get-api-me-payout-account" class="nav-link link-get nav-page-link" data-page="/" data-hash="get-api-me-payout-account"><span class="method-pill method-get">GET</span> /me/payout-account</a>
                 <a href="{{ url('/') }}#put-api-me-payout-account" class="nav-link link-put nav-page-link" data-page="/" data-hash="put-api-me-payout-account"><span class="method-pill method-put">PUT</span> /me/payout-account</a>
+                <a href="{{ url('/') }}#delete-api-me-payout-account" class="nav-link link-delete nav-page-link" data-page="/" data-hash="delete-api-me-payout-account"><span class="method-pill method-delete">DEL</span> /me/payout-account</a>
                 <a href="{{ url('/') }}#post-api-midtrans-webhook" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-midtrans-webhook"><span class="method-pill method-post">POST</span> /midtrans/webhook</a>
                 <a href="{{ url('/') }}#post-api-midtrans-iris-webhook" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-midtrans-iris-webhook"><span class="method-pill method-post">POST</span> /midtrans/iris-webhook</a>
+            </div>
+        </div>
+
+        <!-- Media & Storage -->
+        <div class="nav-group">
+            <div class="nav-group-toggle">
+                <div class="nav-group-label">
+                    <div class="nav-group-icon" style="background: rgba(0, 195, 255, 0.12);">
+                        <img src="{{ asset('icons/SVGs/Picture/picture-white.svg') }}" class="icon-themed" alt="" />
+                    </div>
+                    <span class="nav-group-title">Media & Storage</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="nav-group-count">4</span>
+                    <span class="nav-group-chevron">▶</span>
+                </div>
+            </div>
+            <div class="nav-group-items">
+                <a href="{{ url('/') }}#post-api-media" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-media"><span class="method-pill method-post">POST</span> /media</a>
+                <a href="{{ url('/') }}#get-api-media-id" class="nav-link link-get nav-page-link" data-page="/" data-hash="get-api-media-id"><span class="method-pill method-get">GET</span> /media/{id}</a>
+                <a href="{{ url('/') }}#delete-api-media-id" class="nav-link link-delete nav-page-link" data-page="/" data-hash="delete-api-media-id"><span class="method-pill method-delete">DEL</span> /media/{id}</a>
+                <a href="{{ url('/') }}#get-storage-path" class="nav-link link-get nav-page-link" data-page="/" data-hash="get-storage-path"><span class="method-pill method-get">GET</span> /storage/{path}</a>
             </div>
         </div>
 

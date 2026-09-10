@@ -215,6 +215,55 @@
         </div>
     </div>
 
+    <!-- POST /api/commissions/{id}/propose-deadline -->
+    <div class="endpoint-card" id="post-api-commissions-propose-deadline">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/commissions/{id}/propose-deadline</span>
+            </div>
+            <span class="auth-badge">Assigned Artist</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Proposes a new delivery deadline with justification note. Awaiting buyer confirmation.</p>
+            <table class="param-table">
+                <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="param-name">proposed_deadline</span> <span class="param-required">req</span></td><td><span class="param-type">date</span></td><td>Proposed new target completion date.</td></tr>
+                    <tr><td><span class="param-name">reason</span> <span class="param-optional">opt</span></td><td><span class="param-type">string</span></td><td>Reason for deadline extension request.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- POST /api/commissions/{id}/accept-deadline -->
+    <div class="endpoint-card" id="post-api-commissions-accept-deadline">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/commissions/{id}/accept-deadline</span>
+            </div>
+            <span class="auth-badge">Commission Buyer</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Buyer accepts the artist's proposed deadline extension, updating order deadline.</p>
+        </div>
+    </div>
+
+    <!-- POST /api/commissions/{id}/decline-deadline -->
+    <div class="endpoint-card" id="post-api-commissions-decline-deadline">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/commissions/{id}/decline-deadline</span>
+            </div>
+            <span class="auth-badge">Commission Buyer</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Buyer declines the proposed deadline extension. Retains current active deadline.</p>
+        </div>
+    </div>
+
     <!-- POST /api/commissions/{id}/reviews -->
     <div class="endpoint-card" id="post-api-commission-reviews">
         <div class="endpoint-header">
@@ -233,6 +282,48 @@
                     <tr><td><span class="param-name">comment</span> <span class="param-optional">opt</span></td><td><span class="param-type">string</span></td><td>Review text.</td></tr>
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- PUT /api/reviews/{review} -->
+    <div class="endpoint-card" id="put-api-reviews">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-put">PUT</span>
+                <span>/api/reviews/{review}</span>
+            </div>
+            <span class="auth-badge">Review Author</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Updates rating and text of an existing review. Restricted to the original review author.</p>
+        </div>
+    </div>
+
+    <!-- PATCH /api/reviews/{review}/reply -->
+    <div class="endpoint-card" id="patch-api-reviews-reply">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-patch">PATCH</span>
+                <span>/api/reviews/{review}/reply</span>
+            </div>
+            <span class="auth-badge">Assigned Artist</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Allows the commissioned artist to post a public response to the client's review.</p>
+        </div>
+    </div>
+
+    <!-- DELETE /api/reviews/{review} -->
+    <div class="endpoint-card" id="delete-api-reviews">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-delete">DELETE</span>
+                <span>/api/reviews/{review}</span>
+            </div>
+            <span class="auth-badge">Review Author / Admin</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Deletes an existing review and recalculates the artist's average rating.</p>
         </div>
     </div>
 </section>

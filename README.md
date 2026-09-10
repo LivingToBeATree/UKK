@@ -12,6 +12,7 @@
   <img src="https://img.shields.io/badge/TypeScript-5.7+-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
   <img src="https://img.shields.io/badge/PostgreSQL-16+-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL">
   <img src="https://img.shields.io/badge/Midtrans-Snap%20%26%20Iris-02F5A8?style=for-the-badge&logo=cashapp&logoColor=black" alt="Midtrans Payments">
+  <img src="https://img.shields.io/badge/API%20Endpoints-127%20Routes-7928CA?style=for-the-badge&logo=fastapi&logoColor=white" alt="API Endpoints">
   <img src="https://img.shields.io/badge/Backend%20Tests-105%20Passed%20(443%20Assertions)-02F5A8?style=for-the-badge&logo=githubactions&logoColor=black" alt="Tests Passed">
 </p>
 
@@ -19,9 +20,9 @@
 
 ## Overview
 
-**Comme** is an end-to-end digital creator marketplace and art commission platform that bridges illustrators and buyers with bank-grade escrow security, transparent order lifecycles, and automated financial disbursements. 
+**Comme** is an end-to-end digital creator marketplace and art commission platform that bridges illustrators and buyers with bank-grade escrow security, transparent order lifecycles, and automated financial disbursements.
 
-Built with a **Laravel 12 REST API** backend and a **React 19 / TypeScript** single-page frontend, Comme provides a seamless experience for browsing artwork, purchasing custom art commissions, tracking revisions, managing studio availability, and processing instant refunds and payouts via the **Midtrans Snap** and **Midtrans Iris** payment gateways.
+Built with a **Laravel 12 REST API** backend and a **React 19 / TypeScript** single-page frontend, Comme provides a seamless experience for browsing artwork, purchasing custom art commissions, tracking revisions, negotiating deadlines, managing studio availability, and processing instant refunds and payouts via the **Midtrans Snap** and **Midtrans Iris** payment gateways.
 
 ---
 
@@ -33,6 +34,7 @@ UKK/
 │   ├── app/                     # Domain models, controllers, services, policies
 │   ├── database/                # Migrations & comprehensive seeders
 │   ├── resources/views/         # Interactive API docs portal (Blade + Vanilla CSS)
+│   ├── routes/                  # Modular route files (127 endpoints across 19 modules)
 │   ├── tests/Feature/           # PHPUnit test suite (105 tests, 443 assertions)
 │   └── README.md                # Backend architecture & API documentation
 │
@@ -47,21 +49,24 @@ UKK/
 
 ```mermaid
 graph TD
-    Client["React 19 Client SPA<br/>(TailwindCSS, TypeScript)"]
-    API["Laravel 12 REST API<br/>(Sanctum, RFC-7807)"]
+    Client["React 19 Client SPA<br/>(TailwindCSS, TypeScript, Lucide)"]
+    API["Laravel 12 REST API<br/>(Sanctum Bearer, RFC-7807, CORS Allowlist)"]
     DB[("PostgreSQL 16+<br/>Database")]
+    Storage["Google Cloud Storage / Disk<br/>(/storage/{path} Provider)"]
     MidtransSnap["Midtrans Snap<br/>(Escrow Checkout)"]
     MidtransIris["Midtrans Iris<br/>(Creator Bank Payouts)"]
-    Scheduler["Artisan Scheduler<br/>(Auto-Release, Reconciliation)"]
+    Scheduler["Artisan Scheduler<br/>(Background Auto-Release & Reconciliation)"]
 
     Client -->|REST API / Bearer Token| API
+    Client -->|Direct Asset Streaming| Storage
     Client -->|Snap Popup Checkout| MidtransSnap
     API -->|Eloquent ORM| DB
+    API -->|Stream / Upload Assets| Storage
     API -->|Create Snap Token| MidtransSnap
     MidtransSnap -->|Payment Webhook (SHA-512)| API
     API -->|Disburse Escrow| MidtransIris
     MidtransIris -->|Payout Status Callback| API
-    Scheduler -->|Scheduled Payout Tasks| API
+    Scheduler -->|Cron Payout Routines| API
 ```
 
 ---
@@ -71,7 +76,9 @@ graph TD
 ### 1. Commission Lifecycle & Escrow Protection
 - **Order State Machine**: Enforces valid state transitions: `pending` &rarr; `accepted` &rarr; `in_progress` &rarr; `review` &rarr; `completed` (or `cancelled`/`declined`).
 - **Escrow Vaulting**: Buyer deposits are safely held in escrow via Midtrans Snap until artwork delivery is approved.
+- **Deadline Negotiation Protocol**: Formal proposal-and-acceptance protocol (`/propose-deadline`, `/accept-deadline`, `/decline-deadline`) allowing creators to request completion date adjustments with buyer agreement.
 - **Revision Tracking**: Structured client revision cycles tracked against service limits.
+- **Delivery MIME Enforcement**: Strict server-side MIME type inspection for delivered artwork (`image/*`, `application/pdf`, `application/zip`, `application/x-rar-compressed`, `video/*`).
 - **Automated Payouts**: Completed orders automatically trigger creator bank disbursements via Midtrans Iris.
 
 ### 2. Mutual Cancellation & Automated Escrow Refunds
@@ -91,34 +98,58 @@ graph TD
   - <span style="color: #F59E0B; font-weight: bold;">● Busy / Waitlist Only</span>: Amber badge accepting waitlist orders.
   - <span style="color: #EF4444; font-weight: bold;">● Commissions Closed</span>: Rose badge pausing new incoming requests.
 - **Studio Profile Settings**: Dedicated studio bio and terms, external portfolio website, and verified social links (Twitter/X, ArtStation, Instagram).
-- **Bank Payout Configuration**: Artist bank accounts are encrypted with AES-256 at rest and displayed masked (`••••••••1234`).
+- **Bank Payout Configuration**: Artist bank accounts are encrypted with AES-256 at rest, displayed masked (`••••••••1234`), and can be safely managed or deleted.
 
 ### 5. SEO-Friendly Slug Routing
-- Clean, SEO-optimized permalinks for all marketplace resources:
+- Clean, SEO-optimized permalinks for marketplace resources:
   - `/services/{slug}` &mdash; Commission services
   - `/portfolios/{slug}` &mdash; Creator portfolio items
   - `/posts/{slug}` &mdash; Community artwork feed posts
+  - `/commissions/{buyer_username}-{slug}-{nano_id}` &mdash; User-prefixed commission order permalinks
 - Dual-lookup support transparently resolving both human-readable slugs and legacy numeric IDs.
 
-### 6. Security & Identity
-- **Email OTP Confirmation**: 6-digit one-time code verification during registration with automatic rate limiting.
-- **Two-Factor Authentication (2FA)**: TOTP authentication with QR code setup and encrypted recovery codes.
-- **Device Anomaly Alerts**: Automatic email notifications when sign-in occurs from an unrecognized device or IP.
-- **Media Authorization**: Strict policy enforcement for file deletion, chat isolation, and order access.
+### 6. Social Community & Feed
+- **Artwork Feed**: Multi-image/video post creation with tag categorization and paginated exploration.
+- **Engagement**: Like and bookmark posts and comments with dedicated `GET /api/me/bookmarks` and `GET /api/me/likes` queries.
+- **Threaded Comments**: Post comments with parent-reply threading, in-place author editing (`PUT /api/comments/{comment}`), and author/post-owner deletion (`DELETE /api/comments/{comment}`).
+- **User Following**: Follow favourite creators to populate personalized community streams.
 
-### 7. Interactive Developer Documentation Portal
+### 7. Security, Storage & Architecture Hardening
+- **Cross-Origin Bearer Auth**: Sanctum Bearer token authorization decoupled from stateful session cookies, supporting independent cross-domain deployments.
+- **Explicit CORS Allowlist**: Strict origin matching via `CORS_ALLOWED_ORIGINS` environment variable (no open wildcards in production).
+- **Session & Device Management**: Active token listing (`GET /api/auth/sessions`) and multi-session revocation (`DELETE /api/auth/sessions/{id}`).
+- **Account Deletion**: Complete user data lifecycle with secure password confirmation (`DELETE /api/auth/account`).
+- **Two-Factor Authentication (2FA)**: TOTP authentication with QR code setup and encrypted recovery codes.
+- **Storage Streaming Provider**: Direct `/storage/{path}` file provider with CORS streaming headers, GCS persistent volume compatibility, and forced attachment download queries (`?download=1&name=...`).
+- **Dependency Pinning & Sandboxing**: Midtrans PHP SDK pinned to `^2.6.4`; test payment simulation endpoint guarded from production execution.
+
+### 8. Interactive Developer Documentation Portal
 - Hosted directly on the backend root (`/`):
-  - **Live Documentation**: Categorized endpoint groups with cURL snippets and request schemas.
+  - **Live Documentation**: Categorized endpoint groups covering all 127 routes with cURL snippets and schemas.
   - **API Explorer (`/explore`)**: In-browser request sandbox with token persistence and latency measurement.
   - **Error Reference (`/errors`)**: RFC-7807 compliant error catalog for all HTTP status codes.
   - **Theme System**: Dark, Light, and System OS themes with day/night SVG icons.
 
 ---
 
+## Scheduled Artisan Automation Commands
+
+The backend implements automated background cron tasks configured in `routes/console.php`:
+
+| Command Signature | Schedule | Background | Purpose |
+|---|---|---|---|
+| `commissions:release-due-payouts` | Every minute (`* * * * *`) | Yes (`runInBackground()`) | Scans completed/confirmed commissions past the 7-day review grace period and automatically releases escrow payouts to creator bank accounts via Midtrans Iris. |
+| `commissions:reconcile-payouts` | Every 5 minutes (`*/5 * * * *`) | No | Polls Midtrans Iris payout status for pending disbursements to resolve transient gateway drops. |
+| `commissions:retry-failed-payouts` | Every 30 minutes (`*/30 * * * *`) | No | Retries transiently failed bank disbursements up to 3 attempts before flagging for staff audit. |
+| `model:prune --model=PendingRegistration` | Hourly (`0 * * * *`) | No | Prunes unverified and expired user registration records from the database. |
+| `migrate:sync-existing` | Deployment utility | No | Reconciles missing columns and indexes across schema versions without destructive table drops. |
+
+---
+
 ## Quickstart Guide
 
 ### Prerequisites
-- **PHP** >= 8.2 with `pdo_pgsql`, `mbstring`, `openssl`, `bcmath`, `curl`
+- **PHP** >= 8.2 with `pdo_pgsql`, `mbstring`, `openssl`, `bcmath`, `curl`, `fileinfo`
 - **Composer** >= 2.x
 - **PostgreSQL** >= 16.x
 - **Node.js** >= 18.x
@@ -138,13 +169,14 @@ composer install
 cp .env.example .env
 php artisan key:generate
 
-# 3. Configure database credentials in .env:
+# 3. Configure database credentials and CORS allowlist in .env:
 # DB_CONNECTION=pgsql
 # DB_HOST=127.0.0.1
 # DB_PORT=5432
 # DB_DATABASE=comme_db
 # DB_USERNAME=postgres
 # DB_PASSWORD=your_password
+# CORS_ALLOWED_ORIGINS=http://localhost:5173
 
 # 4. Run database migrations and seeders
 php artisan migrate --seed
@@ -209,8 +241,8 @@ npm run build
 ## Detailed Documentation Links
 
 For in-depth guides and API specifications, refer to the individual component documentation:
-- **[Backend README & API Reference](file:///c:/Users/LENOVO/UKK/backend/comme-backend/README.md)**
-- **[Frontend Architecture & Component Guide](file:///c:/Users/LENOVO/UKK/frontend/comme-frontend/README.md)**
+- **[Backend README & API Reference](backend/comme-backend/README.md)**
+- **[Frontend Architecture & Component Guide](frontend/comme-frontend/README.md)**
 - **[Interactive API Documentation Portal](http://localhost:8000)** (when backend is running)
 - **[Interactive API Sandbox](http://localhost:8000/explore)**
 - **[HTTP Error Envelope Catalog](http://localhost:8000/errors)**

@@ -86,7 +86,35 @@
         </div>
     </div>
 
-    <!-- POST /api/post-comments -->
+    <!-- GET /api/me/likes -->
+    <div class="endpoint-card" id="get-api-me-likes">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-get">GET</span>
+                <span>/api/me/likes</span>
+            </div>
+            <span class="auth-badge">Authenticated</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Lists all posts liked by the current user. Paginated.</p>
+        </div>
+    </div>
+
+    <!-- GET /api/posts/{post}/comments -->
+    <div class="endpoint-card" id="get-api-post-comments">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-get">GET</span>
+                <span>/api/posts/{post}/comments</span>
+            </div>
+            <span class="auth-badge">Public</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Retrieves paginated comments and reply threads for a specific post.</p>
+        </div>
+    </div>
+
+    <!-- POST /api/posts/{post}/comments -->
     <div class="endpoint-card" id="post-api-post-comments">
         <div class="endpoint-header">
             <div class="endpoint-path">
@@ -101,8 +129,51 @@
                 <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
                 <tbody>
                     <tr><td><span class="param-name">body</span> <span class="param-required">req</span></td><td><span class="param-type">string</span></td><td>Comment text.</td></tr>
+                    <tr><td><span class="param-name">parent_id</span> <span class="param-optional">opt</span></td><td><span class="param-type">integer</span></td><td>Parent comment ID for threaded replies.</td></tr>
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- PUT /api/comments/{comment} -->
+    <div class="endpoint-card" id="put-api-comments">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-put">PUT</span>
+                <span>/api/comments/{comment}</span>
+            </div>
+            <span class="auth-badge">Comment Author</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Updates existing comment content. Restricted to the author of the comment.</p>
+        </div>
+    </div>
+
+    <!-- DELETE /api/comments/{comment} -->
+    <div class="endpoint-card" id="delete-api-comments">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-delete">DELETE</span>
+                <span>/api/comments/{comment}</span>
+            </div>
+            <span class="auth-badge">Author or Post Owner</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Deletes a comment. Authorized for the comment author or the post owner.</p>
+        </div>
+    </div>
+
+    <!-- POST /api/comments/{comment}/like -->
+    <div class="endpoint-card" id="post-api-comments-like">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/comments/{comment}/like</span>
+            </div>
+            <span class="auth-badge">Authenticated</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Toggles like status for a comment.</p>
         </div>
     </div>
 

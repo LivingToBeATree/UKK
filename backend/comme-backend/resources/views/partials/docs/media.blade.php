@@ -74,4 +74,18 @@ sort_order: 0 (optional integer)</div>
             </p>
         </div>
     </div>
+
+    <!-- GET /storage/{path} -->
+    <div class="endpoint-card" id="get-storage-path">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-get">GET</span>
+                <span>/storage/{path}</span>
+            </div>
+            <span class="auth-badge">Public Access</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Direct storage asset streaming and download provider with automatic CORS headers (<code>Access-Control-Allow-Origin: *</code>). Resolves files across public storage disks and mounts. Supports forced attachment downloads via <code>?download=1&name=custom_name.ext</code> query parameter.</p>
+        </div>
+    </div>
 </section>

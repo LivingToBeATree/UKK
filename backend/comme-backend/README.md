@@ -27,10 +27,10 @@
 
 ### 1. Authentication & Account Security
 - **Email OTP Verification**: Registration sends a 6-digit numeric OTP with rate limiting; verified users are created atomically upon confirmation.
-- **Sanctum Multi-Platform Auth**: Supports SPA Cookie-based authentication and mobile/third-party Bearer API Tokens.
-- **Two-Factor Authentication (2FA)**: Time-based One-Time Password (TOTP) setup with QR codes and encrypted emergency recovery codes.
-- **Device Sign-In Tracking**: Detects new browser and IP logins, sending immediate security alerts with geolocation context.
-- **Password Lifecycle**: Forgot password OTP flow, password reset token validation, and authenticated password changes.
+- **Sanctum Multi-Platform Auth**: Supports SPA Cookie-based authentication and cross-origin Bearer API Tokens for cloud deployments.
+- **Two-Factor Authentication (2FA)**: Time-based One-Time Password (TOTP) setup with QR codes and encrypted emergency recovery codes (`/api/profile/2fa/*`).
+- **Device & Session Management**: Tracks active user sessions with IP and user-agent context, remote session revoking (`/api/profile/sessions`), logout from other devices, and new device anomaly alerts.
+- **Password & Account Lifecycle**: Forgot password OTP flow, password reset token validation, authenticated password changes, warning acknowledgment, and GDPR account deletion (`DELETE /api/account`).
 
 ### 2. Artist Vetting & Application Queue
 - **Portfolio Submissions**: Regular users can submit applications with external portfolio links (ArtStation, Behance, Carrd) and social profiles.
@@ -39,14 +39,15 @@
 ### 3. Artist Studio & Profile Settings
 - **Master Availability Status**: Real-time commission availability indicator (`open`, `busy`, `closed`) that cascades across public profiles and marketplace service listings.
 - **Studio Profile Customization**: Dedicated studio bio and terms separate from personal user bio, custom studio website URL, portfolio link, and social handles (Twitter/X, ArtStation, Instagram).
-- **Public Profile Envelopes**: Includes aggregate rating stats, completed commission counts, and active services.
+- **Public Profile Envelopes**: Includes aggregate rating stats, completed commission counts, active services, and verified reviews.
 
 ### 4. Commission Lifecycle & Order State Machine
-- **Service Catalog**: Artists publish customizable commission listings with pricing, turnaround times, and revision limits.
+- **Service Catalog**: Artists publish customizable commission listings with pricing, turnaround times, add-ons, and revision limits.
 - **Strict State Machine**: Tracks explicit transitions (`pending`, `accepted`, `in_progress`, `review`, `completed`, `cancelled`, `declined`).
-- **Deadline Management**: Proposed deadline updates with client acceptance/decline workflows.
+- **Deadline Negotiation**: Structured deadline proposal and counter-acceptance workflow (`propose-deadline`, `accept-deadline`, `decline-deadline`, `update-deadline`).
+- **Delivery Validation**: Dedicated `DeliverCommissionRequest` enforcing accepted file formats (images, videos, archives, design files) up to 50MB.
 - **Revision Workflows**: Structured client revision requests tracked against allowed revision quotas.
-- **Reviews & Ratings**: 1–5 star buyer feedback with verified purchase badges.
+- **Reviews & Ratings**: 1–5 star buyer feedback with verified purchase badges, review updates, deletion, and artist replies.
 
 ### 5. Mutual Cancellation & Automated Escrow Refunds
 - **Mutual Agreement Protocol**: When an order is active (`accepted`, `in_progress`, `review`), either party can initiate a cancellation request with a mandatory reason. The counterparty can accept or decline.
@@ -60,14 +61,16 @@
 - **Print & PDF Layout**: Clean, print-optimized document view with watermarked status badges.
 
 ### 7. Midtrans Snap & Iris Escrow Disbursements
-- **Midtrans Snap Checkout**: Secure token generation for buyer escrow deposits.
+- **Midtrans Snap Checkout**: Secure token generation for buyer escrow deposits via `/api/commissions/{id}/payment`.
+- **Live Settlement Verification**: Immediate payment status checks (`/payment/check-status`) to verify transactions in real time.
+- **Environment Route Guards**: Test payment simulation (`/payment/simulate`) strictly isolated to local and testing environments.
 - **Webhook Signature Verification**: SHA-512 hash verification for all Midtrans Snap callbacks (`settlement`, `pending`, `deny`, `expire`, `cancel`).
-- **Creator Bank Accounts**: Encrypted at rest using AES-256 (`bank_name`, `account_holder`, `account_number`), masked on read endpoints (`••••••••1234`).
+- **Creator Bank Accounts**: Encrypted at rest using AES-256 (`bank_name`, `account_holder`, `account_number`), masked on read endpoints (`••••••••1234`), with secure deletion support.
 - **Automated Bank Payouts (Midtrans Iris)**: Programmatic fund disbursement upon order confirmation or completion.
-- **Resilience & Reconciliation**: Idempotent payout keys, lost-response recovery, and background status reconciliation.
+- **Resilience & Reconciliation**: Idempotent payout keys, lost-response recovery, and automated background reconciliation.
 
 ### 8. SEO-Friendly Slugs & Permalinks
-- **Unified `HasSlug` Trait**: Automatically generates clean URL slugs for commission services (`/services/{slug}`), portfolios (`/portfolios/{slug}`), and posts (`/posts/{slug}`).
+- **Unified `HasSlug` Trait**: Automatically generates clean URL slugs for commission services (`/services/{slug}`), portfolios (`/portfolios/{slug}`), posts (`/posts/{slug}`), and commission orders (`/commissions/{slug}`).
 - **Graceful Fallback**: Transparently resolves entities by slug or legacy numeric ID without breaking backwards compatibility.
 
 ### 9. Real-Time Order Messaging
@@ -75,16 +78,24 @@
 - Support for attached artwork WIPs, reference images, and delivery attachments.
 
 ### 10. Social Feed & Creator Engagement
-- Artwork feed with multi-media uploads (images/videos up to 25MB).
-- Interactive likes, bookmarks, threaded comments, and user follow/follower graphs.
+- Artwork feed with multi-media uploads (images/videos up to 25MB) and HTTP 206 Byte-Range streaming for video seeking (`/api/media/stream/{path}`).
+- Interactive likes, bookmarks, threaded comments with author editing (`PUT`) and deletion (`DELETE`) controls, and user follow/follower graphs.
 
 ### 11. Scheduled Artisan Automations
-- `php artisan commissions:auto-release`: Auto-releases escrow funds to creators 7 days after artwork delivery if buyer does not confirm or dispute.
-- `php artisan commissions:reconcile-payouts`: Polls Midtrans Iris payout status for pending disbursements to resolve network drops.
-- `php artisan commissions:retry-payouts`: Automatically retries failed bank disbursements with exponential backoff (up to 3 attempts).
-- `php artisan registration:prune-expired`: Daily maintenance purging expired pending registrations and OTP codes.
+- `php artisan commissions:release-due-payouts`: Runs every minute (`everyMinute()`, non-overlapping) to auto-release escrow funds to creators 7 days after artwork delivery if buyer does not confirm or dispute.
+- `php artisan commissions:reconcile-payouts`: Runs every 5 minutes (`everyFiveMinutes()`, non-overlapping) to poll Midtrans Iris payout status for in-flight disbursements and resolve network disconnects.
+- `php artisan commissions:retry-failed-payouts`: Runs every 30 minutes (`everyThirtyMinutes()`, non-overlapping) to retry failed bank disbursements with exponential backoff (up to 3 attempts).
+- `php artisan model:prune --model=PendingRegistration`: Runs hourly to clean up unverified registrations and expired OTP codes.
+- `php artisan migrate:sync-existing`: Synchronization utility for cloud deployments to register existing schema objects and guarantee idempotent migrations.
 
-### 12. Interactive Documentation & Developer Portal
+### 12. Security Hardening & Cloud Infrastructure
+- **Strict CORS Allowlist**: Credentialed requests locked down exclusively to domains configured in `CORS_ALLOWED_ORIGINS` (wildcard subdomains removed).
+- **Dependency Pinning**: Third-party payment libraries like `midtrans/midtrans-php` strictly pinned (`^2.5`) to eliminate supply chain vulnerabilities.
+- **Cloud Run Media Persistence**: Integrated Google Cloud Storage (`comme_bucket`) persistent volume mount for containerized environments.
+- **Direct Storage Provider**: Built-in `/storage/{path}` route with CORS headers and fallback resolution across public and cloud storage disks.
+- **Codebase Cleanliness**: All models, enums, facades, services, and exceptions strictly imported via top-level `use` statements with zero inline FQCNs.
+
+### 13. Interactive Documentation & Developer Portal
 - Built-in portal at `/` featuring instant endpoint search, collapsible domain groups, and cURL generation.
 - **Interactive Sandbox (`/explore`)**: In-page live request console with Bearer token persistence and latency measurement.
 - **Error Reference Catalog (`/errors`)**: Complete catalog of standard RFC-7807 HTTP error envelopes (400, 401, 403, 404, 409, 422, 429, 500).
@@ -192,99 +203,162 @@ Content-Type: application/json
 Authorization: Bearer <personal_access_token>
 ```
 
-### 1. Auth & Account
+### 1. Auth & Account Security
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
 | `POST` | `/api/register` | Public | Initiates email registration & dispatches 6-digit OTP |
 | `POST` | `/api/register/confirm` | Public | Confirms OTP & issues Sanctum Bearer token |
+| `POST` | `/api/register/resend` | Public | Resends registration OTP code (rate-limited) |
 | `POST` | `/api/login` | Public | Authenticates user & checks new device alerts |
+| `POST` | `/api/login/2fa` | Public | Completes 2FA login challenge with TOTP code |
 | `GET` | `/api/me` | Auth | Returns authenticated user profile & artist status |
 | `POST` | `/api/logout` | Auth | Revokes current Sanctum access token |
-| `POST` | `/api/forgot-password` | Public | Sends password reset email link |
-| `POST` | `/api/reset-password` | Public | Resets password with token |
+| `POST` | `/api/logout-other-devices` | Auth | Revokes tokens for all other active user sessions |
+| `PATCH`| `/api/profile` | Auth | Updates display name, bio, avatar, and banner |
 | `PUT` | `/api/profile/password` | Auth | Changes password with current password verification |
-| `POST` | `/api/2fa/setup` | Auth | Generates 2FA TOTP secret & QR code |
-| `POST` | `/api/2fa/confirm` | Auth | Confirms 2FA setup & returns emergency recovery codes |
-| `POST` | `/api/2fa/disable` | Auth | Disables 2FA with current password confirmation |
+| `GET` | `/api/profile/sessions` | Auth | Lists active user sessions with IP and browser info |
+| `DELETE`| `/api/profile/sessions/{id}` | Auth | Remotely terminates a specific active session |
+| `POST` | `/api/profile/acknowledge-warning`| Auth | Acknowledges official moderator warning |
+| `DELETE`| `/api/account` | Auth | Permanently deletes authenticated user account |
+| `POST` | `/api/forgot-password` | Public | Sends password reset email link |
+| `POST` | `/api/reset-password` | Public | Resets password with signed token |
+| `GET` | `/api/email/verify/{id}/{hash}` | Auth (Signed)| Verifies email address from verification link |
+| `POST` | `/api/email/verification-notification` | Auth | Resends email verification link |
+| `POST` | `/api/profile/2fa/setup` | Auth | Generates 2FA TOTP secret & QR code |
+| `POST` | `/api/profile/2fa/confirm` | Auth | Confirms 2FA setup & returns recovery codes |
+| `GET` | `/api/profile/2fa/recovery-codes`| Auth | Retrieves current emergency 2FA recovery codes |
+| `POST` | `/api/profile/2fa/recovery-codes`| Auth | Regenerates emergency 2FA recovery codes |
+| `DELETE`| `/api/profile/2fa` | Auth | Disables 2FA with current password confirmation |
+| `GET` | `/api/users/{username}` | Public | Public user profile & artist portfolio preview |
 
 ### 2. Artist Applications & Studio Profiles
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
 | `POST` | `/api/artist-applications` | Auth | Submits portfolio application for seller privileges |
 | `GET` | `/api/artist-applications/my-application` | Auth | Views current user's application status |
-| `GET` | `/api/artist-applications` | Staff | Lists pending application queue |
+| `GET` | `/api/artist-applications` | Staff | Lists pending application review queue |
 | `POST` | `/api/artist-applications/{id}/approve` | Staff | Approves applicant & generates artist profile |
-| `POST` | `/api/artist-applications/{id}/reject` | Staff | Rejects application with reason |
+| `POST` | `/api/artist-applications/{id}/reject` | Staff | Rejects application with structured feedback |
 | `GET` | `/api/artist-profiles/{id}` | Public | Retrieves public artist studio profile & statistics |
 | `PUT` | `/api/artist-profiles/{id}` | Artist | Updates studio settings (`commission_status`, `bio`, `website`, `social_links`) |
+| `GET` | `/api/artist-profiles/{id}/reviews` | Public | Lists verified reviews for an artist profile |
 
-### 3. Commission Services & Orders
+### 3. Commission Services & Order Management
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
 | `GET` | `/api/commission-services` | Public | Lists public commission services & pricing (filterable) |
 | `GET` | `/api/commission-services/{id_or_slug}` | Public | Retrieves commission service by ID or SEO slug |
 | `POST` | `/api/commission-services` | Artist | Creates new commission service listing |
+| `PUT/PATCH`| `/api/commission-services/{id}` | Artist | Updates commission service listing |
+| `DELETE`| `/api/commission-services/{id}` | Artist | Archives or deletes commission service |
 | `GET` | `/api/commissions` | Auth | Lists user's buyer and artist orders |
-| `GET` | `/api/commissions/{id}` | Participants | Retrieves commission order detail & receipt data |
-| `POST` | `/api/commissions` | Auth | Places a new commission order from a service |
-| `POST` | `/api/commissions/{id}/accept` | Artist | Artist accepts a pending commission order |
-| `POST` | `/api/commissions/{id}/decline` | Artist | Artist declines a pending commission order |
-| `POST` | `/api/commissions/{id}/deliver` | Artist | Delivers finished artwork deliverables |
-| `POST` | `/api/commissions/{id}/confirm` | Buyer | Approves delivery & triggers escrow payout release |
-| `POST` | `/api/commissions/{id}/request-revision` | Buyer | Requests artwork revision against allowed quota |
-| `POST` | `/api/commissions/{id}/request-cancellation`| Participants | Submits mutual cancellation request with reason |
-| `POST` | `/api/commissions/{id}/accept-cancellation` | Counterparty | Accepts cancellation & **triggers automated escrow refund** |
-| `POST` | `/api/commissions/{id}/decline-cancellation`| Counterparty | Declines cancellation request and resumes order |
-| `PATCH`| `/api/commissions/{id}/cancel` | Participants | Direct cancellation for pending orders (refunds if paid) |
-| `POST` | `/api/commissions/{id}/reviews` | Buyer | Submits review and rating for completed order |
+| `GET` | `/api/commissions/{id_or_slug}` | Participants | Retrieves commission order detail, messages & receipt data |
+| `POST` | `/api/commissions` | Auth | Places new commission order (MIME & size validated) |
+| `PUT/PATCH`| `/api/commissions/{commission}` | Participants | Updates commission parameters |
+| `POST` | `/api/commissions/{commission}/accept` | Artist | Artist accepts a pending commission order |
+| `POST` | `/api/commissions/{commission}/decline` | Artist | Artist declines a pending commission order |
+| `POST` | `/api/commissions/{commission}/deliver` | Artist | Submits finished deliverables (MIME & size validated) |
+| `POST` | `/api/commissions/{commission}/confirm` | Buyer | Approves delivery & triggers escrow payout release |
+| `POST` | `/api/commissions/{commission}/request-revision` | Buyer | Requests artwork revision against allowed quota |
+| `PATCH`| `/api/commissions/{commission}/deadline` | Participants | Directly adjusts agreed commission deadline |
+| `POST` | `/api/commissions/{commission}/propose-deadline` | Artist | Proposes a new deadline extension with note |
+| `POST` | `/api/commissions/{commission}/accept-deadline` | Buyer | Accepts proposed deadline extension |
+| `POST` | `/api/commissions/{commission}/decline-deadline`| Buyer | Declines proposed deadline extension |
+| `POST` | `/api/commissions/{commission}/request-cancellation`| Participants | Submits mutual cancellation request with reason |
+| `POST` | `/api/commissions/{commission}/accept-cancellation` | Counterparty | Accepts cancellation & **triggers automated escrow refund** |
+| `POST` | `/api/commissions/{commission}/decline-cancellation`| Counterparty | Declines cancellation request and resumes order |
+| `PATCH`| `/api/commissions/{commission}/cancel` | Participants | Direct cancellation for pending orders (refunds if paid) |
+| `POST` | `/api/commissions/{commission}/reviews` | Buyer | Submits review and rating for completed order |
+| `GET` | `/api/reviews/{review}` | Public | Retrieves specific review details |
+| `PUT/PATCH`| `/api/reviews/{review}` | Review Author | Updates review rating and comment |
+| `DELETE`| `/api/reviews/{review}` | Review Author | Removes review |
+| `PATCH`| `/api/reviews/{review}/reply` | Artist | Artist reply to buyer review |
 
 ### 4. Payments, Escrow & Creator Payouts
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
-| `POST` | `/api/commissions/{id}/payment-token` | Buyer | Generates Midtrans Snap checkout token |
+| `POST` | `/api/commissions/{commission}/payment` | Buyer | Generates Midtrans Snap checkout token for escrow |
+| `GET/POST`| `/api/commissions/{commission}/payment/check-status`| Buyer/Artist | Queries live Midtrans API for transaction status |
+| `POST` | `/api/commissions/{commission}/payment/simulate` | Dev/Test | Simulates instant settlement (`local`/`testing` only) |
 | `GET` | `/api/me/payout-account` | Artist | Retrieves artist bank transfer account (masked) |
 | `PUT` | `/api/me/payout-account` | Artist | Configures artist bank account (AES-256 encrypted) |
+| `DELETE`| `/api/me/payout-account` | Artist | Removes configured bank payout account |
 | `POST` | `/api/midtrans/webhook` | Webhook | Midtrans Snap payment callback (SHA-512 verified) |
 | `POST` | `/api/midtrans/iris-webhook` | Webhook | Midtrans Iris payout status challenge callback |
 
 ### 5. Commission Messaging
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
-| `GET` | `/api/commissions/{id}/messages` | Participants | Fetches isolated order chat history |
-| `POST` | `/api/commissions/{id}/messages` | Participants | Sends chat message & notifies recipient |
+| `GET` | `/api/commissions/{commission}/messages` | Participants | Fetches isolated order chat history |
+| `POST` | `/api/commissions/{commission}/messages` | Participants | Sends chat message with optional attachments |
 
-### 6. Social Feed, Posts & Portfolios
+### 6. Social Feed, Posts & Comments
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
 | `GET` | `/api/posts` | Public | Paginated public artwork feed |
 | `GET` | `/api/posts/{id_or_slug}` | Public | Retrieves artwork post by ID or SEO slug |
 | `POST` | `/api/posts` | Artist | Creates new artwork post |
-| `POST` | `/api/posts/{id}/like` | Auth | Toggles like on a post |
-| `POST` | `/api/posts/{id}/bookmark` | Auth | Toggles bookmark on a post |
+| `PUT/PATCH`| `/api/posts/{post}` | Post Author | Updates post content and visibility |
+| `DELETE`| `/api/posts/{post}` | Author/Admin | Deletes artwork post and associated media |
+| `POST` | `/api/posts/{post}/like` | Auth | Toggles like on a post |
+| `POST` | `/api/posts/{post}/bookmark` | Auth | Toggles bookmark on a post |
 | `GET` | `/api/me/bookmarks` | Auth | Lists authenticated user's bookmarks |
+| `GET` | `/api/me/likes` | Auth | Lists authenticated user's liked posts |
+| `GET` | `/api/posts/{post}/comments` | Public | Lists threaded comments on a post |
 | `POST` | `/api/posts/{post}/comments` | Auth | Adds comment to a post |
+| `GET` | `/api/comments/{comment}` | Public | Retrieves comment details |
+| `PUT/PATCH`| `/api/comments/{comment}` | Comment Author | Edits existing comment body |
+| `DELETE`| `/api/comments/{comment}` | Author/Admin | Deletes comment |
+| `POST` | `/api/comments/{comment}/like` | Auth | Toggles like on comment |
+| `POST` | `/api/comments/{comment}/bookmark` | Auth | Toggles bookmark on comment |
+| `GET` | `/api/portfolios` | Public | Lists public portfolio items |
 | `GET` | `/api/portfolios/{id_or_slug}` | Public | Retrieves portfolio item by ID or SEO slug |
 | `POST` | `/api/portfolios` | Artist | Creates new portfolio showcase piece |
-| `POST` | `/api/users/{id}/follow` | Auth | Toggles user follow |
-| `GET` | `/api/users/{id}/followers` | Auth | Lists user followers |
+| `PUT/PATCH`| `/api/portfolios/{portfolio}` | Portfolio Author | Updates portfolio showcase piece |
+| `DELETE`| `/api/portfolios/{portfolio}` | Author/Admin | Removes portfolio piece |
+| `POST` | `/api/users/{user}/follow` | Auth | Toggles user follow |
+| `GET` | `/api/users/{user}/followers` | Auth | Lists user followers |
+| `GET` | `/api/users/{user}/following` | Auth | Lists user following |
+| `GET` | `/api/tags` | Public | Lists trending discovery tags |
+| `GET` | `/api/gifs` | Public | Proxied KLIPY GIF search & trending feed |
 
 ### 7. Notifications
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
 | `GET` | `/api/notifications` | Auth | Lists user notifications (`?unread=true`) |
 | `GET` | `/api/notifications/unread-count` | Auth | Returns count of unread notifications |
-| `PATCH` | `/api/notifications/read-all` | Auth | Marks all notifications as read |
-| `PATCH` | `/api/notifications/{id}/read` | Auth | Marks single notification as read |
+| `PATCH`| `/api/notifications/read-all` | Auth | Marks all notifications as read |
+| `PATCH`| `/api/notifications/{id}/read` | Auth | Marks single notification as read |
+| `DELETE`| `/api/notifications/{id}` | Auth | Removes notification record |
 
-### 8. Media & Moderation
+### 8. Media, Streaming & Moderation
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
 | `POST` | `/api/media` | Auth | Uploads multipart image/video asset (max 25MB) |
 | `GET` | `/api/media/{id}` | Public | Retrieves asset metadata and public URL |
-| `DELETE` | `/api/media/{id}` | Owner/Admin | Purges media file and record |
+| `GET` | `/api/media/{id}/download` | Public | Initiates direct binary download of media asset |
+| `GET` | `/api/media/download-file` | Public | Downloads media by path parameter |
+| `GET` | `/api/media/stream/{path}` | Public | HTTP 206 Byte-Range streaming for video seeking |
+| `DELETE`| `/api/media/{id}` | Owner/Admin | Purges media file and record |
+| `GET` | `/storage/{path}` | Public | Direct storage provider with CORS headers and disk fallback |
+| `GET` | `/api/reports` | Staff | Lists reported content queue |
 | `POST` | `/api/reports` | Auth | Submits content report for staff review |
+| `GET` | `/api/reports/{report}` | Staff | Retrieves single report detail |
+| `PUT/PATCH`| `/api/reports/{report}` | Staff | Updates report status and notes |
+| `POST` | `/api/reports/{report}/action` | Staff | Executes moderation action (`remove_content`, `warn`, `suspend`) |
 | `GET` | `/api/tickets` | Auth | Lists user support tickets |
-| `POST` | `/api/tickets/{id}/messages` | Participants | Sends message on ticket thread |
+| `GET` | `/api/tickets/{ticket}` | Participants | Retrieves ticket thread |
+| `PATCH`| `/api/tickets/{ticket}` | Staff | Updates ticket status / priority |
+| `PATCH`| `/api/tickets/{ticket}/close` | Participants | Closes resolved ticket thread |
+| `POST` | `/api/tickets/{ticket}/messages`| Participants | Sends message on ticket thread |
+
+### 9. Administration (Staff Only)
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `GET` | `/api/admin/stats` | Staff | Returns platform analytics and volume figures |
+| `GET` | `/api/admin/users` | Staff | Paginated user management list |
+| `PATCH`| `/api/admin/users/{user}/role` | Admin | Promotes/demotes user role (`user`, `artist`, `admin`) |
+| `GET` | `/api/admin/moderation-logs` | Staff | Audit log of all staff moderation actions |
 
 ---
 
@@ -292,10 +366,11 @@ Authorization: Bearer <personal_access_token>
 
 | Command | Frequency | Description |
 |---|---|---|
-| `commissions:auto-release` | Daily (`00:00`) | Automatically releases escrow funds to creators 7 days after review delivery |
-| `commissions:reconcile-payouts`| Hourly | Polls Midtrans Iris for pending disbursements to resolve network disconnects |
-| `commissions:retry-payouts` | Every 30m | Retries failed bank disbursements with exponential backoff (up to 3 attempts) |
-| `registration:prune-expired` | Daily | Cleans up pending unverified registrations and expired OTP codes |
+| `commissions:release-due-payouts` | Every Minute (`everyMinute()`, background) | Automatically completes commissions and queues creator payouts when 7-day review deadline elapses |
+| `commissions:reconcile-payouts` | Every 5 Minutes (`everyFiveMinutes()`, background) | Polls Midtrans Iris payout status for in-flight disbursements to resolve network disconnects |
+| `commissions:retry-failed-payouts`| Every 30 Minutes (`everyThirtyMinutes()`, background) | Retries failed bank disbursements with exponential backoff (up to 3 attempts) |
+| `model:prune --model=PendingRegistration` | Hourly (`hourly()`) | Prunes expired pending user registrations and dead OTP codes |
+| `migrate:sync-existing` | Deployment On-Demand | Synchronizes existing database tables into migrations ledger to guarantee idempotent migrations |
 
 ---
 
