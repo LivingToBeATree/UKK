@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/PostgreSQL-16+-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL">
   <img src="https://img.shields.io/badge/Sanctum-Auth-A802F5?style=for-the-badge&logo=auth0&logoColor=white" alt="Sanctum Auth">
   <img src="https://img.shields.io/badge/Midtrans-Snap%20%26%20Iris-02F5A8?style=for-the-badge&logo=cashapp&logoColor=black" alt="Midtrans Payments">
-  <img src="https://img.shields.io/badge/Tests-105%20Passed%20(443%20Assertions)-02F5A8?style=for-the-badge&logo=githubactions&logoColor=black" alt="Tests Passed">
+  <img src="https://img.shields.io/badge/Tests-113%20Passed%20(460%20Assertions)-02F5A8?style=for-the-badge&logo=githubactions&logoColor=black" alt="Tests Passed">
 </p>
 
 ---
@@ -101,6 +101,20 @@
 - **Error Reference Catalog (`/errors`)**: Complete catalog of standard RFC-7807 HTTP error envelopes (400, 401, 403, 404, 409, 422, 429, 500).
 - **Theme Switcher**: Dark mode, Light mode, and OS System theme with automatic SVG icon adaptation.
 
+### 14. Real-Time Observability, Smart Caching & Tiered Rate Limiting
+- **Laravel Pulse (`/pulse`)**: Real-time application performance monitoring (APM) dashboard tracking slow database queries (>500ms), slow HTTP requests (>1,000ms), cache hit/miss ratio, and server usage.
+- **Interactive Log Viewer (`/log-viewer`)**: In-browser diagnostic logging portal with live streaming, search by log level, formatted stack traces, and log file downloads.
+- **PostgreSQL-Backed Smart Caching (`CacheService`)**: Fast caching for public artwork feeds, commission service listings, and artist profiles using epoch-based invalidation that guarantees atomic cache purging upon model lifecycle events via `CacheInvalidationObserver`.
+- **Role-Tiered Rate Limiting**: Dynamic request throttling based on authenticated roles:
+  - **Admin**: 300 req/min
+  - **Moderator**: 240 req/min
+  - **Verified Artist**: 180 req/min (high-frequency studio workflows)
+  - **Authenticated Buyer**: 120 req/min
+  - **Guest / Public**: 60 req/min
+  - Dedicated limiters: Search (30 req/min), Media Uploads (20 req/min), Payment Checkout (10 req/min).
+- **Request Correlation Tracing (`AssignRequestId`)**: Unique `X-Request-ID` UUID automatically assigned to every request, injected into structured logging context (`Log::withContext(...)`), and returned in response headers for end-to-end debugging.
+- **Slow Query Detection**: Automatic database listener (`DB::whenQueryingForLongerThan(500)`) logging warnings for queries exceeding 500ms.
+
 ---
 
 ## Technology Stack
@@ -110,11 +124,13 @@
 | **Framework** | Laravel 12.x |
 | **Runtime** | PHP 8.2+ |
 | **Database** | PostgreSQL 16+ |
+| **Observability (APM)** | Laravel Pulse (`/pulse`) |
+| **Log Diagnostics** | Interactive Log Viewer (`/log-viewer`) |
 | **Authentication** | Laravel Sanctum (SPA Cookies & Bearer Tokens) + 2FA TOTP |
 | **Payment Gateway** | Midtrans Snap (Escrow Deposits) & Midtrans Iris (Creator Payouts) |
 | **Data Encryption** | AES-256 (Creator Bank Account Numbers at rest) |
 | **Mailing** | Laravel Notifications with custom branded HTML templates |
-| **Testing** | PHPUnit (105 automated test methods with 443 assertions) |
+| **Testing** | PHPUnit (113 automated test methods with 460 assertions) |
 | **Deployment** | Docker / Google Cloud Run + Cloud SQL + VPC Connector |
 
 ---

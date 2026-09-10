@@ -15,6 +15,7 @@ use App\Enum\MediaType;
 use App\Enum\PostVisibilityType;
 use App\Models\PostMedia;
 use App\Models\Tag;
+use App\Services\API\V1\CacheService;
 use App\Services\ModerationSyncService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
@@ -159,7 +160,32 @@ class PostController extends Controller
                 break;
         }
 
-        $posts = $query->paginate(20);
+        $page = (int) $request->get('page', 1);
+        $perPage = min((int) $request->get('per_page', 20), 50);
+        $tag = $request->get('tag');
+
+        // Cache public generic feed browsing (guest user, no search query, no user_id / username filter)
+        $canCache = ! $user && ! $request->filled('search') && ! $request->filled('user_id') && ! $request->filled('username');
+
+        if ($canCache) {
+            $data = CacheService::rememberPosts($page, $tag, $sort, function () use ($query, $perPage) {
+                $posts = $query->paginate($perPage);
+                $paginated = PostResource::collection($posts)->response()->getData(true);
+
+                return [
+                    'status_code' => Response::HTTP_OK,
+                    'status' => 'SUCCESS',
+                    'message' => 'Posts retrieved successfully.',
+                    'data' => $paginated['data'],
+                    'links' => $paginated['links'] ?? null,
+                    'meta' => $paginated['meta'] ?? null,
+                ];
+            });
+
+            return response()->json($data);
+        }
+
+        $posts = $query->paginate($perPage);
 
         return ApiResponseHelper::paginatedResponse(
             PostResource::collection($posts),

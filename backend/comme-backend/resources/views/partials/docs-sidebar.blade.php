@@ -62,6 +62,18 @@
                     <img src="{{ asset('icons/SVGs/Shield/shield-white.svg') }}" class="icon-themed" style="width: 14px; height: 14px;" alt="" /> Error Reference
                 </span>
             </a>
+            <a href="{{ url('/pulse') }}" class="nav-link" target="_blank" rel="noopener noreferrer" style="font-family: inherit; font-weight: 600; font-size: 13px;">
+                <span style="display: flex; align-items: center; gap: 8px;">
+                    <img src="{{ asset('icons/SVGs/Zap/zap-white.svg') }}" class="icon-themed" style="width: 14px; height: 14px;" alt="" /> Laravel Pulse
+                </span>
+                <span class="auth-badge" style="font-size: 10px; padding: 1px 6px; margin-left: auto; background: rgba(2, 245, 168, 0.15); color: #02f5a8; border-color: rgba(2, 245, 168, 0.3);">APM</span>
+            </a>
+            <a href="{{ url('/log-viewer') }}" class="nav-link" target="_blank" rel="noopener noreferrer" style="font-family: inherit; font-weight: 600; font-size: 13px;">
+                <span style="display: flex; align-items: center; gap: 8px;">
+                    <img src="{{ asset('icons/SVGs/Paper/paper-white.svg') }}" class="icon-themed" style="width: 14px; height: 14px;" alt="" /> Log Viewer
+                </span>
+                <span class="auth-badge" style="font-size: 10px; padding: 1px 6px; margin-left: auto; background: rgba(168, 2, 245, 0.15); color: #c464fa; border-color: rgba(168, 2, 245, 0.3);">Live</span>
+            </a>
         </div>
 
         <div style="height: 1px; background: var(--border-subtle); margin: 4px 0 14px;"></div>

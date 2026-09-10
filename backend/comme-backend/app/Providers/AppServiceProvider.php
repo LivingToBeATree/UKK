@@ -2,15 +2,19 @@
 
 namespace App\Providers;
 
+use App\Enum\UserRole;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use App\Models\ArtistProfile;
 use App\Models\CommissionOrder;
 use App\Models\CommissionReview;
 use App\Models\CommissionService;
@@ -21,6 +25,7 @@ use App\Models\Report;
 use App\Models\Ticket;
 use App\Models\TicketMessage;
 use App\Models\User;
+use App\Observers\CacheInvalidationObserver;
 use App\Policies\ReportPolicy;
 use App\Policies\TicketMessagePolicy;
 use App\Policies\TicketPolicy;
@@ -43,6 +48,24 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Report::class, ReportPolicy::class);
         Gate::policy(Ticket::class, TicketPolicy::class);
         Gate::policy(TicketMessage::class, TicketMessagePolicy::class);
+
+        Gate::define('viewPulse', function (?User $user = null) {
+            return app()->environment('local', 'testing') || ($user && $user->role === UserRole::ADMIN);
+        });
+
+        Gate::define('viewLogViewer', function (?User $user = null) {
+            return app()->environment('local', 'testing') || ($user && $user->role === UserRole::ADMIN);
+        });
+
+        DB::whenQueryingForLongerThan(500, function ($connection) {
+            Log::warning("Slow database query detected on [{$connection->getName()}]: {$connection->totalQueryDuration()}ms");
+        });
+
+        // Smart Cache Invalidation Observers
+        Post::observe(CacheInvalidationObserver::class);
+        CommissionService::observe(CacheInvalidationObserver::class);
+        ArtistProfile::observe(CacheInvalidationObserver::class);
+        CommissionReview::observe(CacheInvalidationObserver::class);
 
         Relation::morphMap([
             'post' => Post::class,
@@ -78,11 +101,35 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by(($request->input('email') ?? 'none').'|'.$request->ip());
         });
 
-        // General catch-all for everything else — by user ID once logged
-        // in (fair per-person), falling back to IP for anything
-        // unauthenticated that slips through.
-        RateLimiter::for('api', function(Request $request) {
-            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+        // Role-tiered API rate limiter:
+        // Admin: 300/min, Moderator: 240/min, Artist: 180/min, Buyer/User: 120/min, Guest: 60/min
+        RateLimiter::for('api', function (Request $request) {
+            $user = $request->user();
+            if ($user) {
+                if ($user->role === UserRole::ADMIN) {
+                    return Limit::perMinute(300)->by($user->id);
+                }
+                if ($user->role === UserRole::MODERATOR) {
+                    return Limit::perMinute(240)->by($user->id);
+                }
+                if ($user->artistProfile()->exists()) {
+                    return Limit::perMinute(180)->by($user->id);
+                }
+                return Limit::perMinute(120)->by($user->id);
+            }
+            return Limit::perMinute(60)->by($request->ip());
+        });
+
+        RateLimiter::for('search', function (Request $request) {
+            return Limit::perMinute(30)->by($request->user()?->id ?: $request->ip());
+        });
+
+        RateLimiter::for('media-upload', function (Request $request) {
+            return Limit::perMinute(20)->by($request->user()?->id ?: $request->ip());
+        });
+
+        RateLimiter::for('payment-checkout', function (Request $request) {
+            return Limit::perMinute(10)->by($request->user()?->id ?: $request->ip());
         });
 
         /**

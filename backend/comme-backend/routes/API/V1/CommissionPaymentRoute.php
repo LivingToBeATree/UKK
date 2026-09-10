@@ -4,7 +4,8 @@ use App\Http\Controllers\API\V1\PaymentController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/commissions/{commission}/payment', [PaymentController::class, 'initiate']);
+    Route::post('/commissions/{commission}/payment', [PaymentController::class, 'initiate'])
+        ->middleware('throttle:payment-checkout');
     if (app()->environment('local', 'testing')) {
         Route::post('/commissions/{commission}/payment/simulate', [PaymentController::class, 'simulate']);
     }

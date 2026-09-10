@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { toast } from '@/components/ui/sonner';
 
 axios.defaults.withCredentials = true;
 
@@ -81,6 +82,11 @@ api.interceptors.response.use(
         if (error.response?.status === 401 && typeof window !== 'undefined') {
             localStorage.removeItem('comme_user');
             localStorage.removeItem('comme_token');
+        }
+        if (error.response?.status === 429 && typeof window !== 'undefined') {
+            const retryAfter = error.response.headers?.['retry-after'];
+            const seconds = retryAfter ? parseInt(retryAfter, 10) : 60;
+            toast.error(`Rate limit exceeded. Please wait ${seconds}s before retrying.`);
         }
         return Promise.reject(error);
     }

@@ -23,10 +23,25 @@
         </div>
 
         <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 18px;">
-            <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">Local Dev URL</div>
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--brand-gold);">
-                http://localhost:8000
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Real-Time APM</div>
+                <span class="auth-badge" style="font-size: 10px; padding: 1px 6px; background: rgba(2, 245, 168, 0.15); color: #02f5a8; border-color: rgba(2, 245, 168, 0.3);">Pulse</span>
             </div>
+            <a href="{{ url('/pulse') }}" target="_blank" rel="noopener noreferrer" style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--brand-teal); text-decoration: none; display: flex; align-items: center; gap: 6px;">
+                <span>/pulse</span> <span style="font-size: 11px; opacity: 0.7;">↗</span>
+            </a>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Slow queries, slow requests, and cache hit metrics.</div>
+        </div>
+
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 18px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Diagnostic Logs</div>
+                <span class="auth-badge" style="font-size: 10px; padding: 1px 6px; background: rgba(168, 2, 245, 0.15); color: #c464fa; border-color: rgba(168, 2, 245, 0.3);">Log Viewer</span>
+            </div>
+            <a href="{{ url('/log-viewer') }}" target="_blank" rel="noopener noreferrer" style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #c464fa; text-decoration: none; display: flex; align-items: center; gap: 6px;">
+                <span>/log-viewer</span> <span style="font-size: 11px; opacity: 0.7;">↗</span>
+            </a>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Live stream, search by level, and stack traces.</div>
         </div>
     </div>
 </section>

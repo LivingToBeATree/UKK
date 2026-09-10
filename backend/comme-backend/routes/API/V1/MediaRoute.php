@@ -12,6 +12,6 @@ Route::get('media/{media}/download', [MediaController::class, 'download']);
 Route::get('media/{media}', [MediaController::class, 'show']);
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('media', [MediaController::class, 'store']);
+    Route::post('media', [MediaController::class, 'store'])->middleware('throttle:media-upload');
     Route::delete('media/{media}', [MediaController::class, 'destroy']);
 });

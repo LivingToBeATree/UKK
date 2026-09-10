@@ -15,6 +15,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Tag;
+use App\Services\API\V1\CacheService;
 use App\Services\ModerationSyncService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -112,6 +113,30 @@ class CommissionServiceController extends Controller
             default:
                 $query->latest();
                 break;
+        }
+
+        $page = (int) $request->get('page', 1);
+        $tag = $request->get('tag');
+
+        // Cache public generic catalog browsing (no search, no price filter, no specific artist or status filter)
+        $canCache = ! $request->filled('search') && ! $request->filled('artist_profile_id') && ! $request->filled('min_price') && ! $request->filled('max_price') && ! $request->filled('status');
+
+        if ($canCache) {
+            $data = CacheService::rememberServices($page, $tag, $sort, function () use ($query) {
+                $commissionServices = $query->paginate(20);
+                $paginated = CommissionServiceResource::collection($commissionServices)->response()->getData(true);
+
+                return [
+                    'status_code' => Response::HTTP_OK,
+                    'status' => 'SUCCESS',
+                    'message' => 'Commission services retrieved successfully.',
+                    'data' => $paginated['data'],
+                    'links' => $paginated['links'] ?? null,
+                    'meta' => $paginated['meta'] ?? null,
+                ];
+            });
+
+            return response()->json($data);
         }
 
         $commissionServices = $query->paginate(20);

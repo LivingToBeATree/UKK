@@ -13,7 +13,8 @@
   <img src="https://img.shields.io/badge/PostgreSQL-16+-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL">
   <img src="https://img.shields.io/badge/Midtrans-Snap%20%26%20Iris-02F5A8?style=for-the-badge&logo=cashapp&logoColor=black" alt="Midtrans Payments">
   <img src="https://img.shields.io/badge/API%20Endpoints-127%20Routes-7928CA?style=for-the-badge&logo=fastapi&logoColor=white" alt="API Endpoints">
-  <img src="https://img.shields.io/badge/Backend%20Tests-105%20Passed%20(443%20Assertions)-02F5A8?style=for-the-badge&logo=githubactions&logoColor=black" alt="Tests Passed">
+  <img src="https://img.shields.io/badge/Observability-Pulse%20%26%20Log%20Viewer-00C3FF?style=for-the-badge&logo=datadog&logoColor=white" alt="Observability">
+  <img src="https://img.shields.io/badge/Backend%20Tests-113%20Passed%20(460%20Assertions)-02F5A8?style=for-the-badge&logo=githubactions&logoColor=black" alt="Tests Passed">
 </p>
 
 ---
@@ -130,6 +131,20 @@ graph TD
   - **Error Reference (`/errors`)**: RFC-7807 compliant error catalog for all HTTP status codes.
   - **Theme System**: Dark, Light, and System OS themes with day/night SVG icons.
 
+### 9. Real-Time Observability, Smart Caching & Tiered Rate Limiting
+- **Laravel Pulse APM (`/pulse`)**: Real-time application performance monitoring tracking slow database queries (>500ms), slow HTTP requests (>1,000ms), cache hit/miss ratio, and server usage.
+- **Interactive Log Viewer (`/log-viewer`)**: In-browser diagnostic logging dashboard with live streaming, search by log level, formatted stack traces, and log file downloads.
+- **PostgreSQL-Backed Smart Caching (`CacheService`)**: Fast caching for public artwork feeds, commission service listings, and artist profiles with epoch-based invalidation that guarantees atomic cache purging upon model lifecycle events via `CacheInvalidationObserver`.
+- **Role-Tiered Rate Limiting**: Dynamic request throttling based on authenticated roles:
+  - **Admin**: 300 req/min
+  - **Moderator**: 240 req/min
+  - **Verified Artist**: 180 req/min (high-frequency studio workflows)
+  - **Authenticated Buyer**: 120 req/min
+  - **Guest / Public**: 60 req/min
+  - Dedicated limiters: Search (30 req/min), Media Uploads (20 req/min), Payment Checkout (10 req/min).
+- **Request Correlation Tracing (`AssignRequestId`)**: Unique `X-Request-ID` UUID automatically assigned to every request, injected into structured logging context (`Log::withContext(...)`), and returned in response headers for end-to-end debugging.
+- **Slow Query Detection**: Automatic database listener (`DB::whenQueryingForLongerThan(500)`) logging warnings for queries exceeding 500ms.
+
 ---
 
 ## Scheduled Artisan Automation Commands
@@ -244,6 +259,8 @@ For in-depth guides and API specifications, refer to the individual component do
 - **[Backend README & API Reference](backend/comme-backend/README.md)**
 - **[Frontend Architecture & Component Guide](frontend/comme-frontend/README.md)**
 - **[Interactive API Documentation Portal](http://localhost:8000)** (when backend is running)
+- **[Laravel Pulse APM Dashboard](http://localhost:8000/pulse)** (Real-time performance & cache telemetry)
+- **[Interactive Log Viewer](http://localhost:8000/log-viewer)** (Diagnostic live logs & search)
 - **[Interactive API Sandbox](http://localhost:8000/explore)**
 - **[HTTP Error Envelope Catalog](http://localhost:8000/errors)**
 
