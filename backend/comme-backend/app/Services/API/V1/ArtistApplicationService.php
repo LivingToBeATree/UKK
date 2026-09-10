@@ -12,6 +12,7 @@ use App\Notifications\API\V1\ArtistApplication\ArtistApplicationApprovedNotifica
 use App\Notifications\API\V1\ArtistApplication\ArtistApplicationRejectedNotification;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
+use LogicException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class ArtistApplicationService
@@ -75,7 +76,7 @@ class ArtistApplicationService
             // Second line of defence (DB unique constraint is the first):
             // refuse the operation cleanly if the user somehow already has a profile.
             if ($application->user->hasArtistProfile()) {
-                throw new \LogicException(
+                throw new LogicException(
                     "User [{$application->user_id}] already has an artist profile. Cannot approve application [{$application->id}]."
                 );
             }

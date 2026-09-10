@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Throwable;
 
 class SyncExistingMigrations extends Command
 {
@@ -110,7 +111,7 @@ class SyncExistingMigrations extends Command
 
             $this->info("Synchronization complete. Marked {$markedCount} migration(s) as already ran.");
             return 0;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->error('Failed to sync migrations: ' . $e->getMessage());
             return 1;
         }

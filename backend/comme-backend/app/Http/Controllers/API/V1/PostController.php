@@ -11,6 +11,15 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
+use App\Enum\MediaType;
+use App\Enum\PostVisibilityType;
+use App\Models\PostMedia;
+use App\Models\Tag;
+use App\Services\ModerationSyncService;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class PostController extends Controller
 {
@@ -26,7 +35,7 @@ class PostController extends Controller
 
         $query = Post::with(['user', 'portfolio.media', 'portfolio.thumbnailMedia', 'media', 'tags']);
 
-        // 1. Exclude taken-down posts and posts from suspended authors (except for staff, or the post's own author)
+        // Exclude taken-down posts and posts from suspended authors (except for staff, or the post's own author)
         if (! $isStaff) {
             if ($user) {
                 $query->where(function ($q) use ($user) {
@@ -49,10 +58,10 @@ class PostController extends Controller
             }
         }
 
-        // 2. Tag filtering (by slug or name)
+        // Tag filtering (by slug or name)
         if ($request->filled('tag')) {
             $tagInput = trim(str_replace('#', '', $request->tag));
-            $tagSlug = \Illuminate\Support\Str::slug($tagInput);
+            $tagSlug = Str::slug($tagInput);
 
             $query->whereHas('tags', function ($q) use ($tagInput, $tagSlug) {
                 $q->where('slug', $tagSlug)
@@ -61,7 +70,7 @@ class PostController extends Controller
             });
         }
 
-        // 3. Full-text search across content, author, and tags
+        // Full-text search across content, author, and tags
         if ($request->filled('search')) {
             $search = trim($request->search);
             $query->where(function ($q) use ($search) {
@@ -77,7 +86,7 @@ class PostController extends Controller
             });
         }
 
-        // 4. Type filtering: 'artwork' vs 'posts'
+        // Type filtering: 'artwork' vs 'posts'
         if ($request->get('type') === 'artwork') {
             $query->where(function ($q) {
                 $q->whereNotNull('portfolio_id')
@@ -87,7 +96,7 @@ class PostController extends Controller
             $query->whereNull('portfolio_id');
         }
 
-        // 5. User filtering
+        // User filtering
         $isTargetOwner = false;
         if ($request->filled('user_id')) {
             $query->where('user_id', $request->user_id);
@@ -103,21 +112,21 @@ class PostController extends Controller
             }
         }
 
-        // 6. Visibility scoping (hide private posts from public/unauthorized viewers, keep visible to author and followers)
+        // Visibility scoping (hide private posts from public/unauthorized viewers, keep visible to author and followers)
         if (! $isStaff && ! $isTargetOwner) {
             $query->where(function ($q) use ($user) {
-                $q->where('visibility', \App\Enum\PostVisibilityType::PUBLIC);
+                $q->where('visibility', PostVisibilityType::PUBLIC);
                 if ($user) {
                     $q->orWhere('user_id', $user->id)
                         ->orWhere(function ($fq) use ($user) {
-                            $fq->where('visibility', \App\Enum\PostVisibilityType::FOLLOWERS)
+                            $fq->where('visibility', PostVisibilityType::FOLLOWERS)
                                 ->whereHas('user.followers', fn ($fl) => $fl->where('follower_id', $user->id));
                         });
                 }
             });
         }
 
-        // 7. Sort Order
+        // Sort Order
         $sort = $request->get('sort', 'latest');
         switch ($sort) {
             case 'title_asc':
@@ -166,7 +175,7 @@ class PostController extends Controller
         $post = Post::create([
             'content' => $request->content ?? '',
             'portfolio_id' => $request->portfolio_id,
-            'visibility' => $request->visibility ?? \App\Enum\PostVisibilityType::PUBLIC,
+            'visibility' => $request->visibility ?? PostVisibilityType::PUBLIC,
             'commentable' => $request->boolean('commentable', true),
             'user_id' => $request->user()->id,
         ]);
@@ -176,18 +185,18 @@ class PostController extends Controller
             foreach ($request->file('media') as $index => $file) {
                 $path = $file->store('posts/media', 'public');
                 if (! $path) {
-                    \Illuminate\Support\Facades\Log::error('Failed to store post media file: ' . $file->getClientOriginalName());
+                    Log::error('Failed to store post media file: ' . $file->getClientOriginalName());
                     return ApiResponseHelper::errorResponse(
                         'Failed to write file to storage. Please check disk permissions.',
                         Response::HTTP_INTERNAL_SERVER_ERROR
                     );
                 }
                 $mime = $file->getClientMimeType();
-                $mediaType = str_starts_with($mime, 'video/') ? \App\Enum\MediaType::VIDEO : \App\Enum\MediaType::IMAGE;
+                $mediaType = str_starts_with($mime, 'video/') ? MediaType::VIDEO : MediaType::IMAGE;
 
                 // Auto faststart MP4 videos for instant streaming
-                if ($mediaType === \App\Enum\MediaType::VIDEO && strtolower($file->getClientOriginalExtension()) === 'mp4') {
-                    $fullDiskPath = \Illuminate\Support\Facades\Storage::disk('public')->path($path);
+                if ($mediaType === MediaType::VIDEO && strtolower($file->getClientOriginalExtension()) === 'mp4') {
+                    $fullDiskPath = Storage::disk('public')->path($path);
                     $scriptPath = base_path('storage/mp4-faststart.cjs');
                     if (file_exists($scriptPath) && file_exists($fullDiskPath)) {
                         @exec('node ' . escapeshellarg($scriptPath) . ' ' . escapeshellarg($fullDiskPath) . ' 2>&1');
@@ -195,7 +204,7 @@ class PostController extends Controller
                     }
                 }
 
-                \App\Models\PostMedia::create([
+                PostMedia::create([
                     'post_id' => $post->id,
                     'file_name' => $file->getClientOriginalName(),
                     'file_path' => $path,
@@ -215,9 +224,9 @@ class PostController extends Controller
             foreach ($tagNames as $name) {
                 $cleanName = trim(str_replace('#', '', (string) $name));
                 if (!empty($cleanName)) {
-                    $tag = \App\Models\Tag::firstOrCreate(
+                    $tag = Tag::firstOrCreate(
                         ['name' => $cleanName],
-                        ['slug' => \Illuminate\Support\Str::slug($cleanName)]
+                        ['slug' => Str::slug($cleanName)]
                     );
                     $tagIds[] = $tag->id;
                 }
@@ -253,7 +262,7 @@ class PostController extends Controller
     {
         $validated = $request->validated();
 
-        if ($post->is_taken_down && isset($validated['visibility']) && $validated['visibility'] !== \App\Enum\PostVisibilityType::PRIVATE->value) {
+        if ($post->is_taken_down && isset($validated['visibility']) && $validated['visibility'] !== PostVisibilityType::PRIVATE->value) {
             if (! $request->user()?->isStaff()) {
                 return ApiResponseHelper::errorResponse(
                     'This post has been taken down by moderators for a policy violation and cannot be made public. Please open a support ticket to submit an appeal.',
@@ -262,7 +271,7 @@ class PostController extends Controller
             }
         }
 
-        $post->update(\Illuminate\Support\Arr::except($validated, ['tags', 'media', 'delete_media_ids']));
+        $post->update(Arr::except($validated, ['tags', 'media', 'delete_media_ids']));
 
         // Handle deleting specific existing post media files
         if ($request->filled('delete_media_ids')) {
@@ -272,8 +281,8 @@ class PostController extends Controller
 
             $mediasToDelete = $post->media()->whereIn('id', $deleteIds)->get();
             foreach ($mediasToDelete as $m) {
-                if ($m->file_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($m->file_path)) {
-                    \Illuminate\Support\Facades\Storage::disk('public')->delete($m->file_path);
+                if ($m->file_path && Storage::disk('public')->exists($m->file_path)) {
+                    Storage::disk('public')->delete($m->file_path);
                 }
                 $m->delete();
             }
@@ -284,18 +293,18 @@ class PostController extends Controller
             foreach ($request->file('media') as $index => $file) {
                 $path = $file->store('posts/media', 'public');
                 if (! $path) {
-                    \Illuminate\Support\Facades\Log::error('Failed to store post media update: ' . $file->getClientOriginalName());
+                    Log::error('Failed to store post media update: ' . $file->getClientOriginalName());
                     return ApiResponseHelper::errorResponse(
                         'Failed to write file to storage. Please check disk permissions.',
                         Response::HTTP_INTERNAL_SERVER_ERROR
                     );
                 }
                 $mime = $file->getClientMimeType();
-                $mediaType = str_starts_with($mime, 'video/') ? \App\Enum\MediaType::VIDEO : \App\Enum\MediaType::IMAGE;
+                $mediaType = str_starts_with($mime, 'video/') ? MediaType::VIDEO : MediaType::IMAGE;
 
                 // Auto faststart MP4 videos for instant streaming
-                if ($mediaType === \App\Enum\MediaType::VIDEO && strtolower($file->getClientOriginalExtension()) === 'mp4') {
-                    $fullDiskPath = \Illuminate\Support\Facades\Storage::disk('public')->path($path);
+                if ($mediaType === MediaType::VIDEO && strtolower($file->getClientOriginalExtension()) === 'mp4') {
+                    $fullDiskPath = Storage::disk('public')->path($path);
                     $scriptPath = base_path('storage/mp4-faststart.cjs');
                     if (file_exists($scriptPath) && file_exists($fullDiskPath)) {
                         @exec('node ' . escapeshellarg($scriptPath) . ' ' . escapeshellarg($fullDiskPath) . ' 2>&1');
@@ -303,7 +312,7 @@ class PostController extends Controller
                     }
                 }
 
-                \App\Models\PostMedia::create([
+                PostMedia::create([
                     'post_id' => $post->id,
                     'file_name' => $file->getClientOriginalName(),
                     'file_path' => $path,
@@ -323,9 +332,9 @@ class PostController extends Controller
             foreach ($tagNames as $name) {
                 $cleanName = trim(str_replace('#', '', (string) $name));
                 if (!empty($cleanName)) {
-                    $tag = \App\Models\Tag::firstOrCreate(
+                    $tag = Tag::firstOrCreate(
                         ['name' => $cleanName],
-                        ['slug' => \Illuminate\Support\Str::slug($cleanName)]
+                        ['slug' => Str::slug($cleanName)]
                     );
                     $tagIds[] = $tag->id;
                 }
@@ -336,7 +345,7 @@ class PostController extends Controller
         // Notify moderation on ticket thread if this post has active reports/tickets
         $actor = $request->user();
         if ($actor) {
-            \App\Services\ModerationSyncService::handleContentUpdated($post, $actor);
+            ModerationSyncService::handleContentUpdated($post, $actor);
         }
 
         return ApiResponseHelper::successResponse(
@@ -354,7 +363,7 @@ class PostController extends Controller
 
         $actor = request()->user() ?? $post->user;
         if ($actor) {
-            \App\Services\ModerationSyncService::handleContentDeleted($post, $actor);
+            ModerationSyncService::handleContentDeleted($post, $actor);
         }
 
         $post->delete();

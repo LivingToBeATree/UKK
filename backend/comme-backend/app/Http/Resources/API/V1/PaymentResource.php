@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\API\V1;
 
+use DateTimeInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -22,7 +23,7 @@ class PaymentResource extends JsonResource
             'status' => $this->status?->value ?? $this->status,
             'payment_type' => $this->payment_type,
             'gross_amount' => (float) $this->gross_amount,
-            'paid_at' => $this->paid_at instanceof \DateTimeInterface ? $this->paid_at->toISOString() : ($this->paid_at ? (string) $this->paid_at : null),
+            'paid_at' => $this->paid_at instanceof DateTimeInterface ? $this->paid_at->toISOString() : ($this->paid_at ? (string) $this->paid_at : null),
             'created_at' => $this->created_at?->toISOString(),
         ];
     }

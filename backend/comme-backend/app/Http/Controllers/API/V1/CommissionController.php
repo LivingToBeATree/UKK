@@ -19,6 +19,15 @@ use Illuminate\Http\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use App\Enum\MediaType;
+use App\Enum\MessageType;
+use App\Enum\NotificationType;
+use App\Models\CommissionMessage;
+use App\Models\CommissionMessageMedia;
+use App\Models\Notification;
+use App\Http\Requests\API\V1\Commission\DeliverCommissionRequest;
+use App\Services\API\V1\CommissionCompletionService;
+use Exception;
 
 class CommissionController extends Controller
 {
@@ -185,12 +194,12 @@ class CommissionController extends Controller
         }
 
         // Create initial commission message with the brief and attached references
-        $initialMessage = \App\Models\CommissionMessage::create([
+        $initialMessage = CommissionMessage::create([
             'commission_id' => $commission->id,
             'sender_id' => $request->user()->id,
             'recipient_id' => $service->artistProfile?->user_id,
             'message' => $request->description,
-            'message_type' => \App\Enum\MessageType::USER,
+            'message_type' => MessageType::USER,
         ]);
 
         if (!empty($files)) {
@@ -201,10 +210,10 @@ class CommissionController extends Controller
                 $path = $file->store('commissions/messages', 'public');
                 $mime = $file->getClientMimeType() ?: 'application/octet-stream';
                 $mediaType = str_starts_with($mime, 'image/') 
-                    ? \App\Enum\MediaType::IMAGE 
-                    : (str_starts_with($mime, 'video/') ? \App\Enum\MediaType::VIDEO : \App\Enum\MediaType::IMAGE);
+                    ? MediaType::IMAGE 
+                    : (str_starts_with($mime, 'video/') ? MediaType::VIDEO : MediaType::IMAGE);
 
-                \App\Models\CommissionMessageMedia::create([
+                CommissionMessageMedia::create([
                     'commission_message_id' => $initialMessage->id,
                     'file_name' => $file->getClientOriginalName(),
                     'file_path' => $path,
@@ -303,7 +312,7 @@ class CommissionController extends Controller
         );
     }
 
-    public function deliver(Request $request, Commission $commission): JsonResponse
+    public function deliver(DeliverCommissionRequest $request, Commission $commission): JsonResponse
     {
         Gate::authorize('markDelivered', $commission);
 
@@ -329,12 +338,12 @@ class CommissionController extends Controller
             ]);
 
             // Create a dedicated Delivery Message in the chat workspace
-            $deliveryMessage = \App\Models\CommissionMessage::create([
+            $deliveryMessage = CommissionMessage::create([
                 'commission_id' => $commission->id,
                 'sender_id' => $request->user()->id,
                 'recipient_id' => $commission->user_id,
                 'message' => "[Final Work Delivered]: {$deliveryNote}",
-                'message_type' => \App\Enum\MessageType::USER,
+                'message_type' => MessageType::USER,
             ]);
 
             foreach ($files as $index => $file) {
@@ -344,10 +353,10 @@ class CommissionController extends Controller
                 $path = $file->store('commissions/deliverables', 'public');
                 $mime = $file->getClientMimeType() ?: 'application/octet-stream';
                 $mediaType = str_starts_with($mime, 'image/')
-                    ? \App\Enum\MediaType::IMAGE
-                    : (str_starts_with($mime, 'video/') ? \App\Enum\MediaType::VIDEO : \App\Enum\MediaType::IMAGE);
+                    ? MediaType::IMAGE
+                    : (str_starts_with($mime, 'video/') ? MediaType::VIDEO : MediaType::IMAGE);
 
-                \App\Models\CommissionMessageMedia::create([
+                CommissionMessageMedia::create([
                     'commission_message_id' => $deliveryMessage->id,
                     'file_name' => $file->getClientOriginalName(),
                     'file_path' => $path,
@@ -358,9 +367,9 @@ class CommissionController extends Controller
                 ]);
             }
 
-            \App\Models\Notification::create([
+            Notification::create([
                 'user_id' => $commission->user_id,
-                'type' => \App\Enum\NotificationType::COMMISSION_MESSAGE,
+                'type' => NotificationType::COMMISSION_MESSAGE,
                 'title' => 'Deliverables submitted',
                 'message' => 'The artist has delivered final work for your commission. Please review it within 7 days.',
                 'notifiable_type' => Commission::class,
@@ -374,7 +383,7 @@ class CommissionController extends Controller
         );
     }
 
-    public function confirm(Commission $commission, \App\Services\API\V1\CommissionCompletionService $completionService): JsonResponse
+    public function confirm(Commission $commission, CommissionCompletionService $completionService): JsonResponse
     {
         Gate::authorize('confirmCompletion', $commission);
 
@@ -385,7 +394,7 @@ class CommissionController extends Controller
                 new CommissionResource($completed->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review', 'payout'])),
                 'Commission successfully confirmed and completed. Artist payout has been queued.'
             );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return ApiResponseHelper::errorResponse(
                 $e->getMessage(),
                 Response::HTTP_UNPROCESSABLE_ENTITY
@@ -470,9 +479,9 @@ class CommissionController extends Controller
             : $commission->user_id;
 
         if ($counterpartId) {
-            \App\Models\Notification::create([
+            Notification::create([
                 'user_id' => $counterpartId,
-                'type' => \App\Enum\NotificationType::SYSTEM,
+                'type' => NotificationType::SYSTEM,
                 'title' => 'Cancellation Requested',
                 'message' => "{$request->user()->display_name} has requested to cancel Commission #{$commission->id}: \"{$validated['reason']}\"",
                 'notifiable_type' => Commission::class,
@@ -481,12 +490,12 @@ class CommissionController extends Controller
         }
 
         // Post notice in workspace chat
-        \App\Models\CommissionMessage::create([
+        CommissionMessage::create([
             'commission_id' => $commission->id,
             'sender_id' => $request->user()->id,
             'recipient_id' => $counterpartId,
             'message' => "[Cancellation Request] " . $request->user()->display_name . " requested to cancel this order.\nReason: " . $validated['reason'],
-            'message_type' => \App\Enum\MessageType::SYSTEM,
+            'message_type' => MessageType::SYSTEM,
         ]);
 
         return ApiResponseHelper::successResponse(
@@ -552,12 +561,12 @@ class CommissionController extends Controller
             ? "[Cancellation & Escrow Refund] The cancellation request was accepted by {$acceptor->display_name}. Full escrow payment of {$formattedRefund} has been refunded to the client."
             : "[Cancellation Accepted] The cancellation request was accepted by {$acceptor->display_name}. This commission order has been officially cancelled.";
 
-        \App\Models\CommissionMessage::create([
+        CommissionMessage::create([
             'commission_id' => $commission->id,
             'sender_id' => $acceptor->id,
             'recipient_id' => $requesterId,
             'message' => $chatNotice,
-            'message_type' => \App\Enum\MessageType::SYSTEM,
+            'message_type' => MessageType::SYSTEM,
         ]);
 
         // Send notifications
@@ -566,9 +575,9 @@ class CommissionController extends Controller
                 ? "Your cancellation request for Commission #{$commission->id} was accepted. A full escrow refund of {$formattedRefund} has been processed back to your account."
                 : "Your cancellation request for Commission #{$commission->id} was accepted. The commission is now cancelled.";
 
-            \App\Models\Notification::create([
+            Notification::create([
                 'user_id' => $requesterId,
-                'type' => \App\Enum\NotificationType::SYSTEM,
+                'type' => NotificationType::SYSTEM,
                 'title' => $wasRefunded ? 'Cancellation & Refund Processed' : 'Cancellation Accepted',
                 'message' => $notifMessage,
                 'notifiable_type' => Commission::class,
@@ -578,9 +587,9 @@ class CommissionController extends Controller
 
         // If the acceptor was the artist and buyer was refunded, also notify buyer if not requester
         if ($wasRefunded && $commission->user_id !== $requesterId) {
-            \App\Models\Notification::create([
+            Notification::create([
                 'user_id' => $commission->user_id,
-                'type' => \App\Enum\NotificationType::SYSTEM,
+                'type' => NotificationType::SYSTEM,
                 'title' => 'Escrow Refund Processed',
                 'message' => "Commission #{$commission->id} was cancelled. A full escrow refund of {$formattedRefund} has been returned to you.",
                 'notifiable_type' => Commission::class,
@@ -609,33 +618,33 @@ class CommissionController extends Controller
         ]);
 
         if (!$isRequester && $requesterId) {
-            \App\Models\Notification::create([
+            Notification::create([
                 'user_id' => $requesterId,
-                'type' => \App\Enum\NotificationType::SYSTEM,
+                'type' => NotificationType::SYSTEM,
                 'title' => 'Cancellation Request Declined',
                 'message' => "{$currentUser->display_name} declined your cancellation request. The commission remains active.",
                 'notifiable_type' => Commission::class,
                 'notifiable_id' => $commission->id,
             ]);
 
-            \App\Models\CommissionMessage::create([
+            CommissionMessage::create([
                 'commission_id' => $commission->id,
                 'sender_id' => $currentUser->id,
                 'recipient_id' => $requesterId,
                 'message' => "[Cancellation Request Declined] {$currentUser->display_name} declined the cancellation request. The order remains active.",
-                'message_type' => \App\Enum\MessageType::SYSTEM,
+                'message_type' => MessageType::SYSTEM,
             ]);
         } else {
             $counterpartId = ($currentUser->id === $commission->user_id)
                 ? $commission->artistProfile?->user_id
                 : $commission->user_id;
 
-            \App\Models\CommissionMessage::create([
+            CommissionMessage::create([
                 'commission_id' => $commission->id,
                 'sender_id' => $currentUser->id,
                 'recipient_id' => $counterpartId,
                 'message' => "[Cancellation Request Withdrawn] {$currentUser->display_name} withdrew their cancellation request.",
-                'message_type' => \App\Enum\MessageType::SYSTEM,
+                'message_type' => MessageType::SYSTEM,
             ]);
         }
 

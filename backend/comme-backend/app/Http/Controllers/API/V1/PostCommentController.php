@@ -11,6 +11,9 @@ use App\Http\Helpers\ApiResponseHelper;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
+use App\Models\PostCommentBookmark;
+use App\Models\PostCommentLike;
+use Illuminate\Http\Request;
 
 class PostCommentController extends Controller
 {
@@ -115,10 +118,10 @@ class PostCommentController extends Controller
     /**
      * Toggle like on a comment
      */
-    public function toggleLike(PostComment $comment, \Illuminate\Http\Request $request): JsonResponse
+    public function toggleLike(PostComment $comment, Request $request): JsonResponse
     {
         $user = $request->user();
-        $existing = \App\Models\PostCommentLike::where('post_comment_id', $comment->id)
+        $existing = PostCommentLike::where('post_comment_id', $comment->id)
             ->where('user_id', $user->id)
             ->first();
 
@@ -126,7 +129,7 @@ class PostCommentController extends Controller
             $existing->delete();
             $liked = false;
         } else {
-            \App\Models\PostCommentLike::create([
+            PostCommentLike::create([
                 'post_comment_id' => $comment->id,
                 'user_id' => $user->id,
             ]);
@@ -145,10 +148,10 @@ class PostCommentController extends Controller
     /**
      * Toggle bookmark on a comment
      */
-    public function toggleBookmark(PostComment $comment, \Illuminate\Http\Request $request): JsonResponse
+    public function toggleBookmark(PostComment $comment, Request $request): JsonResponse
     {
         $user = $request->user();
-        $existing = \App\Models\PostCommentBookmark::where('post_comment_id', $comment->id)
+        $existing = PostCommentBookmark::where('post_comment_id', $comment->id)
             ->where('user_id', $user->id)
             ->first();
 
@@ -156,7 +159,7 @@ class PostCommentController extends Controller
             $existing->delete();
             $bookmarked = false;
         } else {
-            \App\Models\PostCommentBookmark::create([
+            PostCommentBookmark::create([
                 'post_comment_id' => $comment->id,
                 'user_id' => $user->id,
             ]);

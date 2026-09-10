@@ -14,6 +14,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use App\Enum\CommissionStatus;
+use App\Enum\MediaType;
+use App\Models\CommissionMessageMedia;
 
 class CommissionMessageController extends Controller
 {
@@ -58,7 +61,7 @@ class CommissionMessageController extends Controller
             throw new AccessDeniedHttpException('Only the buyer or artist can send messages for this commission.');
         }
 
-        $statusValue = $commission->status instanceof \App\Enum\CommissionStatus ? $commission->status->value : $commission->status;
+        $statusValue = $commission->status instanceof CommissionStatus ? $commission->status->value : $commission->status;
         if (!in_array($statusValue, ['accepted', 'in_progress', 'waiting_for_client', 'revision'])) {
             return ApiResponseHelper::errorResponse(
                 'Direct messaging is only available while the commission is active (after acceptance and before completion).',
@@ -96,10 +99,10 @@ class CommissionMessageController extends Controller
                 $path = $file->store('commissions/messages', 'public');
                 $mime = $file->getClientMimeType() ?: 'application/octet-stream';
                 $mediaType = str_starts_with($mime, 'image/') 
-                    ? \App\Enum\MediaType::IMAGE 
-                    : (str_starts_with($mime, 'video/') ? \App\Enum\MediaType::VIDEO : \App\Enum\MediaType::IMAGE);
+                    ? MediaType::IMAGE 
+                    : (str_starts_with($mime, 'video/') ? MediaType::VIDEO : MediaType::IMAGE);
 
-                \App\Models\CommissionMessageMedia::create([
+                CommissionMessageMedia::create([
                     'commission_message_id' => $message->id,
                     'file_name' => $file->getClientOriginalName(),
                     'file_path' => $path,

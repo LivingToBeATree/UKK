@@ -12,6 +12,8 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class MediaController extends Controller
 {
@@ -37,7 +39,7 @@ class MediaController extends Controller
         $path = $file->storeAs('uploads/' . date('Y/m'), $fileName, 'public');
 
         if (! $path) {
-            \Illuminate\Support\Facades\Log::error('Failed to store media file: ' . $originalName);
+            Log::error('Failed to store media file: ' . $originalName);
             return ApiResponseHelper::errorResponse(
                 'Failed to write file to storage. Please check disk permissions.',
                 Response::HTTP_INTERNAL_SERVER_ERROR
@@ -102,7 +104,7 @@ class MediaController extends Controller
     /**
      * Download any file from public storage by path or URL query parameter.
      */
-    public function downloadByPath(\Illuminate\Http\Request $request)
+    public function downloadByPath(Request $request)
     {
         $raw = $request->query('path') ?? $request->query('url') ?? '';
         $raw = urldecode($raw);

@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Commission;
 use App\Models\User;
+use App\Enum\CommissionStatus;
 
 class CommissionPolicy
 {
@@ -117,7 +118,7 @@ class CommissionPolicy
 
     public function requestCancellation(User $user, Commission $commission): bool
     {
-        $statusVal = $commission->status instanceof \App\Enum\CommissionStatus 
+        $statusVal = $commission->status instanceof CommissionStatus 
             ? $commission->status->value 
             : (string) $commission->status;
 

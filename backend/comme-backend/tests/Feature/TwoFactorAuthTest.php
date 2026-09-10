@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Services\API\V1\TwoFactorAuthService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use ReflectionClass;
 use Tests\TestCase;
 
 class TwoFactorAuthTest extends TestCase
@@ -58,7 +59,7 @@ class TwoFactorAuthTest extends TestCase
         // Mock a valid code calculation using current time slice
         $currentTimeSlice = (int) floor(time() / 30);
         $packed = pack('J', $currentTimeSlice);
-        $reflection = new \ReflectionClass($this->twoFactorService);
+        $reflection = new ReflectionClass($this->twoFactorService);
         $method = $reflection->getMethod('base32Decode');
         $method->setAccessible(true);
         $binarySecret = $method->invoke($this->twoFactorService, $secret);

@@ -6,6 +6,7 @@ use App\Enum\PayoutStatus;
 use App\Models\CommissionPayout;
 use App\Services\API\V1\MidtransPayoutService;
 use App\Services\API\V1\StaffNotificationService;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -64,7 +65,7 @@ class ReconcilePayouts extends Command
                     $stillProcessing++;
                     $this->line("  Payout #{$payout->id} still in-flight ({$providerStatus}) — remaining in PROCESSING.");
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->error("  Error polling Payout #{$payout->id}: " . $e->getMessage());
                 Log::error("ReconcilePayouts error for Payout #{$payout->id}: " . $e->getMessage());
             }

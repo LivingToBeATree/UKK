@@ -19,6 +19,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use App\Enum\PayoutStatus;
+use App\Http\Resources\API\V1\CommissionResource;
+use App\Models\CommissionPayout;
 
 class PaymentController extends Controller
 {
@@ -120,7 +123,7 @@ class PaymentController extends Controller
         });
 
         return ApiResponseHelper::successResponse(
-            new \App\Http\Resources\API\V1\CommissionResource($updatedCommission->fresh(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
+            new CommissionResource($updatedCommission->fresh(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
             'Payment secured in Escrow! Commission is now in progress.'
         );
     }
@@ -141,7 +144,7 @@ class PaymentController extends Controller
         // If already paid, return success immediately
         if ($payment->status === PaymentStatus::PAID->value || $commission->status === CommissionStatus::IN_PROGRESS) {
             return ApiResponseHelper::successResponse(
-                new \App\Http\Resources\API\V1\CommissionResource($commission->fresh(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
+                new CommissionResource($commission->fresh(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
                 'Payment is already confirmed and secured in Escrow.'
             );
         }
@@ -183,13 +186,13 @@ class PaymentController extends Controller
             });
 
             return ApiResponseHelper::successResponse(
-                new \App\Http\Resources\API\V1\CommissionResource($updatedCommission->fresh(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
+                new CommissionResource($updatedCommission->fresh(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
                 'Payment verified from Midtrans! Commission is now In Progress in Escrow.'
             );
         }
 
         return ApiResponseHelper::successResponse(
-            new \App\Http\Resources\API\V1\CommissionResource($commission->fresh(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
+            new CommissionResource($commission->fresh(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
             'Midtrans payment status: ' . ($remoteStatus['transaction_status'] ?? 'pending')
         );
     }
@@ -283,14 +286,14 @@ class PaymentController extends Controller
             return ApiResponseHelper::errorResponse('Missing reference_no.', Response::HTTP_BAD_REQUEST);
         }
 
-        $payout = \App\Models\CommissionPayout::where('reference', $reference)->first();
+        $payout = CommissionPayout::where('reference', $reference)->first();
 
         if (!$payout) {
             return ApiResponseHelper::errorResponse('Payout record not found.', Response::HTTP_NOT_FOUND);
         }
 
         // Terminal protection: Once a payout is COMPLETED, it must never be downgraded by a delayed webhook.
-        if ($payout->status === \App\Enum\PayoutStatus::COMPLETED) {
+        if ($payout->status === PayoutStatus::COMPLETED) {
             Log::info("Iris webhook: Payout #{$payout->id} is already in terminal state COMPLETED — ignoring webhook update.");
             return ApiResponseHelper::successResponse(message: 'Payout already in terminal state COMPLETED.');
         }
@@ -301,14 +304,14 @@ class PaymentController extends Controller
 
         if (in_array($providerStatus, ['completed', 'done', 'settled', 'success'])) {
             $payout->update([
-                'status' => \App\Enum\PayoutStatus::COMPLETED,
+                'status' => PayoutStatus::COMPLETED,
                 'completed_at' => now(),
                 'raw_response' => $verified,
             ]);
             Log::info("Iris webhook: Payout #{$payout->id} verified and marked COMPLETED via Midtrans source-of-truth challenge.");
         } elseif (in_array($providerStatus, ['failed', 'rejected', 'denied'])) {
             $payout->update([
-                'status' => \App\Enum\PayoutStatus::FAILED,
+                'status' => PayoutStatus::FAILED,
                 'failed_at' => now(),
                 'failure_reason' => "Provider confirmed status: {$providerStatus}",
                 'raw_response' => $verified,

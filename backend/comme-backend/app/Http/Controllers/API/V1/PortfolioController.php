@@ -13,6 +13,14 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use App\Enum\CommissionVisibility;
+use App\Enum\MediaType;
+use App\Enum\PostVisibilityType;
+use App\Models\Post;
+use App\Models\Tag;
+use App\Services\ModerationSyncService;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class PortfolioController extends Controller
 {
@@ -28,7 +36,7 @@ class PortfolioController extends Controller
 
         $query = Portfolio::with(['artistProfile.user', 'thumbnailMedia', 'media', 'tags']);
 
-        // 1. Exclude taken-down portfolios and suspended artists from public views (except staff or artist owner)
+        // Exclude taken-down portfolios and suspended artists from public views (except staff or artist owner)
         if (! $isStaff) {
             if ($user) {
                 $query->where(function ($q) use ($user) {
@@ -48,7 +56,7 @@ class PortfolioController extends Controller
 
         if ($request->filled('tag')) {
             $tagInput = trim(str_replace('#', '', $request->tag));
-            $tagSlug = \Illuminate\Support\Str::slug($tagInput);
+            $tagSlug = Str::slug($tagInput);
 
             $query->whereHas('tags', function ($q) use ($tagInput, $tagSlug) {
                 $q->where('slug', $tagSlug)
@@ -81,7 +89,7 @@ class PortfolioController extends Controller
 
         // Hide private artworks unless viewed by artist owner or staff
         if (! $isStaff && ! $isArtistOwner) {
-            $query->where('visibility', \App\Enum\CommissionVisibility::PUBLIC);
+            $query->where('visibility', CommissionVisibility::PUBLIC);
         }
 
         // Sorting / Sort Order
@@ -129,17 +137,17 @@ class PortfolioController extends Controller
             foreach ($request->file('media') as $index => $file) {
                 $path = $file->store('portfolios/media', 'public');
                 if (! $path) {
-                    \Illuminate\Support\Facades\Log::error('Failed to store portfolio media: ' . $file->getClientOriginalName());
+                    Log::error('Failed to store portfolio media: ' . $file->getClientOriginalName());
                     return ApiResponseHelper::errorResponse(
                         'Failed to write file to storage. Please check disk permissions.',
                         Response::HTTP_INTERNAL_SERVER_ERROR
                     );
                 }
                 $mime = $file->getClientMimeType();
-                $mediaType = str_starts_with($mime, 'video/') ? \App\Enum\MediaType::VIDEO : \App\Enum\MediaType::IMAGE;
+                $mediaType = str_starts_with($mime, 'video/') ? MediaType::VIDEO : MediaType::IMAGE;
 
                 // Auto-faststart if mp4
-                if ($mediaType === \App\Enum\MediaType::VIDEO && strtolower($file->getClientOriginalExtension()) === 'mp4') {
+                if ($mediaType === MediaType::VIDEO && strtolower($file->getClientOriginalExtension()) === 'mp4') {
                     $fullDiskPath = Storage::disk('public')->path($path);
                     $scriptPath = base_path('storage/mp4-faststart.cjs');
                     if (file_exists($scriptPath) && file_exists($fullDiskPath)) {
@@ -165,12 +173,12 @@ class PortfolioController extends Controller
         // When "post as an artwork" is enabled, also publish as a Post on community feed
         if ($request->boolean('post_as_artwork', false)) {
             $visibility = match ($request->input('post_visibility')) {
-                'followers' => \App\Enum\PostVisibilityType::FOLLOWERS,
-                'private' => \App\Enum\PostVisibilityType::PRIVATE,
-                default => \App\Enum\PostVisibilityType::PUBLIC,
+                'followers' => PostVisibilityType::FOLLOWERS,
+                'private' => PostVisibilityType::PRIVATE,
+                default => PostVisibilityType::PUBLIC,
             };
 
-            $post = \App\Models\Post::create([
+            $post = Post::create([
                 'user_id' => $request->user()->id,
                 'portfolio_id' => $portfolio->id,
                 'content' => $request->filled('post_content')
@@ -187,9 +195,9 @@ class PortfolioController extends Controller
                 foreach ($tagNames as $name) {
                     $cleanName = trim(str_replace('#', '', (string) $name));
                     if (!empty($cleanName)) {
-                        $tag = \App\Models\Tag::firstOrCreate(
+                        $tag = Tag::firstOrCreate(
                             ['name' => $cleanName],
-                            ['slug' => \Illuminate\Support\Str::slug($cleanName)]
+                            ['slug' => Str::slug($cleanName)]
                         );
                         $tagIds[] = $tag->id;
                     }
@@ -230,7 +238,7 @@ class PortfolioController extends Controller
     {
         $validated = $request->safe()->except(['media', 'tags', 'delete_media_ids']);
 
-        if ($portfolio->is_taken_down && isset($validated['visibility']) && $validated['visibility'] !== \App\Enum\CommissionVisibility::PRIVATE->value) {
+        if ($portfolio->is_taken_down && isset($validated['visibility']) && $validated['visibility'] !== CommissionVisibility::PRIVATE->value) {
             if (! $request->user()?->isStaff()) {
                 return ApiResponseHelper::errorResponse(
                     'This artwork has been taken down by moderators for a policy violation and cannot be made public. Please open a support ticket to submit an appeal.',
@@ -263,9 +271,9 @@ class PortfolioController extends Controller
             foreach ($tagNames as $name) {
                 $cleanName = trim(str_replace('#', '', (string) $name));
                 if (!empty($cleanName)) {
-                    $tag = \App\Models\Tag::firstOrCreate(
+                    $tag = Tag::firstOrCreate(
                         ['name' => $cleanName],
-                        ['slug' => \Illuminate\Support\Str::slug($cleanName)]
+                        ['slug' => Str::slug($cleanName)]
                     );
                     $tagIds[] = $tag->id;
                 }
@@ -273,7 +281,7 @@ class PortfolioController extends Controller
             $portfolio->tags()->sync($tagIds);
 
             // Also sync companion post tags if exists
-            $companionPost = \App\Models\Post::where('portfolio_id', $portfolio->id)->first();
+            $companionPost = Post::where('portfolio_id', $portfolio->id)->first();
             if ($companionPost) {
                 $companionPost->tags()->sync($tagIds);
                 if (isset($validated['title']) || isset($validated['description'])) {
@@ -289,17 +297,17 @@ class PortfolioController extends Controller
             foreach ($request->file('media') as $index => $file) {
                 $path = $file->store('portfolios/media', 'public');
                 if (! $path) {
-                    \Illuminate\Support\Facades\Log::error('Failed to store updated portfolio media: ' . $file->getClientOriginalName());
+                    Log::error('Failed to store updated portfolio media: ' . $file->getClientOriginalName());
                     return ApiResponseHelper::errorResponse(
                         'Failed to write file to storage. Please check disk permissions.',
                         Response::HTTP_INTERNAL_SERVER_ERROR
                     );
                 }
                 $mime = $file->getClientMimeType();
-                $mediaType = str_starts_with($mime, 'video/') ? \App\Enum\MediaType::VIDEO : \App\Enum\MediaType::IMAGE;
+                $mediaType = str_starts_with($mime, 'video/') ? MediaType::VIDEO : MediaType::IMAGE;
 
                 // Auto-faststart if mp4
-                if ($mediaType === \App\Enum\MediaType::VIDEO && strtolower($file->getClientOriginalExtension()) === 'mp4') {
+                if ($mediaType === MediaType::VIDEO && strtolower($file->getClientOriginalExtension()) === 'mp4') {
                     $fullDiskPath = Storage::disk('public')->path($path);
                     $scriptPath = base_path('storage/mp4-faststart.cjs');
                     if (file_exists($scriptPath) && file_exists($fullDiskPath)) {
@@ -333,7 +341,7 @@ class PortfolioController extends Controller
         // Notify moderation on ticket thread if this portfolio has active reports/tickets
         $actor = $request->user();
         if ($actor) {
-            \App\Services\ModerationSyncService::handleContentUpdated($portfolio, $actor);
+            ModerationSyncService::handleContentUpdated($portfolio, $actor);
         }
 
         return ApiResponseHelper::successResponse(
@@ -351,14 +359,14 @@ class PortfolioController extends Controller
 
         $actor = request()->user() ?? $portfolio->artistProfile?->user;
         if ($actor) {
-            \App\Services\ModerationSyncService::handleContentDeleted($portfolio, $actor);
+            ModerationSyncService::handleContentDeleted($portfolio, $actor);
         }
 
         // If this portfolio has a companion post, delete and sync it too
-        $companionPost = \App\Models\Post::where('portfolio_id', $portfolio->id)->first();
+        $companionPost = Post::where('portfolio_id', $portfolio->id)->first();
         if ($companionPost) {
             if ($actor) {
-                \App\Services\ModerationSyncService::handleContentDeleted($companionPost, $actor);
+                ModerationSyncService::handleContentDeleted($companionPost, $actor);
             }
             $companionPost->delete();
         }

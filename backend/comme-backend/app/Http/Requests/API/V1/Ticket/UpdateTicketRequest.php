@@ -6,14 +6,15 @@ use App\Enum\TicketPriority;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
+use App\Models\Ticket;
 
 class UpdateTicketRequest extends FormRequest
 {
     public function authorize(): bool
     {
         $ticket = $this->route('ticket');
-        if (! $ticket instanceof \App\Models\Ticket) {
-            $ticket = \App\Models\Ticket::find($ticket);
+        if (! $ticket instanceof Ticket) {
+            $ticket = Ticket::find($ticket);
         }
         return $ticket ? $this->user()->can('update', $ticket) : false;
     }

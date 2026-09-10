@@ -14,6 +14,16 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Http\Request;
+use App\Enum\CommissionVisibility;
+use App\Enum\NotificationType;
+use App\Enum\PostVisibilityType;
+use App\Models\ModerationAction;
+use App\Models\Notification;
+use App\Models\Portfolio;
+use App\Models\Post;
+use App\Models\TicketMessage;
+use App\Models\User;
+use Illuminate\Validation\Rule;
 
 class ReportController extends Controller
 {
@@ -149,77 +159,77 @@ class ReportController extends Controller
         }
 
         $validated = $request->validate([
-            'action_type' => ['required', \Illuminate\Validation\Rule::in(['warning', 'remove_content', 'restore_content', 'suspend_user', 'unsuspend_user'])],
+            'action_type' => ['required', Rule::in(['warning', 'remove_content', 'restore_content', 'suspend_user', 'unsuspend_user'])],
             'notes' => ['required', 'string', 'max:1000'],
         ]);
 
         $actionType = $validated['action_type'];
         $notes = $validated['notes'];
 
-        // 1. Perform action on reportable entity
+        // Perform action on reportable entity
         $targetUser = null;
         $targetTitle = 'Reported Item';
 
         if ($report->reportable) {
-            if ($report->reportable instanceof \App\Models\Post) {
+            if ($report->reportable instanceof Post) {
                 $post = $report->reportable;
                 $targetUser = $post->user;
                 $targetTitle = "Post #{$post->id}";
                 if ($actionType === 'remove_content') {
                     $post->update([
-                        'visibility' => \App\Enum\PostVisibilityType::PRIVATE,
+                        'visibility' => PostVisibilityType::PRIVATE,
                         'is_taken_down' => true,
                         'taken_down_reason' => $notes,
                     ]);
                     if ($post->portfolio_id) {
                         $post->portfolio?->update([
-                            'visibility' => \App\Enum\CommissionVisibility::PRIVATE,
+                            'visibility' => CommissionVisibility::PRIVATE,
                             'is_taken_down' => true,
                             'taken_down_reason' => $notes,
                         ]);
                     }
                 } elseif ($actionType === 'restore_content') {
                     $post->update([
-                        'visibility' => \App\Enum\PostVisibilityType::PUBLIC,
+                        'visibility' => PostVisibilityType::PUBLIC,
                         'is_taken_down' => false,
                         'taken_down_reason' => null,
                     ]);
                     if ($post->portfolio_id) {
                         $post->portfolio?->update([
-                            'visibility' => \App\Enum\CommissionVisibility::PUBLIC,
+                            'visibility' => CommissionVisibility::PUBLIC,
                             'is_taken_down' => false,
                             'taken_down_reason' => null,
                         ]);
                     }
                 }
-            } elseif ($report->reportable instanceof \App\Models\Portfolio) {
+            } elseif ($report->reportable instanceof Portfolio) {
                 $portfolio = $report->reportable;
                 $targetUser = $portfolio->artistProfile?->user;
                 $targetTitle = "Artwork '{$portfolio->title}'";
                 if ($actionType === 'remove_content') {
                     $portfolio->update([
-                        'visibility' => \App\Enum\CommissionVisibility::PRIVATE,
+                        'visibility' => CommissionVisibility::PRIVATE,
                         'is_taken_down' => true,
                         'taken_down_reason' => $notes,
                     ]);
-                    \App\Models\Post::where('portfolio_id', $portfolio->id)->update([
-                        'visibility' => \App\Enum\PostVisibilityType::PRIVATE,
+                    Post::where('portfolio_id', $portfolio->id)->update([
+                        'visibility' => PostVisibilityType::PRIVATE,
                         'is_taken_down' => true,
                         'taken_down_reason' => $notes,
                     ]);
                 } elseif ($actionType === 'restore_content') {
                     $portfolio->update([
-                        'visibility' => \App\Enum\CommissionVisibility::PUBLIC,
+                        'visibility' => CommissionVisibility::PUBLIC,
                         'is_taken_down' => false,
                         'taken_down_reason' => null,
                     ]);
-                    \App\Models\Post::where('portfolio_id', $portfolio->id)->update([
-                        'visibility' => \App\Enum\PostVisibilityType::PUBLIC,
+                    Post::where('portfolio_id', $portfolio->id)->update([
+                        'visibility' => PostVisibilityType::PUBLIC,
                         'is_taken_down' => false,
                         'taken_down_reason' => null,
                     ]);
                 }
-            } elseif ($report->reportable instanceof \App\Models\User) {
+            } elseif ($report->reportable instanceof User) {
                 $targetUser = $report->reportable;
                 $targetTitle = "User @{$targetUser->username}";
             }
@@ -246,24 +256,24 @@ class ReportController extends Controller
             }
         }
 
-        // 2. Audit log to ModerationAction
-        $moderationAction = \App\Models\ModerationAction::create([
+        // Audit log to ModerationAction
+        $moderationAction = ModerationAction::create([
             'ticket_id' => $report->ticket?->id,
             'user_id' => $user->id,
             'type' => $actionType,
             'notes' => $notes,
         ]);
 
-        // 3. If ticket exists, post an official message to the ticket thread
+        // If ticket exists, post an official message to the ticket thread
         if ($report->ticket) {
-            \App\Models\TicketMessage::create([
+            TicketMessage::create([
                 'ticket_id' => $report->ticket->id,
                 'user_id' => $user->id,
                 'content' => "🛡️ [STAFF ACTION TAKEN - " . strtoupper(str_replace('_', ' ', $actionType)) . "]: {$notes}",
             ]);
         }
 
-        // 4. Send Notification to target user if identified
+        // Send Notification to target user if identified
         if ($targetUser && $targetUser->id !== $user->id) {
             $notificationTitle = match ($actionType) {
                 'warning' => 'Official Warning Notice',
@@ -274,18 +284,18 @@ class ReportController extends Controller
                 default => 'Moderation Notice',
             };
 
-            \App\Models\Notification::create([
+            Notification::create([
                 'user_id' => $targetUser->id,
                 'actor_id' => $user->id,
-                'type' => \App\Enum\NotificationType::SYSTEM,
+                'type' => NotificationType::SYSTEM,
                 'title' => $notificationTitle,
                 'message' => "Moderation action taken regarding {$targetTitle}: {$notes}",
             ]);
         }
 
-        // 5. Update report status to resolved & close ticket
+        // Update report status to resolved & close ticket
         $report->update([
-            'status' => \App\Enum\ReportStatus::RESOLVED,
+            'status' => ReportStatus::RESOLVED,
             'handled_by' => $user->id,
             'handled_at' => now(),
         ]);

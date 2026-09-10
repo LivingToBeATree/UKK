@@ -51,7 +51,7 @@ return new class extends Migration
                     $service->saveQuietly();
                 }
             });
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Ignore backfill errors if tables are empty during testing
         }
 
@@ -73,7 +73,7 @@ return new class extends Migration
                     $portfolio->saveQuietly();
                 }
             });
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Ignore backfill errors
         }
 
@@ -96,7 +96,7 @@ return new class extends Migration
                     $post->saveQuietly();
                 }
             });
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Ignore backfill errors
         }
     }

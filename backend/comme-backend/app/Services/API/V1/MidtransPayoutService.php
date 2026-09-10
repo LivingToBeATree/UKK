@@ -3,9 +3,10 @@
 namespace App\Services\API\V1;
 
 use App\Models\CommissionPayout;
+use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Exception;
+use RuntimeException;
 
 class MidtransPayoutService
 {
@@ -33,7 +34,7 @@ class MidtransPayoutService
         if (empty($this->apiKey)) {
             // Fail-closed in production: NEVER simulate disbursements with real money disabled
             if (app()->environment('production') || config('app.env') === 'production') {
-                throw new \RuntimeException(
+                throw new RuntimeException(
                     "FATAL: Midtrans Iris API Key (MIDTRANS_IRIS_API_KEY) is missing in production environment. Real payout cannot be processed or simulated."
                 );
             }
@@ -98,7 +99,7 @@ class MidtransPayoutService
     {
         if (empty($this->apiKey)) {
             if (app()->environment('production') || config('app.env') === 'production') {
-                throw new \RuntimeException(
+                throw new RuntimeException(
                     "FATAL: Midtrans Iris API Key is missing in production environment. Cannot reconcile payout status."
                 );
             }

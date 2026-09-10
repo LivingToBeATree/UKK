@@ -11,6 +11,19 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use App\Models\CommissionOrder;
+use App\Models\CommissionReview;
+use App\Models\CommissionService;
+use App\Models\Portfolio;
+use App\Models\Post;
+use App\Models\PostComment;
+use App\Models\Report;
+use App\Models\Ticket;
+use App\Models\TicketMessage;
+use App\Models\User;
+use App\Policies\ReportPolicy;
+use App\Policies\TicketMessagePolicy;
+use App\Policies\TicketPolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -27,18 +40,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Gate::policy(\App\Models\Report::class, \App\Policies\ReportPolicy::class);
-        Gate::policy(\App\Models\Ticket::class, \App\Policies\TicketPolicy::class);
-        Gate::policy(\App\Models\TicketMessage::class, \App\Policies\TicketMessagePolicy::class);
+        Gate::policy(Report::class, ReportPolicy::class);
+        Gate::policy(Ticket::class, TicketPolicy::class);
+        Gate::policy(TicketMessage::class, TicketMessagePolicy::class);
 
         Relation::morphMap([
-            'post' => \App\Models\Post::class,
-            'post_comment' => \App\Models\PostComment::class,
-            'commission_review' => \App\Models\CommissionReview::class,
-            'portfolio' => \App\Models\Portfolio::class,
-            'commission_service' => \App\Models\CommissionService::class,
-            'user' => \App\Models\User::class,
-            'commission' => \App\Models\CommissionOrder::class,
+            'post' => Post::class,
+            'post_comment' => PostComment::class,
+            'commission_review' => CommissionReview::class,
+            'portfolio' => Portfolio::class,
+            'commission_service' => CommissionService::class,
+            'user' => User::class,
+            'commission' => CommissionOrder::class,
         ]);
         // Keyed by email+IP together, not just IP — a shared office/campus
         // IP shouldn't lock out everyone just because one person is

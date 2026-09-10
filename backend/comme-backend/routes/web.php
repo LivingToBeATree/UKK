@@ -1,12 +1,18 @@
 <?php
 
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
+use Illuminate\Http\Request;
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 Route::withoutMiddleware([
-    \Illuminate\Session\Middleware\StartSession::class,
-    \Illuminate\Cookie\Middleware\EncryptCookies::class,
-    \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-    \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
+    StartSession::class,
+    EncryptCookies::class,
+    ShareErrorsFromSession::class,
+    ValidateCsrfToken::class,
 ])->group(function () {
     Route::get('/', function () {
         return view('welcome');
@@ -22,18 +28,18 @@ Route::withoutMiddleware([
 
     Route::get('/migrate-deploy', function () {
         try {
-            \Illuminate\Support\Facades\Artisan::call('migrate:sync-existing');
-            $syncOutput = \Illuminate\Support\Facades\Artisan::output();
+            Artisan::call('migrate:sync-existing');
+            $syncOutput = Artisan::output();
 
-            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-            $migrateOutput = \Illuminate\Support\Facades\Artisan::output();
+            Artisan::call('migrate', ['--force' => true]);
+            $migrateOutput = Artisan::output();
 
             return response()->json([
                 'status' => 'SUCCESS',
                 'sync_output' => $syncOutput,
                 'migrate_output' => $migrateOutput,
             ]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return response()->json([
                 'status' => 'ERROR',
                 'message' => $e->getMessage(),
@@ -44,7 +50,7 @@ Route::withoutMiddleware([
 });
 
 // Direct storage file provider with full CORS support and fallback for development & production
-Route::get('storage/{path}', function (\Illuminate\Http\Request $request, string $path) {
+Route::get('storage/{path}', function (Request $request, string $path) {
     $raw = urldecode($path);
     $cleanPath = ltrim(explode('?', $raw)[0], '/');
 

@@ -6,6 +6,8 @@ use App\Enum\ReportReason;
 use App\Enum\ReportStatus;
 use App\Enum\TicketPriority;
 use App\Enum\UserRole;
+use App\Models\ArtistProfile;
+use App\Models\Portfolio;
 use App\Models\Post;
 use App\Models\Report;
 use App\Models\Ticket;
@@ -312,13 +314,13 @@ class ReportAndTicketFlowTest extends TestCase
     public function test_taking_down_portfolio_also_takes_down_companion_post(): void
     {
         $artistUser = User::factory()->create();
-        $artistProfile = \App\Models\ArtistProfile::create([
+        $artistProfile = ArtistProfile::create([
             'user_id' => $artistUser->id,
             'bio' => 'Artist Bio',
             'commission_open' => true,
         ]);
 
-        $portfolio = \App\Models\Portfolio::create([
+        $portfolio = Portfolio::create([
             'artist_profile_id' => $artistProfile->id,
             'title' => 'Original Artwork',
             'description' => 'Artwork description',
@@ -339,7 +341,7 @@ class ReportAndTicketFlowTest extends TestCase
 
         $report = Report::create([
             'user_id' => $staff->id,
-            'reportable_type' => \App\Models\Portfolio::class,
+            'reportable_type' => Portfolio::class,
             'reportable_id' => $portfolio->id,
             'reason' => ReportReason::COPYRIGHT,
             'status' => ReportStatus::PENDING,

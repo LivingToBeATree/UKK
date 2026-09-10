@@ -9,6 +9,8 @@ use App\Models\Report;
 use App\Models\TicketMessage;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use App\Enum\ModerationActionType;
+use Illuminate\Support\Str;
 
 class ModerationSyncService
 {
@@ -22,7 +24,7 @@ class ModerationSyncService
             $model->getMorphClass(),
             get_class($model),
             strtolower(class_basename($model)),
-            \Illuminate\Support\Str::snake(class_basename($model)),
+            Str::snake(class_basename($model)),
         ]);
         $reportableId = $model->id;
         $modelName = class_basename($model);
@@ -55,7 +57,7 @@ class ModerationSyncService
                 ModerationAction::create([
                     'ticket_id' => $ticket->id,
                     'user_id' => $actor->id,
-                    'type' => \App\Enum\ModerationActionType::REMOVE_CONTENT,
+                    'type' => ModerationActionType::REMOVE_CONTENT,
                     'notes' => "Author @{$actor->username} permanently deleted {$modelName} #{$reportableId}. Report auto-resolved.",
                 ]);
             }
@@ -72,7 +74,7 @@ class ModerationSyncService
             $model->getMorphClass(),
             get_class($model),
             strtolower(class_basename($model)),
-            \Illuminate\Support\Str::snake(class_basename($model)),
+            Str::snake(class_basename($model)),
         ]);
         $reportableId = $model->id;
         $modelName = class_basename($model);

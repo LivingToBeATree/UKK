@@ -6,6 +6,7 @@ use App\Enum\PayoutStatus;
 use App\Models\CommissionPayout;
 use App\Services\API\V1\PayoutService;
 use App\Services\API\V1\StaffNotificationService;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -19,11 +20,8 @@ class RetryFailedPayouts extends Command
 
     public function handle(PayoutService $payoutService): int
     {
-        // Only retry payouts that:
-        // 1. Are FAILED
-        // 2. Failed more than 15 minutes ago (backoff)
-        // 3. Have not exceeded max retries
-        // 4. Have bank info (artist configured their account)
+        // Only retry payouts that are FAILED, failed more than 15 minutes ago (backoff),
+        // have not exceeded max retries, and have bank info (artist configured their account)
         $eligiblePayouts = CommissionPayout::where('status', PayoutStatus::FAILED)
             ->where('retry_count', '<', self::MAX_RETRIES)
             ->where('failed_at', '<=', now()->subMinutes(15))
@@ -96,7 +94,7 @@ class RetryFailedPayouts extends Command
                     $retried++;
                     $this->info("  ✓ Payout #{$payout->id} dispatched successfully on retry.");
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->error("  Error retrying Payout #{$payout->id}: " . $e->getMessage());
                 Log::error("RetryFailedPayouts error for Payout #{$payout->id}: " . $e->getMessage());
             }

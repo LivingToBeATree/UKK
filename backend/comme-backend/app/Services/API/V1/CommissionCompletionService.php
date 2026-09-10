@@ -8,6 +8,7 @@ use App\Enum\PayoutStatus;
 use App\Models\Commission;
 use App\Models\CommissionPayout;
 use App\Models\Notification;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
@@ -134,7 +135,7 @@ class CommissionCompletionService
         if ($result['has_payout_account']) {
             try {
                 $this->payoutService->processPayout($result['payout']);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // PayoutService already marks the payout FAILED internally.
                 // Commission stays COMPLETED — that's a valid business state.
                 Log::warning("Payout dispatch failed for Commission #{$result['commission']->id}: " . $e->getMessage());

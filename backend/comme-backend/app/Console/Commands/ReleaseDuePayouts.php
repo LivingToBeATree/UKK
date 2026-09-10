@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Enum\CommissionStatus;
 use App\Models\Commission;
 use App\Services\API\V1\CommissionCompletionService;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -48,7 +49,7 @@ class ReleaseDuePayouts extends Command
                 $completionService->completeCommission($commission, true);
                 $processed++;
                 $this->info("✓ Commission #{$commission->id} completed and payout queued.");
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $failed++;
                 $this->error("✗ Failed to process Commission #{$commission->id}: " . $e->getMessage());
                 Log::error("ReleaseDuePayouts failed for Commission #{$commission->id}: " . $e->getMessage());

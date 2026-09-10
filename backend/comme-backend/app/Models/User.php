@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use App\Enum\UserRole;
 use App\Notifications\API\V1\User\Auth\ResetPasswordNotification;
+use App\Enum\ArtistApplicationStatus;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -199,7 +200,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function hasPendingArtistApplication(): bool
     {
-        return $this->artistApplications()->where('status', \App\Enum\ArtistApplicationStatus::PENDING)->exists();
+        return $this->artistApplications()->where('status', ArtistApplicationStatus::PENDING)->exists();
     }
 
     public function canApplyForArtistProfile(): bool

@@ -14,6 +14,10 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Tag;
+use App\Services\ModerationSyncService;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class CommissionServiceController extends Controller
 {
@@ -26,10 +30,10 @@ class CommissionServiceController extends Controller
 
         $query = CommissionService::with(['artistProfile.user', 'thumbnailMedia', 'media', 'options.addons', 'tags']);
 
-        // 1. Tag filtering
+        // Tag filtering
         if ($request->filled('tag')) {
             $tagInput = trim(str_replace('#', '', $request->tag));
-            $tagSlug = \Illuminate\Support\Str::slug($tagInput);
+            $tagSlug = Str::slug($tagInput);
 
             $query->whereHas('tags', function ($q) use ($tagInput, $tagSlug) {
                 $q->where('slug', $tagSlug)
@@ -38,7 +42,7 @@ class CommissionServiceController extends Controller
             });
         }
 
-        // 2. Search query across title, description, artist, and tags
+        // Search query across title, description, artist, and tags
         if ($request->filled('search')) {
             $search = trim($request->search);
             $query->where(function ($q) use ($search) {
@@ -55,17 +59,17 @@ class CommissionServiceController extends Controller
             });
         }
 
-        // 3. Artist filter
+        // Artist filter
         if ($request->filled('artist_profile_id')) {
             $query->where('artist_profile_id', $request->artist_profile_id);
         }
 
-        // 4. Status filter (open / closed)
+        // Status filter (open / closed)
         if ($request->filled('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
 
-        // 5. Price filtering
+        // Price filtering
         if ($request->filled('min_price')) {
             $query->whereHas('options', function ($oq) use ($request) {
                 $oq->where('base_price', '>=', (float) $request->min_price);
@@ -77,7 +81,7 @@ class CommissionServiceController extends Controller
             });
         }
 
-        // 6. Sorting / Sort Order
+        // Sorting / Sort Order
         $sort = $request->get('sort', 'latest');
         switch ($sort) {
             case 'oldest':
@@ -132,13 +136,13 @@ class CommissionServiceController extends Controller
             'artist_profile_id' => $request->user()->artistProfile->id,
         ]);
 
-        // 1. Process showcase and reference media uploads
+        // Process showcase and reference media uploads
         if ($request->hasFile('media')) {
             $firstMediaId = null;
             foreach ($request->file('media') as $index => $file) {
                 $path = $file->store('commission_services/media', 'public');
                 if (! $path) {
-                    \Illuminate\Support\Facades\Log::error('Failed to store commission service media: ' . $file->getClientOriginalName());
+                    Log::error('Failed to store commission service media: ' . $file->getClientOriginalName());
                     return ApiResponseHelper::errorResponse(
                         'Failed to write file to storage. Please check disk permissions.',
                         Response::HTTP_INTERNAL_SERVER_ERROR
@@ -167,7 +171,7 @@ class CommissionServiceController extends Controller
             }
         }
 
-        // 2. Process Service Packages/Options & Add-ons
+        // Process Service Packages/Options & Add-ons
         if (! empty($optionsData) && is_array($optionsData)) {
             foreach ($optionsData as $opt) {
                 $option = $commissionService->options()->create([
@@ -190,16 +194,16 @@ class CommissionServiceController extends Controller
             }
         }
 
-        // 3. Process Tags
+        // Process Tags
         if ($request->has('tags')) {
             $tagNames = is_array($request->tags) ? $request->tags : explode(',', (string) $request->tags);
             $tagIds = [];
             foreach ($tagNames as $name) {
                 $cleanName = trim(str_replace('#', '', (string) $name));
                 if (! empty($cleanName)) {
-                    $tag = \App\Models\Tag::firstOrCreate(
+                    $tag = Tag::firstOrCreate(
                         ['name' => $cleanName],
-                        ['slug' => \Illuminate\Support\Str::slug($cleanName)]
+                        ['slug' => Str::slug($cleanName)]
                     );
                     $tagIds[] = $tag->id;
                 }
@@ -246,7 +250,7 @@ class CommissionServiceController extends Controller
             foreach ($request->file('media') as $index => $file) {
                 $path = $file->store('commission_services/media', 'public');
                 if (! $path) {
-                    \Illuminate\Support\Facades\Log::error('Failed to store updated commission service media: ' . $file->getClientOriginalName());
+                    Log::error('Failed to store updated commission service media: ' . $file->getClientOriginalName());
                     return ApiResponseHelper::errorResponse(
                         'Failed to write file to storage. Please check disk permissions.',
                         Response::HTTP_INTERNAL_SERVER_ERROR
@@ -302,9 +306,9 @@ class CommissionServiceController extends Controller
             foreach ($tagNames as $name) {
                 $cleanName = trim(str_replace('#', '', (string) $name));
                 if (! empty($cleanName)) {
-                    $tag = \App\Models\Tag::firstOrCreate(
+                    $tag = Tag::firstOrCreate(
                         ['name' => $cleanName],
-                        ['slug' => \Illuminate\Support\Str::slug($cleanName)]
+                        ['slug' => Str::slug($cleanName)]
                     );
                     $tagIds[] = $tag->id;
                 }
@@ -314,7 +318,7 @@ class CommissionServiceController extends Controller
 
         $actor = $request->user();
         if ($actor) {
-            \App\Services\ModerationSyncService::handleContentUpdated($commissionService, $actor);
+            ModerationSyncService::handleContentUpdated($commissionService, $actor);
         }
 
         return ApiResponseHelper::successResponse(
@@ -332,7 +336,7 @@ class CommissionServiceController extends Controller
 
         $actor = request()->user() ?? $commissionService->artistProfile?->user;
         if ($actor) {
-            \App\Services\ModerationSyncService::handleContentDeleted($commissionService, $actor);
+            ModerationSyncService::handleContentDeleted($commissionService, $actor);
         }
 
         $commissionService->delete();

@@ -13,6 +13,15 @@ use App\Models\CommissionPayment;
 use App\Models\CommissionPayout;
 use App\Models\CommissionService;
 use App\Models\User;
+use App\Enum\NotificationType;
+use App\Enum\ServiceStatus;
+use App\Enum\UserRole;
+use App\Models\Notification;
+use App\Services\API\V1\CommissionCompletionService;
+use App\Services\API\V1\MidtransPayoutService;
+use App\Services\API\V1\PayoutService;
+use Exception;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -84,7 +93,7 @@ class CommissionLifecyclePayoutTest extends TestCase
 
     public function test_buyer_can_create_commission_without_option_safely(): void
     {
-        $this->service->update(['status' => \App\Enum\ServiceStatus::OPEN]);
+        $this->service->update(['status' => ServiceStatus::OPEN]);
 
         $response = $this->actingAs($this->buyerUser)
             ->postJson('/api/commissions', [
@@ -313,7 +322,7 @@ class CommissionLifecyclePayoutTest extends TestCase
             'retry_count' => 0,
         ]);
 
-        $mockIris = $this->createMock(\App\Services\API\V1\MidtransPayoutService::class);
+        $mockIris = $this->createMock(MidtransPayoutService::class);
         $mockIris->method('createPayout')
             ->willReturn([
                 'payouts' => [
@@ -324,7 +333,7 @@ class CommissionLifecyclePayoutTest extends TestCase
                 ]
             ]);
 
-        $this->app->instance(\App\Services\API\V1\MidtransPayoutService::class, $mockIris);
+        $this->app->instance(MidtransPayoutService::class, $mockIris);
 
         $this->artisan('commissions:retry-failed-payouts')
             ->assertSuccessful();
@@ -443,7 +452,7 @@ class CommissionLifecyclePayoutTest extends TestCase
         $this->assertEquals('9876543210', $account->bank_account_number);
 
         // Raw DB value should NOT be plaintext.
-        $rawRow = \Illuminate\Support\Facades\DB::table('artist_payout_accounts')
+        $rawRow = DB::table('artist_payout_accounts')
             ->where('id', $account->id)
             ->first();
         $this->assertNotEquals('9876543210', $rawRow->bank_account_number);
@@ -465,9 +474,9 @@ class CommissionLifecyclePayoutTest extends TestCase
         $commission = $this->createCommissionInWaitingState();
 
         // In production without key, completing commission should not silently simulate payout.
-        $midtransService = new \App\Services\API\V1\MidtransPayoutService();
-        $payoutService = new \App\Services\API\V1\PayoutService($midtransService);
-        $completionService = new \App\Services\API\V1\CommissionCompletionService($payoutService);
+        $midtransService = new MidtransPayoutService();
+        $payoutService = new PayoutService($midtransService);
+        $completionService = new CommissionCompletionService($payoutService);
 
         $completionService->completeCommission($commission);
 
@@ -492,12 +501,12 @@ class CommissionLifecyclePayoutTest extends TestCase
 
         $commission = $this->createCommissionInWaitingState();
 
-        $mockIris = $this->createMock(\App\Services\API\V1\MidtransPayoutService::class);
+        $mockIris = $this->createMock(MidtransPayoutService::class);
         $mockIris->method('createPayout')
-            ->willThrowException(new \Exception('cURL error 28: Operation timed out after 15000 milliseconds with 0 bytes received'));
+            ->willThrowException(new Exception('cURL error 28: Operation timed out after 15000 milliseconds with 0 bytes received'));
 
-        $payoutService = new \App\Services\API\V1\PayoutService($mockIris);
-        $completionService = new \App\Services\API\V1\CommissionCompletionService($payoutService);
+        $payoutService = new PayoutService($mockIris);
+        $completionService = new CommissionCompletionService($payoutService);
 
         $completionService->completeCommission($commission);
 
@@ -522,7 +531,7 @@ class CommissionLifecyclePayoutTest extends TestCase
             'requested_at' => now(),
         ]);
 
-        $mockIris = $this->createMock(\App\Services\API\V1\MidtransPayoutService::class);
+        $mockIris = $this->createMock(MidtransPayoutService::class);
         $mockIris->method('getPayoutStatus')
             ->willReturn([
                 'status' => 'unknown',
@@ -530,7 +539,7 @@ class CommissionLifecyclePayoutTest extends TestCase
                 'error' => 'Payout not found',
             ]);
 
-        $this->app->instance(\App\Services\API\V1\MidtransPayoutService::class, $mockIris);
+        $this->app->instance(MidtransPayoutService::class, $mockIris);
 
         $this->artisan('commissions:reconcile-payouts')
             ->assertSuccessful();
@@ -578,14 +587,14 @@ class CommissionLifecyclePayoutTest extends TestCase
         ]);
 
         // Scenario 1: Forged webhook claims 'completed', but Midtrans challenge returns 'processing'
-        $mockIris = $this->createMock(\App\Services\API\V1\MidtransPayoutService::class);
+        $mockIris = $this->createMock(MidtransPayoutService::class);
         $mockIris->method('getPayoutStatus')
             ->willReturn([
                 'status' => 'processing',
                 'reference_no' => 'PAYOUT-6666',
             ]);
 
-        $this->app->instance(\App\Services\API\V1\MidtransPayoutService::class, $mockIris);
+        $this->app->instance(MidtransPayoutService::class, $mockIris);
 
         $this->postJson('/api/midtrans/iris-webhook', [
             'reference_no' => 'PAYOUT-6666',
@@ -596,14 +605,14 @@ class CommissionLifecyclePayoutTest extends TestCase
         $this->assertEquals(PayoutStatus::PROCESSING, $payout->status, 'Unverified webhook claims must not alter payout state');
 
         // Scenario 2: Verified webhook where Midtrans challenge confirms 'completed'
-        $mockIris2 = $this->createMock(\App\Services\API\V1\MidtransPayoutService::class);
+        $mockIris2 = $this->createMock(MidtransPayoutService::class);
         $mockIris2->method('getPayoutStatus')
             ->willReturn([
                 'status' => 'completed',
                 'reference_no' => 'PAYOUT-6666',
             ]);
 
-        $this->app->instance(\App\Services\API\V1\MidtransPayoutService::class, $mockIris2);
+        $this->app->instance(MidtransPayoutService::class, $mockIris2);
 
         $this->postJson('/api/midtrans/iris-webhook', [
             'reference_no' => 'PAYOUT-6666',
@@ -617,7 +626,7 @@ class CommissionLifecyclePayoutTest extends TestCase
 
     public function test_stale_processing_payout_triggers_admin_alert(): void
     {
-        $admin = User::factory()->create(['role' => \App\Enum\UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
 
         $payout = CommissionPayout::create([
             'commission_id' => $this->createCommissionInWaitingState()->id,
@@ -631,18 +640,18 @@ class CommissionLifecyclePayoutTest extends TestCase
             'requested_at' => now()->subHours(25), // 25 hours old
         ]);
 
-        $mockIris = $this->createMock(\App\Services\API\V1\MidtransPayoutService::class);
+        $mockIris = $this->createMock(MidtransPayoutService::class);
         $mockIris->method('getPayoutStatus')
             ->willReturn([
                 'status' => 'processing',
             ]);
 
-        $this->app->instance(\App\Services\API\V1\MidtransPayoutService::class, $mockIris);
+        $this->app->instance(MidtransPayoutService::class, $mockIris);
 
         $this->artisan('commissions:reconcile-payouts')
             ->assertSuccessful();
 
-        $adminNotification = \App\Models\Notification::where('type', \App\Enum\NotificationType::SYSTEM)
+        $adminNotification = Notification::where('type', NotificationType::SYSTEM)
             ->where('notifiable_id', $payout->id)
             ->where('user_id', $admin->id)
             ->first();
@@ -664,12 +673,12 @@ class CommissionLifecyclePayoutTest extends TestCase
         $commission = $this->createCommissionInWaitingState();
 
         // 1. Initial disbursement: Iris receives request but local connection times out
-        $mockIris = $this->createMock(\App\Services\API\V1\MidtransPayoutService::class);
+        $mockIris = $this->createMock(MidtransPayoutService::class);
         $mockIris->method('createPayout')
-            ->willThrowException(new \Exception('cURL error 28: Operation timed out'));
+            ->willThrowException(new Exception('cURL error 28: Operation timed out'));
 
-        $payoutService = new \App\Services\API\V1\PayoutService($mockIris);
-        $completionService = new \App\Services\API\V1\CommissionCompletionService($payoutService);
+        $payoutService = new PayoutService($mockIris);
+        $completionService = new CommissionCompletionService($payoutService);
 
         $completionService->completeCommission($commission);
 
@@ -678,7 +687,7 @@ class CommissionLifecyclePayoutTest extends TestCase
         $this->assertEquals("PAYOUT-{$commission->id}", $payout->reference);
 
         // 2. Next reconciliation cycle: polls Iris with the canonical reference_no
-        $reconcileMock = $this->createMock(\App\Services\API\V1\MidtransPayoutService::class);
+        $reconcileMock = $this->createMock(MidtransPayoutService::class);
         $reconcileMock->method('getPayoutStatus')
             ->with($this->callback(fn ($p) => $p->reference === "PAYOUT-{$commission->id}"))
             ->willReturn([
@@ -687,7 +696,7 @@ class CommissionLifecyclePayoutTest extends TestCase
                 'amount' => '500000.00',
             ]);
 
-        $this->app->instance(\App\Services\API\V1\MidtransPayoutService::class, $reconcileMock);
+        $this->app->instance(MidtransPayoutService::class, $reconcileMock);
 
         $this->artisan('commissions:reconcile-payouts')
             ->assertSuccessful();

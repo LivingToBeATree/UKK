@@ -5,8 +5,12 @@ namespace App\Services\API\V1;
 use App\Enum\PaymentStatus;
 use App\Models\Commission;
 use App\Models\CommissionPayment;
+use Exception;
 use Midtrans\Config;
 use Midtrans\Snap;
+use Midtrans\Transaction;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class MidtransService
 {
@@ -43,11 +47,11 @@ class MidtransService
                     'name' => mb_substr($commission->commissionService->name ?? 'Commission Service', 0, 50),
                 ]],
             ]);
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::warning('Midtrans Snap Exception: ' . $e->getMessage());
+        } catch (Exception $e) {
+            Log::warning('Midtrans Snap Exception: ' . $e->getMessage());
 
             if (app()->environment('local', 'testing')) {
-                return 'mock_snap_token_' . \Illuminate\Support\Str::random(24);
+                return 'mock_snap_token_' . Str::random(24);
             }
 
             throw $e;
@@ -103,10 +107,10 @@ class MidtransService
     public function getTransactionStatus(string $orderId): ?array
     {
         try {
-            $statusObj = \Midtrans\Transaction::status($orderId);
+            $statusObj = Transaction::status($orderId);
             return json_decode(json_encode($statusObj), true);
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::warning("Midtrans Transaction Status Exception for {$orderId}: " . $e->getMessage());
+        } catch (Exception $e) {
+            Log::warning("Midtrans Transaction Status Exception for {$orderId}: " . $e->getMessage());
             return null;
         }
     }
@@ -139,14 +143,14 @@ class MidtransService
     {
         try {
             $params = [
-                'refund_key' => 'ref-' . time() . '-' . \Illuminate\Support\Str::random(6),
+                'refund_key' => 'ref-' . time() . '-' . Str::random(6),
                 'amount' => (int) $amount,
                 'reason' => $reason,
             ];
-            $response = \Midtrans\Transaction::refund($orderId, $params);
+            $response = Transaction::refund($orderId, $params);
             return json_decode(json_encode($response), true);
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::warning("Midtrans Refund Exception for {$orderId}: " . $e->getMessage());
+        } catch (Exception $e) {
+            Log::warning("Midtrans Refund Exception for {$orderId}: " . $e->getMessage());
             return null;
         }
     }
@@ -157,10 +161,10 @@ class MidtransService
     public function cancelTransaction(string $orderId): ?array
     {
         try {
-            $response = \Midtrans\Transaction::cancel($orderId);
+            $response = Transaction::cancel($orderId);
             return json_decode(json_encode($response), true);
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::warning("Midtrans Cancel Exception for {$orderId}: " . $e->getMessage());
+        } catch (Exception $e) {
+            Log::warning("Midtrans Cancel Exception for {$orderId}: " . $e->getMessage());
             return null;
         }
     }

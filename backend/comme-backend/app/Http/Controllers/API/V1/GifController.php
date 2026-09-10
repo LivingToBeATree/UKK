@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Throwable;
 
 class GifController extends Controller
 {
@@ -98,7 +99,7 @@ class GifController extends Controller
                     'results' => $parsed,
                     'hasNext' => count($parsed) >= $perPage,
                 ];
-            } catch (\Throwable) {
+            } catch (Throwable) {
                 return [
                     'results' => [],
                     'hasNext' => false,
