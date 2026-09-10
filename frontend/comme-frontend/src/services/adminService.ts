@@ -107,9 +107,43 @@ export interface ModerationLogsResponse {
     };
 }
 
+export interface HealthTelemetry {
+    status: 'healthy' | 'degraded';
+    timestamp: string;
+    database: {
+        connected: boolean;
+        latency_ms: number;
+        driver: string;
+    };
+    cache: {
+        working: boolean;
+        latency_ms: number;
+        driver: string;
+    };
+    storage: {
+        driver: string;
+        free_space_mb: number | null;
+        total_space_mb: number | null;
+    };
+    queue: {
+        driver: string;
+        pending_jobs: number;
+        failed_jobs: number;
+    };
+    links: {
+        pulse: string;
+        log_viewer: string;
+    };
+}
+
 export const adminApi = {
     getStats: async (): Promise<{ data: AdminStats }> => {
         const response = await api.get('/admin/stats');
+        return response.data;
+    },
+
+    getHealth: async (): Promise<{ data: HealthTelemetry }> => {
+        const response = await api.get('/health');
         return response.data;
     },
 

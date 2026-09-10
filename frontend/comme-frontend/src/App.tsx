@@ -13,6 +13,7 @@ import { ForArtistsCta } from '@/components/ForArtistsCta';
 import { PublicFooter } from '@/components/PublicFooter';
 import { Toaster } from '@/components/ui/sonner';
 import { WarningNoticeModal } from '@/components/modals/WarningNoticeModal';
+import { CommandPalette } from '@/components/CommandPalette';
 import { DynamicTitleUpdater } from '@/components/DynamicTitleUpdater';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from 'react-router-dom';
@@ -38,6 +39,7 @@ function AppLayout() {
             <div className="min-h-screen bg-background text-foreground font-sans transition-colors duration-200">
                 <DynamicTitleUpdater />
                 <AppRoutes />
+                <CommandPalette />
                 <Toaster />
                 <WarningNoticeModal />
             </div>
@@ -55,6 +57,7 @@ function AppLayout() {
                 </main>
                 <ForArtistsCta />
                 <PublicFooter />
+                <CommandPalette />
                 <Toaster />
                 <WarningNoticeModal />
             </div>
@@ -94,6 +97,7 @@ function AppLayout() {
             {/* Mobile Bottom Navigation Bar (Visible on Mobile Only) */}
             <MobileBottomNav />
 
+            <CommandPalette />
             <Toaster />
             <WarningNoticeModal />
         </div>

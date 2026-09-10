@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Compass, Store, Layers, ShieldCheck, Menu, X } from 'lucide-react';
+import { Compass, Store, Layers, ShieldCheck, Menu, X, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 import { AnimatePresence, motion } from 'motion/react';
@@ -73,6 +73,20 @@ export const Navbar: React.FC = () => {
 
                 {/* Right Action Controls: Log In Only */}
                 <div className="hidden md:flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                            window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }));
+                        }}
+                        className="h-8 px-2.5 text-xs text-muted-foreground gap-2 rounded-xl hidden lg:flex border-border/80 hover:text-foreground"
+                    >
+                        <Search className="h-3.5 w-3.5" />
+                        <span>Search...</span>
+                        <kbd className="text-[10px] font-mono px-1.5 py-0.5 bg-muted rounded border border-border/70">
+                            ⌘K
+                        </kbd>
+                    </Button>
                     <Button
                         size="sm"
                         onClick={() => openAuthModal('generic')}

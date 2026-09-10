@@ -3,6 +3,7 @@
 namespace App\Services\API\V1;
 
 use App\Enum\PaymentStatus;
+use App\Models\ArtistTip;
 use App\Models\Commission;
 use App\Models\CommissionPayment;
 use Exception;
@@ -52,6 +53,39 @@ class MidtransService
 
             if (app()->environment('local', 'testing')) {
                 return 'mock_snap_token_' . Str::random(24);
+            }
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Generate a Snap token for creator micro-donations / tips.
+     */
+    public function createTipSnapTransaction(ArtistTip $tip): string
+    {
+        try {
+            return Snap::getSnapToken([
+                'transaction_details' => [
+                    'order_id' => "TIP-{$tip->id}-" . time(),
+                    'gross_amount' => (int) $tip->amount,
+                ],
+                'customer_details' => [
+                    'first_name' => $tip->supporter_name ?: 'Supporter',
+                    'email' => $tip->supporter_email ?: 'supporter@comme.art',
+                ],
+                'item_details' => [[
+                    'id' => "tip-{$tip->id}",
+                    'price' => (int) $tip->amount,
+                    'quantity' => 1,
+                    'name' => 'Tip for ' . mb_substr($tip->artistProfile->user->username ?? 'Artist', 0, 30),
+                ]],
+            ]);
+        } catch (Exception $e) {
+            Log::warning('Midtrans Tip Snap Exception: ' . $e->getMessage());
+
+            if (app()->environment('local', 'testing')) {
+                return 'mock_tip_snap_token_' . Str::random(24);
             }
 
             throw $e;

@@ -10,6 +10,12 @@ import {
     ArrowRight,
     RefreshCw,
     DollarSign,
+    Activity,
+    ExternalLink,
+    HardDrive,
+    Database,
+    Zap,
+    Terminal,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,13 +23,14 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuth';
-import { adminApi, type AdminStats } from '@/services/adminService';
+import { adminApi, type AdminStats, type HealthTelemetry } from '@/services/adminService';
 import { formatCurrencySafe, formatDateSafe } from '@/utils/format';
 import { toast } from '@/components/ui/sonner';
 
 export const AdminDashboardPage: React.FC = () => {
     const { user } = useAuth();
     const [stats, setStats] = useState<AdminStats | null>(null);
+    const [health, setHealth] = useState<HealthTelemetry | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
 
@@ -34,8 +41,12 @@ export const AdminDashboardPage: React.FC = () => {
 
     const fetchStats = async () => {
         try {
-            const res = await adminApi.getStats();
-            setStats(res.data);
+            const [statsRes, healthRes] = await Promise.allSettled([
+                adminApi.getStats(),
+                adminApi.getHealth(),
+            ]);
+            if (statsRes.status === 'fulfilled') setStats(statsRes.value.data);
+            if (healthRes.status === 'fulfilled') setHealth(healthRes.value.data);
         } catch {
             toast.error('Failed to load platform statistics');
         } finally {
@@ -239,6 +250,114 @@ export const AdminDashboardPage: React.FC = () => {
                                         {stats?.completed_commissions_count ?? 0}
                                     </p>
                                 )}
+                            </div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Observability & System Telemetry Widget */}
+            <Card className="border border-border/80 bg-gradient-to-br from-card via-card to-primary/5 rounded-2xl shadow-xs overflow-hidden">
+                <CardHeader className="p-5 pb-3 border-b border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                            <Activity className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <CardTitle className="text-base font-bold flex items-center gap-2">
+                                System Health & Real-Time Observability
+                                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                    {health?.status === 'healthy' ? 'Operational' : 'Online'}
+                                </span>
+                            </CardTitle>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                                Live APM diagnostics, query latency metrics, and backend log streaming
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(health?.links?.pulse || 'http://localhost:8000/pulse', '_blank')}
+                            className="rounded-xl text-xs gap-1.5 h-9 font-semibold border-border hover:border-primary/50 cursor-pointer"
+                        >
+                            <Zap className="h-3.5 w-3.5 text-amber-400" />
+                            Laravel Pulse
+                            <ExternalLink className="h-3 w-3 opacity-60" />
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(health?.links?.log_viewer || 'http://localhost:8000/log-viewer', '_blank')}
+                            className="rounded-xl text-xs gap-1.5 h-9 font-semibold border-border hover:border-primary/50 cursor-pointer"
+                        >
+                            <Terminal className="h-3.5 w-3.5 text-blue-400" />
+                            Log Viewer
+                            <ExternalLink className="h-3 w-3 opacity-60" />
+                        </Button>
+                    </div>
+                </CardHeader>
+                <CardContent className="p-5 pt-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div className="p-3.5 rounded-xl bg-muted/30 border border-border/50">
+                            <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
+                                <span>Database</span>
+                                <Database className="h-3.5 w-3.5 text-blue-400" />
+                            </div>
+                            <div className="mt-1 flex items-baseline gap-2">
+                                <p className="text-lg font-bold text-foreground">
+                                    {health ? `${health.database.latency_ms} ms` : '...'}
+                                </p>
+                                <span className="text-[10px] text-emerald-400 font-semibold">
+                                    {health?.database.driver ?? 'PostgreSQL'}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="p-3.5 rounded-xl bg-muted/30 border border-border/50">
+                            <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
+                                <span>Cache Store</span>
+                                <Zap className="h-3.5 w-3.5 text-amber-400" />
+                            </div>
+                            <div className="mt-1 flex items-baseline gap-2">
+                                <p className="text-lg font-bold text-foreground">
+                                    {health ? `${health.cache.latency_ms} ms` : '...'}
+                                </p>
+                                <span className="text-[10px] text-emerald-400 font-semibold">
+                                    {health?.cache.driver ?? 'Database'}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="p-3.5 rounded-xl bg-muted/30 border border-border/50">
+                            <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
+                                <span>Disk Storage</span>
+                                <HardDrive className="h-3.5 w-3.5 text-indigo-400" />
+                            </div>
+                            <div className="mt-1 flex items-baseline gap-2">
+                                <p className="text-lg font-bold text-foreground">
+                                    {health?.storage.free_space_mb ? `${Math.round(health.storage.free_space_mb / 1024)} GB` : 'Available'}
+                                </p>
+                                <span className="text-[10px] text-muted-foreground font-mono">
+                                    Free
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="p-3.5 rounded-xl bg-muted/30 border border-border/50">
+                            <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
+                                <span>Queue Worker</span>
+                                <Activity className="h-3.5 w-3.5 text-purple-400" />
+                            </div>
+                            <div className="mt-1 flex items-baseline gap-2">
+                                <p className="text-lg font-bold text-foreground">
+                                    {health?.queue ? `${health.queue.pending_jobs} jobs` : '0 jobs'}
+                                </p>
+                                <span className="text-[10px] text-purple-400 font-semibold">
+                                    {health?.queue.driver ?? 'Database'}
+                                </span>
                             </div>
                         </div>
                     </div>

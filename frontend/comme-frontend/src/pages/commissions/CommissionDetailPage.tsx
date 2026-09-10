@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { commissionOrderApi, commissionReviewApi } from '@/services/commissionService';
 import { useAuth } from '@/hooks/useAuth';
+import { useEventStream } from '@/hooks/useEventStream';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -301,6 +302,20 @@ export const CommissionDetailPage: React.FC = () => {
             isMounted = false;
         };
     }, [id]);
+
+    // Real-Time Live Messaging & Updates via native Server-Sent Events (SSE)
+    useEventStream<CommissionMessage>({
+        url: commission?.id ? `/api/commissions/${commission.id}/stream` : null,
+        enabled: Boolean(commission?.id),
+        onMessage: (newMsg) => {
+            if (newMsg && newMsg.id) {
+                setMessages((prev) => {
+                    if (prev.some((m) => m.id === newMsg.id)) return prev;
+                    return [...prev, newMsg];
+                });
+            }
+        },
+    });
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -1105,15 +1120,27 @@ export const CommissionDetailPage: React.FC = () => {
                                                     .flatMap(m => m.media || [])
                                                     .map((item, idx, allMedia) => {
                                                         const isImage = !item.media_type || item.media_type === 'image' || item.mime_type?.startsWith('image/');
+                                                        const isUnderReview = commission.status === 'waiting_for_client';
+                                                        const isCompleted = commission.status === 'completed';
+                                                        const displayUrl = (isUnderReview && isBuyer && item.id)
+                                                            ? `/api/commissions/${commission.id}/proof/${item.id}`
+                                                            : item.url;
                                                         return (
                                                             <div key={item.id || idx} className="group relative rounded-xl overflow-hidden border border-border bg-card">
+                                                                {isUnderReview && isBuyer && (
+                                                                    <div className="absolute top-2 left-2 z-10">
+                                                                        <Badge variant="outline" className="bg-amber-500/90 text-black border-amber-400 font-mono text-[9px] px-1.5 py-0.5 shadow-md flex items-center gap-1 font-bold backdrop-blur-xs">
+                                                                            <Lock className="h-2.5 w-2.5" /> Proof Preview
+                                                                        </Badge>
+                                                                    </div>
+                                                                )}
                                                                 {isImage ? (
                                                                     <div
                                                                         onClick={() => openLightbox(allMedia, idx)}
                                                                         className="aspect-square cursor-pointer overflow-hidden bg-black/20 relative"
                                                                     >
                                                                         <img
-                                                                            src={item.url}
+                                                                            src={displayUrl}
                                                                             alt={item.file_name || 'Deliverable'}
                                                                             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                                                                         />
@@ -1139,10 +1166,17 @@ export const CommissionDetailPage: React.FC = () => {
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
                                                                             e.preventDefault();
-                                                                            downloadFile(item.url, item.file_name || 'deliverable');
+                                                                            if (isCompleted && item.id) {
+                                                                                downloadFile(`/api/commissions/${commission.id}/download-original/${item.id}`, item.file_name || 'deliverable');
+                                                                            } else if (isUnderReview && item.id) {
+                                                                                downloadFile(`/api/commissions/${commission.id}/proof/${item.id}`, `proof_${item.file_name || 'preview'}`);
+                                                                                toast.info('Downloading watermarked proof. Full resolution unlocks once delivery is accepted!');
+                                                                            } else {
+                                                                                downloadFile(item.url, item.file_name || 'deliverable');
+                                                                            }
                                                                         }}
                                                                         className="h-7 w-7 rounded-lg bg-secondary hover:bg-muted text-foreground flex items-center justify-center shrink-0 transition-all cursor-pointer hover:scale-105 active:scale-95"
-                                                                        title="Download deliverable"
+                                                                        title={isUnderReview ? "Download watermarked proof" : "Download deliverable"}
                                                                     >
                                                                         <Download className="h-3.5 w-3.5" />
                                                                     </button>
@@ -1172,6 +1206,32 @@ export const CommissionDetailPage: React.FC = () => {
                                         className="gap-2 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 cursor-pointer font-bold shadow-xs"
                                     >
                                         <Receipt className="h-4 w-4 text-emerald-400" /> Show Receipt
+                                    </Button>
+                                )}
+
+                                {/* BOTH: Official Invoice (PDF) */}
+                                {(['waiting_for_client', 'completed'].includes(commission.status) || commission.payment?.status === 'paid') && (
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => window.open(`/api/commissions/${commission.id}/invoice`, '_blank')}
+                                        className="gap-2 border-primary/40 text-primary hover:bg-primary/10 cursor-pointer font-bold shadow-xs"
+                                        title="Download Itemized Tax Invoice"
+                                    >
+                                        <FileText className="h-4 w-4" /> Official Invoice
+                                    </Button>
+                                )}
+
+                                {/* BOTH: Commercial License Certificate */}
+                                {commission.status === 'completed' && (
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => window.open(`/api/commissions/${commission.id}/license`, '_blank')}
+                                        className="gap-2 border-amber-500/40 text-amber-400 hover:bg-amber-500/10 cursor-pointer font-bold shadow-xs"
+                                        title="Download Commercial / Personal License Certificate"
+                                    >
+                                        <Sparkles className="h-4 w-4 text-amber-400" /> License Agreement
                                     </Button>
                                 )}
 

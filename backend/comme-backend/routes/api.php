@@ -20,6 +20,16 @@ Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']
 // Public user profile lookup
 Route::get('/users/{username}', [UserController::class, 'show']);
 
+// Public artist embeddable badge
+Route::get('/artists/{username}/badge.svg', [\App\Http\Controllers\API\V1\ArtistBadgeController::class, 'show']);
+
+// Artist micro-donations / Tip Jar
+Route::get('/artists/{username}/tips', [\App\Http\Controllers\API\V1\ArtistTipController::class, 'index']);
+Route::post('/artists/{username}/tip', [\App\Http\Controllers\API\V1\ArtistTipController::class, 'store']);
+
+// System health and telemetry endpoint
+Route::get('/health', [\App\Http\Controllers\API\V1\HealthController::class, 'show']);
+
 // Midtrans webhooks
 Route::post('/midtrans/webhook', [PaymentController::class, 'webhook'])
     ->withoutMiddleware('throttle:api');

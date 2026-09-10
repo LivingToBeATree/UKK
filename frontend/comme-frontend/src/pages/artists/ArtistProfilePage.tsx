@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { ArrowLeft, Star, ExternalLink, UserPlus, UserCheck } from 'lucide-react';
+import { ArrowLeft, Star, ExternalLink, UserPlus, UserCheck, Code2, Heart } from 'lucide-react';
+import { EmbedBadgeModal } from '@/components/modals/EmbedBadgeModal';
+import { TipArtistModal } from '@/components/modals/TipArtistModal';
 import { artistProfileApi, followApi, portfolioApi, type Portfolio } from '@/services/artistService';
 import { commissionServiceApi, commissionReviewApi, type CommissionReview } from '@/services/commissionService';
 import { useAuth } from '@/hooks/useAuth';
@@ -26,6 +28,8 @@ export const ArtistProfilePage: React.FC = () => {
     const [reviews, setReviews] = useState<CommissionReview[]>([]);
     const [following, setFollowing] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [showEmbedModal, setShowEmbedModal] = useState(false);
+    const [showTipModal, setShowTipModal] = useState(false);
 
     useEffect(() => {
         if (!id) return;
@@ -140,9 +144,23 @@ export const ArtistProfilePage: React.FC = () => {
                                     )}
                                 </div>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap gap-2">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setShowTipModal(true)}
+                                    className="rounded-xl gap-1.5 font-semibold text-xs h-10 border-rose-500/30 text-rose-400 hover:bg-rose-500/10"
+                                >
+                                    <Heart className="h-4 w-4 fill-rose-500 text-rose-500" /> Tip Artist
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setShowEmbedModal(true)}
+                                    className="rounded-xl gap-1.5 font-semibold text-xs h-10"
+                                >
+                                    <Code2 className="h-4 w-4 text-primary" /> Embed Badge
+                                </Button>
                                 {currentUser && currentUser.id !== profile.user_id && (
-                                    <Button variant={following ? 'secondary' : 'default'} onClick={handleFollow}>
+                                    <Button variant={following ? 'secondary' : 'default'} onClick={handleFollow} className="rounded-xl h-10">
                                         {following ? (
                                             <><UserCheck className="h-4 w-4 mr-2" /> Following</>
                                         ) : (
@@ -152,7 +170,7 @@ export const ArtistProfilePage: React.FC = () => {
                                 )}
                                 {profile.portfolio_url && (
                                     <a href={profile.portfolio_url} target="_blank" rel="noreferrer">
-                                        <Button variant="outline" size="icon">
+                                        <Button variant="outline" size="icon" className="rounded-xl h-10 w-10">
                                             <ExternalLink className="h-4 w-4" />
                                         </Button>
                                     </a>
@@ -161,6 +179,25 @@ export const ArtistProfilePage: React.FC = () => {
                         </div>
                     </CardContent>
                 </Card>
+
+                {profile && (
+                    <>
+                        <EmbedBadgeModal
+                            open={showEmbedModal}
+                            onOpenChange={setShowEmbedModal}
+                            username={profile.user?.username || ''}
+                            profileId={profile.id}
+                            displayName={profile.user?.display_name}
+                        />
+                        <TipArtistModal
+                            open={showTipModal}
+                            onOpenChange={setShowTipModal}
+                            username={profile.user?.username || ''}
+                            displayName={profile.user?.display_name}
+                            avatarUrl={profile.user?.avatar_url}
+                        />
+                    </>
+                )}
 
                 {/* Tabs */}
                 <Tabs defaultValue="services">

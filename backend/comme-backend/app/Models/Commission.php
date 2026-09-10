@@ -52,6 +52,11 @@ class Commission extends Model
         return $this->belongsTo(CommissionService::class);
     }
 
+    public function service(): BelongsTo
+    {
+        return $this->commissionService();
+    }
+
     public function commissionOption(): BelongsTo
     {
         return $this->belongsTo(CommissionOption::class);

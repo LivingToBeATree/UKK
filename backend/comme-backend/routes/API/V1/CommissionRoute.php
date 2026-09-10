@@ -48,5 +48,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('commissions/{commission}/messages', [CommissionMessageController::class, 'index']);
     Route::post('commissions/{commission}/messages', [CommissionMessageController::class, 'store']);
 
+    // Watermarked proof preview and gated original download
+    Route::get('commissions/{commission}/proof/{media}', [\App\Http\Controllers\API\V1\CommissionDeliveryController::class, 'proof'])
+        ->name('commissions.proof');
+    Route::get('commissions/{commission}/download-original/{media}', [\App\Http\Controllers\API\V1\CommissionDeliveryController::class, 'downloadOriginal'])
+        ->name('commissions.download-original');
+
+    // Official printable documents: Invoice and License Certificate
+    Route::get('commissions/{commission}/invoice', [\App\Http\Controllers\API\V1\CommissionDocumentController::class, 'invoice'])
+        ->name('commissions.invoice');
+    Route::get('commissions/{commission}/license', [\App\Http\Controllers\API\V1\CommissionDocumentController::class, 'license'])
+        ->name('commissions.license');
+
+    // Live Server-Sent Events (SSE) stream for commission room
+    Route::get('commissions/{commission}/stream', [\App\Http\Controllers\API\V1\LiveStreamController::class, 'streamCommission'])
+        ->name('commissions.stream');
+
     Route::apiResource('commissions', CommissionController::class)->except(['destroy']);
 });
