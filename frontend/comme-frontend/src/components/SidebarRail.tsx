@@ -479,7 +479,7 @@ export const SidebarRail: React.FC = () => {
                                 {user.artist_profile && (
                                     <DropdownMenuItem
                                         onClick={() => navigate('/dashboard')}
-                                        className="rounded-xl text-xs py-2 cursor-pointer text-purple-400 hover:text-purple-300 hover:bg-purple-500/10"
+                                        className="rounded-xl text-xs py-2 cursor-pointer text-primary hover:text-primary hover:bg-primary/10"
                                     >
                                         <PenTool className="mr-2 h-4 w-4" />
                                         <span>Artist Studio</span>
@@ -495,7 +495,7 @@ export const SidebarRail: React.FC = () => {
                                 </DropdownMenuItem>
                                 {user.role !== 'admin' && user.role !== 'moderator' && (
                                     <DropdownMenuItem onClick={() => navigate('/support')} className="rounded-xl text-xs py-2 cursor-pointer">
-                                        <LifeBuoy className="mr-2 h-4 w-4 text-purple-400" />
+                                        <LifeBuoy className="mr-2 h-4 w-4 text-primary" />
                                         <span>Support & Tickets</span>
                                     </DropdownMenuItem>
                                 )}

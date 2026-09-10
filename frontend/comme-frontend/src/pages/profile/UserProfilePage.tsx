@@ -677,14 +677,14 @@ export const UserProfilePage: React.FC = () => {
                                         }}
                                         className={`rounded-xl text-xs font-semibold gap-1.5 cursor-pointer ${
                                             currentUser?.role === 'admin' || currentUser?.role === 'moderator'
-                                                ? 'text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 border border-purple-500/30'
+                                                ? 'text-primary hover:text-primary hover:bg-primary/10 border border-primary/30'
                                                 : 'text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10'
                                         }`}
                                         title={currentUser?.role === 'admin' || currentUser?.role === 'moderator' ? 'Open Moderation Workbench' : 'Report this user'}
                                     >
                                         {currentUser?.role === 'admin' || currentUser?.role === 'moderator' ? (
                                             <>
-                                                <Shield className="h-3.5 w-3.5 text-purple-400" />
+                                                <Shield className="h-3.5 w-3.5 text-primary" />
                                                 <span>Moderate</span>
                                             </>
                                         ) : (
@@ -716,9 +716,9 @@ export const UserProfilePage: React.FC = () => {
 
                                 {/* Dedicated Studio Bio & Specialty Card */}
                                 {artistProfile?.bio && (
-                                    <div className="p-3.5 sm:p-4 rounded-2xl bg-purple-500/10 border border-purple-500/25 max-w-3xl space-y-1.5 shadow-xs">
-                                        <div className="flex items-center gap-2 text-xs font-bold text-purple-300 font-mono uppercase tracking-wider">
-                                            <Palette className="h-3.5 w-3.5 text-purple-400" /> Studio Bio &amp; Artistic Specialty
+                                    <div className="p-3.5 sm:p-4 rounded-2xl bg-primary/10 border border-primary/25 max-w-3xl space-y-1.5 shadow-xs">
+                                        <div className="flex items-center gap-2 text-xs font-bold text-primary font-mono uppercase tracking-wider">
+                                            <Palette className="h-3.5 w-3.5 text-primary" /> Studio Bio &amp; Artistic Specialty
                                         </div>
                                         <p className="text-xs sm:text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
                                             {artistProfile.bio}
@@ -1258,7 +1258,7 @@ export const UserProfilePage: React.FC = () => {
 
                         {artistProfile?.bio && (
                             <div className="pt-4 border-t border-border/60 space-y-2">
-                                <h4 className="text-xs font-bold text-purple-400 font-mono uppercase tracking-wider flex items-center gap-1.5">
+                                <h4 className="text-xs font-bold text-primary font-mono uppercase tracking-wider flex items-center gap-1.5">
                                     <Palette className="h-3.5 w-3.5" /> Studio &amp; Artistic Specialty
                                 </h4>
                                 <p className="text-xs sm:text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap bg-secondary/30 p-4 rounded-2xl border border-border/60">

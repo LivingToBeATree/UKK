@@ -67,7 +67,7 @@ export const ArtistInquiriesPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-black flex items-center gap-2.5 text-foreground">
-                        <MessageSquare className="h-6 w-6 text-purple-400" />
+                        <MessageSquare className="h-6 w-6 text-primary" />
                         Client Inquiries & Chat
                     </h1>
                     <p className="text-sm text-muted-foreground mt-1">
@@ -75,7 +75,7 @@ export const ArtistInquiriesPage: React.FC = () => {
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="px-3 py-1 bg-purple-500/10 border-purple-500/30 text-purple-400 font-bold">
+                    <Badge variant="outline" className="px-3 py-1 bg-primary/10 border-primary/30 text-primary font-bold">
                         {filteredOrders.length} Conversations
                     </Badge>
                 </div>
@@ -104,7 +104,7 @@ export const ArtistInquiriesPage: React.FC = () => {
                                 onClick={() => setStatusFilter(filterKey)}
                                 className={`h-8 px-3.5 rounded-xl text-xs font-bold capitalize cursor-pointer shrink-0 ${
                                     statusFilter === filterKey
-                                        ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-xs'
+                                        ? 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs'
                                         : 'text-muted-foreground hover:text-foreground'
                                 }`}
                             >
@@ -143,7 +143,7 @@ export const ArtistInquiriesPage: React.FC = () => {
                         return (
                             <Card
                                 key={order.id}
-                                className="rounded-2xl border-border/80 hover:border-purple-500/50 transition-all duration-200 bg-card hover:bg-secondary/20 shadow-xs"
+                                className="rounded-2xl border-border/80 hover:border-primary/50 transition-all duration-200 bg-card hover:bg-secondary/20 shadow-xs"
                             >
                                 <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                     {/* Client Info & Order details */}
@@ -175,7 +175,7 @@ export const ArtistInquiriesPage: React.FC = () => {
                                                     {formatDateSafe(order.created_at)}
                                                 </span>
                                                 <span>•</span>
-                                                <span className="font-semibold text-purple-400">
+                                                <span className="font-semibold text-primary">
                                                     {formatPrice(order.total_price || 0)}
                                                 </span>
                                             </div>
@@ -205,7 +205,7 @@ export const ArtistInquiriesPage: React.FC = () => {
                                         <Link to={`/dashboard/commissions/${order.slug || order.id}`}>
                                             <Button
                                                 size="sm"
-                                                className="h-9 px-4 rounded-xl font-bold text-xs gap-1.5 bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-xs"
+                                                className="h-9 px-4 rounded-xl font-bold text-xs gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shadow-xs"
                                             >
                                                 Open Chat
                                                 <ArrowRight className="h-3.5 w-3.5" />
@@ -219,7 +219,7 @@ export const ArtistInquiriesPage: React.FC = () => {
                 </div>
             ) : (
                 <Card className="rounded-3xl border-dashed border-border/80 p-12 text-center bg-card/40">
-                    <div className="h-12 w-12 rounded-2xl bg-purple-500/15 text-purple-400 flex items-center justify-center mx-auto mb-4 border border-purple-500/30">
+                    <div className="h-12 w-12 rounded-2xl bg-primary/15 text-primary flex items-center justify-center mx-auto mb-4 border border-primary/30">
                         <MessageSquare className="h-6 w-6" />
                     </div>
                     <h3 className="text-base font-bold text-foreground">No client inquiries found</h3>

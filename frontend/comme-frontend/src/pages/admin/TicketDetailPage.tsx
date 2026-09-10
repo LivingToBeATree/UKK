@@ -124,7 +124,7 @@ export const TicketDetailPage: React.FC = () => {
                                                 {msg.user?.display_name || msg.user?.username}
                                             </span>
                                             {msg.user?.role === 'admin' && (
-                                                <span className="px-1.5 py-0.2 rounded-md bg-purple-500/20 text-purple-300 font-bold text-[9px]">
+                                                <span className="px-1.5 py-0.2 rounded-md bg-primary/20 text-primary font-bold text-[9px]">
                                                     STAFF
                                                 </span>
                                             )}
@@ -154,7 +154,7 @@ export const TicketDetailPage: React.FC = () => {
                         onChange={(e) => setReply(e.target.value)}
                         className="flex-1 h-10 rounded-xl bg-card border-border/80 text-xs"
                     />
-                    <Button type="submit" disabled={sending || !reply.trim()} className="h-10 px-4 rounded-xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white">
+                    <Button type="submit" disabled={sending || !reply.trim()} className="h-10 px-4 rounded-xl font-bold text-xs bg-primary hover:bg-primary/90 text-primary-foreground">
                         <Send className="h-3.5 w-3.5 mr-1" /> Send
                     </Button>
                 </form>

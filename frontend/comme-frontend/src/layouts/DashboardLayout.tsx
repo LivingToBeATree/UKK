@@ -45,7 +45,7 @@ export const DashboardLayout: React.FC = () => {
                 {/* ── Mobile Studio Subnav Bar ── */}
                 <div className="md:hidden sticky top-14 z-30 bg-card/95 backdrop-blur-xl border-b border-border px-3 py-2 flex items-center gap-1.5 overflow-x-auto scrollbar-none shadow-xs">
                     <div className="flex items-center gap-1.5 shrink-0 pr-2 border-r border-border/80 mr-1">
-                        <PenTool className="h-4 w-4 text-purple-400" />
+                        <PenTool className="h-4 w-4 text-primary" />
                         <span className="font-bold text-xs">Studio</span>
                     </div>
                     {studioTabs.map((tab) => {
@@ -60,7 +60,7 @@ export const DashboardLayout: React.FC = () => {
                                 className={cn(
                                     'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition-colors',
                                     isActive
-                                        ? 'bg-purple-600 text-white shadow-xs'
+                                        ? 'bg-primary text-primary-foreground shadow-xs'
                                         : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
                                 )}
                             >

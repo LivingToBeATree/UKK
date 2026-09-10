@@ -119,7 +119,7 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
                 {/* ── Modal Header ── */}
                 <div className="p-5 border-b border-border/80 flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                        <div className="h-9 w-9 rounded-2xl bg-purple-600/15 text-purple-400 flex items-center justify-center font-black text-xs border border-purple-500/20 shadow-inner">
+                        <div className="h-9 w-9 rounded-2xl bg-primary/15 text-primary flex items-center justify-center font-black text-xs border border-primary/20 shadow-inner">
                             GIF
                         </div>
                         <div>
@@ -127,7 +127,7 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
                                 <h2 className="text-base font-extrabold text-foreground">
                                     GIF Search & Reactions
                                 </h2>
-                                <span className="text-[10px] font-black text-purple-400 bg-purple-500/15 px-2 py-0.5 rounded-full border border-purple-500/30">
+                                <span className="text-[10px] font-black text-primary bg-primary/15 px-2 py-0.5 rounded-full border border-primary/30">
                                     LIVE
                                 </span>
                             </div>
@@ -213,7 +213,7 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
                                         onClick={() => setSearchQuery(tag.query)}
                                         className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
                                             isActive
-                                                ? 'bg-purple-600 text-white shadow-xs'
+                                                ? 'bg-primary text-primary-foreground shadow-xs'
                                                 : 'bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary'
                                         }`}
                                     >
@@ -245,7 +245,7 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
                                     <div
                                         key={gif.id}
                                         onClick={() => handleSelect(gif)}
-                                        className="group relative rounded-2xl overflow-hidden bg-secondary/40 border border-border/80 hover:border-purple-500/80 aspect-video cursor-pointer transition-all duration-200 hover:shadow-lg flex items-center justify-center"
+                                        className="group relative rounded-2xl overflow-hidden bg-secondary/40 border border-border/80 hover:border-primary/80 aspect-video cursor-pointer transition-all duration-200 hover:shadow-lg flex items-center justify-center"
                                     >
                                         <img
                                             src={gif.previewUrl}
@@ -318,7 +318,7 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
                                     type="button"
                                     onClick={handleApplyCustomUrl}
                                     disabled={!customUrl.trim() || customUrlPreviewError}
-                                    className="h-11 px-5 rounded-2xl font-bold text-xs gap-1.5 cursor-pointer shrink-0 bg-purple-600 hover:bg-purple-700 text-white"
+                                    className="h-11 px-5 rounded-2xl font-bold text-xs gap-1.5 cursor-pointer shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground"
                                 >
                                     <Check className="h-4 w-4" /> Insert GIF
                                 </Button>
@@ -353,7 +353,7 @@ export const GifPickerModal: React.FC<GifPickerModalProps> = ({
                 {/* ── Modal Footer ── */}
                 <div className="p-4 border-t border-border/80 bg-secondary/20 flex items-center justify-between text-xs text-muted-foreground">
                     <span className="flex items-center gap-1.5">
-                        <Sparkles className="h-3.5 w-3.5 text-purple-400" />
+                        <Sparkles className="h-3.5 w-3.5 text-primary" />
                         Click any GIF to attach to media
                     </span>
                     <Button

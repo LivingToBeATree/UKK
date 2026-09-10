@@ -99,7 +99,7 @@ export const ArtistStudioSettingsPage: React.FC = () => {
             {/* Header */}
             <div>
                 <h1 className="text-2xl font-black flex items-center gap-2.5 text-foreground">
-                    <Settings className="h-6 w-6 text-purple-400" />
+                    <Settings className="h-6 w-6 text-primary" />
                     Studio Profile & Settings
                 </h1>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -119,7 +119,7 @@ export const ArtistStudioSettingsPage: React.FC = () => {
                     <Card className="rounded-3xl border-border/80 bg-card overflow-hidden">
                     <CardContent className="p-6 space-y-4">
                         <div className="flex items-center gap-2.5">
-                            <Clock className="h-5 w-5 text-purple-400" />
+                            <Clock className="h-5 w-5 text-primary" />
                             <h3 className="text-base font-bold text-foreground">
                                 Commission Availability Status
                             </h3>
@@ -156,13 +156,13 @@ export const ArtistStudioSettingsPage: React.FC = () => {
                                         onClick={() => setStatus(opt.id)}
                                         className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
                                             isSelected
-                                                ? `${opt.badgeColor} ring-2 ring-purple-500/30 shadow-md`
+                                                ? `${opt.badgeColor} ring-2 ring-primary/30 shadow-md`
                                                 : 'border-border/80 bg-secondary/30 hover:bg-secondary/60 text-muted-foreground'
                                         }`}
                                     >
                                         <div className="flex items-center justify-between">
                                             <span className="font-bold text-xs text-foreground">{opt.label}</span>
-                                            {isSelected && <CheckCircle2 className="h-4 w-4 text-purple-400" />}
+                                            {isSelected && <CheckCircle2 className="h-4 w-4 text-primary" />}
                                         </div>
                                         <p className="text-[11px] text-muted-foreground leading-relaxed">
                                             {opt.desc}
@@ -178,7 +178,7 @@ export const ArtistStudioSettingsPage: React.FC = () => {
                 <Card className="rounded-3xl border-border/80 bg-card overflow-hidden">
                     <CardContent className="p-6 space-y-4">
                         <div className="flex items-center gap-2.5">
-                            <Palette className="h-5 w-5 text-purple-400" />
+                            <Palette className="h-5 w-5 text-primary" />
                             <h3 className="text-base font-bold text-foreground">
                                 Studio Bio & Artistic Specialty
                             </h3>
@@ -205,7 +205,7 @@ export const ArtistStudioSettingsPage: React.FC = () => {
                 <Card className="rounded-3xl border-border/80 bg-card overflow-hidden">
                     <CardContent className="p-6 space-y-4">
                         <div className="flex items-center gap-2.5">
-                            <LinkIcon className="h-5 w-5 text-purple-400" />
+                            <LinkIcon className="h-5 w-5 text-primary" />
                             <h3 className="text-base font-bold text-foreground">
                                 External Portfolio & Social Links
                             </h3>
@@ -268,7 +268,7 @@ export const ArtistStudioSettingsPage: React.FC = () => {
                     <Button
                         type="submit"
                         disabled={saving}
-                        className="h-10 px-6 rounded-2xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-md gap-2"
+                        className="h-10 px-6 rounded-2xl font-bold text-xs bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shadow-md gap-2"
                     >
                         <Save className="h-4 w-4" />
                         {saving ? 'Saving...' : 'Save Studio Settings'}

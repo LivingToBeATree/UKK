@@ -176,9 +176,9 @@ export const ArtistEarningsPage: React.FC = () => {
 
                 <Card className="rounded-3xl border-border/80 bg-card p-5">
                     <span className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 mb-2">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-purple-400" /> Available for Payout
+                        <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Available for Payout
                     </span>
-                    <div className="text-2xl sm:text-3xl font-black text-purple-400 font-mono">
+                    <div className="text-2xl sm:text-3xl font-black text-primary font-mono">
                         {loading ? <Skeleton className="h-8 w-32" /> : formatPrice(availableForPayout)}
                     </div>
                     <p className="text-[11px] text-muted-foreground mt-1">
@@ -192,7 +192,7 @@ export const ArtistEarningsPage: React.FC = () => {
                 <CardContent className="p-6 space-y-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="p-2.5 rounded-2xl bg-purple-500/15 text-purple-400 border border-purple-500/20">
+                            <div className="p-2.5 rounded-2xl bg-primary/15 text-primary border border-primary/20">
                                 <Building2 className="h-5 w-5" />
                             </div>
                             <div>
@@ -237,7 +237,7 @@ export const ArtistEarningsPage: React.FC = () => {
                                     <select
                                         value={bankName}
                                         onChange={(e) => setBankName(e.target.value)}
-                                        className="w-full h-10 px-3 rounded-xl bg-secondary/50 border border-border/80 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-purple-500"
+                                        className="w-full h-10 px-3 rounded-xl bg-secondary/50 border border-border/80 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                                     >
                                         {POPULAR_BANKS.map((b) => (
                                             <option key={b.code} value={b.code}>
@@ -279,7 +279,7 @@ export const ArtistEarningsPage: React.FC = () => {
                                     type="submit"
                                     size="sm"
                                     disabled={savingAccount}
-                                    className="h-9 px-5 rounded-xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-xs"
+                                    className="h-9 px-5 rounded-xl font-bold text-xs bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shadow-xs"
                                 >
                                     {savingAccount ? 'Saving...' : 'Save Payout Account'}
                                 </Button>
@@ -317,7 +317,7 @@ export const ArtistEarningsPage: React.FC = () => {
                             <Button
                                 size="sm"
                                 onClick={() => setIsEditingAccount(true)}
-                                className="h-9 px-4 rounded-xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-xs gap-1.5"
+                                className="h-9 px-4 rounded-xl font-bold text-xs bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shadow-xs gap-1.5"
                             >
                                 <Plus className="h-3.5 w-3.5" /> Link Bank Account
                             </Button>

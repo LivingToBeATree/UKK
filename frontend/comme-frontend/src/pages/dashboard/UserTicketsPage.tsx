@@ -139,7 +139,7 @@ export const UserTicketsPage: React.FC = () => {
                 );
             default:
                 return (
-                    <Badge variant="outline" className="bg-purple-500/10 text-purple-400 border-purple-500/20 text-[10px] uppercase font-bold">
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] uppercase font-bold">
                         <AlertCircle className="h-3 w-3 mr-1" /> Pending Staff
                     </Badge>
                 );
@@ -160,7 +160,7 @@ export const UserTicketsPage: React.FC = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-black tracking-tight flex items-center gap-2.5">
-                            <LifeBuoy className="h-6 w-6 text-purple-400" /> Support &amp; Moderation Tickets
+                            <LifeBuoy className="h-6 w-6 text-primary" /> Support &amp; Moderation Tickets
                         </h1>
                         <p className="text-xs text-muted-foreground mt-1">
                             Track your submitted content reports, dispute investigations, and communicate directly with staff.
@@ -170,7 +170,7 @@ export const UserTicketsPage: React.FC = () => {
                         <Button
                             size="sm"
                             onClick={() => setShowCreateModal(true)}
-                            className="rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold gap-1.5 shadow-md cursor-pointer"
+                            className="rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold gap-1.5 shadow-md cursor-pointer"
                         >
                             <Plus className="h-3.5 w-3.5" />
                             <span>New Ticket / Appeal</span>
@@ -202,7 +202,7 @@ export const UserTicketsPage: React.FC = () => {
                             onClick={() => setFilterStatus(tab.id)}
                             className={`text-xs font-bold px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
                                 filterStatus === tab.id
-                                    ? 'bg-purple-600 text-white shadow-md'
+                                    ? 'bg-primary text-primary-foreground shadow-md'
                                     : 'bg-secondary/40 text-muted-foreground hover:bg-secondary/80 hover:text-foreground'
                             }`}
                         >
@@ -225,7 +225,7 @@ export const UserTicketsPage: React.FC = () => {
                             ))
                         ) : filteredTickets.length === 0 ? (
                             <Card className="rounded-3xl border-border/80 bg-card/60 p-8 text-center space-y-4">
-                                <div className="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-400 mx-auto flex items-center justify-center">
+                                <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary mx-auto flex items-center justify-center">
                                     <LifeBuoy className="h-6 w-6" />
                                 </div>
                                 <div className="space-y-1">
@@ -237,7 +237,7 @@ export const UserTicketsPage: React.FC = () => {
                                 <Button
                                     size="sm"
                                     onClick={() => setShowCreateModal(true)}
-                                    className="rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold gap-1.5 shadow-md cursor-pointer"
+                                    className="rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold gap-1.5 shadow-md cursor-pointer"
                                 >
                                     <Plus className="h-3.5 w-3.5" /> Open Ticket or Appeal
                                 </Button>
@@ -251,8 +251,8 @@ export const UserTicketsPage: React.FC = () => {
                                         onClick={() => loadTicketDetail(ticket.id)}
                                         className={`rounded-3xl border transition-all cursor-pointer overflow-hidden ${
                                             isSelected
-                                                ? 'border-purple-500 bg-purple-500/10 shadow-md ring-1 ring-purple-500/30'
-                                                : 'border-border/80 bg-card/60 hover:border-purple-500/40 hover:bg-secondary/30'
+                                                ? 'border-primary bg-primary/10 shadow-md ring-1 ring-primary/30'
+                                                : 'border-border/80 bg-card/60 hover:border-primary/40 hover:bg-secondary/30'
                                         }`}
                                     >
                                         <CardContent className="p-4 space-y-2.5">
@@ -269,7 +269,7 @@ export const UserTicketsPage: React.FC = () => {
                                             {ticket.report && (
                                                 <div>
                                                     <div className="text-xs font-semibold text-foreground line-clamp-1">
-                                                        Reason: <span className="capitalize text-purple-300">{ticket.report.reason?.replace(/_/g, ' ')}</span>
+                                                        Reason: <span className="capitalize text-primary">{ticket.report.reason?.replace(/_/g, ' ')}</span>
                                                     </div>
                                                     <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
                                                         {ticket.report.description || `Reported ${ticket.report.reportable_type} #${ticket.report.reportable_id}`}
@@ -281,7 +281,7 @@ export const UserTicketsPage: React.FC = () => {
                                                 <span>
                                                     {formatDateTimeSafe(ticket.created_at || (ticket.report ? ticket.report.created_at : null))}
                                                 </span>
-                                                <div className="flex items-center gap-1 text-purple-400 font-bold">
+                                                <div className="flex items-center gap-1 text-primary font-bold">
                                                     <span>View Thread</span>
                                                     <ChevronRight className="h-3 w-3" />
                                                 </div>
@@ -322,8 +322,8 @@ export const UserTicketsPage: React.FC = () => {
                                         </div>
 
                                         {selectedTicket.assignee && (
-                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-xs">
-                                                <Shield className="h-3.5 w-3.5 text-purple-400" />
+                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-primary/10 border border-primary/20 text-xs">
+                                                <Shield className="h-3.5 w-3.5 text-primary" />
                                                 <span className="text-[11px] text-muted-foreground">Assigned to:</span>
                                                 <span className="font-bold text-foreground">
                                                     {selectedTicket.assignee.display_name || selectedTicket.assignee.username}
@@ -336,7 +336,7 @@ export const UserTicketsPage: React.FC = () => {
                                     {selectedTicket.report && (
                                         <div className="p-3.5 rounded-2xl bg-black/30 border border-border/60 text-xs space-y-1.5">
                                             <div className="flex items-center justify-between text-muted-foreground text-[11px]">
-                                                <span className="font-bold uppercase tracking-wider text-purple-300">
+                                                <span className="font-bold uppercase tracking-wider text-primary">
                                                     Reported Content
                                                 </span>
                                                 <span className="capitalize">
@@ -382,7 +382,7 @@ export const UserTicketsPage: React.FC = () => {
                                                                 {isMyMessage ? 'You' : msg.user?.display_name || msg.user?.username}
                                                             </span>
                                                             {!isMyMessage && (
-                                                                <span className="px-1.5 py-0.2 rounded-md bg-purple-500/20 text-purple-300 font-bold text-[9px]">
+                                                                <span className="px-1.5 py-0.2 rounded-md bg-primary/20 text-primary font-bold text-[9px]">
                                                                     STAFF
                                                                 </span>
                                                             )}
@@ -393,7 +393,7 @@ export const UserTicketsPage: React.FC = () => {
                                                         <div
                                                             className={`p-3.5 rounded-2xl text-xs leading-relaxed whitespace-pre-wrap break-words ${
                                                                 isMyMessage
-                                                                    ? 'bg-purple-600 text-white rounded-tr-xs'
+                                                                    ? 'bg-primary text-primary-foreground rounded-tr-xs'
                                                                     : 'bg-secondary/60 text-foreground border border-border/60 rounded-tl-xs'
                                                             }`}
                                                         >
@@ -423,13 +423,13 @@ export const UserTicketsPage: React.FC = () => {
                                             value={newMessage}
                                             onChange={(e) => setNewMessage(e.target.value)}
                                             placeholder="Reply or provide more details to staff..."
-                                            className="h-10 rounded-xl bg-card border-border/80 text-xs focus-visible:ring-purple-500"
+                                            className="h-10 rounded-xl bg-card border-border/80 text-xs focus-visible:ring-primary"
                                             disabled={sending}
                                         />
                                         <Button
                                             type="submit"
                                             disabled={!newMessage.trim() || sending}
-                                            className="h-10 px-4 rounded-xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-md shrink-0 gap-1.5"
+                                            className="h-10 px-4 rounded-xl font-bold text-xs bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shadow-md shrink-0 gap-1.5"
                                         >
                                             <Send className="h-3.5 w-3.5" />
                                             <span>Send</span>

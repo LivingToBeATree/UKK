@@ -532,7 +532,7 @@ export const CommandPalette: React.FC = () => {
                                             {showHeader && (
                                                 <div className="flex items-center justify-between px-3 pt-3 pb-1 text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground/70 select-none">
                                                     <span className="flex items-center gap-1.5">
-                                                        {cmd.category === 'Recent' && <History className="h-3 w-3 text-purple-400" />}
+                                                        {cmd.category === 'Recent' && <History className="h-3 w-3 text-primary" />}
                                                         {cmd.category}
                                                     </span>
                                                     {cmd.category === 'Recent' && (
@@ -563,7 +563,7 @@ export const CommandPalette: React.FC = () => {
                                                         isSelected
                                                             ? 'bg-primary-foreground/15 text-primary-foreground'
                                                             : cmd.isJumpBack
-                                                            ? 'bg-purple-500/15 text-purple-400'
+                                                            ? 'bg-primary/15 text-primary'
                                                             : 'bg-muted text-muted-foreground'
                                                     }`}>
                                                         <Icon className="h-4 w-4" />
@@ -586,8 +586,8 @@ export const CommandPalette: React.FC = () => {
                                                     {cmd.isJumpBack ? (
                                                         <Badge
                                                             variant="outline"
-                                                            className={`text-[9px] uppercase font-mono px-1.5 py-0 border-purple-500/40 ${
-                                                                isSelected ? 'bg-white/20 text-white' : 'bg-purple-500/15 text-purple-400'
+                                                            className={`text-[9px] uppercase font-mono px-1.5 py-0 border-primary/40 ${
+                                                                isSelected ? 'bg-white/20 text-white' : 'bg-primary/15 text-primary'
                                                             }`}
                                                         >
                                                             Jump Back

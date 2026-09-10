@@ -196,7 +196,7 @@ const ScrollableCommentMediaGallery: React.FC<{
                                 <Video className="h-3 w-3" /> VIDEO
                             </span>
                         ) : m.isGif ? (
-                            <span className="px-2.5 py-0.5 rounded-full bg-purple-600/90 text-white text-[10px] font-black shadow-md backdrop-blur-md">
+                            <span className="px-2.5 py-0.5 rounded-full bg-primary/90 text-white text-[10px] font-black shadow-md backdrop-blur-md">
                                 GIF
                             </span>
                         ) : null}
@@ -261,7 +261,7 @@ const ScrollableCommentMediaGallery: React.FC<{
                                         <Video className="h-3 w-3" /> VID
                                     </span>
                                 ) : m.isGif ? (
-                                    <span className="px-2.5 py-0.5 rounded-full bg-purple-600/90 text-white text-[10px] font-black shadow-md backdrop-blur-md">
+                                    <span className="px-2.5 py-0.5 rounded-full bg-primary/90 text-white text-[10px] font-black shadow-md backdrop-blur-md">
                                         GIF
                                     </span>
                                 ) : null}
@@ -558,7 +558,7 @@ const CommentItem: React.FC<{
                                         size="sm"
                                         onClick={handleSaveEdit}
                                         disabled={isSavingEdit || !editContent.trim()}
-                                        className="h-7 px-3.5 text-xs font-bold rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-xs cursor-pointer gap-1.5"
+                                        className="h-7 px-3.5 text-xs font-bold rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs cursor-pointer gap-1.5"
                                     >
                                         {isSavingEdit ? (
                                             <div className="h-3 w-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -608,7 +608,7 @@ const CommentItem: React.FC<{
                             <button
                                 type="button"
                                 onClick={() => setShowReplyComposer((prev) => !prev)}
-                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-muted-foreground hover:text-purple-400 hover:bg-purple-500/10 transition-colors cursor-pointer"
+                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer"
                                 aria-label="Reply to comment"
                             >
                                 <Reply className="h-3.5 w-3.5" />
@@ -650,7 +650,7 @@ const CommentItem: React.FC<{
 
             {/* Inline Nested Reply Composer */}
             {showReplyComposer && (
-                <div className="pl-4 sm:pl-6 border-l-2 border-purple-500/40 mt-2">
+                <div className="pl-4 sm:pl-6 border-l-2 border-primary/40 mt-2">
                     <CommentComposer
                         postId={postId}
                         parentCommentId={comment.id}
@@ -791,7 +791,7 @@ const ScrollableMediaGallery: React.FC<{
                                 <Video className="h-3.5 w-3.5" /> Video Attachment
                             </span>
                         ) : m.mime_type?.includes('gif') ? (
-                            <span className="px-3 py-1 rounded-full bg-purple-600/90 backdrop-blur-md text-white text-xs font-black shadow-md">
+                            <span className="px-3 py-1 rounded-full bg-primary/90 backdrop-blur-md text-white text-xs font-black shadow-md">
                                 GIF Attachment
                             </span>
                         ) : attachedPortfolio ? (
@@ -866,7 +866,7 @@ const ScrollableMediaGallery: React.FC<{
                                             <Video className="h-3 w-3" /> VIDEO
                                         </span>
                                     ) : m.mime_type?.includes('gif') ? (
-                                        <span className="px-2.5 py-0.5 rounded-full bg-purple-600/90 text-white text-[10px] font-black shadow-md backdrop-blur-md">
+                                        <span className="px-2.5 py-0.5 rounded-full bg-primary/90 text-white text-[10px] font-black shadow-md backdrop-blur-md">
                                             GIF
                                         </span>
                                     ) : null}
@@ -1248,20 +1248,20 @@ export const PostDetailPage: React.FC = () => {
                         {/* Moderation Taken-Down Banner: Staff Control vs Owner Appeal */}
                         {post.is_taken_down && (
                             isStaff ? (
-                                <div className="p-4 rounded-2xl bg-purple-950/20 border border-purple-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs shadow-inner">
-                                    <div className="flex items-start sm:items-center gap-3.5 text-purple-200">
-                                        <div className="p-2.5 rounded-xl bg-purple-500/20 text-purple-400 shrink-0 border border-purple-500/30">
+                                <div className="p-4 rounded-2xl bg-primary/10 border border-primary/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs shadow-inner">
+                                    <div className="flex items-start sm:items-center gap-3.5 text-primary/70">
+                                        <div className="p-2.5 rounded-xl bg-primary/20 text-primary shrink-0 border border-primary/30">
                                             <Shield className="h-5 w-5" />
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="font-bold text-purple-300 text-sm">Staff Moderation Notice: Post Taken Down</span>
-                                                <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-black uppercase tracking-wider border border-purple-500/30">
+                                                <span className="font-bold text-primary text-sm">Staff Moderation Notice: Post Taken Down</span>
+                                                <span className="px-2 py-0.5 rounded-full bg-primary/20 text-primary text-[10px] font-black uppercase tracking-wider border border-primary/30">
                                                     Staff View
                                                 </span>
                                             </div>
                                             <div className="text-foreground/90 mt-0.5 font-normal">
-                                                Enforcement Reason: <span className="font-semibold text-purple-200">"{post.taken_down_reason || 'Violation of Community Guidelines'}"</span>
+                                                Enforcement Reason: <span className="font-semibold text-primary/70">"{post.taken_down_reason || 'Violation of Community Guidelines'}"</span>
                                             </div>
                                             <p className="text-[11px] text-muted-foreground mt-0.5">
                                                 This post is locked in private visibility and hidden from public exploration feeds. The owner cannot republish it without staff approval.
@@ -1270,7 +1270,7 @@ export const PostDetailPage: React.FC = () => {
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
                                         <Link to="/admin/reports" className="w-full sm:w-auto">
-                                            <Button size="sm" className="w-full sm:w-auto rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold gap-1.5 shadow-md">
+                                            <Button size="sm" className="w-full sm:w-auto rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold gap-1.5 shadow-md">
                                                 <Shield className="h-3.5 w-3.5" /> Reports Desk
                                             </Button>
                                         </Link>
@@ -1303,7 +1303,7 @@ export const PostDetailPage: React.FC = () => {
                                         <Button
                                             size="sm"
                                             onClick={() => setShowEditModal(true)}
-                                            className="rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs gap-1.5 shadow-sm cursor-pointer"
+                                            className="rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs gap-1.5 shadow-sm cursor-pointer"
                                         >
                                             <Pencil className="h-3.5 w-3.5" />
                                             <span>Edit &amp; Revise Post</span>
@@ -1432,13 +1432,13 @@ export const PostDetailPage: React.FC = () => {
                                                 }}
                                                 className={`rounded-xl text-xs py-2 cursor-pointer gap-2 ${
                                                     user?.role === 'admin' || user?.role === 'moderator'
-                                                        ? 'text-purple-400 hover:text-purple-300 hover:bg-purple-500/10'
+                                                        ? 'text-primary hover:text-primary hover:bg-primary/10'
                                                         : 'text-rose-400 hover:text-rose-300 hover:bg-rose-500/10'
                                                 }`}
                                             >
                                                 {user?.role === 'admin' || user?.role === 'moderator' ? (
                                                     <>
-                                                        <Shield className="h-3.5 w-3.5 text-purple-400" />
+                                                        <Shield className="h-3.5 w-3.5 text-primary" />
                                                         <span>Moderate Post</span>
                                                     </>
                                                 ) : (

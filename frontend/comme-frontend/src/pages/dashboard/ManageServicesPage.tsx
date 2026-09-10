@@ -47,14 +47,14 @@ export const ManageServicesPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-black tracking-tight flex items-center gap-2.5">
-                        <Sparkles className="h-6 w-6 text-purple-400" /> Commission Services
+                        <Sparkles className="h-6 w-6 text-primary" /> Commission Services
                     </h1>
                     <p className="text-xs text-muted-foreground mt-1">
                         Manage your commission listings, packages, add-ons, and showcase samples.
                     </p>
                 </div>
                 <Link to="/dashboard/services/new">
-                    <Button className="h-10 px-5 rounded-2xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-md gap-2">
+                    <Button className="h-10 px-5 rounded-2xl font-bold text-xs bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shadow-md gap-2">
                         <Plus className="h-4 w-4" /> New Commission Service
                     </Button>
                 </Link>
@@ -79,7 +79,7 @@ export const ManageServicesPage: React.FC = () => {
                 ) : services.length === 0 ? (
                     <Card className="rounded-3xl border-border/80 bg-card/60">
                         <CardContent className="p-12 text-center space-y-4">
-                            <div className="w-16 h-16 mx-auto rounded-3xl bg-purple-500/10 flex items-center justify-center text-purple-400">
+                            <div className="w-16 h-16 mx-auto rounded-3xl bg-primary/10 flex items-center justify-center text-primary">
                                 <Sparkles className="h-8 w-8" />
                             </div>
                             <div>
@@ -89,7 +89,7 @@ export const ManageServicesPage: React.FC = () => {
                                 </p>
                             </div>
                             <Link to="/dashboard/services/new">
-                                <Button className="h-10 px-6 rounded-2xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-md gap-2">
+                                <Button className="h-10 px-6 rounded-2xl font-bold text-xs bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shadow-md gap-2">
                                     <Plus className="h-4 w-4" /> Create Your First Service
                                 </Button>
                             </Link>
@@ -109,7 +109,7 @@ export const ManageServicesPage: React.FC = () => {
                         return (
                             <Card
                                 key={svc.id}
-                                className="rounded-3xl border-border/80 bg-card/60 hover:border-purple-500/40 transition-all shadow-xs overflow-hidden"
+                                className="rounded-3xl border-border/80 bg-card/60 hover:border-primary/40 transition-all shadow-xs overflow-hidden"
                             >
                                 <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                     {/* Thumbnail + Details */}
@@ -161,12 +161,12 @@ export const ManageServicesPage: React.FC = () => {
                                                     </span>
                                                 )}
                                                 <span className="flex items-center gap-1">
-                                                    <Layers className="h-3.5 w-3.5 text-purple-400" />
+                                                    <Layers className="h-3.5 w-3.5 text-primary" />
                                                     {svc.options?.length || 0} Package Option(s)
                                                 </span>
                                                 {totalAddons > 0 && (
                                                     <span className="flex items-center gap-1">
-                                                        <Tag className="h-3.5 w-3.5 text-purple-400" />
+                                                        <Tag className="h-3.5 w-3.5 text-primary" />
                                                         {totalAddons} Add-on Extra(s)
                                                     </span>
                                                 )}

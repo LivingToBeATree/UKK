@@ -112,7 +112,7 @@ export const Footer: React.FC = () => {
                                     href={`${apiBase}/explore`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="hover:text-foreground transition-colors inline-flex items-center gap-1 text-purple-400 font-medium"
+                                    className="hover:text-foreground transition-colors inline-flex items-center gap-1 text-primary font-medium"
                                 >
                                     API Explorer <ExternalLink className="h-3 w-3" />
                                 </a>

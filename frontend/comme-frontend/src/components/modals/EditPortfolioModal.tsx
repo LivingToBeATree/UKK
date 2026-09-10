@@ -214,7 +214,7 @@ export const EditPortfolioModal: React.FC<EditPortfolioModalProps> = ({
                     {/* Header */}
                     <div className="flex items-center justify-between p-5 border-b border-border/60 bg-muted/20">
                         <div className="flex items-center gap-2.5">
-                            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                            <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
                                 <ImageIcon className="h-4 w-4" />
                             </div>
                             <div>
@@ -275,7 +275,7 @@ export const EditPortfolioModal: React.FC<EditPortfolioModalProps> = ({
                         <div className="space-y-3 pt-1 border-t border-border/50">
                             <div className="flex items-center justify-between">
                                 <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                                    <Sparkles className="h-3.5 w-3.5 text-purple-400" />
+                                    <Sparkles className="h-3.5 w-3.5 text-primary" />
                                     Artwork Media &amp; Files ({existingMedias.length + newMediaList.length})
                                 </label>
                                 <span className="text-[11px] text-muted-foreground">PNG, JPG, WEBP, GIF, MP4</span>
@@ -304,7 +304,7 @@ export const EditPortfolioModal: React.FC<EditPortfolioModalProps> = ({
                                                     {/* Badges */}
                                                     <div className="absolute top-2 left-2 flex items-center gap-1 z-10">
                                                         {isCover && (
-                                                            <span className="bg-purple-600/90 backdrop-blur-md text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+                                                            <span className="bg-primary/90 backdrop-blur-md text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">
                                                                 Cover
                                                             </span>
                                                         )}
@@ -384,8 +384,8 @@ export const EditPortfolioModal: React.FC<EditPortfolioModalProps> = ({
                                 onClick={() => fileInputRef.current?.click()}
                                 className={`border-2 border-dashed rounded-2xl p-4 text-center cursor-pointer transition-all duration-200 flex flex-col items-center justify-center gap-1.5 ${
                                     isDragging
-                                        ? 'border-purple-500 bg-purple-500/10'
-                                        : 'border-border/80 hover:border-purple-500/50 bg-secondary/20 hover:bg-secondary/40'
+                                        ? 'border-primary bg-primary/10'
+                                        : 'border-border/80 hover:border-primary/50 bg-secondary/20 hover:bg-secondary/40'
                                 }`}
                             >
                                 <input
@@ -401,7 +401,7 @@ export const EditPortfolioModal: React.FC<EditPortfolioModalProps> = ({
                                     }}
                                     className="hidden"
                                 />
-                                <div className="h-8 w-8 rounded-xl bg-purple-600/10 text-purple-400 flex items-center justify-center border border-purple-500/20">
+                                <div className="h-8 w-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
                                     <UploadCloud className="h-4 w-4" />
                                 </div>
                                 <p className="text-xs font-semibold text-foreground">

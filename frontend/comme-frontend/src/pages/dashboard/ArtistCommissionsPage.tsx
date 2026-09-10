@@ -81,11 +81,11 @@ export const ArtistCommissionsPage: React.FC = () => {
                         }, 'Recent');
 
                         return (
-                            <Card key={c.id} className="rounded-2xl border-border/80 bg-card/60 hover:border-purple-500/40 transition-all shadow-xs overflow-hidden">
+                            <Card key={c.id} className="rounded-2xl border-border/80 bg-card/60 hover:border-primary/40 transition-all shadow-xs overflow-hidden">
                                 <CardContent className="p-5 space-y-3">
                                     <div className="flex items-center justify-between gap-4">
                                         <div className="flex-1 min-w-0">
-                                            <Link to={`/dashboard/commissions/${c.slug || c.id}`} className="font-bold text-sm text-foreground hover:text-purple-400 truncate block transition-colors">
+                                            <Link to={`/dashboard/commissions/${c.slug || c.id}`} className="font-bold text-sm text-foreground hover:text-primary truncate block transition-colors">
                                                 {c.commission_service?.name || `Commission Order #${c.id}`}
                                             </Link>
                                             <p className="text-xs text-muted-foreground mt-0.5">
@@ -99,7 +99,7 @@ export const ArtistCommissionsPage: React.FC = () => {
                                                     c.status === 'completed'
                                                         ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
                                                         : c.status === 'in_progress' || c.status === 'accepted'
-                                                        ? 'bg-purple-500/15 text-purple-400 border border-purple-500/30'
+                                                        ? 'bg-primary/15 text-primary border border-primary/30'
                                                         : c.status === 'waiting_for_client'
                                                         ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
                                                         : c.status === 'cancelled' || c.status === 'declined'

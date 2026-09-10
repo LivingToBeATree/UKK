@@ -210,14 +210,14 @@ export const ServiceDetailPage: React.FC = () => {
                     }}
                     className={`rounded-xl text-xs font-semibold gap-1.5 cursor-pointer ${
                         user?.role === 'admin' || user?.role === 'moderator'
-                            ? 'text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 border border-purple-500/30'
+                            ? 'text-primary hover:text-primary hover:bg-primary/10 border border-primary/30'
                             : 'text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10'
                     }`}
                     title={user?.role === 'admin' || user?.role === 'moderator' ? 'Open Moderation Workbench' : 'Report this commission listing'}
                 >
                     {user?.role === 'admin' || user?.role === 'moderator' ? (
                         <>
-                            <Shield className="h-3.5 w-3.5 text-purple-400" />
+                            <Shield className="h-3.5 w-3.5 text-primary" />
                             <span>Moderate Listing</span>
                         </>
                     ) : (
@@ -267,8 +267,8 @@ export const ServiceDetailPage: React.FC = () => {
                                         onClick={() => setActiveMediaIndex(idx)}
                                         className={`w-16 h-16 rounded-2xl overflow-hidden border-2 shrink-0 transition-all cursor-pointer ${
                                             activeMediaIndex === idx
-                                                ? 'border-purple-500 scale-105 shadow-xs'
-                                                : 'border-border/60 hover:border-purple-500/50 opacity-70 hover:opacity-100'
+                                                ? 'border-primary scale-105 shadow-xs'
+                                                : 'border-border/60 hover:border-primary/50 opacity-70 hover:opacity-100'
                                         }`}
                                     >
                                         <img src={m.url} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
@@ -341,7 +341,7 @@ export const ServiceDetailPage: React.FC = () => {
                         {/* Studio Bio Snippet */}
                         {service.artist_profile?.bio && (
                             <div className="p-3 rounded-xl bg-muted/30 border border-border/50 text-xs text-muted-foreground leading-relaxed">
-                                <span className="font-bold text-[11px] block uppercase font-mono tracking-wider text-purple-400 mb-0.5">
+                                <span className="font-bold text-[11px] block uppercase font-mono tracking-wider text-primary mb-0.5">
                                     Artist Studio Specialty
                                 </span>
                                 {service.artist_profile.bio}
@@ -370,7 +370,7 @@ export const ServiceDetailPage: React.FC = () => {
                     {service.options && service.options.length > 0 && (
                         <div className="space-y-3 pt-2">
                             <h2 className="font-bold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                                <Layers className="h-4 w-4 text-purple-400" />
+                                <Layers className="h-4 w-4 text-primary" />
                                 Select Service Package
                             </h2>
                             <div className="grid gap-3">
@@ -381,8 +381,8 @@ export const ServiceDetailPage: React.FC = () => {
                                             key={option.id}
                                             className={`cursor-pointer rounded-2xl transition-all border ${
                                                 isSelected
-                                                    ? 'border-purple-500 bg-purple-500/10 ring-1 ring-purple-500/30 shadow-xs'
-                                                    : 'border-border/80 bg-card/60 hover:border-purple-500/40 hover:bg-secondary/40'
+                                                    ? 'border-primary bg-primary/10 ring-1 ring-primary/30 shadow-xs'
+                                                    : 'border-border/80 bg-card/60 hover:border-primary/40 hover:bg-secondary/40'
                                             }`}
                                             onClick={() => handleSelectOption(option)}
                                         >
@@ -392,7 +392,7 @@ export const ServiceDetailPage: React.FC = () => {
                                                         <div
                                                             className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
                                                                 isSelected
-                                                                    ? 'border-purple-500 bg-purple-600 text-white'
+                                                                    ? 'border-primary bg-primary text-primary-foreground'
                                                                     : 'border-border/80'
                                                             }`}
                                                         >
@@ -431,7 +431,7 @@ export const ServiceDetailPage: React.FC = () => {
                     {availableAddons.length > 0 && (
                         <div className="space-y-3 pt-2">
                             <h2 className="font-bold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                                <Tag className="h-4 w-4 text-purple-400" />
+                                <Tag className="h-4 w-4 text-primary" />
                                 Optional Add-ons &amp; Extras ({availableAddons.length})
                             </h2>
                             <div className="grid gap-2.5">
@@ -443,7 +443,7 @@ export const ServiceDetailPage: React.FC = () => {
                                             onClick={() => handleToggleAddon(addon.id)}
                                             className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
                                                 isChecked
-                                                    ? 'border-purple-500 bg-purple-500/10 ring-1 ring-purple-500/30 shadow-xs'
+                                                    ? 'border-primary bg-primary/10 ring-1 ring-primary/30 shadow-xs'
                                                     : 'border-border/80 bg-card/60 hover:bg-secondary/40'
                                             }`}
                                         >
@@ -452,7 +452,7 @@ export const ServiceDetailPage: React.FC = () => {
                                                     type="checkbox"
                                                     checked={isChecked}
                                                     onChange={() => {}}
-                                                    className="h-4 w-4 accent-purple-600 rounded cursor-pointer shrink-0"
+                                                    className="h-4 w-4 accent-primary rounded cursor-pointer shrink-0"
                                                 />
                                                 <div className="min-w-0">
                                                     <p className="font-bold text-xs text-foreground truncate">
@@ -515,8 +515,8 @@ export const ServiceDetailPage: React.FC = () => {
                                             </div>
                                             <p className="text-xs text-muted-foreground">{rev.comment}</p>
                                             {rev.artist_reply && (
-                                                <div className="ml-4 mt-2 p-3 rounded-2xl bg-secondary/50 border-l-2 border-purple-500 text-xs space-y-1">
-                                                    <p className="font-bold text-[11px] text-purple-400">Artist Reply</p>
+                                                <div className="ml-4 mt-2 p-3 rounded-2xl bg-secondary/50 border-l-2 border-primary text-xs space-y-1">
+                                                    <p className="font-bold text-[11px] text-primary">Artist Reply</p>
                                                     <p className="text-muted-foreground">{rev.artist_reply}</p>
                                                 </div>
                                             )}
@@ -533,7 +533,7 @@ export const ServiceDetailPage: React.FC = () => {
                     <Card className="sticky top-20 rounded-3xl border-border/80 bg-card/70 backdrop-blur-md shadow-lg overflow-hidden">
                         <CardContent className="p-6 space-y-5">
                             <div className="flex items-center gap-2 pb-2 border-b border-border/60">
-                                <ShoppingCart className="h-4 w-4 text-purple-400" />
+                                <ShoppingCart className="h-4 w-4 text-primary" />
                                 <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
                                     Order Summary
                                 </h2>
@@ -600,7 +600,7 @@ export const ServiceDetailPage: React.FC = () => {
                                             <Button
                                                 className="w-full h-11 rounded-2xl font-bold text-xs bg-secondary hover:bg-muted text-foreground border border-border cursor-pointer shadow-md gap-2"
                                             >
-                                                <PenTool className="h-4 w-4 text-purple-400" />
+                                                <PenTool className="h-4 w-4 text-primary" />
                                                 Manage in Artist Studio
                                             </Button>
                                         </Link>
@@ -694,8 +694,8 @@ export const ServiceDetailPage: React.FC = () => {
                                 >
                                     {user?.role === 'admin' || user?.role === 'moderator' ? (
                                         <>
-                                            <Shield className="h-3 w-3 text-purple-400" />
-                                            <span className="text-purple-400">Open Moderation Panel</span>
+                                            <Shield className="h-3 w-3 text-primary" />
+                                            <span className="text-primary">Open Moderation Panel</span>
                                         </>
                                     ) : (
                                         <>

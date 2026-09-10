@@ -242,7 +242,7 @@ export const OrderCommissionPage: React.FC = () => {
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                 <div>
                     <h1 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-2.5">
-                        <Sparkles className="h-6 w-6 text-purple-400" /> Confirm Commission Order
+                        <Sparkles className="h-6 w-6 text-primary" /> Confirm Commission Order
                     </h1>
                     <p className="text-xs text-muted-foreground mt-1">
                         Review your chosen package, set your delivery deadline preference, and provide your project reference details.
@@ -257,7 +257,7 @@ export const OrderCommissionPage: React.FC = () => {
                             <CardContent className="p-6 space-y-4">
                                 <div className="flex items-center justify-between">
                                     <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                                        <Calendar className="h-4 w-4 text-purple-400" />
+                                        <Calendar className="h-4 w-4 text-primary" />
                                         Delivery Deadline Preference
                                     </Label>
                                     {selectedOption?.duration_days && (
@@ -276,8 +276,8 @@ export const OrderCommissionPage: React.FC = () => {
                                         className={cn(
                                             'p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between space-y-2',
                                             deadlineType === 'flexible'
-                                                ? 'border-purple-500 bg-purple-500/10 ring-1 ring-purple-500/30 shadow-xs'
-                                                : 'border-border/80 bg-card/40 hover:bg-secondary/40 hover:border-purple-500/30'
+                                                ? 'border-primary bg-primary/10 ring-1 ring-primary/30 shadow-xs'
+                                                : 'border-border/80 bg-card/40 hover:bg-secondary/40 hover:border-primary/30'
                                         )}
                                     >
                                         <div className="flex items-center justify-between">
@@ -286,7 +286,7 @@ export const OrderCommissionPage: React.FC = () => {
                                                     className={cn(
                                                         'w-3.5 h-3.5 rounded-full border flex items-center justify-center',
                                                         deadlineType === 'flexible'
-                                                            ? 'border-purple-500 bg-purple-600'
+                                                            ? 'border-primary bg-primary'
                                                             : 'border-border/80'
                                                     )}
                                                 >
@@ -312,8 +312,8 @@ export const OrderCommissionPage: React.FC = () => {
                                         className={cn(
                                             'p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between space-y-2',
                                             deadlineType === 'specific'
-                                                ? 'border-purple-500 bg-purple-500/10 ring-1 ring-purple-500/30 shadow-xs'
-                                                : 'border-border/80 bg-card/40 hover:bg-secondary/40 hover:border-purple-500/30'
+                                                ? 'border-primary bg-primary/10 ring-1 ring-primary/30 shadow-xs'
+                                                : 'border-border/80 bg-card/40 hover:bg-secondary/40 hover:border-primary/30'
                                         )}
                                     >
                                         <div className="flex items-center justify-between">
@@ -322,7 +322,7 @@ export const OrderCommissionPage: React.FC = () => {
                                                     className={cn(
                                                         'w-3.5 h-3.5 rounded-full border flex items-center justify-center',
                                                         deadlineType === 'specific'
-                                                            ? 'border-purple-500 bg-purple-600'
+                                                            ? 'border-primary bg-primary'
                                                             : 'border-border/80'
                                                     )}
                                                 >
@@ -349,7 +349,7 @@ export const OrderCommissionPage: React.FC = () => {
                                                 <button
                                                     type="button"
                                                     onClick={() => setDeadline(suggestedDeadline)}
-                                                    className="text-[11px] text-purple-400 hover:text-purple-300 font-semibold cursor-pointer underline-offset-2 hover:underline"
+                                                    className="text-[11px] text-primary hover:text-primary font-semibold cursor-pointer underline-offset-2 hover:underline"
                                                 >
                                                     Suggested: {selectedOption?.duration_days} days ({suggestedDeadline})
                                                 </button>
@@ -377,7 +377,7 @@ export const OrderCommissionPage: React.FC = () => {
                                         <button
                                             type="button"
                                             onClick={() => fileInputRef.current?.click()}
-                                            className="inline-flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 font-bold transition-colors cursor-pointer"
+                                            className="inline-flex items-center gap-1.5 text-xs text-primary hover:text-primary font-bold transition-colors cursor-pointer"
                                         >
                                             <Paperclip className="h-3.5 w-3.5" /> Attach References
                                         </button>
@@ -468,7 +468,7 @@ export const OrderCommissionPage: React.FC = () => {
                                                 <button
                                                     type="button"
                                                     onClick={() => fileInputRef.current?.click()}
-                                                    className="h-full min-h-[120px] rounded-2xl border-2 border-dashed border-border/80 hover:border-purple-500/50 hover:bg-purple-500/5 flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:text-purple-400 transition-all cursor-pointer p-3"
+                                                    className="h-full min-h-[120px] rounded-2xl border-2 border-dashed border-border/80 hover:border-primary/50 hover:bg-primary/5 flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:text-primary transition-all cursor-pointer p-3"
                                                 >
                                                     <UploadCloud className="h-6 w-6" />
                                                     <span className="text-xs font-bold">+ Add More</span>
@@ -483,9 +483,9 @@ export const OrderCommissionPage: React.FC = () => {
                                                 e.preventDefault();
                                                 if (e.dataTransfer.files) handleFilesSelect(e.dataTransfer.files);
                                             }}
-                                            className="rounded-2xl border-2 border-dashed border-border/80 hover:border-purple-500/50 bg-secondary/20 hover:bg-purple-500/5 p-6 text-center cursor-pointer transition-all space-y-2"
+                                            className="rounded-2xl border-2 border-dashed border-border/80 hover:border-primary/50 bg-secondary/20 hover:bg-primary/5 p-6 text-center cursor-pointer transition-all space-y-2"
                                         >
-                                            <div className="h-10 w-10 rounded-2xl bg-purple-500/10 text-purple-400 flex items-center justify-center mx-auto">
+                                            <div className="h-10 w-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
                                                 <UploadCloud className="h-5 w-5" />
                                             </div>
                                             <div>
@@ -506,7 +506,7 @@ export const OrderCommissionPage: React.FC = () => {
                                 <div className="pb-3 border-b border-border/60">
                                     <h2 className="font-bold text-base text-foreground truncate">{service.name}</h2>
                                     <div className="flex items-center gap-2 mt-1">
-                                        <Badge variant="secondary" className="font-bold text-[10px] bg-purple-500/15 text-purple-300 border border-purple-500/30 gap-1">
+                                        <Badge variant="secondary" className="font-bold text-[10px] bg-primary/15 text-primary border border-primary/30 gap-1">
                                             <Layers className="h-3 w-3" /> {selectedOption.title}
                                         </Badge>
                                         <span className="font-mono text-xs text-muted-foreground">
@@ -519,7 +519,7 @@ export const OrderCommissionPage: React.FC = () => {
                                 {selectedAddons.length > 0 && (
                                     <div className="space-y-2 pb-3 border-b border-border/60">
                                         <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                                            <Tag className="h-3.5 w-3.5 text-purple-400" /> Selected Add-ons ({selectedAddons.length})
+                                            <Tag className="h-3.5 w-3.5 text-primary" /> Selected Add-ons ({selectedAddons.length})
                                         </p>
                                         <div className="space-y-1.5">
                                             {selectedAddons.map((ad) => (
@@ -541,7 +541,7 @@ export const OrderCommissionPage: React.FC = () => {
                                 <div className="space-y-1.5 py-1 text-xs">
                                     <div className="flex items-center justify-between">
                                         <span className="text-muted-foreground flex items-center gap-1.5">
-                                            <Calendar className="h-3.5 w-3.5 text-purple-400" /> Target Delivery
+                                            <Calendar className="h-3.5 w-3.5 text-primary" /> Target Delivery
                                         </span>
                                         <span className="font-semibold text-foreground font-mono">
                                             {deadlineType === 'specific' && deadline ? deadline : 'Flexible'}
@@ -567,7 +567,7 @@ export const OrderCommissionPage: React.FC = () => {
 
                                 <Button
                                     type="submit"
-                                    className="w-full h-12 rounded-2xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-md gap-2"
+                                    className="w-full h-12 rounded-2xl font-bold text-xs bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shadow-md gap-2"
                                     disabled={submitting}
                                 >
                                     {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}

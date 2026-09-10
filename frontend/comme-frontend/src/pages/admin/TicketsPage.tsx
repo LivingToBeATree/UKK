@@ -13,7 +13,7 @@ import type { Ticket } from '@/types';
 
 const priorityColors: Record<string, string> = {
     low: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    normal: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+    normal: 'bg-primary/10 text-primary border-primary/20',
     high: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
     urgent: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
 };
@@ -41,7 +41,7 @@ export const TicketsPage: React.FC = () => {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-black flex items-center gap-2">
-                        <LifeBuoy className="h-6 w-6 text-purple-400" /> Support & Moderation Tickets
+                        <LifeBuoy className="h-6 w-6 text-primary" /> Support & Moderation Tickets
                     </h1>
                     <p className="text-xs text-muted-foreground mt-1">Review ticket communication threads and moderation inquiries</p>
                 </div>
@@ -65,7 +65,7 @@ export const TicketsPage: React.FC = () => {
                 ) : (
                     tickets.map((ticket) => (
                         <Link key={ticket.id} to={`/admin/tickets/${ticket.id}`}>
-                            <Card className="rounded-3xl border border-border/80 bg-card/60 hover:border-purple-500/60 transition-all mb-3 overflow-hidden shadow-xs hover:shadow-md cursor-pointer">
+                            <Card className="rounded-3xl border border-border/80 bg-card/60 hover:border-primary/60 transition-all mb-3 overflow-hidden shadow-xs hover:shadow-md cursor-pointer">
                                 <CardContent className="p-5 flex items-center justify-between gap-4">
                                     <div className="flex-1 min-w-0 space-y-1">
                                         <div className="flex items-center gap-2">
@@ -93,7 +93,7 @@ export const TicketsPage: React.FC = () => {
                                                 <CheckCircle2 className="h-3 w-3 mr-1" /> Resolved
                                             </Badge>
                                         ) : (
-                                            <Badge variant="outline" className="bg-purple-500/10 text-purple-400 border-purple-500/20 text-[10px] uppercase font-bold">
+                                            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] uppercase font-bold">
                                                 <Clock className="h-3 w-3 mr-1" /> Open
                                             </Badge>
                                         )}

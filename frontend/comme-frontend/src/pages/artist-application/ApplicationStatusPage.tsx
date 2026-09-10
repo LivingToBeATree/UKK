@@ -603,7 +603,7 @@ export const ApplicationStatusPage: React.FC = () => {
                                 <span>Zero Chargeback Risk via Midtrans Integration</span>
                             </div>
                             <div className="flex items-center gap-2 text-foreground/90">
-                                <BadgeCheck className="h-4 w-4 text-purple-400 shrink-0" />
+                                <BadgeCheck className="h-4 w-4 text-primary shrink-0" />
                                 <span>Verified Badge on Profile &amp; Commission Listings</span>
                             </div>
                         </div>

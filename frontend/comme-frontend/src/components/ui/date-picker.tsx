@@ -205,12 +205,12 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                     disabled
                         ? 'bg-muted/40 text-muted-foreground border-border cursor-not-allowed opacity-60'
                         : isOpen
-                        ? 'bg-card border-purple-500/80 ring-2 ring-purple-500/20 shadow-md'
-                        : 'bg-card/90 hover:bg-card border-border hover:border-purple-500/40 text-foreground'
+                        ? 'bg-card border-primary/80 ring-2 ring-primary/20 shadow-md'
+                        : 'bg-card/90 hover:bg-card border-border hover:border-primary/40 text-foreground'
                 }`}
             >
                 <div className="flex items-center gap-2.5 min-w-0">
-                    <CalendarIcon className={`h-4 w-4 shrink-0 ${value ? 'text-purple-400' : 'text-muted-foreground'}`} />
+                    <CalendarIcon className={`h-4 w-4 shrink-0 ${value ? 'text-primary' : 'text-muted-foreground'}`} />
                     <span className={`truncate font-medium ${value ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}>
                         {value ? formatDisplayValue(value) : placeholder}
                     </span>
@@ -277,33 +277,33 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                     {showPresets && (
                         <div className="py-2.5 border-b border-border/40 flex items-center gap-1.5 overflow-x-auto">
                             <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider shrink-0 flex items-center gap-1">
-                                <Sparkles className="h-2.5 w-2.5 text-purple-400" /> Presets:
+                                <Sparkles className="h-2.5 w-2.5 text-primary" /> Presets:
                             </span>
                             <button
                                 type="button"
                                 onClick={() => applyPreset(3)}
-                                className="px-2 py-0.5 rounded-lg text-[10px] font-medium bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 transition-colors shrink-0 cursor-pointer"
+                                className="px-2 py-0.5 rounded-lg text-[10px] font-medium bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-colors shrink-0 cursor-pointer"
                             >
                                 +3 Days
                             </button>
                             <button
                                 type="button"
                                 onClick={() => applyPreset(7)}
-                                className="px-2 py-0.5 rounded-lg text-[10px] font-medium bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 transition-colors shrink-0 cursor-pointer"
+                                className="px-2 py-0.5 rounded-lg text-[10px] font-medium bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-colors shrink-0 cursor-pointer"
                             >
                                 +1 Week
                             </button>
                             <button
                                 type="button"
                                 onClick={() => applyPreset(14)}
-                                className="px-2 py-0.5 rounded-lg text-[10px] font-medium bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 transition-colors shrink-0 cursor-pointer"
+                                className="px-2 py-0.5 rounded-lg text-[10px] font-medium bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-colors shrink-0 cursor-pointer"
                             >
                                 +2 Weeks
                             </button>
                             <button
                                 type="button"
                                 onClick={() => applyPreset(30)}
-                                className="px-2 py-0.5 rounded-lg text-[10px] font-medium bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 transition-colors shrink-0 cursor-pointer"
+                                className="px-2 py-0.5 rounded-lg text-[10px] font-medium bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-colors shrink-0 cursor-pointer"
                             >
                                 +1 Month
                             </button>
@@ -349,11 +349,11 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                                     onClick={() => handleSelectDate(displayYear, displayMonth, day)}
                                     className={`h-8 w-full rounded-xl text-xs font-semibold font-mono flex items-center justify-center transition-all cursor-pointer ${
                                         selected
-                                            ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30 scale-105 font-bold'
+                                            ? 'bg-primary text-primary-foreground shadow-md shadow-purple-500/30 scale-105 font-bold'
                                             : disabledDay
                                             ? 'text-muted-foreground/20 cursor-not-allowed line-through'
                                             : currentDay
-                                            ? 'border border-purple-400/50 text-purple-300 hover:bg-purple-500/15'
+                                            ? 'border border-primary/50 text-primary hover:bg-primary/15'
                                             : 'text-foreground hover:bg-white/10 hover:text-white'
                                     }`}
                                 >
@@ -388,7 +388,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                                     setIsOpen(false);
                                 }
                             }}
-                            className="text-[11px] font-bold text-purple-400 hover:text-purple-300 transition-colors cursor-pointer"
+                            className="text-[11px] font-bold text-primary hover:text-primary transition-colors cursor-pointer"
                         >
                             Today
                         </button>

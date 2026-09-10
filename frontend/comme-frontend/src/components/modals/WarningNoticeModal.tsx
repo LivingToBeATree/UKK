@@ -88,7 +88,7 @@ export const WarningNoticeModal: React.FC = () => {
                         {/* Rules Compliance Notice */}
                         <div className="space-y-2 text-[12px] text-muted-foreground bg-muted/30 p-3.5 rounded-2xl border border-border/50">
                             <div className="flex items-center gap-2 text-foreground font-semibold">
-                                <FileText className="h-3.5 w-3.5 text-purple-400" />
+                                <FileText className="h-3.5 w-3.5 text-primary" />
                                 <span>Platform Rules &amp; Compliance Policy</span>
                             </div>
                             <ul className="list-disc list-inside space-y-1 pl-1 text-[11px]">

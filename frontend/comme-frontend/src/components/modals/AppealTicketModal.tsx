@@ -125,11 +125,11 @@ export const AppealTicketModal: React.FC<AppealTicketModalProps> = ({
                     {/* Header */}
                     <div className="flex items-start justify-between gap-4">
                         <div className="flex items-center gap-3">
-                            <div className="h-11 w-11 rounded-2xl bg-purple-500/10 border border-purple-500/25 flex items-center justify-center text-purple-400 shrink-0">
+                            <div className="h-11 w-11 rounded-2xl bg-primary/10 border border-primary/25 flex items-center justify-center text-primary shrink-0">
                                 {category === 'appeal' ? (
                                     <ShieldAlert className="h-6 w-6 text-rose-400" />
                                 ) : (
-                                    <LifeBuoy className="h-6 w-6 text-purple-400" />
+                                    <LifeBuoy className="h-6 w-6 text-primary" />
                                 )}
                             </div>
                             <div>
@@ -189,12 +189,12 @@ export const AppealTicketModal: React.FC<AppealTicketModalProps> = ({
                                         onClick={() => setCategory('inquiry')}
                                         className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col gap-1 ${
                                             category === 'inquiry'
-                                                ? 'bg-purple-600/15 border-purple-500/60 ring-2 ring-purple-500/20'
+                                                ? 'bg-primary/15 border-primary/60 ring-2 ring-primary/20'
                                                 : 'bg-secondary/40 border-border/60 hover:bg-secondary/70'
                                         }`}
                                     >
                                         <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-                                            <HelpCircle className="h-3.5 w-3.5 text-purple-400" />
+                                            <HelpCircle className="h-3.5 w-3.5 text-primary" />
                                             General Inquiry
                                         </div>
                                         <span className="text-[10px] text-muted-foreground">
@@ -231,7 +231,7 @@ export const AppealTicketModal: React.FC<AppealTicketModalProps> = ({
                                     <select
                                         value={reportableType}
                                         onChange={(e) => setReportableType(e.target.value)}
-                                        className="w-full px-3 py-2 rounded-xl bg-secondary/70 border border-border/80 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                                        className="w-full px-3 py-2 rounded-xl bg-secondary/70 border border-border/80 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
                                     >
                                         <option value="post">Post</option>
                                         <option value="portfolio">Artwork / Portfolio</option>
@@ -246,7 +246,7 @@ export const AppealTicketModal: React.FC<AppealTicketModalProps> = ({
                                         value={reportableId || ''}
                                         onChange={(e) => setReportableId(e.target.value ? Number(e.target.value) : undefined)}
                                         placeholder="e.g. 42"
-                                        className="w-full px-3 py-2 rounded-xl bg-secondary/70 border border-border/80 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                                        className="w-full px-3 py-2 rounded-xl bg-secondary/70 border border-border/80 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
                                     />
                                 </div>
                             </div>
@@ -266,7 +266,7 @@ export const AppealTicketModal: React.FC<AppealTicketModalProps> = ({
                                         ? 'e.g. Requesting review for revised artwork'
                                         : 'e.g. Need assistance with escrow payment'
                                 }
-                                className="w-full px-3.5 py-2.5 rounded-2xl bg-secondary/50 border border-border/80 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                                className="w-full px-3.5 py-2.5 rounded-2xl bg-secondary/50 border border-border/80 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40"
                             />
                         </div>
 
@@ -289,7 +289,7 @@ export const AppealTicketModal: React.FC<AppealTicketModalProps> = ({
                                         ? 'Explain why this item complies with guidelines, or explain what corrections you have made so staff can review and restore it...'
                                         : 'Describe your issue or question in detail...'
                                 }
-                                className="w-full px-3.5 py-2.5 rounded-2xl bg-secondary/50 border border-border/80 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-purple-500/40 resize-none leading-relaxed"
+                                className="w-full px-3.5 py-2.5 rounded-2xl bg-secondary/50 border border-border/80 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none leading-relaxed"
                             />
                         </div>
 
@@ -318,7 +318,7 @@ export const AppealTicketModal: React.FC<AppealTicketModalProps> = ({
                                 className={`rounded-xl text-xs font-bold text-white shadow-md cursor-pointer ${
                                     category === 'appeal'
                                         ? 'bg-rose-600 hover:bg-rose-700'
-                                        : 'bg-purple-600 hover:bg-purple-700'
+                                        : 'bg-primary hover:bg-primary/90'
                                 }`}
                             >
                                 {submitting ? (

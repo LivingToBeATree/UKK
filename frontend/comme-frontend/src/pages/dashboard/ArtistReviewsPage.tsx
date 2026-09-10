@@ -228,9 +228,9 @@ export const ArtistReviewsPage: React.FC = () => {
 
                                 {/* Artist Reply Section */}
                                 {review.artist_reply ? (
-                                    <div className="ml-4 pl-4 border-l-2 border-purple-500/40 bg-purple-950/20 rounded-r-2xl p-3.5 space-y-1.5">
+                                    <div className="ml-4 pl-4 border-l-2 border-primary/40 bg-primary/10 rounded-r-2xl p-3.5 space-y-1.5">
                                         <div className="flex items-center gap-2">
-                                            <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 text-[10px] font-bold">
+                                            <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px] font-bold">
                                                 Artist Response
                                             </Badge>
                                             {review.artist_replied_at && (
@@ -246,7 +246,7 @@ export const ArtistReviewsPage: React.FC = () => {
                                 ) : (
                                     <div>
                                         {replyingReviewId === review.id ? (
-                                            <div className="ml-4 pl-4 border-l-2 border-purple-500/40 space-y-2 pt-2">
+                                            <div className="ml-4 pl-4 border-l-2 border-primary/40 space-y-2 pt-2">
                                                 <Textarea
                                                     value={replyText}
                                                     onChange={(e) => setReplyText(e.target.value)}
@@ -258,7 +258,7 @@ export const ArtistReviewsPage: React.FC = () => {
                                                         size="sm"
                                                         disabled={submittingReply || !replyText.trim()}
                                                         onClick={() => handleSendReply(review.id)}
-                                                        className="h-8 px-4 rounded-xl text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-xs gap-1.5"
+                                                        className="h-8 px-4 rounded-xl text-xs font-bold bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shadow-xs gap-1.5"
                                                     >
                                                         <Send className="h-3 w-3" />
                                                         {submittingReply ? 'Posting...' : 'Post Reply'}
@@ -284,7 +284,7 @@ export const ArtistReviewsPage: React.FC = () => {
                                                     setReplyingReviewId(review.id);
                                                     setReplyText('');
                                                 }}
-                                                className="text-xs text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 font-bold gap-1.5 h-8 px-3 rounded-xl cursor-pointer"
+                                                className="text-xs text-primary hover:text-primary hover:bg-primary/10 font-bold gap-1.5 h-8 px-3 rounded-xl cursor-pointer"
                                             >
                                                 <CornerDownRight className="h-3.5 w-3.5" />
                                                 Reply to review

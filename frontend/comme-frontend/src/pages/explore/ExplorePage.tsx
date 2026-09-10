@@ -212,7 +212,7 @@ const PostCardMedia: React.FC<{ post: Post }> = ({ post }) => {
                         <Video className="h-3 w-3" /> VIDEO
                     </span>
                 ) : isGif ? (
-                    <span className="px-2.5 py-0.5 rounded-full bg-purple-600/90 text-white text-[10px] font-black flex items-center gap-1 shadow-md backdrop-blur-md">
+                    <span className="px-2.5 py-0.5 rounded-full bg-primary/90 text-white text-[10px] font-black flex items-center gap-1 shadow-md backdrop-blur-md">
                         GIF
                     </span>
                 ) : null}
@@ -223,7 +223,7 @@ const PostCardMedia: React.FC<{ post: Post }> = ({ post }) => {
                 <>
                     {/* Top right indicator badge: e.g. 1/8 */}
                     <div className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-black/65 backdrop-blur-md text-white text-[10px] font-bold flex items-center gap-1 shadow-md z-10 pointer-events-none">
-                        <Layers className="h-3 w-3 text-purple-300" />
+                        <Layers className="h-3 w-3 text-primary" />
                         <span>
                             {currentIndex + 1}/{mediaList.length}
                         </span>
@@ -492,14 +492,14 @@ export const ExplorePage: React.FC = () => {
                 </div>
                 {isAuthenticated ? (
                     <Link to="/posts/create">
-                        <Button className="font-bold shadow-md rounded-2xl bg-purple-600 hover:bg-purple-700 text-white">
+                        <Button className="font-bold shadow-md rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground">
                             <Plus className="h-4 w-4 mr-2" /> Create Post / Artwork
                         </Button>
                     </Link>
                 ) : (
                     <Button
                         onClick={() => requireAuth('generic')}
-                        className="font-bold shadow-md rounded-2xl bg-purple-600 hover:bg-purple-700 text-white"
+                        className="font-bold shadow-md rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground"
                     >
                         <Plus className="h-4 w-4 mr-2" /> Create Post / Artwork
                     </Button>
@@ -516,7 +516,7 @@ export const ExplorePage: React.FC = () => {
                             placeholder="Search artworks, creator username, or #tags..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10 pr-10 h-11 rounded-2xl bg-card border-border/80 text-xs sm:text-sm shadow-xs focus-visible:ring-purple-500/40"
+                            className="pl-10 pr-10 h-11 rounded-2xl bg-card border-border/80 text-xs sm:text-sm shadow-xs focus-visible:ring-primary/40"
                         />
                         {searchQuery && (
                             <button
@@ -534,7 +534,7 @@ export const ExplorePage: React.FC = () => {
                             </button>
                         )}
                     </div>
-                    <Button type="submit" className="h-11 px-5 rounded-2xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-sm">
+                    <Button type="submit" className="h-11 px-5 rounded-2xl font-bold text-xs bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shadow-sm">
                         Search
                     </Button>
                 </form>
@@ -542,7 +542,7 @@ export const ExplorePage: React.FC = () => {
                 {/* Trending Tags Bar */}
                 <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-none">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground px-1.5 shrink-0">
-                        <TrendingUp className="h-3.5 w-3.5 text-purple-500" />
+                        <TrendingUp className="h-3.5 w-3.5 text-primary" />
                         <span className="hidden sm:inline">Tags:</span>
                     </div>
 
@@ -551,7 +551,7 @@ export const ExplorePage: React.FC = () => {
                         onClick={() => handleSelectTag('')}
                         className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer shrink-0 ${
                             !selectedTag
-                                ? 'bg-purple-600 text-white shadow-xs'
+                                ? 'bg-primary text-primary-foreground shadow-xs'
                                 : 'bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary border border-border/60'
                         }`}
                     >
@@ -567,7 +567,7 @@ export const ExplorePage: React.FC = () => {
                                 onClick={() => handleSelectTag(tagName)}
                                 className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
                                     isSelected
-                                        ? 'bg-purple-600 text-white shadow-xs ring-2 ring-purple-400/40'
+                                        ? 'bg-primary text-primary-foreground shadow-xs ring-2 ring-primary/40'
                                         : 'bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary border border-border/60'
                                 }`}
                             >
@@ -581,11 +581,11 @@ export const ExplorePage: React.FC = () => {
 
                 {/* Active Filter Indicators */}
                 {(selectedTag || searchQuery) && (
-                    <div className="flex items-center justify-between gap-3 p-2.5 px-4 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-xs">
+                    <div className="flex items-center justify-between gap-3 p-2.5 px-4 rounded-2xl bg-primary/10 border border-primary/20 text-xs">
                         <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-bold text-purple-400">Active Filters:</span>
+                            <span className="font-bold text-primary">Active Filters:</span>
                             {selectedTag && (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-600/20 text-purple-300 border border-purple-500/30 font-semibold font-mono">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30 font-semibold font-mono">
                                     #{selectedTag}
                                     <button type="button" onClick={() => handleSelectTag(selectedTag)} className="hover:text-white cursor-pointer ml-1">
                                         <X className="h-3 w-3" />
@@ -593,7 +593,7 @@ export const ExplorePage: React.FC = () => {
                                 </span>
                             )}
                             {searchQuery && (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-600/20 text-purple-300 border border-purple-500/30 font-semibold">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30 font-semibold">
                                     Search: "{searchQuery}"
                                     <button type="button" onClick={() => { setSearchQuery(''); fetchPosts(1, false); }} className="hover:text-white cursor-pointer ml-1">
                                         <X className="h-3 w-3" />
@@ -617,7 +617,7 @@ export const ExplorePage: React.FC = () => {
                         onClick={() => setActiveCategory('all')}
                         className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                             activeCategory === 'all'
-                                ? 'bg-purple-600 text-white shadow-sm'
+                                ? 'bg-primary text-primary-foreground shadow-sm'
                                 : 'bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary border border-border/60'
                         }`}
                     >
@@ -633,7 +633,7 @@ export const ExplorePage: React.FC = () => {
                         onClick={() => setActiveCategory('artwork')}
                         className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                             activeCategory === 'artwork'
-                                ? 'bg-purple-600 text-white shadow-sm'
+                                ? 'bg-primary text-primary-foreground shadow-sm'
                                 : 'bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary border border-border/60'
                         }`}
                     >
@@ -649,7 +649,7 @@ export const ExplorePage: React.FC = () => {
                         onClick={() => setActiveCategory('posts')}
                         className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                             activeCategory === 'posts'
-                                ? 'bg-purple-600 text-white shadow-sm'
+                                ? 'bg-primary text-primary-foreground shadow-sm'
                                 : 'bg-secondary/70 text-muted-foreground hover:text-foreground hover:bg-secondary border border-border/60'
                         }`}
                     >
@@ -664,7 +664,7 @@ export const ExplorePage: React.FC = () => {
                 {/* Sort Order Selector */}
                 <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 bg-secondary/40 p-1 rounded-xl border border-border/60">
                     <span className="text-[11px] font-bold text-muted-foreground pl-2 flex items-center gap-1.5">
-                        <ArrowUpDown className="h-3.5 w-3.5 text-purple-400" />
+                        <ArrowUpDown className="h-3.5 w-3.5 text-primary" />
                         Sort:
                     </span>
                     <Select
@@ -719,20 +719,20 @@ export const ExplorePage: React.FC = () => {
                     {selectedTag || searchQuery ? (
                         <Button
                             onClick={handleClearFilters}
-                            className="font-bold rounded-2xl bg-purple-600 hover:bg-purple-700 text-white shadow-md cursor-pointer"
+                            className="font-bold rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-md cursor-pointer"
                         >
                             Clear Filters & Show All
                         </Button>
                     ) : isAuthenticated ? (
                         <Link to="/posts/create">
-                            <Button className="font-bold rounded-2xl bg-purple-600 hover:bg-purple-700 text-white shadow-md">
+                            <Button className="font-bold rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-md">
                                 <Sparkles className="h-4 w-4 mr-2" /> Create Post
                             </Button>
                         </Link>
                     ) : (
                         <Button
                             onClick={() => requireAuth('generic')}
-                            className="font-bold rounded-2xl bg-purple-600 hover:bg-purple-700 text-white shadow-md"
+                            className="font-bold rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-md"
                         >
                             <Sparkles className="h-4 w-4 mr-2" /> Create Post
                         </Button>
@@ -758,7 +758,7 @@ export const ExplorePage: React.FC = () => {
                                         /* ── 1. Standardized Artwork Card (Clean Showcase with External Header & Actions) ── */
                                         <Link
                                             to={post.portfolio ? `/portfolio/${post.portfolio.slug || post.portfolio.id}` : post.portfolio_id ? `/portfolio/${post.portfolio_id}` : `/posts/${post.slug || post.id}`}
-                                            className="group relative block rounded-2xl overflow-hidden bg-card border border-border/80 hover:border-purple-500/60 shadow-xs hover:shadow-xl transition-all duration-300 cursor-pointer p-3.5 space-y-3"
+                                            className="group relative block rounded-2xl overflow-hidden bg-card border border-border/80 hover:border-primary/60 shadow-xs hover:shadow-xl transition-all duration-300 cursor-pointer p-3.5 space-y-3"
                                         >
                                             {/* Author Header (Outside Top) */}
                                             <div className="flex items-center justify-between gap-2">
@@ -771,7 +771,7 @@ export const ExplorePage: React.FC = () => {
                                                     />
                                                     <div className="min-w-0">
                                                         <div className="flex items-center gap-1.5">
-                                                            <span className="text-xs font-bold text-foreground truncate group-hover:text-purple-400 transition-colors">
+                                                            <span className="text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors">
                                                                 {post.user?.display_name || post.user?.username}
                                                             </span>
                                                             <span className="text-[9px] font-bold text-amber-400 bg-amber-400/10 px-1.5 py-0.2 rounded border border-amber-400/20 shrink-0">
@@ -898,7 +898,7 @@ export const ExplorePage: React.FC = () => {
                                                             }}
                                                             className={`text-[10px] font-semibold px-2 py-0.5 rounded-full transition-all cursor-pointer ${
                                                                 selectedTag.toLowerCase() === tag.name.toLowerCase()
-                                                                    ? 'bg-purple-600 text-white font-bold shadow-xs'
+                                                                    ? 'bg-primary text-primary-foreground font-bold shadow-xs'
                                                                     : 'bg-secondary/70 hover:bg-secondary text-muted-foreground hover:text-foreground border border-border/50'
                                                             }`}
                                                         >
@@ -957,7 +957,7 @@ export const ExplorePage: React.FC = () => {
                                         /* ── 2. Discussion Card ── */
                                         <Link
                                             to={`/posts/${post.slug || post.id}`}
-                                            className="group relative block rounded-2xl overflow-hidden bg-card border border-border/80 hover:border-purple-500/60 shadow-xs hover:shadow-xl transition-all duration-300 cursor-pointer p-4 space-y-3"
+                                            className="group relative block rounded-2xl overflow-hidden bg-card border border-border/80 hover:border-primary/60 shadow-xs hover:shadow-xl transition-all duration-300 cursor-pointer p-4 space-y-3"
                                         >
                                             {/* Author Header */}
                                             <div className="flex items-center justify-between gap-2">
@@ -970,7 +970,7 @@ export const ExplorePage: React.FC = () => {
                                                     />
                                                     <div className="min-w-0">
                                                         <div className="flex items-center gap-1.5">
-                                                            <span className="text-xs font-bold text-foreground truncate group-hover:text-purple-400 transition-colors">
+                                                            <span className="text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors">
                                                                 {post.user?.display_name || post.user?.username}
                                                             </span>
                                                             <span className="text-[9px] font-bold text-muted-foreground bg-secondary/80 px-1.5 py-0.2 rounded border border-border/60 shrink-0">
@@ -1067,13 +1067,13 @@ export const ExplorePage: React.FC = () => {
                                                                 }}
                                                                 className={`rounded-xl text-xs py-1.5 cursor-pointer gap-2 ${
                                                                     user?.role === 'admin' || user?.role === 'moderator'
-                                                                        ? 'text-purple-400 hover:text-purple-300 hover:bg-purple-500/10'
+                                                                        ? 'text-primary hover:text-primary hover:bg-primary/10'
                                                                         : 'text-rose-400 hover:text-rose-300 hover:bg-rose-500/10'
                                                                 }`}
                                                             >
                                                                 {user?.role === 'admin' || user?.role === 'moderator' ? (
                                                                     <>
-                                                                        <Shield className="h-3.5 w-3.5 text-purple-400" />
+                                                                        <Shield className="h-3.5 w-3.5 text-primary" />
                                                                         <span>Moderate Post</span>
                                                                     </>
                                                                 ) : (
@@ -1119,7 +1119,7 @@ export const ExplorePage: React.FC = () => {
                                                             }}
                                                             className={`text-[10px] font-semibold px-2 py-0.5 rounded-full transition-all cursor-pointer ${
                                                                 selectedTag.toLowerCase() === tag.name.toLowerCase()
-                                                                    ? 'bg-purple-600 text-white font-bold shadow-xs'
+                                                                    ? 'bg-primary text-primary-foreground font-bold shadow-xs'
                                                                     : 'bg-secondary/70 hover:bg-secondary text-muted-foreground hover:text-foreground border border-border/50'
                                                             }`}
                                                         >

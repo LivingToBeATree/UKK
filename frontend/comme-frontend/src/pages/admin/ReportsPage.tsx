@@ -244,7 +244,7 @@ export const ReportsPage: React.FC = () => {
             case 'copyright':
                 return <Copyright className="h-3.5 w-3.5 text-indigo-400" />;
             case 'impersonation':
-                return <UserX className="h-3.5 w-3.5 text-purple-400" />;
+                return <UserX className="h-3.5 w-3.5 text-primary" />;
             case 'scam':
                 return <DollarSign className="h-3.5 w-3.5 text-emerald-400" />;
             default:
@@ -339,7 +339,7 @@ export const ReportsPage: React.FC = () => {
                             onClick={() => setStatusFilter(tab.id)}
                             className={`text-xs font-bold px-3 py-1.5 rounded-xl transition-all cursor-pointer whitespace-nowrap ${
                                 statusFilter === tab.id
-                                    ? 'bg-purple-600 text-white shadow-md'
+                                    ? 'bg-primary text-primary-foreground shadow-md'
                                     : 'bg-secondary/40 text-muted-foreground hover:bg-secondary/80 hover:text-foreground'
                             }`}
                         >
@@ -403,8 +403,8 @@ export const ReportsPage: React.FC = () => {
                                     onClick={() => handleSelectReport(report)}
                                     className={`rounded-3xl border transition-all cursor-pointer overflow-hidden ${
                                         isSelected
-                                            ? 'border-purple-500 bg-purple-500/10 shadow-md ring-1 ring-purple-500/30'
-                                            : 'border-border/80 bg-card/60 hover:border-purple-500/40 hover:bg-secondary/30'
+                                            ? 'border-primary bg-primary/10 shadow-md ring-1 ring-primary/30'
+                                            : 'border-border/80 bg-card/60 hover:border-primary/40 hover:bg-secondary/30'
                                     }`}
                                 >
                                     <CardContent className="p-4 space-y-2.5">
@@ -442,7 +442,7 @@ export const ReportsPage: React.FC = () => {
                                             <span>
                                                 {formatDateTimeSafe(report.created_at)}
                                             </span>
-                                            <div className="flex items-center gap-1 text-purple-400 font-bold">
+                                            <div className="flex items-center gap-1 text-primary font-bold">
                                                 <span>Inspect &amp; Action</span>
                                                 <ChevronRight className="h-3 w-3" />
                                             </div>
@@ -477,7 +477,7 @@ export const ReportsPage: React.FC = () => {
                                                     href={getTargetUrl(selectedReport.reportable_type, selectedReport.reportable_id, selectedReport.reportable)!}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/30 text-purple-300 font-bold text-[11px] border border-purple-500/30 transition-all shadow-xs cursor-pointer"
+                                                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-xl bg-primary/15 hover:bg-primary/30 text-primary font-bold text-[11px] border border-primary/30 transition-all shadow-xs cursor-pointer"
                                                 >
                                                     <span>Survey Target Live</span>
                                                     <ExternalLink className="h-3 w-3" />
@@ -667,7 +667,7 @@ export const ReportsPage: React.FC = () => {
                                                                 size="sm"
                                                                 variant="outline"
                                                                 onClick={() => handleOpenActionModal('suspend_user')}
-                                                                className="rounded-xl text-xs font-bold h-8 border-purple-500/40 text-purple-400 hover:bg-purple-500/10 gap-1.5 cursor-pointer"
+                                                                className="rounded-xl text-xs font-bold h-8 border-primary/40 text-primary hover:bg-primary/10 gap-1.5 cursor-pointer"
                                                             >
                                                                 <UserX className="h-3.5 w-3.5" /> Suspend Offender
                                                             </Button>
@@ -694,7 +694,7 @@ export const ReportsPage: React.FC = () => {
                                                                 size="sm"
                                                                 variant="outline"
                                                                 onClick={() => handleOpenActionModal('suspend_user')}
-                                                                className="rounded-xl text-xs font-bold h-8 border-purple-500/40 text-purple-400 hover:bg-purple-500/10 gap-1.5 cursor-pointer"
+                                                                className="rounded-xl text-xs font-bold h-8 border-primary/40 text-primary hover:bg-primary/10 gap-1.5 cursor-pointer"
                                                             >
                                                                 <UserX className="h-3.5 w-3.5" /> Suspend Offender
                                                             </Button>
@@ -747,7 +747,7 @@ export const ReportsPage: React.FC = () => {
                                         <div className="flex items-center justify-between">
                                             <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                                                 <span>Reported Target</span>
-                                                <Badge variant="outline" className="text-[10px] capitalize font-mono border-purple-500/30 text-purple-300 bg-purple-500/10">
+                                                <Badge variant="outline" className="text-[10px] capitalize font-mono border-primary/30 text-primary bg-primary/10">
                                                     {selectedReport.reportable_type} #{selectedReport.reportable_id}
                                                 </Badge>
                                             </span>
@@ -756,7 +756,7 @@ export const ReportsPage: React.FC = () => {
                                                     href={getTargetUrl(selectedReport.reportable_type, selectedReport.reportable_id, selectedReport.reportable)!}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="text-[11px] font-bold text-purple-400 hover:text-purple-300 flex items-center gap-1 px-2 py-0.5 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 transition-all cursor-pointer shadow-xs"
+                                                    className="text-[11px] font-bold text-primary hover:text-primary flex items-center gap-1 px-2 py-0.5 rounded-lg bg-primary/15 hover:bg-primary/25 border border-primary/30 transition-all cursor-pointer shadow-xs"
                                                 >
                                                     <span>Inspect Live</span>
                                                     <ExternalLink className="h-3 w-3" />
@@ -773,7 +773,7 @@ export const ReportsPage: React.FC = () => {
                                                     href={getTargetUrl(selectedReport.reportable_type, selectedReport.reportable_id, selectedReport.reportable)!}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="text-[11px] text-purple-400 hover:underline flex items-center gap-1"
+                                                    className="text-[11px] text-primary hover:underline flex items-center gap-1"
                                                 >
                                                     <span>View {selectedReport.reportable_type} page</span>
                                                     <ExternalLink className="h-2.5 w-2.5" />
@@ -817,7 +817,7 @@ export const ReportsPage: React.FC = () => {
                                                                         ? 'bg-rose-600 text-white cursor-pointer'
                                                                         : p === 'high'
                                                                         ? 'bg-amber-600 text-white cursor-pointer'
-                                                                        : 'bg-purple-600 text-white cursor-pointer'
+                                                                        : 'bg-primary text-primary-foreground cursor-pointer'
                                                                     : 'bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground cursor-pointer'
                                                             }`}
                                                         >
@@ -895,7 +895,7 @@ export const ReportsPage: React.FC = () => {
                                                             {msg.user?.display_name || msg.user?.username}
                                                         </span>
                                                         {isStaffMessage ? (
-                                                            <span className="px-1.5 py-0.2 rounded-md bg-purple-500/20 text-purple-300 font-bold text-[9px]">
+                                                            <span className="px-1.5 py-0.2 rounded-md bg-primary/20 text-primary font-bold text-[9px]">
                                                                 STAFF
                                                             </span>
                                                         ) : (
@@ -910,7 +910,7 @@ export const ReportsPage: React.FC = () => {
                                                     <div
                                                         className={`p-3.5 rounded-2xl text-xs leading-relaxed whitespace-pre-wrap break-words ${
                                                             isStaffMessage
-                                                                ? 'bg-purple-600 text-white rounded-tr-xs'
+                                                                ? 'bg-primary text-primary-foreground rounded-tr-xs'
                                                                 : 'bg-secondary/60 text-foreground border border-border/60 rounded-tl-xs'
                                                         }`}
                                                     >
@@ -955,13 +955,13 @@ export const ReportsPage: React.FC = () => {
                                             value={staffMessage}
                                             onChange={(e) => setStaffMessage(e.target.value)}
                                             placeholder="Send official moderation reply to reporter..."
-                                            className="h-10 rounded-xl bg-card border-border/80 text-xs focus-visible:ring-purple-500"
+                                            className="h-10 rounded-xl bg-card border-border/80 text-xs focus-visible:ring-primary"
                                             disabled={sendingMsg}
                                         />
                                         <Button
                                             type="submit"
                                             disabled={!staffMessage.trim() || sendingMsg}
-                                            className="h-10 px-4 rounded-xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-md shrink-0 gap-1.5"
+                                            className="h-10 px-4 rounded-xl font-bold text-xs bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shadow-md shrink-0 gap-1.5"
                                         >
                                             <Send className="h-3.5 w-3.5" />
                                             <span>Reply</span>
@@ -993,7 +993,7 @@ export const ReportsPage: React.FC = () => {
                                     <div className="p-2 rounded-xl bg-rose-500/10 text-rose-400">
                                         {actionType === 'remove_content' && <Trash2 className="h-5 w-5" />}
                                         {actionType === 'warning' && <AlertTriangle className="h-5 w-5 text-amber-400" />}
-                                        {actionType === 'suspend_user' && <UserX className="h-5 w-5 text-purple-400" />}
+                                        {actionType === 'suspend_user' && <UserX className="h-5 w-5 text-primary" />}
                                         {actionType === 'unsuspend_user' && <UserCheck className="h-5 w-5 text-emerald-400" />}
                                         {actionType === 'restore_content' && <RotateCcw className="h-5 w-5 text-emerald-400" />}
                                     </div>
@@ -1051,7 +1051,7 @@ export const ReportsPage: React.FC = () => {
                                                 : actionType === 'warning'
                                                 ? 'bg-amber-600 hover:bg-amber-700'
                                                 : actionType === 'suspend_user'
-                                                ? 'bg-purple-600 hover:bg-purple-700'
+                                                ? 'bg-primary hover:bg-primary/90'
                                                 : 'bg-emerald-600 hover:bg-emerald-700'
                                         }`}
                                     >

@@ -331,7 +331,7 @@ export const ManagePortfolioPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-black flex items-center gap-2.5 text-foreground">
-                        <Palette className="h-6 w-6 text-purple-400" />
+                        <Palette className="h-6 w-6 text-primary" />
                         Portfolio Works
                     </h1>
                     <p className="text-sm text-muted-foreground mt-1">
@@ -340,7 +340,7 @@ export const ManagePortfolioPage: React.FC = () => {
                 </div>
                 <Button
                     onClick={() => setShowForm(!showForm)}
-                    className="h-10 px-5 rounded-2xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-md gap-2 shrink-0"
+                    className="h-10 px-5 rounded-2xl font-bold text-xs bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shadow-md gap-2 shrink-0"
                 >
                     <Plus className="h-4 w-4" />
                     {showForm ? 'Close Uploader' : 'Upload Artwork'}
@@ -356,12 +356,12 @@ export const ManagePortfolioPage: React.FC = () => {
                         exit={{ opacity: 0, height: 0 }}
                         className="overflow-hidden"
                     >
-                        <Card className="rounded-3xl border-purple-500/30 bg-card/90 backdrop-blur-xl shadow-2xl overflow-hidden mb-6">
+                        <Card className="rounded-3xl border-primary/30 bg-card/90 backdrop-blur-xl shadow-2xl overflow-hidden mb-6">
                             <CardContent className="p-6 sm:p-8">
                                 <form onSubmit={handleCreate} className="space-y-6">
                                     <div className="flex items-center justify-between border-b border-border/60 pb-3">
                                         <div className="flex items-center gap-2">
-                                            <Sparkles className="h-4 w-4 text-purple-400" />
+                                            <Sparkles className="h-4 w-4 text-primary" />
                                             <h2 className="text-base font-bold text-foreground">
                                                 Add New Artwork
                                             </h2>
@@ -402,8 +402,8 @@ export const ManagePortfolioPage: React.FC = () => {
                                                 onClick={() => mainFileInputRef.current?.click()}
                                                 className={`border-2 border-dashed rounded-3xl p-8 text-center cursor-pointer transition-all duration-200 flex flex-col items-center justify-center gap-2 ${
                                                     isDraggingMain
-                                                        ? 'border-purple-500 bg-purple-500/10 scale-[0.99]'
-                                                        : 'border-purple-500/40 hover:border-purple-500 bg-purple-500/5 hover:bg-purple-500/10'
+                                                        ? 'border-primary bg-primary/10 scale-[0.99]'
+                                                        : 'border-primary/40 hover:border-primary bg-primary/5 hover:bg-primary/10'
                                                 }`}
                                             >
                                                 <input
@@ -418,7 +418,7 @@ export const ManagePortfolioPage: React.FC = () => {
                                                     }}
                                                     className="hidden"
                                                 />
-                                                <div className="h-12 w-12 rounded-2xl bg-purple-600/20 text-purple-400 flex items-center justify-center border border-purple-500/30 shadow-inner">
+                                                <div className="h-12 w-12 rounded-2xl bg-primary/20 text-primary flex items-center justify-center border border-primary/30 shadow-inner">
                                                     <UploadCloud className="h-6 w-6" />
                                                 </div>
                                                 <div>
@@ -431,7 +431,7 @@ export const ManagePortfolioPage: React.FC = () => {
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div className="relative rounded-2xl overflow-hidden bg-black/60 border-2 border-purple-500/60 p-2 flex items-center justify-between gap-4">
+                                            <div className="relative rounded-2xl overflow-hidden bg-black/60 border-2 border-primary/60 p-2 flex items-center justify-between gap-4">
                                                 <div className="flex items-center gap-3 min-w-0">
                                                     <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-black/80 shrink-0 border border-white/10">
                                                         {mainArtwork.isVideo ? (
@@ -442,7 +442,7 @@ export const ManagePortfolioPage: React.FC = () => {
                                                     </div>
                                                     <div className="min-w-0 space-y-1">
                                                         <div className="flex items-center gap-2">
-                                                            <span className="bg-purple-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm">
+                                                            <span className="bg-primary text-primary-foreground text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm">
                                                                 MAIN ARTWORK / COVER
                                                             </span>
                                                             <span className="text-xs text-muted-foreground">{mainArtwork.size}</span>
@@ -607,7 +607,7 @@ export const ManagePortfolioPage: React.FC = () => {
                                                 type="checkbox"
                                                 checked={isStarred}
                                                 onChange={(e) => setIsStarred(e.target.checked)}
-                                                className="rounded border-border text-purple-600 focus:ring-purple-500 h-4 w-4"
+                                                className="rounded border-border text-primary focus:ring-primary h-4 w-4"
                                             />
                                             <span className="flex items-center gap-1">
                                                 <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
@@ -620,10 +620,10 @@ export const ManagePortfolioPage: React.FC = () => {
                                                 type="checkbox"
                                                 checked={postAsArtwork}
                                                 onChange={(e) => setPostAsArtwork(e.target.checked)}
-                                                className="rounded border-border text-purple-600 focus:ring-purple-500 h-4 w-4"
+                                                className="rounded border-border text-primary focus:ring-primary h-4 w-4"
                                             />
                                             <span className="flex items-center gap-1.5">
-                                                <Sparkles className="h-3.5 w-3.5 text-purple-400" />
+                                                <Sparkles className="h-3.5 w-3.5 text-primary" />
                                                 Post as an artwork
                                                 <span className="text-[10px] font-normal text-muted-foreground">(also shares to community feed)</span>
                                             </span>
@@ -638,7 +638,7 @@ export const ManagePortfolioPage: React.FC = () => {
                                                 animate={{ opacity: 1, height: 'auto', y: 0 }}
                                                 exit={{ opacity: 0, height: 0, y: -6 }}
                                                 transition={{ duration: 0.25 }}
-                                                className="space-y-6 pt-4 pb-2 border-t border-purple-500/20 bg-purple-950/10 p-4 sm:p-5 rounded-3xl border border-border/80 overflow-hidden"
+                                                className="space-y-6 pt-4 pb-2 border-t border-primary/20 bg-primary/5 p-4 sm:p-5 rounded-3xl border border-border/80 overflow-hidden"
                                             >
                                                 {/* Author Header & Visibility Badge */}
                                                 <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border/60">
@@ -654,7 +654,7 @@ export const ManagePortfolioPage: React.FC = () => {
                                                                 <span className="font-bold text-sm text-foreground">
                                                                     {user?.display_name || user?.username || 'Artist'}
                                                                 </span>
-                                                                <span className="text-[10px] font-bold text-purple-400 bg-purple-500/15 px-2 py-0.5 rounded-full border border-purple-500/25">
+                                                                <span className="text-[10px] font-bold text-primary bg-primary/15 px-2 py-0.5 rounded-full border border-primary/25">
                                                                     Artist
                                                                 </span>
                                                             </div>
@@ -831,7 +831,7 @@ export const ManagePortfolioPage: React.FC = () => {
                                                 <div className="space-y-2.5 pt-2 border-t border-border/60">
                                                     <div className="flex items-center justify-between">
                                                         <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                                                            <Tag className="h-3.5 w-3.5 text-purple-400" /> POST TAGS ({postTags.length}/8)
+                                                            <Tag className="h-3.5 w-3.5 text-primary" /> POST TAGS ({postTags.length}/8)
                                                         </Label>
                                                         <span className="text-[11px] text-muted-foreground">Press Enter or comma to add</span>
                                                     </div>
@@ -842,7 +842,7 @@ export const ManagePortfolioPage: React.FC = () => {
                                                             <Badge
                                                                 key={tag}
                                                                 variant="secondary"
-                                                                className="pl-3 pr-2 py-1 text-xs font-bold gap-1.5 bg-purple-500/15 text-purple-300 border border-purple-500/30"
+                                                                className="pl-3 pr-2 py-1 text-xs font-bold gap-1.5 bg-primary/15 text-primary border border-primary/30"
                                                             >
                                                                 #{tag}
                                                                 <button
@@ -889,7 +889,7 @@ export const ManagePortfolioPage: React.FC = () => {
                                                 {/* ── Post Visibility ── */}
                                                 <div className="space-y-2 pt-2 border-t border-border/60">
                                                     <div className="flex items-center gap-2">
-                                                        <Globe className="h-4 w-4 text-purple-400" />
+                                                        <Globe className="h-4 w-4 text-primary" />
                                                         <div>
                                                             <p className="text-xs font-bold text-foreground">Post Visibility</p>
                                                             <p className="text-[11px] text-muted-foreground">Choose who can discover and see this post across Comme.</p>
@@ -926,18 +926,18 @@ export const ManagePortfolioPage: React.FC = () => {
                                                                     onClick={() => setPostVisibility(opt.id)}
                                                                     className={`w-full p-3 rounded-xl border text-left flex items-start justify-between gap-3 transition-all cursor-pointer ${
                                                                         isSelected
-                                                                            ? 'border-purple-500 bg-purple-500/10 ring-1 ring-purple-500/30 text-foreground'
+                                                                            ? 'border-primary bg-primary/10 ring-1 ring-primary/30 text-foreground'
                                                                             : 'border-border hover:bg-secondary/60 text-muted-foreground'
                                                                     }`}
                                                                 >
                                                                     <div className="flex items-start gap-3">
-                                                                        <Icon className={`h-4 w-4 mt-0.5 shrink-0 ${isSelected ? 'text-purple-400' : 'text-muted-foreground'}`} />
+                                                                        <Icon className={`h-4 w-4 mt-0.5 shrink-0 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
                                                                         <div>
                                                                             <p className="text-xs font-bold text-foreground">{opt.label}</p>
                                                                             <p className="text-[11px] text-muted-foreground mt-0.5">{opt.desc}</p>
                                                                         </div>
                                                                     </div>
-                                                                    {isSelected && <Check className="h-4 w-4 text-purple-400 shrink-0" />}
+                                                                    {isSelected && <Check className="h-4 w-4 text-primary shrink-0" />}
                                                                 </button>
                                                             );
                                                         })}
@@ -948,7 +948,7 @@ export const ManagePortfolioPage: React.FC = () => {
                                                 <div className="p-3.5 rounded-2xl border border-border/80 bg-secondary/30 flex items-center justify-between gap-4">
                                                     <div className="space-y-0.5">
                                                         <div className="flex items-center gap-2">
-                                                            <MessageSquare className="h-4 w-4 text-purple-400" />
+                                                            <MessageSquare className="h-4 w-4 text-primary" />
                                                             <Label htmlFor="post_commentable_toggle" className="text-xs font-bold text-foreground cursor-pointer">
                                                                 Community Comments
                                                             </Label>
@@ -962,7 +962,7 @@ export const ManagePortfolioPage: React.FC = () => {
                                                         type="checkbox"
                                                         checked={postCommentable}
                                                         onChange={(e) => setPostCommentable(e.target.checked)}
-                                                        className="h-5 w-5 accent-purple-600 rounded cursor-pointer"
+                                                        className="h-5 w-5 accent-primary rounded cursor-pointer"
                                                     />
                                                 </div>
                                             </motion.div>
@@ -982,7 +982,7 @@ export const ManagePortfolioPage: React.FC = () => {
                                         <Button
                                             type="submit"
                                             disabled={submitting || !title.trim() || !mainArtwork}
-                                            className="h-10 px-6 rounded-2xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-md gap-2"
+                                            className="h-10 px-6 rounded-2xl font-bold text-xs bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shadow-md gap-2"
                                         >
                                             <CheckCircle2 className="h-4 w-4" />
                                             {submitting ? 'Publishing...' : 'Publish to Portfolio'}
@@ -1009,7 +1009,7 @@ export const ManagePortfolioPage: React.FC = () => {
                     ))
                 ) : portfolios.length === 0 ? (
                     <Card className="col-span-full rounded-3xl border-dashed border-border/80 p-16 text-center bg-card/40">
-                        <div className="h-16 w-16 rounded-3xl bg-purple-500/15 text-purple-400 flex items-center justify-center mx-auto mb-4 border border-purple-500/30">
+                        <div className="h-16 w-16 rounded-3xl bg-primary/15 text-primary flex items-center justify-center mx-auto mb-4 border border-primary/30">
                             <ImageIcon className="h-8 w-8" />
                         </div>
                         <h3 className="text-lg font-bold text-foreground">No portfolio artworks yet</h3>
@@ -1018,7 +1018,7 @@ export const ManagePortfolioPage: React.FC = () => {
                         </p>
                         <Button
                             onClick={() => setShowForm(true)}
-                            className="h-10 px-5 rounded-2xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-md gap-2"
+                            className="h-10 px-5 rounded-2xl font-bold text-xs bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shadow-md gap-2"
                         >
                             <Plus className="h-4 w-4" /> Upload Your First Artwork
                         </Button>
@@ -1036,7 +1036,7 @@ export const ManagePortfolioPage: React.FC = () => {
                         return (
                             <Card
                                 key={item.id}
-                                className="group relative rounded-3xl overflow-hidden border border-border/80 hover:border-purple-500/60 bg-card transition-all duration-300 hover:shadow-xl flex flex-col"
+                                className="group relative rounded-3xl overflow-hidden border border-border/80 hover:border-primary/60 bg-card transition-all duration-300 hover:shadow-xl flex flex-col"
                             >
                                 {/* Media Container */}
                                 <Link
@@ -1085,7 +1085,7 @@ export const ManagePortfolioPage: React.FC = () => {
                                     {/* Media Count Badge */}
                                     {item.media && item.media.length > 1 && (
                                         <div className="absolute bottom-3 left-3 bg-black/70 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm">
-                                            <Layers className="h-3 w-3 text-purple-300" /> {item.media.length} Files
+                                            <Layers className="h-3 w-3 text-primary" /> {item.media.length} Files
                                         </div>
                                     )}
 
@@ -1125,9 +1125,9 @@ export const ManagePortfolioPage: React.FC = () => {
 
                                 {/* Content */}
                                 <CardContent className="p-4 flex-1 flex flex-col justify-between space-y-2">
-                                    <Link to={`/portfolio/${item.slug || item.id}`} className="block group-hover:text-purple-300 transition-colors">
+                                    <Link to={`/portfolio/${item.slug || item.id}`} className="block group-hover:text-primary transition-colors">
                                         <div className="flex items-start justify-between gap-2">
-                                            <h3 className="font-bold text-sm text-foreground truncate group-hover:text-purple-300 transition-colors">
+                                            <h3 className="font-bold text-sm text-foreground truncate group-hover:text-primary transition-colors">
                                                 {item.title}
                                             </h3>
                                             <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -1162,7 +1162,7 @@ export const ManagePortfolioPage: React.FC = () => {
                                             </button>
                                             <Link
                                                 to={`/portfolio/${item.slug || item.id}`}
-                                                className="text-purple-400 hover:text-purple-300 font-bold hover:underline"
+                                                className="text-primary hover:text-primary font-bold hover:underline"
                                             >
                                                 Details →
                                             </Link>

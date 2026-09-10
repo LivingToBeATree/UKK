@@ -188,7 +188,7 @@ export const AdminDashboardPage: React.FC = () => {
 
                 {/* Active Tickets */}
                 <Link to="/admin/tickets" className="group">
-                    <Card className="border border-border/80 bg-card hover:border-purple-500/40 transition-all shadow-xs h-full">
+                    <Card className="border border-border/80 bg-card hover:border-primary/40 transition-all shadow-xs h-full">
                         <CardContent className="p-5 flex items-center justify-between">
                             <div className="space-y-1">
                                 <p className="text-xs font-semibold text-muted-foreground uppercase font-mono tracking-wide">
@@ -204,7 +204,7 @@ export const AdminDashboardPage: React.FC = () => {
                                     </div>
                                 )}
                             </div>
-                            <div className="h-12 w-12 rounded-2xl bg-purple-500/10 text-purple-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
                                 <MessageSquare className="h-6 w-6" />
                             </div>
                         </CardContent>
@@ -359,13 +359,13 @@ export const AdminDashboardPage: React.FC = () => {
                         <div className="p-3.5 rounded-xl bg-muted/30 border border-border/50">
                             <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
                                 <span>Queue Worker</span>
-                                <Activity className="h-3.5 w-3.5 text-purple-400" />
+                                <Activity className="h-3.5 w-3.5 text-primary" />
                             </div>
                             <div className="mt-1 flex items-baseline gap-2">
                                 <p className="text-lg font-bold text-foreground">
                                     {health?.queue ? `${health.queue.pending_jobs} jobs` : '0 jobs'}
                                 </p>
-                                <span className="text-[10px] text-purple-400 font-semibold">
+                                <span className="text-[10px] text-primary font-semibold">
                                     {health?.queue.driver ?? 'Database'}
                                 </span>
                             </div>
@@ -467,7 +467,7 @@ export const AdminDashboardPage: React.FC = () => {
                 <Card className="border border-border/80 bg-card rounded-2xl shadow-xs flex flex-col">
                     <CardHeader className="p-4 pb-3 border-b border-border/60 flex flex-row items-center justify-between">
                         <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
-                            <MessageSquare className="h-4 w-4 text-purple-400" /> Support Tickets
+                            <MessageSquare className="h-4 w-4 text-primary" /> Support Tickets
                         </CardTitle>
                         <Link to="/admin/tickets" className="text-xs text-primary hover:underline font-semibold flex items-center gap-1">
                             Tickets <ArrowRight className="h-3 w-3" />

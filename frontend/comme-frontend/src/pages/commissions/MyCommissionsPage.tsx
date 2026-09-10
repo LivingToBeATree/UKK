@@ -15,7 +15,7 @@ import type { CommissionOrder, PaginationMeta } from '@/types';
 const statusColors: Record<string, string> = {
     pending: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
     accepted: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-    in_progress: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
+    in_progress: 'bg-primary/10 text-primary border-primary/20',
     waiting_for_client: 'bg-teal-500/10 text-teal-500 border-teal-500/20',
     revision: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
     completed: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',

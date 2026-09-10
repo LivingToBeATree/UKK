@@ -71,8 +71,8 @@ export const DashboardHomePage: React.FC = () => {
             label: 'Active Orders',
             value: loading ? '...' : String(activeOrders.length),
             icon: Layers,
-            color: 'text-purple-400',
-            bg: 'bg-purple-500/10',
+            color: 'text-primary',
+            bg: 'bg-primary/10',
         },
         {
             label: 'Avg Client Rating',
@@ -106,7 +106,7 @@ export const DashboardHomePage: React.FC = () => {
             desc: 'Add a new pricing tier & turnaround time',
             icon: Plus,
             href: '/dashboard/services/new',
-            color: 'from-purple-600/20 to-purple-600/5 hover:border-purple-500/50',
+            color: 'from-primary/20 to-primary/5 hover:border-primary/50',
             btnText: 'New Tier',
         },
         {
@@ -141,7 +141,7 @@ export const DashboardHomePage: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl sm:text-3xl font-black flex items-center gap-2.5 text-foreground">
-                        <LayoutDashboard className="h-7 w-7 text-purple-400" />
+                        <LayoutDashboard className="h-7 w-7 text-primary" />
                         Artist Studio
                     </h1>
                     <p className="text-sm text-muted-foreground mt-1">
@@ -187,7 +187,7 @@ export const DashboardHomePage: React.FC = () => {
             {/* Quick Actions Grid */}
             <div className="space-y-3">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                    <Sparkles className="h-3.5 w-3.5 text-purple-400" /> Quick Studio Actions
+                    <Sparkles className="h-3.5 w-3.5 text-primary" /> Quick Studio Actions
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {quickActions.map((act) => {
@@ -197,10 +197,10 @@ export const DashboardHomePage: React.FC = () => {
                                 <Card className={`rounded-3xl border border-border/80 bg-gradient-to-br ${act.color} transition-all duration-200 hover:shadow-lg group h-full flex flex-col justify-between p-5`}>
                                     <div className="space-y-2">
                                         <div className="h-10 w-10 rounded-2xl bg-card border border-border/80 flex items-center justify-center text-foreground group-hover:scale-110 transition-transform">
-                                            <Icon className="h-5 w-5 text-purple-400" />
+                                            <Icon className="h-5 w-5 text-primary" />
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-sm text-foreground group-hover:text-purple-300 transition-colors">
+                                            <h4 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">
                                                 {act.title}
                                             </h4>
                                             <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
@@ -208,7 +208,7 @@ export const DashboardHomePage: React.FC = () => {
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="pt-4 flex items-center text-xs font-bold text-purple-400 gap-1 group-hover:translate-x-1 transition-transform">
+                                    <div className="pt-4 flex items-center text-xs font-bold text-primary gap-1 group-hover:translate-x-1 transition-transform">
                                         {act.btnText} <ArrowRight className="h-3.5 w-3.5" />
                                     </div>
                                 </Card>
@@ -266,7 +266,7 @@ export const DashboardHomePage: React.FC = () => {
                                             {formatPrice(order.total_price || 0)}
                                         </span>
                                         <Link to={`/dashboard/commissions/${order.slug || order.id}`}>
-                                            <Button size="sm" className="h-8 px-3 rounded-xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-xs">
+                                            <Button size="sm" className="h-8 px-3 rounded-xl font-bold text-xs bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shadow-xs">
                                                 Manage Order
                                             </Button>
                                         </Link>

@@ -101,13 +101,13 @@ export const MobileHeader: React.FC<{ onOpenDrawer: () => void }> = ({ onOpenDra
                         >
                             <Bell className="h-5 w-5" />
                             {typeof unreadCount === 'number' && unreadCount > 0 && (
-                                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-purple-500 ring-2 ring-card animate-pulse" />
+                                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary ring-2 ring-card animate-pulse" />
                             )}
                         </Link>
                         <button
                             type="button"
                             onClick={() => navigate('/profile')}
-                            className="p-0.5 rounded-full hover:ring-2 hover:ring-purple-500/50 transition-all cursor-pointer"
+                            className="p-0.5 rounded-full hover:ring-2 hover:ring-primary/50 transition-all cursor-pointer"
                             aria-label="My Profile"
                         >
                             <Avatar
@@ -122,7 +122,7 @@ export const MobileHeader: React.FC<{ onOpenDrawer: () => void }> = ({ onOpenDra
                     <Button
                         size="xs"
                         onClick={() => openAuthModal('generic')}
-                        className="rounded-xl font-bold bg-purple-600 hover:bg-purple-700 text-white text-xs h-8 px-3 shadow-xs"
+                        className="rounded-xl font-bold bg-primary hover:bg-primary/90 text-primary-foreground text-xs h-8 px-3 shadow-xs"
                     >
                         Sign In
                     </Button>
@@ -149,7 +149,7 @@ export const MobileBottomNav: React.FC = () => {
             <Link
                 to="/explore"
                 className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
-                    isExplore ? 'text-purple-400 font-bold' : 'text-muted-foreground hover:text-foreground'
+                    isExplore ? 'text-primary font-bold' : 'text-muted-foreground hover:text-foreground'
                 }`}
             >
                 <Compass className={`h-5 w-5 ${isExplore ? 'stroke-[2.5px]' : 'stroke-[1.8px]'}`} />
@@ -160,7 +160,7 @@ export const MobileBottomNav: React.FC = () => {
             <Link
                 to="/store"
                 className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
-                    isStore ? 'text-purple-400 font-bold' : 'text-muted-foreground hover:text-foreground'
+                    isStore ? 'text-primary font-bold' : 'text-muted-foreground hover:text-foreground'
                 }`}
             >
                 <FolderKanban className={`h-5 w-5 ${isStore ? 'stroke-[2.5px]' : 'stroke-[1.8px]'}`} />
@@ -181,8 +181,8 @@ export const MobileBottomNav: React.FC = () => {
             >
                 <div className={`h-11 w-11 rounded-2xl flex items-center justify-center shadow-lg transition-transform active:scale-95 ${
                     isCreate
-                        ? 'bg-purple-600 text-white ring-4 ring-purple-500/20'
-                        : 'bg-gradient-to-tr from-purple-600 to-indigo-500 text-white hover:opacity-90'
+                        ? 'bg-primary text-primary-foreground ring-4 ring-primary/20'
+                        : 'bg-gradient-to-tr from-primary to-primary/80 text-white hover:opacity-90'
                 }`}>
                     <Plus className="h-6 w-6 stroke-[2.5px]" />
                 </div>
@@ -199,7 +199,7 @@ export const MobileBottomNav: React.FC = () => {
                     }
                 }}
                 className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
-                    isOrders ? 'text-purple-400 font-bold' : 'text-muted-foreground hover:text-foreground'
+                    isOrders ? 'text-primary font-bold' : 'text-muted-foreground hover:text-foreground'
                 }`}
             >
                 <ShoppingBag className={`h-5 w-5 ${isOrders ? 'stroke-[2.5px]' : 'stroke-[1.8px]'}`} />
@@ -210,7 +210,7 @@ export const MobileBottomNav: React.FC = () => {
             <Link
                 to={isAuthenticated ? "/profile" : "/login"}
                 className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
-                    isProfile ? 'text-purple-400 font-bold' : 'text-muted-foreground hover:text-foreground'
+                    isProfile ? 'text-primary font-bold' : 'text-muted-foreground hover:text-foreground'
                 }`}
             >
                 <UserIcon className={`h-5 w-5 ${isProfile ? 'stroke-[2.5px]' : 'stroke-[1.8px]'}`} />
@@ -310,7 +310,7 @@ export const MobileDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = 
                                 <Link
                                     to="/explore"
                                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
-                                        location.pathname === '/explore' ? 'bg-purple-600 text-white' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                                        location.pathname === '/explore' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
                                     }`}
                                 >
                                     <Compass className="h-4 w-4" /> Explore Feed
@@ -319,7 +319,7 @@ export const MobileDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = 
                                 <Link
                                     to="/store"
                                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
-                                        location.pathname.startsWith('/store') ? 'bg-purple-600 text-white' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                                        location.pathname.startsWith('/store') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
                                     }`}
                                 >
                                     <FolderKanban className="h-4 w-4" /> Commission Store
@@ -328,7 +328,7 @@ export const MobileDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = 
                                 <Link
                                     to="/artists"
                                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
-                                        location.pathname.startsWith('/artists') ? 'bg-purple-600 text-white' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                                        location.pathname.startsWith('/artists') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
                                     }`}
                                 >
                                     <Layers className="h-4 w-4" /> Artists Directory
@@ -353,7 +353,7 @@ export const MobileDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = 
                                 ) : (
                                     <Link
                                         to={user?.artist_profile ? "/dashboard" : "/apply-artist"}
-                                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-purple-400 hover:bg-purple-500/10 transition-colors"
+                                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
                                     >
                                         <PenTool className="h-4 w-4" /> {user?.artist_profile ? "Artist Studio" : "Become an Artist"}
                                     </Link>
@@ -362,7 +362,7 @@ export const MobileDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = 
                                 <Link
                                     to="/commissions"
                                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
-                                        location.pathname.startsWith('/commissions') ? 'bg-purple-600 text-white' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                                        location.pathname.startsWith('/commissions') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
                                     }`}
                                 >
                                     <ShoppingBag className="h-4 w-4" /> My Orders
@@ -412,7 +412,7 @@ export const MobileDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = 
                                         onClose();
                                         openAuthModal('generic');
                                     }}
-                                    className="w-full font-bold bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs h-9"
+                                    className="w-full font-bold bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-xs h-9"
                                 >
                                     Sign In / Register
                                 </Button>

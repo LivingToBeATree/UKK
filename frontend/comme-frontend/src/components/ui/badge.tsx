@@ -11,13 +11,14 @@ export const badgeVariants = cva(
                 secondary: 'border-transparent bg-secondary text-secondary-foreground',
                 outline: 'text-foreground border-border',
                 // Comme brand variants:
-                purple: 'border-purple-500/30 bg-purple-500/10 text-purple-400 font-bold',
+                primary: 'border-primary/30 bg-primary/10 text-primary font-bold',
+                purple: 'border-primary/30 bg-primary/10 text-primary font-bold',
                 teal: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-bold',
                 gold: 'border-amber-500/30 bg-amber-500/10 text-amber-400 font-bold',
                 rose: 'border-rose-500/30 bg-rose-500/10 text-rose-400 font-bold',
                 // HTTP / API Method variants:
                 get: 'border-emerald-500/30 bg-emerald-500/15 text-emerald-400',
-                post: 'border-purple-500/30 bg-purple-500/15 text-purple-400',
+                post: 'border-primary/30 bg-primary/15 text-primary',
                 patch: 'border-amber-500/30 bg-amber-500/15 text-amber-400',
                 delete: 'border-rose-500/30 bg-rose-500/15 text-rose-400',
             },

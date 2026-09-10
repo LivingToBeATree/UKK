@@ -126,7 +126,7 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-2xl bg-card/95 backdrop-blur-xl border border-border p-0 overflow-hidden shadow-2xl">
                 {/* Header with Midtrans Branding */}
-                <div className="bg-gradient-to-r from-emerald-950/60 via-background to-purple-950/40 p-5 border-b border-border flex items-center justify-between">
+                <div className="bg-gradient-to-r from-emerald-950/60 via-background to-primary/10 p-5 border-b border-border flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-black text-base shadow-inner">
                             <Lock className="h-5 w-5" />

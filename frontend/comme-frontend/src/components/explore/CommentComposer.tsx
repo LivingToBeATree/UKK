@@ -707,7 +707,7 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
                                                     <Video className="h-2 w-2" /> VID
                                                 </span>
                                             ) : m.isGif ? (
-                                                <span className="bg-purple-600/90 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm">
+                                                <span className="bg-primary/90 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm">
                                                     GIF
                                                 </span>
                                             ) : (
@@ -754,7 +754,7 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
                             <Button
                                 type="submit"
                                 disabled={submitting || (!content.trim() && attachedMedia.length === 0)}
-                                className="h-9 px-5 rounded-xl font-bold text-xs gap-2 shadow-md cursor-pointer bg-purple-600 hover:bg-purple-700 text-white"
+                                className="h-9 px-5 rounded-xl font-bold text-xs gap-2 shadow-md cursor-pointer bg-primary hover:bg-primary/90 text-primary-foreground"
                             >
                                 <Send className="h-3.5 w-3.5" />
                                 {submitting ? 'Posting...' : parentCommentId ? 'Post Reply' : 'Post Comment'}

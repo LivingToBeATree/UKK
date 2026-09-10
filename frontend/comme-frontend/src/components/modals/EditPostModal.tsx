@@ -285,16 +285,16 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
                         <div className="space-y-2.5 pt-1 border-t border-border/50">
                             <div className="flex items-center justify-between">
                                 <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                                    <Palette className="h-3.5 w-3.5 text-purple-400" />
+                                    <Palette className="h-3.5 w-3.5 text-primary" />
                                     Attached Portfolio Artwork
                                 </label>
                                 {attachedPortfolio && (
-                                    <span className="text-[11px] text-purple-400 font-semibold">Artwork Linked</span>
+                                    <span className="text-[11px] text-primary font-semibold">Artwork Linked</span>
                                 )}
                             </div>
 
                             {attachedPortfolio ? (
-                                <div className="p-3 rounded-2xl bg-secondary/40 border border-purple-500/30 flex items-center justify-between gap-3">
+                                <div className="p-3 rounded-2xl bg-secondary/40 border border-primary/30 flex items-center justify-between gap-3">
                                     <div className="flex items-center gap-3 min-w-0">
                                         <div className="h-12 w-12 rounded-xl overflow-hidden bg-black/60 border border-border shrink-0">
                                             {getPortfolioThumbnail(attachedPortfolio) ? (
@@ -346,9 +346,9 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
                                         variant="outline"
                                         size="sm"
                                         onClick={() => setShowArtworkPicker(true)}
-                                        className="h-9 rounded-xl text-xs gap-1.5 border-dashed border-border/80 hover:border-purple-500 text-muted-foreground hover:text-foreground cursor-pointer w-full justify-center"
+                                        className="h-9 rounded-xl text-xs gap-1.5 border-dashed border-border/80 hover:border-primary text-muted-foreground hover:text-foreground cursor-pointer w-full justify-center"
                                     >
-                                        <Plus className="h-3.5 w-3.5 text-purple-400" />
+                                        <Plus className="h-3.5 w-3.5 text-primary" />
                                         <span>Link an Artwork from Your Portfolio</span>
                                     </Button>
                                 </div>
@@ -391,8 +391,8 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
                                                         }}
                                                         className={`relative rounded-xl overflow-hidden border p-1.5 flex flex-col gap-1.5 cursor-pointer transition-all duration-150 ${
                                                             isSelected
-                                                                ? 'border-purple-500 bg-purple-500/15 ring-1 ring-purple-500'
-                                                                : 'border-border/60 hover:border-purple-400/50 bg-secondary/30'
+                                                                ? 'border-primary bg-primary/15 ring-1 ring-primary'
+                                                                : 'border-border/60 hover:border-primary/50 bg-secondary/30'
                                                         }`}
                                                     >
                                                         <div className="aspect-4/3 rounded-lg overflow-hidden bg-black/40">
@@ -408,7 +408,7 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
                                                             {p.title}
                                                         </span>
                                                         {isSelected && (
-                                                            <div className="absolute top-2 right-2 h-4 w-4 rounded-full bg-purple-600 text-white flex items-center justify-center shadow-md">
+                                                            <div className="absolute top-2 right-2 h-4 w-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md">
                                                                 <Check className="h-2.5 w-2.5" />
                                                             </div>
                                                         )}
@@ -425,7 +425,7 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
                         <div className="space-y-3 pt-1 border-t border-border/50">
                             <div className="flex items-center justify-between">
                                 <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                                    <Sparkles className="h-3.5 w-3.5 text-purple-400" />
+                                    <Sparkles className="h-3.5 w-3.5 text-primary" />
                                     Post Attachments &amp; Media ({existingMedias.length + newMediaList.length})
                                 </label>
                                 <span className="text-[11px] text-muted-foreground">Images, GIFs, MP4</span>
@@ -527,8 +527,8 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
                                 onClick={() => fileInputRef.current?.click()}
                                 className={`border-2 border-dashed rounded-2xl p-4 text-center cursor-pointer transition-all duration-200 flex flex-col items-center justify-center gap-1.5 ${
                                     isDragging
-                                        ? 'border-purple-500 bg-purple-500/10'
-                                        : 'border-border/80 hover:border-purple-500/50 bg-secondary/20 hover:bg-secondary/40'
+                                        ? 'border-primary bg-primary/10'
+                                        : 'border-border/80 hover:border-primary/50 bg-secondary/20 hover:bg-secondary/40'
                                 }`}
                             >
                                 <input
@@ -544,7 +544,7 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
                                     }}
                                     className="hidden"
                                 />
-                                <div className="h-8 w-8 rounded-xl bg-purple-600/10 text-purple-400 flex items-center justify-center border border-purple-500/20">
+                                <div className="h-8 w-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
                                     <UploadCloud className="h-4 w-4" />
                                 </div>
                                 <p className="text-xs font-semibold text-foreground">

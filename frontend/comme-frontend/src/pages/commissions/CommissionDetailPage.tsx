@@ -857,7 +857,7 @@ export const CommissionDetailPage: React.FC = () => {
                                         {formatDateSafe(commission.deadline, { dateStyle: 'medium' }, 'Flexible')}
                                     </p>
                                     {commission.proposed_deadline && (
-                                        <span className="text-[10px] text-purple-400 block mt-0.5 font-mono">
+                                        <span className="text-[10px] text-primary block mt-0.5 font-mono">
                                             Proposed: {formatDateSafe(commission.proposed_deadline, { dateStyle: 'short' })}
                                         </span>
                                     )}
@@ -900,11 +900,11 @@ export const CommissionDetailPage: React.FC = () => {
 
                             {/* BUYER: Deadline Extension Proposal Alert Banner */}
                             {isBuyer && commission.proposed_deadline && (
-                                <div className="p-4 sm:p-5 rounded-2xl border border-purple-500/40 bg-purple-500/10 backdrop-blur-md space-y-3">
+                                <div className="p-4 sm:p-5 rounded-2xl border border-primary/40 bg-primary/10 backdrop-blur-md space-y-3">
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="space-y-1">
-                                            <p className="font-bold text-sm text-purple-300 flex items-center gap-2">
-                                                <Clock className="h-4 w-4 text-purple-400" /> Deadline Extension Proposed by Artist
+                                            <p className="font-bold text-sm text-primary flex items-center gap-2">
+                                                <Clock className="h-4 w-4 text-primary" /> Deadline Extension Proposed by Artist
                                             </p>
                                             <p className="text-xs text-muted-foreground leading-relaxed">
                                                 The artist has requested to extend the delivery deadline to{' '}
@@ -919,7 +919,7 @@ export const CommissionDetailPage: React.FC = () => {
                                     </div>
 
                                     {commission.deadline_proposal_note && (
-                                        <div className="p-3 rounded-xl bg-black/20 border border-purple-500/20 text-xs text-foreground/90 italic">
+                                        <div className="p-3 rounded-xl bg-black/20 border border-primary/20 text-xs text-foreground/90 italic">
                                             "{commission.deadline_proposal_note}"
                                         </div>
                                     )}
@@ -929,7 +929,7 @@ export const CommissionDetailPage: React.FC = () => {
                                             size="sm"
                                             onClick={handleAcceptDeadline}
                                             disabled={actionLoading}
-                                            className="gap-1.5 bg-purple-600 hover:bg-purple-700 text-white font-bold cursor-pointer"
+                                            className="gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground font-bold cursor-pointer"
                                         >
                                             <CheckCircle2 className="h-4 w-4" /> Accept New Deadline
                                         </Button>
@@ -948,10 +948,10 @@ export const CommissionDetailPage: React.FC = () => {
 
                             {/* ARTIST: Deadline Extension Proposal Pending Banner */}
                             {isArtistUser && commission.proposed_deadline && (
-                                <div className="p-4 rounded-2xl border border-purple-500/30 bg-purple-500/10 space-y-2 text-xs">
+                                <div className="p-4 rounded-2xl border border-primary/30 bg-primary/10 space-y-2 text-xs">
                                     <div className="flex items-center justify-between gap-3">
-                                        <p className="font-bold text-purple-300 flex items-center gap-1.5">
-                                            <Clock className="h-4 w-4 text-purple-400" /> Pending Deadline Extension Proposal
+                                        <p className="font-bold text-primary flex items-center gap-1.5">
+                                            <Clock className="h-4 w-4 text-primary" /> Pending Deadline Extension Proposal
                                         </p>
                                         <Button
                                             size="xs"
@@ -1492,7 +1492,7 @@ export const CommissionDetailPage: React.FC = () => {
                                     <Dialog open={deadlineModalOpen} onOpenChange={setDeadlineModalOpen}>
                                         <DialogTrigger asChild>
                                             <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer">
-                                                <Calendar className="h-3.5 w-3.5 text-purple-400" /> Propose New Deadline
+                                                <Calendar className="h-3.5 w-3.5 text-primary" /> Propose New Deadline
                                             </Button>
                                         </DialogTrigger>
                                         <DialogContent className="max-w-md">
@@ -1526,7 +1526,7 @@ export const CommissionDetailPage: React.FC = () => {
                                                 <Button
                                                     onClick={handleProposeDeadline}
                                                     disabled={actionLoading || !newDeadline}
-                                                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold cursor-pointer"
+                                                    className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold cursor-pointer"
                                                 >
                                                     Send Proposal to Client
                                                 </Button>

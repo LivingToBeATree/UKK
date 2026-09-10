@@ -229,7 +229,7 @@ export const InfoFlyout: React.FC<{ collapsed: boolean }> = ({ collapsed }) => {
                             {/* Column 3: Developers & APIs */}
                             <div className="space-y-2.5">
                                 <div className="flex items-center gap-1.5 text-foreground font-bold text-xs">
-                                    <Code2 className="h-3.5 w-3.5 text-purple-400" />
+                                    <Code2 className="h-3.5 w-3.5 text-primary" />
                                     <span>Developer &amp; API</span>
                                 </div>
                                 <ul className="space-y-1 text-xs text-muted-foreground">
@@ -241,7 +241,7 @@ export const InfoFlyout: React.FC<{ collapsed: boolean }> = ({ collapsed }) => {
                                             onClick={() => setIsOpen(false)}
                                             className="hover:text-foreground transition-colors flex items-center justify-between py-1 group/link"
                                         >
-                                            <span className="flex items-center gap-1.5 text-purple-300 font-medium">
+                                            <span className="flex items-center gap-1.5 text-primary font-medium">
                                                 <Zap className="h-3 w-3 text-amber-400" />
                                                 <span>API Explorer</span>
                                             </span>

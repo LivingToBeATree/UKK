@@ -390,7 +390,7 @@ export const CreateServicePage: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                     <h1 className="text-2xl font-black tracking-tight flex items-center gap-2.5">
-                        <Sparkles className="h-6 w-6 text-purple-400" />
+                        <Sparkles className="h-6 w-6 text-primary" />
                         {isEditMode ? 'Edit Commission Service' : 'Create Commission Service'}
                     </h1>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -404,7 +404,7 @@ export const CreateServicePage: React.FC = () => {
                 <Card className="border-border/80 bg-card/60 backdrop-blur-xs shadow-xs rounded-3xl overflow-hidden">
                     <CardContent className="p-6 space-y-5">
                         <div className="flex items-center gap-2 pb-2 border-b border-border/60">
-                            <Layers className="h-4 w-4 text-purple-400" />
+                            <Layers className="h-4 w-4 text-primary" />
                             <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">Service Overview</h2>
                         </div>
 
@@ -418,7 +418,7 @@ export const CreateServicePage: React.FC = () => {
                                 onChange={(e) => setName(e.target.value)}
                                 placeholder="e.g. Dynamic Anime Character Illustration / Live2D Model & Rigging"
                                 required
-                                className="h-11 rounded-xl bg-secondary/30 border-border/80 text-sm font-medium focus-visible:ring-purple-500"
+                                className="h-11 rounded-xl bg-secondary/30 border-border/80 text-sm font-medium focus-visible:ring-primary"
                             />
                         </div>
 
@@ -433,7 +433,7 @@ export const CreateServicePage: React.FC = () => {
                                 placeholder="What do you specialize in? Outline drawing styles, turnaround time expectations, accepted themes, and commercial usage policies..."
                                 rows={4}
                                 required
-                                className="rounded-xl bg-secondary/30 border-border/80 text-xs leading-relaxed focus-visible:ring-purple-500"
+                                className="rounded-xl bg-secondary/30 border-border/80 text-xs leading-relaxed focus-visible:ring-primary"
                             />
                         </div>
 
@@ -503,7 +503,7 @@ export const CreateServicePage: React.FC = () => {
                         <div className="space-y-3 pt-2 border-t border-border/60">
                             <div className="flex items-center justify-between">
                                 <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                                    <Tag className="h-3.5 w-3.5 text-purple-400" />
+                                    <Tag className="h-3.5 w-3.5 text-primary" />
                                     Service Tags & Specialties ({serviceTags.length}/8)
                                 </Label>
                                 <span className="text-[10px] text-muted-foreground">Press Enter or comma to add</span>
@@ -515,7 +515,7 @@ export const CreateServicePage: React.FC = () => {
                                     {serviceTags.map((tag) => (
                                         <span
                                             key={tag}
-                                            className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-purple-600/20 text-purple-300 border border-purple-500/30"
+                                            className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-primary/20 text-primary border border-primary/30"
                                         >
                                             #{tag}
                                             <button
@@ -543,7 +543,7 @@ export const CreateServicePage: React.FC = () => {
                                             }
                                         }}
                                         placeholder="Add a specialty tag (e.g. Anime, Chibi, VTuber, Emotes, Live2D)..."
-                                        className="h-10 rounded-xl bg-secondary/30 border-border/80 text-xs focus-visible:ring-purple-500"
+                                        className="h-10 rounded-xl bg-secondary/30 border-border/80 text-xs focus-visible:ring-primary"
                                     />
                                     <Button
                                         type="button"
@@ -583,7 +583,7 @@ export const CreateServicePage: React.FC = () => {
                     <CardContent className="p-6 space-y-5">
                         <div className="flex items-center justify-between pb-2 border-b border-border/60">
                             <div className="flex items-center gap-2">
-                                <ImageIcon className="h-4 w-4 text-purple-400" />
+                                <ImageIcon className="h-4 w-4 text-primary" />
                                 <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
                                     Showcase &amp; Reference Artwork ({mediaItems.length})
                                 </h2>
@@ -619,11 +619,11 @@ export const CreateServicePage: React.FC = () => {
                             onClick={() => fileInputRef.current?.click()}
                             className={`p-6 border-2 border-dashed rounded-3xl flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 ${
                                 isDragging
-                                    ? 'border-purple-500 bg-purple-500/10 scale-[0.99]'
-                                    : 'border-border/80 hover:border-purple-500/50 bg-secondary/20 hover:bg-secondary/40'
+                                    ? 'border-primary bg-primary/10 scale-[0.99]'
+                                    : 'border-border/80 hover:border-primary/50 bg-secondary/20 hover:bg-secondary/40'
                             }`}
                         >
-                            <div className="p-3 rounded-2xl bg-purple-500/10 text-purple-400 mb-2.5">
+                            <div className="p-3 rounded-2xl bg-primary/10 text-primary mb-2.5">
                                 <Upload className="h-5 w-5" />
                             </div>
                             <p className="text-xs font-bold text-foreground">
@@ -644,7 +644,7 @@ export const CreateServicePage: React.FC = () => {
                                     >
                                         {item.isVideo ? (
                                             <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-900">
-                                                <Film className="h-8 w-8 text-purple-400 mb-1" />
+                                                <Film className="h-8 w-8 text-primary mb-1" />
                                                 <span className="text-[10px] text-zinc-400 truncate max-w-[90%] px-1 font-mono">
                                                     {item.name}
                                                 </span>
@@ -655,7 +655,7 @@ export const CreateServicePage: React.FC = () => {
 
                                         {/* Cover Badge on first image */}
                                         {idx === 0 && (
-                                            <Badge className="absolute top-2 left-2 text-[9px] font-black uppercase tracking-wider bg-purple-600 text-white shadow-md border-0">
+                                            <Badge className="absolute top-2 left-2 text-[9px] font-black uppercase tracking-wider bg-primary text-primary-foreground shadow-md border-0">
                                                 Cover Image
                                             </Badge>
                                         )}
@@ -699,7 +699,7 @@ export const CreateServicePage: React.FC = () => {
                                 size="sm"
                                 variant="outline"
                                 onClick={handleAddPackage}
-                                className="rounded-xl text-xs font-bold gap-1.5 border-purple-500/30 text-purple-400 hover:bg-purple-500/10 cursor-pointer"
+                                className="rounded-xl text-xs font-bold gap-1.5 border-primary/30 text-primary hover:bg-primary/10 cursor-pointer"
                             >
                                 <Plus className="h-3.5 w-3.5" /> Add Package Option
                             </Button>
@@ -715,7 +715,7 @@ export const CreateServicePage: React.FC = () => {
                                     {/* Package Header */}
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
-                                            <Badge variant="secondary" className="font-bold text-xs bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                                            <Badge variant="secondary" className="font-bold text-xs bg-primary/15 text-primary border border-primary/30">
                                                 Package #{pkgIdx + 1}
                                             </Badge>
                                             <span className="text-xs font-bold text-foreground truncate max-w-[200px] sm:max-w-xs">
@@ -784,7 +784,7 @@ export const CreateServicePage: React.FC = () => {
                                     <div className="pt-3 border-t border-border/60 space-y-3">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-1.5">
-                                                <Tag className="h-3.5 w-3.5 text-purple-400" />
+                                                <Tag className="h-3.5 w-3.5 text-primary" />
                                                 <span className="text-xs font-bold text-foreground">
                                                     Add-ons &amp; Extras ({opt.addons.length})
                                                 </span>
@@ -794,7 +794,7 @@ export const CreateServicePage: React.FC = () => {
                                                 variant="ghost"
                                                 size="xs"
                                                 onClick={() => handleAddAddon(pkgIdx)}
-                                                className="text-xs font-bold text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 cursor-pointer gap-1"
+                                                className="text-xs font-bold text-primary hover:text-primary hover:bg-primary/10 cursor-pointer gap-1"
                                             >
                                                 <PlusCircle className="h-3.5 w-3.5" /> Add Extra
                                             </Button>
@@ -886,7 +886,7 @@ export const CreateServicePage: React.FC = () => {
                     <Button
                         type="submit"
                         disabled={submitting}
-                        className="h-11 px-7 rounded-2xl font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer shadow-md gap-2"
+                        className="h-11 px-7 rounded-2xl font-bold text-xs bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shadow-md gap-2"
                     >
                         <CheckCircle2 className="h-4 w-4" />
                         {submitting

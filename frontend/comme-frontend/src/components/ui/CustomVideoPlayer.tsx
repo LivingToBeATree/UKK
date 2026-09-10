@@ -336,7 +336,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
                     {/* Background Track */}
                     <div className="w-full h-1.5 group-hover/timeline:h-2.5 bg-white/25 rounded-full overflow-hidden transition-all duration-150">
                         <div
-                            className="h-full bg-gradient-to-r from-primary to-purple-400 rounded-full transition-all"
+                            className="h-full bg-gradient-to-r from-primary to-primary rounded-full transition-all"
                             style={{ width: `${progressPercentage}%` }}
                         />
                     </div>

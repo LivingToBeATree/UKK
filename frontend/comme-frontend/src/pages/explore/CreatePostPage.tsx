@@ -527,7 +527,7 @@ export const CreatePostPage: React.FC = () => {
                                             <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5 shadow-md">
                                                 {mediaPreviews[0].isGif ? (
                                                     <>
-                                                        <span className="bg-purple-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded">GIF</span>
+                                                        <span className="bg-primary text-primary-foreground text-[10px] font-black px-1.5 py-0.5 rounded">GIF</span>
                                                         <span>Attached GIF</span>
                                                     </>
                                                 ) : (
@@ -1044,7 +1044,7 @@ export const CreatePostPage: React.FC = () => {
                                                                     <Video className="h-3 w-3" /> VIDEO
                                                                 </span>
                                                             ) : item.isGif ? (
-                                                                <span className="bg-purple-600 text-white px-1.5 py-0.5 rounded">GIF</span>
+                                                                <span className="bg-primary text-primary-foreground px-1.5 py-0.5 rounded">GIF</span>
                                                             ) : (
                                                                 <span className="bg-black/70 text-white px-1.5 py-0.5 rounded">IMG</span>
                                                             )}

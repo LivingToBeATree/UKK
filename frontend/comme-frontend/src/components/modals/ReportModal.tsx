@@ -71,7 +71,7 @@ const REPORT_REASONS: {
         label: 'Impersonation & Fake Account',
         description: 'Pretending to be another artist, creator, client, or official staff member.',
         icon: UserX,
-        color: 'text-purple-400',
+        color: 'text-primary',
     },
     {
         id: 'scam',
@@ -247,7 +247,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
                                 </Button>
                                 <Button
                                     type="button"
-                                    className="rounded-xl text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white gap-2 shadow-md"
+                                    className="rounded-xl text-xs font-bold bg-primary hover:bg-primary/90 text-primary-foreground gap-2 shadow-md"
                                     onClick={() => {
                                         handleResetAndClose();
                                         navigate('/dashboard/tickets');
@@ -300,14 +300,14 @@ export const ReportModal: React.FC<ReportModalProps> = ({
                                                 onClick={() => setSelectedReason(item.id)}
                                                 className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3 ${
                                                     isSelected
-                                                        ? 'border-purple-500 bg-purple-500/10 ring-1 ring-purple-500/30'
+                                                        ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
                                                         : 'border-border/60 bg-secondary/20 hover:border-border hover:bg-secondary/40'
                                                 }`}
                                             >
                                                 <div
                                                     className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
                                                         isSelected
-                                                            ? 'border-purple-500 bg-purple-600 text-white'
+                                                            ? 'border-primary bg-primary text-primary-foreground'
                                                             : 'border-muted-foreground/40'
                                                     }`}
                                                 >
@@ -346,7 +346,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
                                     onChange={(e) => setDescription(e.target.value.slice(0, 1000))}
                                     placeholder="Provide any relevant timestamps, original source links, or details to help staff investigate..."
                                     rows={3}
-                                    className="rounded-2xl bg-secondary/30 border-border/80 text-xs focus-visible:ring-purple-500"
+                                    className="rounded-2xl bg-secondary/30 border-border/80 text-xs focus-visible:ring-primary"
                                 />
                             </div>
 

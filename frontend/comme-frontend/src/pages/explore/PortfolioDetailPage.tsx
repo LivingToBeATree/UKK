@@ -445,20 +445,20 @@ export const PortfolioDetailPage: React.FC = () => {
                         {/* Moderation Taken-Down Banner: Staff Control vs Owner Appeal */}
                         {portfolio.is_taken_down && (
                             isStaff ? (
-                                <div className="p-4 rounded-2xl bg-purple-950/20 border border-purple-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs shadow-inner">
-                                    <div className="flex items-start sm:items-center gap-3.5 text-purple-200">
-                                        <div className="p-2.5 rounded-xl bg-purple-500/20 text-purple-400 shrink-0 border border-purple-500/30">
+                                <div className="p-4 rounded-2xl bg-primary/10 border border-primary/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs shadow-inner">
+                                    <div className="flex items-start sm:items-center gap-3.5 text-primary/70">
+                                        <div className="p-2.5 rounded-xl bg-primary/20 text-primary shrink-0 border border-primary/30">
                                             <Shield className="h-5 w-5" />
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="font-bold text-purple-300 text-sm">Staff Moderation Notice: Content Taken Down</span>
-                                                <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-black uppercase tracking-wider border border-purple-500/30">
+                                                <span className="font-bold text-primary text-sm">Staff Moderation Notice: Content Taken Down</span>
+                                                <span className="px-2 py-0.5 rounded-full bg-primary/20 text-primary text-[10px] font-black uppercase tracking-wider border border-primary/30">
                                                     Staff View
                                                 </span>
                                             </div>
                                             <div className="text-foreground/90 mt-0.5 font-normal">
-                                                Enforcement Reason: <span className="font-semibold text-purple-200">"{portfolio.taken_down_reason || 'Violation of Community Guidelines'}"</span>
+                                                Enforcement Reason: <span className="font-semibold text-primary/70">"{portfolio.taken_down_reason || 'Violation of Community Guidelines'}"</span>
                                             </div>
                                             <p className="text-[11px] text-muted-foreground mt-0.5">
                                                 This item is locked in private visibility and hidden from public feeds. The owner cannot republish it without staff approval.
@@ -467,7 +467,7 @@ export const PortfolioDetailPage: React.FC = () => {
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
                                         <Link to="/admin/reports" className="w-full sm:w-auto">
-                                            <Button size="sm" className="w-full sm:w-auto rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold gap-1.5 shadow-md">
+                                            <Button size="sm" className="w-full sm:w-auto rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold gap-1.5 shadow-md">
                                                 <Shield className="h-3.5 w-3.5" /> Reports Desk
                                             </Button>
                                         </Link>
@@ -498,7 +498,7 @@ export const PortfolioDetailPage: React.FC = () => {
                                         <Button
                                             size="sm"
                                             onClick={() => setShowEditModal(true)}
-                                            className="rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs gap-1.5 shadow-sm cursor-pointer"
+                                            className="rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs gap-1.5 shadow-sm cursor-pointer"
                                         >
                                             <Pencil className="h-3.5 w-3.5" />
                                             <span>Edit &amp; Revise Artwork</span>
@@ -620,7 +620,7 @@ export const PortfolioDetailPage: React.FC = () => {
                                                 onClick={() => navigate(`/store?artist=${encodeURIComponent(artistUser.username)}`)}
                                                 className="rounded-xl text-xs py-2 cursor-pointer gap-2"
                                             >
-                                                <Paintbrush className="h-3.5 w-3.5 text-purple-400" />
+                                                <Paintbrush className="h-3.5 w-3.5 text-primary" />
                                                 <span>Commission Artist</span>
                                             </DropdownMenuItem>
                                         )}
@@ -657,13 +657,13 @@ export const PortfolioDetailPage: React.FC = () => {
                                                 }}
                                                 className={`rounded-xl text-xs py-2 cursor-pointer gap-2 ${
                                                     user?.role === 'admin' || user?.role === 'moderator'
-                                                        ? 'text-purple-400 hover:text-purple-300 hover:bg-purple-500/10'
+                                                        ? 'text-primary hover:text-primary hover:bg-primary/10'
                                                         : 'text-rose-400 hover:text-rose-300 hover:bg-rose-500/10'
                                                 }`}
                                             >
                                                 {user?.role === 'admin' || user?.role === 'moderator' ? (
                                                     <>
-                                                        <Shield className="h-3.5 w-3.5 text-purple-400" />
+                                                        <Shield className="h-3.5 w-3.5 text-primary" />
                                                         <span>Moderate Artwork</span>
                                                     </>
                                                 ) : (

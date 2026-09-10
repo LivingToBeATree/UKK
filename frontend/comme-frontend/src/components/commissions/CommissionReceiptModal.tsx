@@ -93,7 +93,7 @@ export const CommissionReceiptModal: React.FC<CommissionReceiptModalProps> = ({
                 className="relative w-full max-w-2xl bg-zinc-950 border border-border/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[90vh]"
             >
                 {/* Decorative Top Accent Bar */}
-                <div className={`h-2 bg-gradient-to-r ${isRefunded ? 'from-rose-500 via-amber-400 to-rose-400' : 'from-purple-500 via-emerald-400 to-amber-400'} shrink-0`} />
+                <div className={`h-2 bg-gradient-to-r ${isRefunded ? 'from-rose-500 via-amber-400 to-rose-400' : 'from-primary via-emerald-400 to-amber-400'} shrink-0`} />
 
                 {/* Modal Header Actions (Screen Only) */}
                 <div className="p-4 sm:p-6 pb-0 flex items-center justify-between gap-3 shrink-0 no-print">
@@ -208,7 +208,7 @@ export const CommissionReceiptModal: React.FC<CommissionReceiptModalProps> = ({
                             <p className="text-muted-foreground text-[11px]">
                                 @{commission.artist_profile?.user?.username || 'artist'}
                             </p>
-                            <p className="text-purple-400 text-[11px] font-medium flex items-center gap-1">
+                            <p className="text-primary text-[11px] font-medium flex items-center gap-1">
                                 <Sparkles className="h-3 w-3" /> Verified Comme Artist Studio
                             </p>
                         </div>
@@ -268,7 +268,7 @@ export const CommissionReceiptModal: React.FC<CommissionReceiptModalProps> = ({
                                     {commission.addons_selections.map((addon) => (
                                         <div key={addon.id} className="p-3 flex items-center justify-between text-muted-foreground">
                                             <span className="flex items-center gap-1.5">
-                                                <span className="text-purple-400 font-bold">+</span>
+                                                <span className="text-primary font-bold">+</span>
                                                 {addon.title} (Add-on)
                                             </span>
                                             <span className="font-mono text-foreground font-medium">

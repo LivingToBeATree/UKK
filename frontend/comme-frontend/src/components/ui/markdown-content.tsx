@@ -143,7 +143,7 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({
                         }
 
                         return (
-                            <div className="relative inline-block my-2 max-w-full rounded-2xl overflow-hidden border border-border/80 bg-secondary/20 shadow-xs hover:border-purple-500/40 hover:shadow-md transition-all duration-300">
+                            <div className="relative inline-block my-2 max-w-full rounded-2xl overflow-hidden border border-border/80 bg-secondary/20 shadow-xs hover:border-primary/40 hover:shadow-md transition-all duration-300">
                                 <img
                                     src={src}
                                     alt={alt || 'Attachment'}
