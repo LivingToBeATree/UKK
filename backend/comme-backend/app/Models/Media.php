@@ -14,8 +14,10 @@ class Media extends Model
         'user_id',
         'file_name',
         'file_path',
+        'disk',
         'media_type',
         'file_size',
+        'thumbnail_path',
         'mime_type',
         'sort_order',
         'is_thumbnail',
@@ -61,5 +63,28 @@ class Media extends Model
     public function isUploadComplete(): bool
     {
         return !empty($this->file_path);
+    }
+
+    public function isPrivate(): bool
+    {
+        return in_array($this->disk, ['private', 'local'], true);
+    }
+
+    public function getDisk(): string
+    {
+        return $this->disk ?: 'public';
+    }
+
+    public function thumbnailUrl(): ?string
+    {
+        if (empty($this->thumbnail_path)) {
+            return null;
+        }
+
+        if ($this->isPrivate()) {
+            return route('api.v1.media.private.download', ['media' => $this->id, 'type' => 'thumb']);
+        }
+
+        return \Illuminate\Support\Facades\Storage::disk($this->getDisk())->url($this->thumbnail_path);
     }
 }

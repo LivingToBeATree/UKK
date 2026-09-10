@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\API\V1\MediaController;
 use App\Http\Controllers\API\V1\MediaStreamController;
+use App\Http\Controllers\API\V1\PrivateMediaController;
 use Illuminate\Support\Facades\Route;
 
 // Public media stream with HTTP 206 Byte-Range support for video seeking
@@ -14,4 +15,6 @@ Route::get('media/{media}', [MediaController::class, 'show']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('media', [MediaController::class, 'store'])->middleware('throttle:media-upload');
     Route::delete('media/{media}', [MediaController::class, 'destroy']);
+    Route::get('media/private/{media}/download', [PrivateMediaController::class, 'download'])->name('api.v1.media.private.download');
 });
+

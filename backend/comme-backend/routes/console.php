@@ -27,3 +27,12 @@ Schedule::command('commissions:retry-failed-payouts')
     ->everyThirtyMinutes()
     ->withoutOverlapping()
     ->runInBackground();
+
+Schedule::command('media:prune --hours=24')
+    ->daily()
+    ->withoutOverlapping()
+    ->runInBackground();
+
+Schedule::command('queue:prune-failed --hours=168')
+    ->weekly();
+

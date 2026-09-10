@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/PostgreSQL-16+-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL">
   <img src="https://img.shields.io/badge/Sanctum-Auth-A802F5?style=for-the-badge&logo=auth0&logoColor=white" alt="Sanctum Auth">
   <img src="https://img.shields.io/badge/Midtrans-Snap%20%26%20Iris-02F5A8?style=for-the-badge&logo=cashapp&logoColor=black" alt="Midtrans Payments">
-  <img src="https://img.shields.io/badge/Tests-113%20Passed%20(460%20Assertions)-02F5A8?style=for-the-badge&logo=githubactions&logoColor=black" alt="Tests Passed">
+  <img src="https://img.shields.io/badge/Tests-118%20Passed%20(487%20Assertions)-02F5A8?style=for-the-badge&logo=githubactions&logoColor=black" alt="Tests Passed">
 </p>
 
 ---
@@ -115,6 +115,15 @@
 - **Request Correlation Tracing (`AssignRequestId`)**: Unique `X-Request-ID` UUID automatically assigned to every request, injected into structured logging context (`Log::withContext(...)`), and returned in response headers for end-to-end debugging.
 - **Slow Query Detection**: Automatic database listener (`DB::whenQueryingForLongerThan(500)`) logging warnings for queries exceeding 500ms.
 
+### 15. Asynchronous Queue Processing & Multi-Disk Filesystem
+- **Asynchronous Media Processing (`ProcessMediaJob`)**: Heavy media operations (MP4 video faststart relocation and responsive WebP thumbnail generation) offloaded from the HTTP request thread to the database queue worker (`QUEUE_CONNECTION=database`), dropping upload latency to sub-150ms.
+- **Race-Condition Hardening**: Configured `'after_commit' => true` in `config/queue.php` for database queue transactions with automatic retry policies (`$tries = 3`, `$backoff = [10, 30]`).
+- **Dual-Disk Architecture (`public` vs `private`)**:
+  - **Public Disk (`storage/app/public`)**: Public social posts, avatars, and portfolio showcases.
+  - **Private Disk (`storage/app/private`)**: Protected commission deliverables, reference briefs, and private ticket attachments served exclusively through `PrivateMediaController` (`/api/media/private/{media}/download`) with participant/role authorization.
+- **Automated Thumbnail Pipeline**: Generates lightweight companion WebP/JPEG thumbnails (`thumbnail_url`) via `MediaProcessingService` to deliver responsive, bandwidth-efficient social feeds.
+- **Storage Garbage Collection (`php artisan media:prune`)**: Scheduled daily Artisan command (`PruneOrphanedMediaJob`) that detects and permanently deletes abandoned, unattached media files older than 24 hours while safely preserving all active relations.
+
 ---
 
 ## Technology Stack
@@ -124,13 +133,15 @@
 | **Framework** | Laravel 12.x |
 | **Runtime** | PHP 8.2+ |
 | **Database** | PostgreSQL 16+ |
+| **Queue & Workers** | PostgreSQL Database Queue (`database`) with `after_commit` & `ProcessMediaJob` |
+| **Storage & Disks** | Dual-Disk Architecture (Public, Private, Cloudflare R2 / S3) |
 | **Observability (APM)** | Laravel Pulse (`/pulse`) |
 | **Log Diagnostics** | Interactive Log Viewer (`/log-viewer`) |
 | **Authentication** | Laravel Sanctum (SPA Cookies & Bearer Tokens) + 2FA TOTP |
 | **Payment Gateway** | Midtrans Snap (Escrow Deposits) & Midtrans Iris (Creator Payouts) |
 | **Data Encryption** | AES-256 (Creator Bank Account Numbers at rest) |
 | **Mailing** | Laravel Notifications with custom branded HTML templates |
-| **Testing** | PHPUnit (113 automated test methods with 460 assertions) |
+| **Testing** | PHPUnit (118 automated test methods with 487 assertions) |
 | **Deployment** | Docker / Google Cloud Run + Cloud SQL + VPC Connector |
 
 ---

@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\ProcessMediaJob;
 
 class MediaController extends Controller
 {
@@ -34,9 +35,11 @@ class MediaController extends Controller
             ? MediaType::VIDEO
             : MediaType::IMAGE;
 
-        // Generate sanitized unique filename and store in public uploads
+        $disk = $request->input('disk', 'public');
+
+        // Generate sanitized unique filename and store in chosen disk
         $fileName = Str::uuid() . '.' . $extension;
-        $path = $file->storeAs('uploads/' . date('Y/m'), $fileName, 'public');
+        $path = $file->storeAs('uploads/' . date('Y/m'), $fileName, $disk);
 
         if (! $path) {
             Log::error('Failed to store media file: ' . $originalName);
@@ -46,27 +49,20 @@ class MediaController extends Controller
             );
         }
 
-        // Automatically faststart MP4 videos so moov atom is at the front for instant streaming
-        if ($mediaType === MediaType::VIDEO && strtolower($extension) === 'mp4') {
-            $fullDiskPath = Storage::disk('public')->path($path);
-            $scriptPath = base_path('storage/mp4-faststart.cjs');
-            if (file_exists($scriptPath) && file_exists($fullDiskPath)) {
-                @exec('node ' . escapeshellarg($scriptPath) . ' ' . escapeshellarg($fullDiskPath) . ' 2>&1');
-                clearstatcache(true, $fullDiskPath);
-                $fileSize = filesize($fullDiskPath);
-            }
-        }
-
         $media = Media::create([
             'user_id' => $request->user()->id,
             'file_name' => $originalName,
             'file_path' => $path,
+            'disk' => $disk,
             'media_type' => $mediaType,
             'file_size' => $fileSize,
             'mime_type' => $mimeType,
             'sort_order' => (int) $request->input('sort_order', 0),
             'is_thumbnail' => (bool) $request->input('is_thumbnail', false),
         ]);
+
+        // Dispatch background processing for video fast-start and thumbnail generation
+        ProcessMediaJob::dispatch($media->id);
 
         return ApiResponseHelper::successResponse(
             new MediaResource($media),
@@ -160,8 +156,14 @@ class MediaController extends Controller
     {
         Gate::authorize('delete', $media);
 
-        if ($media->file_path && Storage::disk('public')->exists($media->file_path)) {
-            Storage::disk('public')->delete($media->file_path);
+        $disk = $media->getDisk();
+
+        if ($media->file_path && Storage::disk($disk)->exists($media->file_path)) {
+            Storage::disk($disk)->delete($media->file_path);
+        }
+
+        if ($media->thumbnail_path && Storage::disk($disk)->exists($media->thumbnail_path)) {
+            Storage::disk($disk)->delete($media->thumbnail_path);
         }
 
         $media->delete();

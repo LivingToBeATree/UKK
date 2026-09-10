@@ -22,6 +22,7 @@ class StoreMediaRequest extends FormRequest
             ],
             'is_thumbnail' => ['nullable', 'boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
+            'disk' => ['nullable', 'string', 'in:public,private'],
         ];
     }
 }
