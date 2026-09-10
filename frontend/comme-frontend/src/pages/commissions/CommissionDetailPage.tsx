@@ -27,6 +27,7 @@ import {
     Receipt,
 } from 'lucide-react';
 import { commissionOrderApi, commissionReviewApi } from '@/services/commissionService';
+import { api, getApiBaseUrl } from '@/services/api';
 import { useAuth } from '@/hooks/useAuth';
 import { useEventStream } from '@/hooks/useEventStream';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -266,6 +267,28 @@ export const CommissionDetailPage: React.FC = () => {
         setLightboxMedia(mediaItems);
         setLightboxIndex(index);
         setLightboxOpen(true);
+    };
+
+    const handleOpenDocument = async (type: 'invoice' | 'license') => {
+        if (!commission) return;
+        const docWindow = window.open('about:blank', '_blank');
+        if (docWindow) {
+            docWindow.document.write('<!DOCTYPE html><html><head><title>Loading Document...</title><style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#0F172A;color:#fff;}</style></head><body><h3>Generating official document...</h3></body></html>');
+        }
+        try {
+            const res = await api.get(`/commissions/${commission.id}/${type}`, {
+                responseType: 'text',
+            });
+            if (docWindow) {
+                docWindow.document.open();
+                docWindow.document.write(res.data);
+                docWindow.document.close();
+            }
+        } catch (err: unknown) {
+            if (docWindow) docWindow.close();
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || `Failed to load ${type}`;
+            toast.error(msg);
+        }
     };
 
     const refreshData = async () => {
@@ -1116,14 +1139,14 @@ export const CommissionDetailPage: React.FC = () => {
                                         <div className="space-y-2 pt-1">
                                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                                                 {messages
-                                                    .filter(m => m.message?.startsWith('[Final Work Delivered]'))
+.filter(m => m.message?.startsWith('[Final Work Delivered]'))
                                                     .flatMap(m => m.media || [])
                                                     .map((item, idx, allMedia) => {
                                                         const isImage = !item.media_type || item.media_type === 'image' || item.mime_type?.startsWith('image/');
                                                         const isUnderReview = commission.status === 'waiting_for_client';
                                                         const isCompleted = commission.status === 'completed';
                                                         const displayUrl = (isUnderReview && isBuyer && item.id)
-                                                            ? `/api/commissions/${commission.id}/proof/${item.id}`
+                                                            ? `${getApiBaseUrl()}/commissions/${commission.id}/proof/${item.id}`
                                                             : item.url;
                                                         return (
                                                             <div key={item.id || idx} className="group relative rounded-xl overflow-hidden border border-border bg-card">
@@ -1167,9 +1190,9 @@ export const CommissionDetailPage: React.FC = () => {
                                                                             e.stopPropagation();
                                                                             e.preventDefault();
                                                                             if (isCompleted && item.id) {
-                                                                                downloadFile(`/api/commissions/${commission.id}/download-original/${item.id}`, item.file_name || 'deliverable');
+                                                                                downloadFile(`${getApiBaseUrl()}/commissions/${commission.id}/download-original/${item.id}`, item.file_name || 'deliverable');
                                                                             } else if (isUnderReview && item.id) {
-                                                                                downloadFile(`/api/commissions/${commission.id}/proof/${item.id}`, `proof_${item.file_name || 'preview'}`);
+                                                                                downloadFile(`${getApiBaseUrl()}/commissions/${commission.id}/proof/${item.id}`, `proof_${item.file_name || 'preview'}`);
                                                                                 toast.info('Downloading watermarked proof. Full resolution unlocks once delivery is accepted!');
                                                                             } else {
                                                                                 downloadFile(item.url, item.file_name || 'deliverable');
@@ -1214,7 +1237,7 @@ export const CommissionDetailPage: React.FC = () => {
                                     <Button
                                         size="sm"
                                         variant="outline"
-                                        onClick={() => window.open(`/api/commissions/${commission.id}/invoice`, '_blank')}
+                                        onClick={() => handleOpenDocument('invoice')}
                                         className="gap-2 border-primary/40 text-primary hover:bg-primary/10 cursor-pointer font-bold shadow-xs"
                                         title="Download Itemized Tax Invoice"
                                     >
@@ -1227,7 +1250,7 @@ export const CommissionDetailPage: React.FC = () => {
                                     <Button
                                         size="sm"
                                         variant="outline"
-                                        onClick={() => window.open(`/api/commissions/${commission.id}/license`, '_blank')}
+                                        onClick={() => handleOpenDocument('license')}
                                         className="gap-2 border-amber-500/40 text-amber-400 hover:bg-amber-500/10 cursor-pointer font-bold shadow-xs"
                                         title="Download Commercial / Personal License Certificate"
                                     >
