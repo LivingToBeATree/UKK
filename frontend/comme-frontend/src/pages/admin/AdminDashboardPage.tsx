@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
     LayoutDashboard,
@@ -29,6 +29,7 @@ import { toast } from '@/components/ui/sonner';
 
 export const AdminDashboardPage: React.FC = () => {
     const { user } = useAuth();
+    const location = useLocation();
     const [stats, setStats] = useState<AdminStats | null>(null);
     const [health, setHealth] = useState<HealthTelemetry | null>(null);
     const [loading, setLoading] = useState(true);
@@ -58,6 +59,15 @@ export const AdminDashboardPage: React.FC = () => {
     useEffect(() => {
         fetchStats();
     }, []);
+
+    useEffect(() => {
+        if (location.hash === '#observability') {
+            const el = document.getElementById('observability');
+            if (el) {
+                setTimeout(() => el.scrollIntoView({ behavior: 'smooth' }), 120);
+            }
+        }
+    }, [location.hash, loading]);
 
     const handleRefresh = () => {
         setRefreshing(true);
@@ -257,7 +267,7 @@ export const AdminDashboardPage: React.FC = () => {
             </Card>
 
             {/* Observability & System Telemetry Widget */}
-            <Card className="border border-border/80 bg-gradient-to-br from-card via-card to-primary/5 rounded-2xl shadow-xs overflow-hidden">
+            <Card id="observability" className="border border-border/80 bg-gradient-to-br from-card via-card to-primary/5 rounded-2xl shadow-xs overflow-hidden scroll-mt-20">
                 <CardHeader className="p-5 pb-3 border-b border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">

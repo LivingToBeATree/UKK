@@ -7,10 +7,15 @@ import {
     Flag,
     MessageSquare,
     Shield,
+    Activity,
+    ExternalLink,
+    Zap,
+    Terminal,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/hooks/useSidebar';
 import { useAuth } from '@/hooks/useAuth';
+import { getApiBaseUrl } from '@/services/api';
 
 /** All possible navigation items in the staff panel. */
 const allNavItems = [
@@ -20,6 +25,7 @@ const allNavItems = [
     { id: 'reports', label: 'Reports', path: '/admin/reports', icon: Flag, adminOnly: false },
     { id: 'tickets', label: 'Tickets', path: '/admin/tickets', icon: MessageSquare, adminOnly: false },
     { id: 'moderation', label: 'Moderation Log', path: '/admin/moderation-log', icon: Shield, adminOnly: true },
+    { id: 'observability', label: 'System Health & APM', path: '/admin#observability', icon: Activity, adminOnly: true },
 ];
 
 export const AdminLayout: React.FC = () => {
@@ -30,11 +36,19 @@ export const AdminLayout: React.FC = () => {
     const isAdmin = user?.role === 'admin';
     const panelTitle = isAdmin ? 'Admin Panel' : 'Moderator Panel';
     const iconColor = isAdmin ? 'text-amber-400' : 'text-indigo-400';
+    const apiBase = getApiBaseUrl().replace(/\/api\/?$/, '');
 
     // Filter nav items based on role
     const navItems = isAdmin
         ? allNavItems
         : allNavItems.filter((item) => !item.adminOnly);
+
+    const isItemActive = (itemPath: string) => {
+        if (itemPath.includes('#')) {
+            return location.pathname === '/admin' && location.hash === '#observability';
+        }
+        return location.pathname === itemPath && location.hash !== '#observability';
+    };
 
     const railOffset = railCollapsed ? 68 : 260;
     const adminWidth = 240; // Always expanded — no collapse
@@ -49,7 +63,7 @@ export const AdminLayout: React.FC = () => {
                 </div>
                 {navItems.map((item) => {
                     const Icon = item.icon;
-                    const isActive = location.pathname === item.path;
+                    const isActive = isItemActive(item.path);
                     return (
                         <Link
                             key={item.id}
@@ -86,7 +100,7 @@ export const AdminLayout: React.FC = () => {
                 <nav className="flex-1 p-2 space-y-1">
                     {navItems.map((item) => {
                         const Icon = item.icon;
-                        const isActive = location.pathname === item.path;
+                        const isActive = isItemActive(item.path);
                         return (
                             <Link
                                 key={item.id}
@@ -94,7 +108,7 @@ export const AdminLayout: React.FC = () => {
                                 className={cn(
                                     'flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors',
                                     isActive
-                                        ? 'bg-primary/10 text-primary'
+                                        ? 'bg-primary/10 text-primary font-semibold'
                                         : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
                                 )}
                             >
@@ -104,6 +118,54 @@ export const AdminLayout: React.FC = () => {
                         );
                     })}
                 </nav>
+
+                {/* Observability & Diagnostic Tools Quick Access */}
+                {isAdmin && (
+                    <div className="p-3 border-t border-border mt-auto shrink-0 bg-muted/20 space-y-1">
+                        <p className="text-[10px] uppercase font-mono tracking-wider text-muted-foreground font-semibold px-2 mb-1.5">
+                            Live Telemetry & APM
+                        </p>
+                        <a
+                            href={`${apiBase}/pulse`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors group"
+                            title="Open Laravel Pulse in a new tab"
+                        >
+                            <span className="flex items-center gap-2">
+                                <Zap className="h-3.5 w-3.5 text-amber-400" />
+                                <span>Laravel Pulse</span>
+                            </span>
+                            <ExternalLink className="h-3 w-3 opacity-40 group-hover:opacity-100" />
+                        </a>
+                        <a
+                            href={`${apiBase}/log-viewer`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors group"
+                            title="Open Log Viewer in a new tab"
+                        >
+                            <span className="flex items-center gap-2">
+                                <Terminal className="h-3.5 w-3.5 text-blue-400" />
+                                <span>Log Viewer</span>
+                            </span>
+                            <ExternalLink className="h-3 w-3 opacity-40 group-hover:opacity-100" />
+                        </a>
+                        <a
+                            href={`${apiBase}/api/health`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors group"
+                            title="Open /api/health raw JSON in a new tab"
+                        >
+                            <span className="flex items-center gap-2">
+                                <Activity className="h-3.5 w-3.5 text-emerald-400" />
+                                <span>Health API (JSON)</span>
+                            </span>
+                            <ExternalLink className="h-3 w-3 opacity-40 group-hover:opacity-100" />
+                        </a>
+                    </div>
+                )}
             </aside>
 
             {/* Flow Spacer */}
