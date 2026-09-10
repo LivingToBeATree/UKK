@@ -338,7 +338,7 @@ export const PortfolioDetailPage: React.FC = () => {
     const isStaff = user?.role === 'admin' || user?.role === 'moderator';
     const isOwner = Boolean(user && (user.id === artistUser?.id || user.id === (portfolio as any)?.user_id));
 
-    // 1. Error state from backend (403 Forbidden or 404 Not Found)
+    // Error state from backend (403 Forbidden or 404 Not Found)
     if (fetchError || !portfolio) {
         if (fetchError?.status === 403) {
             return (
@@ -360,7 +360,7 @@ export const PortfolioDetailPage: React.FC = () => {
         );
     }
 
-    // 2. Moderation check for unauthorized regular visitors
+    // Moderation check for unauthorized regular visitors
     if (portfolio.is_taken_down && !isStaff && !isOwner) {
         return (
             <UnavailableContentState
@@ -372,7 +372,7 @@ export const PortfolioDetailPage: React.FC = () => {
         );
     }
 
-    // 3. Suspended creator check for regular visitors
+    // Suspended creator check for regular visitors
     if (artistUser?.is_suspended && !isStaff && !isOwner) {
         return (
             <UnavailableContentState
@@ -386,7 +386,7 @@ export const PortfolioDetailPage: React.FC = () => {
 
     const allMediaList = portfolio.media && portfolio.media.length > 0 ? portfolio.media : [];
 
-    // 1. Main Artwork Piece (first media item / thumbnail / cover)
+    // Main Artwork Piece (first media item / thumbnail / cover)
     interface ArtworkMediaItem {
         id: number;
         url: string;
@@ -413,7 +413,7 @@ export const PortfolioDetailPage: React.FC = () => {
               }
             : null);
 
-    // 2. Additional Process Media & Timelapses (all media from index 1 onwards)
+    // Additional Process Media & Timelapses (all media from index 1 onwards)
     const processMedias = allMediaList.length > 1 ? allMediaList.slice(1) : [];
 
     const handleOpenMainLightbox = () => {

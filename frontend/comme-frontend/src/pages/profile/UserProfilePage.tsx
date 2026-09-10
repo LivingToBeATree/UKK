@@ -134,7 +134,7 @@ export const UserProfilePage: React.FC = () => {
             try {
                 let fetchedUser: User | null = null;
 
-                // 1. If accessed via /artists/:id with numeric ID
+                // If accessed via /artists/:id with numeric ID
                 if (cleanParam && !isNaN(Number(cleanParam))) {
                     try {
                         const artistRes = await artistProfileApi.show(Number(cleanParam));
@@ -146,7 +146,7 @@ export const UserProfilePage: React.FC = () => {
                     }
                 }
 
-                // 2. Resolve by clean username
+                // Resolve by clean username
                 if (!fetchedUser && cleanUsername) {
                     try {
                         fetchedUser = await userService.getByUsername(cleanUsername);

@@ -17,7 +17,7 @@ export const EMOJI_BY_NAME: Record<string, string> = {};
 // Every value below was resolved against the live gemoji dataset, so the character is always
 // a real, correctly-encoded emoji — nothing here is hand-typed unicode.
 const EXTRA_ALIASES: Record<string, string> = {
-    // --- original core set ---
+    // Original core set
     sad: '😢',
     happy: '😊',
     cry: '😭',
@@ -40,7 +40,7 @@ const EXTRA_ALIASES: Record<string, string> = {
     lmao: '🤣',
     lol: '😂',
 
-    // --- EMOTIONS (feelings people search by mood word, not by official shortcode) ---
+    // Emotions (feelings people search by mood word, not by official shortcode)
     blue: '😢', down: '😞', gloomy: '😞', miserable: '😭', heartbroken: '💔', brokenhearted: '💔',
     devastated: '😭', hurt: '😔', weepy: '😭', tearful: '😢', upset: '😞', glad: '🙂', joyful: '😃',
     joyous: '😃', cheerful: '😄', elated: '🤩', ecstatic: '🤩', thrilled: '🤩', delighted: '😊',
@@ -63,7 +63,7 @@ const EXTRA_ALIASES: Record<string, string> = {
     unwell: '🤢', queasy: '🤢', drunk: '🥴', tipsy: '🥴', wasted: '🥴', hammered: '🥴', cold: '🥶',
     freezing: '🥶', chilly: '🥶', hot: '🥵', sweaty: '😓', overheated: '🥵', boiling: '🥵',
 
-    // --- SLANG (internet/Discord-speak reactions) ---
+    // Slang (internet/Discord-speak reactions)
     lmfao: '🤣', omg: '😲', wtf: '😖', smh: '😒', tbh: '💬', idk: '🤷', ikr: '💯', fr: '💯',
     deadass: '😑', based: '😎', cringe: '😬', cap: '🤥', no_cap: '✋', sus: '👀', poggers: '🤩',
     pog: '🤩', sadge: '😔', copium: '😩', ratio: '📉', mid: '😐', goated: '🐐', bussin: '😋',
@@ -76,42 +76,42 @@ const EXTRA_ALIASES: Record<string, string> = {
     yo: '👋', bruh: '😑', welp: '🤷', meh: '😑', eh: '🤷', ugh: '😒', uwu: '😊', owo: '😳',
     cheugy: '😒',
 
-    // --- GESTURES / BODY LANGUAGE ---
+    // Gestures / body language
     nod: '👍', headshake: '👎', highfive: '🙌', fistbump: '👊', eyeroll: '🙄', side_eye: '👀',
     stare: '👀', glare: '😒', blink: '😉', yawn: '🥱', stretch: '🤸', flex: '💪', point: '👉',
     pointing: '👉', snap: '✋', applause: '👏', namaste: '🙏', fingers_crossed: '🤞', rock_on: '🤘',
     hang_loose: '🤙', salute: '🫡', facedesk: '🤦', bow: '🙇', kneel: '🧎',
 
-    // --- ANIMALS (casual/onomatopoeia names) ---
+    // Animals (casual/onomatopoeia names)
     puppy: '🐶', kitty: '🐱', kitten: '🐱', bunny: '🐰', doggo: '🐶', birdie: '🐦', ducky: '🦆',
     piggy: '🐷', froggy: '🐸', dino: '🦖', dinosaur: '🦖', ladybug: '🐞', snek: '🐍', moo: '🐮',
     baa: '🐑', quack: '🦆', meow: '🐱', woof: '🐶', ribbit: '🐸', oink: '🐷', neigh: '🐴',
 
-    // --- FOOD & DRINK (casual names) ---
+    // Food & drink (casual names)
     burger: '🍔', fries: '🍟', soda: '🥤', boba: '🧋', chocolate: '🍫', noodles: '🍜', avo: '🥑',
     honey: '🍯', milk: '🥛', cheers: '🥂', hangry: '😡', snack: '🍿', dessert: '🍰', bbq: '🍖',
     brunch: '🍳', latte: '☕', espresso: '☕', smoothie: '🥤',
 
-    // --- WEATHER / NATURE (casual names) ---
+    // Weather / nature (casual names)
     sunny: '☀️', rainy: '🌧️', snowy: '❄️', stormy: '⛈️', windy: '🌬️', foggy: '🌫️', starry: '✨',
     galaxy: '🌌', space: '🚀', ocean: '🌊', beach: '🏖️', forest: '🌲', flower: '🌸', plant: '🌱',
     tree: '🌳', lucky: '🍀',
 
-    // --- OBJECTS / TECH (casual names) ---
+    // Objects / tech (casual names)
     phone: '📱', laptop: '💻', pc: '💻', console: '🎮', controller: '🕹️', mic: '🎤', clock: '⏰',
     time: '⌛', money: '💸', cash: '💰', rich: '💰', present: '🎁', knife: '🔪', sword: '⚔️',
     paint: '🎨', medal: '🥇', diamond: '💎', bag: '👜', hat: '🎩', shoe: '👟', shirt: '👕',
     wallet: '💵', headphone: '🎧', battery_low: '🔋', wifi: '📶', link: '🔗',
 
-    // --- TRAVEL / PLACES (casual names) ---
+    // Travel / places (casual names)
     plane: '✈️', ship: '🚢', bike: '🚲', home: '🏠', city: '🏙️', island: '🏝️', roadtrip: '🚗',
     vacation: '🏖️', camping: '⛺', hiking: '🥾',
 
-    // --- SPORTS / ACTIVITIES (casual names) ---
+    // Sports / activities (casual names)
     swim: '🏊', run: '🏃', dance: '💃', chess: '♟️', cards: '🎴', workout: '🏋️', yoga: '🧘',
     gaming: '🎮', esports: '🏆',
 
-    // --- the "no one uses these, but why not" pile ---
+    // The "no one uses these, but why not" pile
     shit: '💩', poop: '💩', crap: '💩', holy_shit: '💩', bullshit: '💩',
     potato: '🥔', avocadotoast: '🥑', spork: '🍴', doorknob: '🚪', lint: '🧵', shrugging: '🤷',
     whatever: '🤷', crickets: '🦗', dust: '💨', emptiness: '🌑', voidstare: '😶', blank: '⬜',
@@ -124,7 +124,7 @@ const EXTRA_ALIASES: Record<string, string> = {
 // actually type) plus a handful of popular kaomoji, so text emoticons auto-convert the
 // way they do in Discord/Slack/iMessage.
 export const EMOTICON_MAP: Record<string, string> = {
-    // --- original core set ---
+    // Original core set
     '<3': '❤️',
     '</3': '💔',
     ':)': '😊',
@@ -150,52 +150,52 @@ export const EMOTICON_MAP: Record<string, string> = {
     ":')": '🥹',
     '>:(': '😠',
 
-    // --- happy / smile variants ---
+    // Happy / smile variants
     ':]': '🙂', ':-]': '🙂', '=)': '🙂', '=]': '🙂', '(:': '🙂', '(-:': '🙂', 'c:': '🙂', 'C:': '🙂',
 
-    // --- big grin / laughing variants ---
+    // Big grin / laughing variants
     '=D': '😃', '8D': '😆', 'xD': '😆', ':d': '😃', ':-d': '😃', ':))': '😃', ':-))': '😃',
 
-    // --- sad / crying variants ---
+    // Sad / crying variants
     ':[': '😞', ':-[': '😞', '=(': '😞', '=[': '😞', '):': '😞', ')-:': '😞', ']:': '😞',
     ']-:': '😞', ':((': '😭', ':-((': '😭', ';(': '😢', ';-(': '😢', ':,(': '😢',
 
-    // --- wink variants ---
+    // Wink variants
     ';]': '😉', ';-]': '😉', '^_~': '😉', '^.~': '😉',
 
-    // --- tongue-out variants ---
+    // Tongue-out variants
     '=P': '😛', '=p': '😛', ':b': '😛', ':-b': '😛', ':B': '😛',
 
-    // --- skeptical / unsure variants ---
+    // Skeptical / unsure variants
     ':/': '😕', ':-/': '😕', ':\\': '😕', ':-\\': '😕', '=/': '😕', '=\\': '😕',
 
-    // --- neutral / straight face variants ---
+    // Neutral / straight face variants
     ':|': '😐', ':-|': '😐', '=|': '😐',
 
-    // --- shock / surprise variants ---
+    // Shock / surprise variants
     ':-o': '😮', '=O': '😮', '=o': '😮', '8o': '😯', '8-o': '😯',
 
-    // --- angel / devil variants ---
+    // Angel / devil variants
     'O:)': '😇', 'O:-)': '😇', '0:)': '😇', '0:-)': '😇', '>:)': '😈', '>:-)': '😈', '3:)': '😈',
     '3:-)': '😈',
 
-    // --- angry variants ---
+    // Angry variants
     '>:-(': '😠', 'D:': '😧', 'D-:': '😧',
 
-    // --- cool / sunglasses variants ---
+    // Cool / sunglasses variants
     '8-)': '😎', 'B)': '😎', 'B-)': '😎',
 
-    // --- hard crying variants ---
+    // Hard crying variants
     'T_T': '😭', 'T.T': '😭', ';_;': '😭', 'Q_Q': '😭',
 
-    // --- dizzy / confused variants ---
+    // Dizzy / confused variants
     '%)': '😵', '%-)': '😵', 'o.O': '😵', 'O.o': '😵',
 
-    // --- misc (kiss, blush, sealed lips, sick, deadpan) ---
+    // Misc (kiss, blush, sealed lips, sick, deadpan)
     ':^*': '😘', ':">': '😊', ':$': '😳', ':X': '🤐', ':-X': '🤐', ':x': '🤐', ':-#': '🤐',
     '+_+': '😵', '-_-': '😑', '-_-zzz': '😴',
 
-    // --- popular kaomoji ---
+    // Popular kaomoji
     '¯\\_(ツ)_/¯': '🤷', 'ಠ_ಠ': '😒', '( ͡° ͜ʖ ͡°)': '😏', '(╯°□°)╯︵ ┻━┻': '😡', '┬─┬ ノ( ゜-゜ノ)': '☺️',
     '(¬‿¬)': '😏', '(o^▽^o)': '😊', '(≧◡≦)': '😃',
 };
@@ -285,7 +285,7 @@ export function searchEmojiSuggestions(query: string, limit: number = 8): EmojiS
 export function autoReplaceShortcodes(text: string): { text: string; hasReplaced: boolean } {
     let hasReplaced = false;
 
-    // 1. Match :name:
+    // Match :name:
     let replacedText = text.replace(/(^|\s):([a-zA-Z0-9_+-]+):/g, (match, prefix, name) => {
         const found = EMOJI_BY_NAME[name.toLowerCase()];
         if (found) {
@@ -295,7 +295,7 @@ export function autoReplaceShortcodes(text: string): { text: string; hasReplaced
         return match;
     });
 
-    // 2. Match trailing emoticon (e.g. user typed ":) " or "<3 " or "¯\_(ツ)_/¯")
+    // Match trailing emoticon (e.g. user typed ":) " or "<3 " or "¯\_(ツ)_/¯")
     for (const [emoticon, emoji] of Object.entries(EMOTICON_MAP)) {
         const escaped = emoticon.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const regex = new RegExp(`(^|\\s)${escaped}(\\s|$)`, 'g');

@@ -1147,7 +1147,7 @@ export const PostDetailPage: React.FC = () => {
     const isStaff = user?.role === 'admin' || user?.role === 'moderator';
     const isOwner = Boolean(user && user.id === post?.user_id);
 
-    // 1. Error state from backend (403 Forbidden or 404 Not Found)
+    // Error state from backend (403 Forbidden or 404 Not Found)
     if (fetchError || !post) {
         if (fetchError?.status === 403) {
             return (
@@ -1169,7 +1169,7 @@ export const PostDetailPage: React.FC = () => {
         );
     }
 
-    // 2. Moderation check for unauthorized regular visitors
+    // Moderation check for unauthorized regular visitors
     if (post.is_taken_down && !isStaff && !isOwner) {
         return (
             <UnavailableContentState
@@ -1181,7 +1181,7 @@ export const PostDetailPage: React.FC = () => {
         );
     }
 
-    // 3. Suspended author check for regular visitors
+    // Suspended author check for regular visitors
     if (post.user?.is_suspended && !isStaff && !isOwner) {
         return (
             <UnavailableContentState
@@ -1204,7 +1204,7 @@ export const PostDetailPage: React.FC = () => {
     const isValidMedia = (m: any) =>
         Boolean(m && m.url && !m.url.endsWith('/0') && !m.url.endsWith('/storage/0') && m.file_path !== '0');
 
-    // 1. Main Artwork Piece (Shown as Hero Showcase)
+    // Main Artwork Piece (Shown as Hero Showcase)
     const rawMainArtwork = post.portfolio
         ? ((post.portfolio as any)?.thumbnail_media ||
            post.portfolio.media?.[0] ||
@@ -1215,7 +1215,7 @@ export const PostDetailPage: React.FC = () => {
 
     const mainArtwork = isValidMedia(rawMainArtwork) ? rawMainArtwork : null;
 
-    // 2. Additional Process Medias & Timelapses (Formatted as Post Medias Beneath)
+    // Additional Process Medias & Timelapses (Formatted as Post Medias Beneath)
     const rawAdditionalMedias: any[] = post.portfolio
         ? [
               ...(post.portfolio.media && post.portfolio.media.length > 1 ? post.portfolio.media.slice(1) : []),

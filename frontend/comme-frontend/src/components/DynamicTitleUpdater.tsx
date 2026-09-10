@@ -63,64 +63,64 @@ const STATIC_ROUTE_TITLES: Record<string, string> = {
  * Resolves a human-readable title based on the URL pathname and route slugs.
  */
 function resolveTitleFromPath(pathname: string): string {
-    // 1. Direct static lookup
+    // Direct static lookup
     if (STATIC_ROUTE_TITLES[pathname]) {
         return STATIC_ROUTE_TITLES[pathname];
     }
 
-    // 2. Order Commission flow: /store/:serviceId/order
+    // Order Commission flow: /store/:serviceId/order
     const orderMatch = pathname.match(/^\/store\/([^/]+)\/order$/);
     if (orderMatch) {
         const title = slugToTitle(orderMatch[1]);
         return title ? `Order — ${title}` : 'Order Commission';
     }
 
-    // 3. Marketplace Service Detail: /store/:serviceId
+    // Marketplace Service Detail: /store/:serviceId
     const storeMatch = pathname.match(/^\/store\/([^/]+)$/);
     if (storeMatch) {
         const title = slugToTitle(storeMatch[1]);
         return title || 'Commission Service';
     }
 
-    // 4. Portfolio Artwork Detail: /portfolio/:id
+    // Portfolio Artwork Detail: /portfolio/:id
     const portfolioMatch = pathname.match(/^\/portfolio\/([^/]+)$/);
     if (portfolioMatch) {
         const title = slugToTitle(portfolioMatch[1]);
         return title || 'Portfolio Artwork';
     }
 
-    // 5. Community Post Detail: /posts/:id
+    // Community Post Detail: /posts/:id
     const postMatch = pathname.match(/^\/posts\/([^/]+)$/);
     if (postMatch) {
         const title = slugToTitle(postMatch[1]);
         return title || 'Artwork Post';
     }
 
-    // 6. Commission Workspace / Detail: /commissions/:id or /orders/:id
+    // Commission Workspace / Detail: /commissions/:id or /orders/:id
     const commissionMatch = pathname.match(/^\/(?:commissions|orders)\/([^/]+)$/);
     if (commissionMatch) {
         return `Order #${commissionMatch[1]}`;
     }
 
-    // 7. Creator / User Profiles: /profile/:username, /users/:username, /u/:username, /artists/:username
+    // Creator / User Profiles: /profile/:username, /users/:username, /u/:username, /artists/:username
     const profileMatch = pathname.match(/^\/(?:profile|users|u|artists)\/([^/]+)$/);
     if (profileMatch) {
         const rawUsername = profileMatch[1].replace(/^@/, '');
         return `@${rawUsername}`;
     }
 
-    // 8. Own profile root: /profile
+    // Own profile root: /profile
     if (pathname === '/profile') {
         return 'My Profile';
     }
 
-    // 9. Dashboard Service Edit: /dashboard/services/:id/edit
+    // Dashboard Service Edit: /dashboard/services/:id/edit
     const serviceEditMatch = pathname.match(/^\/dashboard\/services\/([^/]+)\/edit$/);
     if (serviceEditMatch) {
         return `Edit Service #${serviceEditMatch[1]}`;
     }
 
-    // 10. Admin Ticket Detail: /admin/tickets/:id
+    // Admin Ticket Detail: /admin/tickets/:id
     const ticketMatch = pathname.match(/^\/admin\/tickets\/([^/]+)$/);
     if (ticketMatch) {
         return `Ticket #${ticketMatch[1]}`;

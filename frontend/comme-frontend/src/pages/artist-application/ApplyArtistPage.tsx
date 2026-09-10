@@ -287,7 +287,7 @@ export const ApplyArtistPage: React.FC = () => {
         );
     }
 
-    // 1. If user already has an active artist profile
+    // If user already has an active artist profile
     if (user?.artist_profile) {
         return (
             <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-6">
@@ -328,7 +328,7 @@ export const ApplyArtistPage: React.FC = () => {
         );
     }
 
-    // 2. If user already has a pending application
+    // If user already has a pending application
     if (existingApplication && existingApplication.status === 'pending') {
         return (
             <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">

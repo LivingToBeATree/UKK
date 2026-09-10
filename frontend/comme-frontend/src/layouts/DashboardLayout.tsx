@@ -15,11 +15,11 @@ const studioTabs = [
 ];
 
 export const DashboardLayout: React.FC = () => {
-    // 1. Global rail collapsed state (outer SidebarProvider in App.tsx)
+    // Global rail collapsed state (outer SidebarProvider in App.tsx)
     const { collapsed: railCollapsed } = useSidebar();
     const location = useLocation();
 
-    // 2. Studio sidebar inner collapsed state
+    // Studio sidebar inner collapsed state
     const [collapsed, setCollapsed] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
 

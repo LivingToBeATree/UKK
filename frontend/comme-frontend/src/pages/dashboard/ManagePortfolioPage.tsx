@@ -78,12 +78,12 @@ export const ManagePortfolioPage: React.FC = () => {
     const [postCommentable, setPostCommentable] = useState(true);
     const postTextareaRef = useRef<HTMLTextAreaElement>(null);
 
-    // 1. Primary / Main Artwork Upload State
+    // Primary / Main Artwork Upload State
     const [mainArtwork, setMainArtwork] = useState<MediaPreviewItem | null>(null);
     const [isDraggingMain, setIsDraggingMain] = useState(false);
     const mainFileInputRef = useRef<HTMLInputElement>(null);
 
-    // 2. Additional Process Media & Timelapses State
+    // Additional Process Media & Timelapses State
     const [additionalMedia, setAdditionalMedia] = useState<MediaPreviewItem[]>([]);
     const [isDraggingAdd, setIsDraggingAdd] = useState(false);
     const addFileInputRef = useRef<HTMLInputElement>(null);
@@ -276,10 +276,10 @@ export const ManagePortfolioPage: React.FC = () => {
                 }
             }
 
-            // 1. Append Main Artwork FIRST (index 0 / cover)
+            // Append Main Artwork FIRST (index 0 / cover)
             formData.append('media[]', mainArtwork.file);
 
-            // 2. Append Additional Process Media / Timelapses sequentially
+            // Append Additional Process Media / Timelapses sequentially
             additionalMedia.forEach((item) => {
                 formData.append('media[]', item.file);
             });

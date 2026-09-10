@@ -21,7 +21,7 @@ export async function downloadFile(
         return false;
     }
 
-    // 1. Determine clean filename
+    // Determine clean filename
     let fileName = options.customName || fallbackFileName;
     if (!fileName || fileName.trim() === '' || fileName === 'deliverable' || fileName === 'attachment' || fileName === 'media') {
         try {
