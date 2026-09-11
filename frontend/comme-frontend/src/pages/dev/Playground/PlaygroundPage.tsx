@@ -939,9 +939,9 @@ export const PlaygroundPage: React.FC = () => {
                 </div>
             </motion.section>
 
-            {/* Collapsible Studio Sidebar Component */}
+            {/* Studio Navigation Sidebar */}
             <motion.section variants={itemVariants} className="space-y-4">
-                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">12. Collapsible Studio Sidebar</h2>
+                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">12. Studio Navigation Sidebar</h2>
                 <Card className="overflow-hidden border border-border">
                     <SidebarProvider defaultCollapsed={false}>
                         <div className="flex h-105 w-full bg-background/50">
@@ -981,7 +981,7 @@ export const PlaygroundPage: React.FC = () => {
                                 <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 space-y-2">
                                     <p className="text-xs font-semibold text-primary">Tip:</p>
                                     <p className="text-xs text-muted-foreground">
-                                        Click the collapse button at the bottom of the sidebar to see smooth spring transitions between full navigation and compact icon-only mode.
+                                        Switch between Studio Overview, Portfolio, Services, and Orders in the sidebar to preview active-route highlighting and synchronized dashboard panel switching.
                                     </p>
                                 </div>
                             </div>
