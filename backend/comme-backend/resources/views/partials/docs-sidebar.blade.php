@@ -62,6 +62,11 @@
                     <img src="{{ asset('icons/SVGs/Shield/shield-white.svg') }}" class="icon-themed" style="width: 14px; height: 14px;" alt="" /> Error Reference
                 </span>
             </a>
+            <a href="{{ url('/emails') }}" class="nav-link nav-page-link" data-page="/emails" style="font-family: inherit; font-weight: 600; font-size: 13px;">
+                <span style="display: flex; align-items: center; gap: 8px;">
+                    <img src="{{ asset('icons/SVGs/Paper/paper-white.svg') }}" class="icon-themed" style="width: 14px; height: 14px;" alt="" /> Email Previews
+                </span>
+            </a>
             <a href="{{ url('/pulse') }}" class="nav-link" target="_blank" rel="noopener noreferrer" style="font-family: inherit; font-weight: 600; font-size: 13px;">
                 <span style="display: flex; align-items: center; gap: 8px;">
                     <img src="{{ asset('icons/SVGs/Zap/zap-white.svg') }}" class="icon-themed" style="width: 14px; height: 14px;" alt="" /> Laravel Pulse

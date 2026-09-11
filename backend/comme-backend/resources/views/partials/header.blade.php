@@ -31,6 +31,10 @@
                 <span>Explore API JSON</span>
                 <span style="color: var(--brand-teal); font-size: 10px;">↗</span>
             </a>
+            <a href="{{ url('/emails') }}" class="btn-copy" style="font-size: 12px; padding: 6px 14px; text-decoration: none; display: flex; align-items: center; gap: 6px;">
+                <span>Email Previews</span>
+                <span style="color: var(--brand-purple); font-size: 11px;">✉</span>
+            </a>
         </div>
     </div>
 </header>
