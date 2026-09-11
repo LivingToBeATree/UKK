@@ -72,7 +72,7 @@
                 <span style="display: flex; align-items: center; gap: 8px;">
                     <img src="{{ asset('icons/SVGs/Paper/paper-white.svg') }}" class="icon-themed" style="width: 14px; height: 14px;" alt="" /> Log Viewer
                 </span>
-                <span class="auth-badge" style="font-size: 10px; padding: 1px 6px; margin-left: auto; background: rgba(168, 2, 245, 0.15); color: #c464fa; border-color: rgba(168, 2, 245, 0.3);">Live</span>
+                <span class="auth-badge" style="font-size: 10px; padding: 1px 6px; margin-left: auto; background: rgba(168, 2, 245, 0.14); color: var(--param-name-color); border-color: rgba(168, 2, 245, 0.3);">Live</span>
             </a>
         </div>
 
@@ -108,7 +108,7 @@
         <div class="nav-group">
             <div class="nav-group-toggle">
                 <div class="nav-group-label">
-                    <div class="nav-group-icon" style="background: rgba(245, 170, 2, 0.12);">
+                    <div class="nav-group-icon" style="background: rgba(245, 158, 11, 0.12);">
                         <img src="{{ asset('icons/SVGs/Paint/paint-tray-white.svg') }}" class="icon-themed" alt="" />
                     </div>
                     <span class="nav-group-title">Artist & Studio</span>
@@ -188,7 +188,7 @@
         <div class="nav-group">
             <div class="nav-group-toggle">
                 <div class="nav-group-label">
-                    <div class="nav-group-icon" style="background: rgba(245, 170, 2, 0.12);">
+                    <div class="nav-group-icon" style="background: rgba(245, 158, 11, 0.12);">
                         <img src="{{ asset('icons/SVGs/Picture/picture-white.svg') }}" class="icon-themed" alt="" />
                     </div>
                     <span class="nav-group-title">Feed & Social</span>
@@ -288,7 +288,7 @@
         <div class="nav-group">
             <div class="nav-group-toggle">
                 <div class="nav-group-label">
-                    <div class="nav-group-icon" style="background: rgba(255, 67, 101, 0.12);">
+                    <div class="nav-group-icon" style="background: rgba(239, 68, 68, 0.12);">
                         <img src="{{ asset('icons/SVGs/Shield/shield-white.svg') }}" class="icon-themed" alt="" />
                     </div>
                     <span class="nav-group-title">Moderation</span>

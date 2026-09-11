@@ -42,7 +42,7 @@
             <button class="btn-copy" onclick="toggleTokenVisibility()" style="font-size: 12px; padding: 7px 12px;">
                 <span id="tokenToggleText">Show Token</span>
             </button>
-            <button class="btn-copy" onclick="clearToken()" style="font-size: 12px; padding: 7px 12px; color: var(--brand-rose); border-color: rgba(255, 67, 101, 0.3);">
+            <button class="btn-copy" onclick="clearToken()" style="font-size: 12px; padding: 7px 12px; color: var(--brand-rose); border-color: rgba(239, 68, 68, 0.3);">
                 Clear
             </button>
         </div>
@@ -149,7 +149,7 @@
 <section style="padding: 24px 28px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 14px; margin-bottom: 64px;">
     <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
         <div style="display: flex; align-items: center; gap: 16px;">
-            <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(255, 67, 101, 0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(239, 68, 68, 0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                 <img src="{{ asset('icons/SVGs/Shield/shield-white.svg') }}" class="icon-themed" style="width: 22px; height: 22px;" alt="" />
             </div>
             <div>
@@ -157,7 +157,7 @@
                 <p style="font-size: 13px; color: var(--text-secondary);">Check our Error Collection for full explanations, status code definitions, and frontend handling tips.</p>
             </div>
         </div>
-        <a href="{{ url('/errors') }}" class="btn-copy" style="text-decoration: none; padding: 9px 18px; font-weight: 600; color: var(--brand-rose); border-color: rgba(255, 67, 101, 0.3);">
+        <a href="{{ url('/errors') }}" class="btn-copy" style="text-decoration: none; padding: 9px 18px; font-weight: 600; color: var(--brand-rose); border-color: rgba(239, 68, 68, 0.3);">
             View Error Catalog →
         </a>
     </div>

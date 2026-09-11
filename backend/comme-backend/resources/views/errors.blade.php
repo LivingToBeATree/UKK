@@ -6,7 +6,7 @@
 <!-- Hero Section -->
 <section style="margin-bottom: 56px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 40px;">
     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-        <span class="auth-badge" style="background: rgba(255, 67, 101, 0.15); color: var(--brand-rose); border-color: rgba(255, 67, 101, 0.3);">
+        <span class="auth-badge" style="background: rgba(239, 68, 68, 0.15); color: var(--brand-rose); border-color: rgba(239, 68, 68, 0.3);">
             Error Catalog v1.0
         </span>
         <span style="font-size: 13px; color: var(--text-muted);">Standardized RFC-7807 Compliant Envelopes</span>
@@ -99,7 +99,7 @@
             <span class="method-pill method-delete">401</span>
             <span>UNAUTHORIZED / UNAUTHENTICATED</span>
         </div>
-        <span class="auth-badge" style="color: var(--brand-rose); border-color: rgba(255, 67, 101, 0.3);">Auth Barrier</span>
+        <span class="auth-badge" style="color: var(--brand-rose); border-color: rgba(239, 68, 68, 0.3);">Auth Barrier</span>
     </div>
     <div class="endpoint-body">
         <p style="font-size: 14px; color: var(--text-secondary);">
@@ -304,7 +304,7 @@
             <span class="method-pill method-delete">429</span>
             <span>TOO MANY REQUESTS / RATE LIMIT EXCEEDED</span>
         </div>
-        <span class="auth-badge" style="color: var(--brand-gold); border-color: rgba(245, 170, 2, 0.3);">Throttling Guard</span>
+        <span class="auth-badge" style="color: var(--brand-gold); border-color: rgba(245, 158, 11, 0.3);">Throttling Guard</span>
     </div>
     <div class="endpoint-body">
         <p style="font-size: 14px; color: var(--text-secondary);">
@@ -420,7 +420,7 @@
             <span class="method-pill method-delete">500</span>
             <span>INTERNAL SERVER ERROR</span>
         </div>
-        <span class="auth-badge" style="color: var(--brand-rose); border-color: rgba(255, 67, 101, 0.3);">Server Exception</span>
+        <span class="auth-badge" style="color: var(--brand-rose); border-color: rgba(239, 68, 68, 0.3);">Server Exception</span>
     </div>
     <div class="endpoint-body">
         <p style="font-size: 14px; color: var(--text-secondary);">

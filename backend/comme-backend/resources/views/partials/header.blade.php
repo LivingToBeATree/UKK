@@ -8,7 +8,7 @@
 
             <a href="{{ url('/') }}" style="display: flex; align-items: center; gap: 14px; text-decoration: none;">
                 <img src="{{ asset('images/Comme_Wordmark.svg') }}" alt="Comme" style="height: 36px; width: auto; object-fit: contain;" />
-                <span style="background: rgba(168, 2, 245, 0.16); color: #c464fa; border: 1px solid rgba(168, 2, 245, 0.35); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.05em; font-family: 'JetBrains Mono', monospace;">
+                <span style="background: rgba(168, 2, 245, 0.14); color: var(--param-name-color); border: 1px solid rgba(168, 2, 245, 0.3); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.05em; font-family: 'JetBrains Mono', monospace;">
                     API v1.0
                 </span>
             </a>

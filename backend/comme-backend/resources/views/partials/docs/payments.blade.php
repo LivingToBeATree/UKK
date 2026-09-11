@@ -50,7 +50,7 @@
                 <span class="method-pill method-post">POST</span>
                 <span>/api/commissions/{commission}/payment/simulate</span>
             </div>
-            <span class="auth-badge" style="background: rgba(255, 170, 0, 0.15); color: #ffa726; border-color: rgba(255, 170, 0, 0.3);">Local / Testing Only</span>
+            <span class="auth-badge" style="background: rgba(245, 158, 11, 0.12); color: var(--brand-gold); border-color: rgba(245, 158, 11, 0.28);">Local / Testing Only</span>
         </div>
         <div class="endpoint-body">
             <p style="font-size: 14px; color: var(--text-secondary);">Simulates successful escrow payment settlement in development/sandbox. Guarded by environment check; returns 404 in production.</p>
