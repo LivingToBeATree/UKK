@@ -11,7 +11,6 @@ import { NotificationCard } from '@/components/NotificationCard';
 import { AppSidebar } from '@/components/AppSidebar';
 import { SidebarProvider, SidebarMobileTrigger } from '@/components/ui/sidebar';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -132,7 +131,6 @@ Ready to finalize details! Feel free to ask any questions below. :sparkles: :roc
 export const PlaygroundPage: React.FC = () => {
     const navigate = useNavigate();
     const { setColorTheme } = useColorTheme();
-    const [progressVal, setProgressVal] = useState(65);
     const [rememberMe, setRememberMe] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [sidebarTab, setSidebarTab] = useState('overview');
@@ -630,31 +628,104 @@ export const PlaygroundPage: React.FC = () => {
                 />
             </motion.section>
 
-            {/* Avatars & Progress */}
+            {/* User Avatars & Presence Indicators */}
             <motion.section variants={itemVariants} className="space-y-4">
-                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">7. Avatars & Progress</h2>
+                <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-bold border-l-4 border-primary pl-3">7. User Avatars & Presence Indicators</h2>
+                    <Badge variant="outline" className="font-mono text-xs">SM • MD • LG • XL</Badge>
+                </div>
                 <Card>
                     <CardContent className="p-6 space-y-6">
-                        <div className="flex items-center gap-4">
-                            <Avatar size="sm" fallback="Sarah Connor" isOnline={true} />
-                            <Avatar size="md" fallback="Aether Art" isOnline={true} />
-                            <Avatar size="lg" fallback="Studio Ghibli" isOnline={false} />
-                            <Avatar size="xl" fallback="Comme Admin" isOnline={true} />
+                        {/* Size scale with active image & presence indicators */}
+                        <div className="space-y-2">
+                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                                Size Scale with Photography & Online Presence
+                            </span>
+                            <div className="flex items-center gap-5 pt-1">
+                                <Avatar
+                                    size="sm"
+                                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=96&h=96&fit=crop&crop=face"
+                                    fallback="Sarah Connor"
+                                    isOnline={true}
+                                />
+                                <Avatar
+                                    size="md"
+                                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop&crop=face"
+                                    fallback="Aether Art"
+                                    isOnline={true}
+                                />
+                                <Avatar
+                                    size="lg"
+                                    src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=128&h=128&fit=crop&crop=face"
+                                    fallback="Studio Ghibli"
+                                    isOnline={false}
+                                />
+                                <Avatar
+                                    size="xl"
+                                    src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=160&h=160&fit=crop&crop=face"
+                                    fallback="Comme Admin"
+                                    isOnline={true}
+                                />
+                            </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-xs font-semibold">
-                                <span>Commission Progress (Step 3 of 4)</span>
-                                <span>{progressVal}%</span>
+                        {/* Fallback Initials */}
+                        <div className="space-y-2 pt-4 border-t border-border">
+                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                                Fallback Initials (When No Image is Provided)
+                            </span>
+                            <div className="flex items-center gap-5 pt-1">
+                                <Avatar size="sm" fallback="Sarah Connor" isOnline={true} />
+                                <Avatar size="md" fallback="Aether Art" isOnline={true} />
+                                <Avatar size="lg" fallback="Studio Ghibli" isOnline={false} />
+                                <Avatar size="xl" fallback="Comme Admin" isOnline={true} />
                             </div>
-                            <Progress value={progressVal} />
-                            <div className="flex gap-2 pt-2">
-                                <Button size="xs" variant="outline" onClick={() => setProgressVal(Math.max(0, progressVal - 15))}>
-                                    -15%
-                                </Button>
-                                <Button size="xs" variant="outline" onClick={() => setProgressVal(Math.min(100, progressVal + 15))}>
-                                    +15%
-                                </Button>
+                        </div>
+
+                        {/* Overlapping Avatar Stacks & User Chip */}
+                        <div className="space-y-2 pt-4 border-t border-border">
+                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                                Overlapping Team Stack & Interactive User Chip
+                            </span>
+                            <div className="flex flex-wrap items-center gap-6 pt-1">
+                                {/* Overlapping Stack */}
+                                <div className="flex -space-x-3 overflow-hidden p-1">
+                                    <Avatar
+                                        size="md"
+                                        src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=96&h=96&fit=crop&crop=face"
+                                        fallback="SC"
+                                        className="ring-2 ring-card"
+                                    />
+                                    <Avatar
+                                        size="md"
+                                        src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop&crop=face"
+                                        fallback="AA"
+                                        className="ring-2 ring-card"
+                                    />
+                                    <Avatar
+                                        size="md"
+                                        src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=128&h=128&fit=crop&crop=face"
+                                        fallback="SG"
+                                        className="ring-2 ring-card"
+                                    />
+                                    <div className="h-10 w-10 rounded-full ring-2 ring-card bg-secondary flex items-center justify-center text-xs font-bold text-muted-foreground">
+                                        +5
+                                    </div>
+                                </div>
+
+                                {/* User Chip */}
+                                <div className="flex items-center gap-3 px-3.5 py-2 rounded-xl border border-border bg-card/60">
+                                    <Avatar
+                                        size="md"
+                                        src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=96&h=96&fit=crop&crop=face"
+                                        fallback="Aether Art"
+                                        isOnline={true}
+                                    />
+                                    <div>
+                                        <span className="text-xs font-bold block">Aether Art Studio</span>
+                                        <span className="text-[11px] text-emerald-400 font-medium">● Online • 4 Active Orders</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </CardContent>
