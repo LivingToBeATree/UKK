@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { ShieldCheck, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { ShieldCheck, Eye, EyeOff, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod/v4';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -30,6 +30,7 @@ export const ResetPasswordPage: React.FC = () => {
 
     const token = searchParams.get('token') || '';
     const email = searchParams.get('email') || '';
+    const isInvalidLink = !token || !email;
 
     const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<ResetForm>({
         resolver: zodResolver(schema),
@@ -64,19 +65,50 @@ export const ResetPasswordPage: React.FC = () => {
                     transition={{ duration: 0.4 }}
                     className="w-full max-w-md space-y-8"
                 >
-                    {/* Header */}
-                    <div className="text-center space-y-3">
-                        <div className="mx-auto w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shadow-inner">
-                            <ShieldCheck className="h-7 w-7 text-primary" />
+                    {isInvalidLink ? (
+                        <div className="space-y-6 text-center">
+                            <div className="mx-auto w-14 h-14 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center justify-center shadow-inner">
+                                <AlertCircle className="h-7 w-7 text-destructive" />
+                            </div>
+                            <div className="space-y-2">
+                                <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
+                                    Invalid or Missing Reset Link
+                                </h1>
+                                <p className="text-sm text-muted-foreground leading-relaxed">
+                                    This password reset link is missing required verification parameters or has expired. Password reset links must be opened directly from the email sent to you.
+                                </p>
+                            </div>
+                            <Button
+                                onClick={() => navigate('/forgot-password')}
+                                className="w-full h-11 rounded-xl font-bold shadow-md cursor-pointer"
+                            >
+                                Request New Reset Link
+                            </Button>
+                            <div className="pt-2 border-t border-border/60">
+                                <Link
+                                    to="/login"
+                                    className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-medium transition-colors"
+                                >
+                                    <ArrowLeft className="h-3.5 w-3.5" />
+                                    <span>Back to Sign In</span>
+                                </Link>
+                            </div>
                         </div>
-                        <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
-                            Reset Password
-                        </h1>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                            Create a new, secure password for{' '}
-                            <span className="font-semibold text-foreground">{email}</span>
-                        </p>
-                    </div>
+                    ) : (
+                        <>
+                            {/* Header */}
+                            <div className="text-center space-y-3">
+                                <div className="mx-auto w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shadow-inner">
+                                    <ShieldCheck className="h-7 w-7 text-primary" />
+                                </div>
+                                <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
+                                    Reset Password
+                                </h1>
+                                <p className="text-sm text-muted-foreground leading-relaxed">
+                                    Create a new, secure password for{' '}
+                                    <span className="font-semibold text-foreground">{email}</span>
+                                </p>
+                            </div>
 
                     {/* Form */}
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -151,7 +183,9 @@ export const ResetPasswordPage: React.FC = () => {
                             <span>Back to Sign In</span>
                         </Link>
                     </div>
-                </motion.div>
+                </>
+            )}
+        </motion.div>
             </div>
         </div>
     );

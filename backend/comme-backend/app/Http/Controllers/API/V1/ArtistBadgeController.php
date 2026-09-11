@@ -20,7 +20,7 @@ class ArtistBadgeController extends Controller
 
         if (! $user || ! $user->artistProfile) {
             $svg = $this->renderSvgBadge('Comme', 'Artist Not Found', '#EF4444');
-            return response($svg, 200)
+            return response($svg, 404)
                 ->header('Content-Type', 'image/svg+xml; charset=utf-8')
                 ->header('Cache-Control', 'no-cache')
                 ->header('Access-Control-Allow-Origin', '*');

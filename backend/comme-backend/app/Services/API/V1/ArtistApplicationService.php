@@ -8,8 +8,6 @@ use App\Models\ArtistApplication;
 use App\Models\ArtistProfile;
 use App\Models\Notification as InAppNotification;
 use App\Models\User;
-use App\Notifications\API\V1\ArtistApplication\ArtistApplicationApprovedNotification;
-use App\Notifications\API\V1\ArtistApplication\ArtistApplicationRejectedNotification;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use LogicException;
@@ -97,8 +95,6 @@ class ArtistApplicationService
 
             $applicant = $application->user;
 
-            $applicant->notify(new ArtistApplicationApprovedNotification($application));
-
             InAppNotification::create([
                 'user_id' => $applicant->id,
                 'actor_id' => $reviewer->id,
@@ -124,8 +120,6 @@ class ArtistApplicationService
             ]);
 
             $applicant = $application->user;
-
-            $applicant->notify(new ArtistApplicationRejectedNotification($application));
 
             InAppNotification::create([
                 'user_id' => $applicant->id,

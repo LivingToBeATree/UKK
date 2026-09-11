@@ -8,8 +8,6 @@ use App\Models\ArtistApplication;
 use App\Models\ArtistProfile;
 use App\Models\Notification as InAppNotification;
 use App\Models\User;
-use App\Notifications\API\V1\ArtistApplication\ArtistApplicationApprovedNotification;
-use App\Notifications\API\V1\ArtistApplication\ArtistApplicationRejectedNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Laravel\Sanctum\Sanctum;
@@ -192,8 +190,6 @@ class ArtistApplicationFlowTest extends TestCase
             'website' => 'https://artist.example.com',
         ]);
 
-        Notification::assertSentTo($applicant, ArtistApplicationApprovedNotification::class);
-
         $this->assertDatabaseHas('notifications', [
             'user_id' => $applicant->id,
             'actor_id' => $admin->id,
@@ -232,8 +228,6 @@ class ArtistApplicationFlowTest extends TestCase
         $this->assertSame('Portfolio samples do not include original work or process shots.', $application->rejection_reason);
 
         $this->assertDatabaseMissing('artist_profiles', ['user_id' => $applicant->id]);
-
-        Notification::assertSentTo($applicant, ArtistApplicationRejectedNotification::class);
 
         $this->assertDatabaseHas('notifications', [
             'user_id' => $applicant->id,
