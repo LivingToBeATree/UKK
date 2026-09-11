@@ -326,4 +326,92 @@
             <p style="font-size: 14px; color: var(--text-secondary);">Deletes an existing review and recalculates the artist's average rating.</p>
         </div>
     </div>
+
+    <!-- POST /api/commissions/{id}/deliver -->
+    <div class="endpoint-card" id="post-api-commissions-deliver">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/commissions/{id}/deliver</span>
+            </div>
+            <span class="auth-badge">Assigned Artist</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Uploads final work deliverables for client review and transitions commission status to <code>waiting_for_client</code> (review). Automatically schedules background watermark proof generation for images.</p>
+        </div>
+    </div>
+
+    <!-- POST /api/commissions/{id}/confirm -->
+    <div class="endpoint-card" id="post-api-commissions-confirm">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/api/commissions/{id}/confirm</span>
+            </div>
+            <span class="auth-badge">Commission Buyer</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Confirms and approves delivery. Marks commission as <code>completed</code>, unlocks pristine full-resolution deliverable downloads for the buyer, and triggers escrow disbursement to the creator.</p>
+        </div>
+    </div>
+
+    <!-- GET /api/commissions/{id}/proof/{media} -->
+    <div class="endpoint-card" id="get-api-commissions-proof">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-get">GET</span>
+                <span>/api/commissions/{id}/proof/{media}</span>
+            </div>
+            <span class="auth-badge">Order Participants</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">
+                Downloads or streams an anti-theft watermarked security preview of the deliverable (burned with <code>COMME PREVIEW • UNPAID • ORDER #[ID]</code>). Available during <code>in_progress</code> and <code>waiting_for_client</code> review states so buyers can inspect artwork without theft risk.
+            </p>
+        </div>
+    </div>
+
+    <!-- GET /api/commissions/{id}/download-original/{media} -->
+    <div class="endpoint-card" id="get-api-commissions-download-original">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-get">GET</span>
+                <span>/api/commissions/{id}/download-original/{media}</span>
+            </div>
+            <span class="auth-badge">Order Participants</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">
+                Downloads the pristine, full-resolution unwatermarked deliverable. Protected by <strong>anti-art theft gates</strong>: buyers can only download once the order is <code>completed</code>. Artists and staff can download at any time.
+            </p>
+        </div>
+    </div>
+
+    <!-- GET /api/commissions/{id}/invoice -->
+    <div class="endpoint-card" id="get-api-commissions-invoice">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-get">GET</span>
+                <span>/api/commissions/{id}/invoice</span>
+            </div>
+            <span class="auth-badge">Order Participants</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Renders a printer-optimized official invoice (with cryptographic receipt number <code>REC-COM-{id}-{hash}</code>) and watermarked payment settlement status badge.</p>
+        </div>
+    </div>
+
+    <!-- GET /api/commissions/{id}/license -->
+    <div class="endpoint-card" id="get-api-commissions-license">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-get">GET</span>
+                <span>/api/commissions/{id}/license</span>
+            </div>
+            <span class="auth-badge">Order Participants</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">Renders the official Certificate of Authenticity & Commercial License (numbered <code>LIC-COM-{id}-{hash}</code>). Unlocked upon order completion.</p>
+        </div>
+    </div>
 </section>
