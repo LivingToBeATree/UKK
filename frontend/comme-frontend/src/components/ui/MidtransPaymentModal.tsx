@@ -125,10 +125,10 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-2xl bg-card/95 backdrop-blur-xl border border-border p-0 overflow-hidden shadow-2xl">
-                {/* Header with Midtrans Branding */}
-                <div className="bg-gradient-to-r from-emerald-950/60 via-background to-primary/10 p-5 border-b border-border flex items-center justify-between">
+                {/* Header with Midtrans Branding & Right Padding for Close X button */}
+                <div className="bg-gradient-to-r from-primary/10 via-background to-secondary/30 p-5 pr-14 border-b border-border flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-black text-base shadow-inner">
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-black text-base shadow-inner">
                             <Lock className="h-5 w-5" />
                         </div>
                         <div>
@@ -147,7 +147,7 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
                     </div>
                     <div className="text-right">
                         <span className="text-[10px] text-muted-foreground uppercase font-mono block">Total Due</span>
-                        <span className="text-lg sm:text-xl font-black text-emerald-400 font-mono">
+                        <span className="text-lg sm:text-xl font-black text-primary font-mono">
                             {formatPrice(commission.total_price)}
                         </span>
                     </div>
@@ -166,11 +166,11 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
                             onClick={() => setActiveMethod('qris')}
                             className={`w-full flex items-center gap-3 p-3 rounded-xl text-left text-xs font-semibold transition-all cursor-pointer ${
                                 activeMethod === 'qris'
-                                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-xs'
+                                    ? 'bg-primary/15 text-primary border border-primary/30 shadow-xs'
                                     : 'text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent'
                             }`}
                         >
-                            <div className={`p-2 rounded-lg ${activeMethod === 'qris' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-muted text-muted-foreground'}`}>
+                            <div className={`p-2 rounded-lg ${activeMethod === 'qris' ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}`}>
                                 <QrCode className="h-4 w-4" />
                             </div>
                             <div className="min-w-0 flex-1">
@@ -184,11 +184,11 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
                             onClick={() => setActiveMethod('va')}
                             className={`w-full flex items-center gap-3 p-3 rounded-xl text-left text-xs font-semibold transition-all cursor-pointer ${
                                 activeMethod === 'va'
-                                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-xs'
+                                    ? 'bg-primary/15 text-primary border border-primary/30 shadow-xs'
                                     : 'text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent'
                             }`}
                         >
-                            <div className={`p-2 rounded-lg ${activeMethod === 'va' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-muted text-muted-foreground'}`}>
+                            <div className={`p-2 rounded-lg ${activeMethod === 'va' ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}`}>
                                 <Building2 className="h-4 w-4" />
                             </div>
                             <div className="min-w-0 flex-1">
@@ -202,11 +202,11 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
                             onClick={() => setActiveMethod('card')}
                             className={`w-full flex items-center gap-3 p-3 rounded-xl text-left text-xs font-semibold transition-all cursor-pointer ${
                                 activeMethod === 'card'
-                                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-xs'
+                                    ? 'bg-primary/15 text-primary border border-primary/30 shadow-xs'
                                     : 'text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent'
                             }`}
                         >
-                            <div className={`p-2 rounded-lg ${activeMethod === 'card' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-muted text-muted-foreground'}`}>
+                            <div className={`p-2 rounded-lg ${activeMethod === 'card' ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}`}>
                                 <CreditCard className="h-4 w-4" />
                             </div>
                             <div className="min-w-0 flex-1">
@@ -237,7 +237,7 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
                                         <h4 className="font-bold text-sm text-foreground">Scan QRIS Code</h4>
                                         <p className="text-xs text-muted-foreground">Compatible with GoPay, BCA, ShopeePay, Dana, LinkAja</p>
                                     </div>
-                                    <Badge variant="purple" className="text-[10px] font-mono">
+                                    <Badge variant="primary" className="text-[10px] font-mono">
                                         Active
                                     </Badge>
                                 </div>
@@ -252,7 +252,7 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
                                                 <div className="w-8 h-8 bg-white p-1.5"><div className="w-full h-full bg-black" /></div>
                                             </div>
                                             <div className="flex items-center justify-center">
-                                                <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white font-black text-[10px] flex items-center justify-center shadow-md">
+                                                <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground font-black text-[10px] flex items-center justify-center shadow-md">
                                                     QRIS
                                                 </div>
                                             </div>
@@ -275,7 +275,7 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
                                         </div>
                                         <div className="space-y-0.5">
                                             <span className="text-muted-foreground text-[11px]">Amount</span>
-                                            <p className="font-bold text-emerald-400 font-mono text-sm">{formatPrice(commission.total_price)}</p>
+                                            <p className="font-bold text-primary font-mono text-sm">{formatPrice(commission.total_price)}</p>
                                         </div>
                                         <div className="space-y-0.5">
                                             <span className="text-muted-foreground text-[11px]">Status</span>
@@ -305,7 +305,7 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
                                             onClick={() => setSelectedBank(bank)}
                                             className={`p-2 rounded-xl text-center font-bold text-xs uppercase transition-all cursor-pointer border ${
                                                 selectedBank === bank
-                                                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-xs'
+                                                    ? 'bg-primary/20 text-primary border-primary/40 shadow-xs'
                                                     : 'bg-muted/30 text-muted-foreground hover:bg-muted border-border'
                                             }`}
                                         >
@@ -351,7 +351,7 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
                                         <h4 className="font-bold text-sm text-foreground">Credit / Debit Card</h4>
                                         <p className="text-xs text-muted-foreground">Pre-filled with Midtrans 3D Secure test card</p>
                                     </div>
-                                    <Badge variant="teal" className="text-[10px] font-mono">
+                                    <Badge variant="primary" className="text-[10px] font-mono">
                                         3DS Verified
                                     </Badge>
                                 </div>
@@ -401,58 +401,56 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
                         )}
 
                         {/* Sandbox Simulation Helper Banner */}
-                        <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 space-y-2.5">
-                            <div className="flex items-start gap-2.5 text-xs text-foreground/90">
-                                <Sparkles className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                                <div className="space-y-0.5">
-                                    <p className="font-bold text-[11px] text-emerald-400">Midtrans Sandbox Integration</p>
-                                    <p className="text-[11px] text-muted-foreground leading-relaxed">
-                                        You can open the official Midtrans Snap popup to get real Sandbox VA/QRIS codes for <strong className="text-foreground">simulator.sandbox.midtrans.com</strong>, or simulate instantly below.
-                                    </p>
-                                </div>
+                        <div className="p-3 rounded-xl bg-secondary/30 border border-border/80 space-y-2 mt-3">
+                            <div className="flex items-center gap-2">
+                                <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
+                                <span className="text-xs font-bold text-foreground">Sandbox Gateway Testing</span>
                             </div>
+                            <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                You can test via the official Midtrans Snap popup, or simulate immediate escrow capture below.
+                            </p>
                             <Button
                                 type="button"
                                 variant="outline"
                                 onClick={handleOpenSnap}
                                 disabled={processing}
-                                className="w-full h-9 rounded-xl font-bold text-xs bg-card hover:bg-muted border-primary/30 text-primary cursor-pointer gap-2"
+                                className="w-full h-8 rounded-xl font-medium text-xs hover:bg-muted cursor-pointer gap-2"
                             >
-                                <ExternalLink className="h-3.5 w-3.5" />
-                                Open Official Midtrans Snap Popup (For Simulator Test)
-                            </Button>
-                        </div>
-
-                        {/* Action Footer */}
-                        <div className="pt-5 border-t border-border flex items-center justify-between gap-3 mt-4">
-                            <Button
-                                variant="outline"
-                                onClick={onClose}
-                                disabled={processing}
-                                className="cursor-pointer text-xs"
-                            >
-                                Cancel
-                            </Button>
-
-                            <Button
-                                onClick={handleExecutePayment}
-                                disabled={processing}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer gap-2 shadow-lg shadow-emerald-600/25 text-xs sm:text-sm px-5"
-                            >
-                                {processing ? (
-                                    <>
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                        Verifying &amp; Locking Escrow...
-                                    </>
-                                ) : (
-                                    <>
-                                        <CheckCircle2 className="h-4 w-4" />
-                                        Confirm &amp; Simulate Payment ({formatPrice(commission.total_price)})
-                                    </>
-                                )}
+                                <ExternalLink className="h-3.5 w-3.5 text-primary" />
+                                Open Official Midtrans Snap Popup
                             </Button>
                         </div>
                     </div>
+                </div>
+
+                {/* Full-width Modal Action Footer */}
+                <div className="p-4 px-5 border-t border-border bg-muted/20 flex items-center justify-between gap-3">
+                    <Button
+                        variant="ghost"
+                        onClick={onClose}
+                        disabled={processing}
+                        className="cursor-pointer text-xs"
+                    >
+                        Cancel
+                    </Button>
+
+                    <Button
+                        onClick={handleExecutePayment}
+                        disabled={processing}
+                        className="font-bold cursor-pointer gap-2 text-xs sm:text-sm px-6 shadow-md"
+                    >
+                        {processing ? (
+                            <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Verifying Escrow...
+                            </>
+                        ) : (
+                            <>
+                                <CheckCircle2 className="h-4 w-4" />
+                                Simulate Payment ({formatPrice(commission.total_price)})
+                            </>
+                        )}
+                    </Button>
                 </div>
             </DialogContent>
         </Dialog>
