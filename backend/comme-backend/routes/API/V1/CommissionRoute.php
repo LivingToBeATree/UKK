@@ -51,11 +51,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('commissions/{commission}/messages', [CommissionMessageController::class, 'index']);
     Route::post('commissions/{commission}/messages', [CommissionMessageController::class, 'store']);
 
-    // Watermarked proof preview and gated original download
+    // Watermarked proof preview, gated original download, and deliverable ZIP bundle
     Route::get('commissions/{commission}/proof/{media}', [CommissionDeliveryController::class, 'proof'])
         ->name('commissions.proof');
     Route::get('commissions/{commission}/download-original/{media}', [CommissionDeliveryController::class, 'downloadOriginal'])
         ->name('commissions.download-original');
+    Route::get('commissions/{commission}/download-bundle', [CommissionDeliveryController::class, 'downloadBundle'])
+        ->name('commissions.download-bundle');
 
     // Official printable documents: Invoice and License Certificate
     Route::get('commissions/{commission}/invoice', [CommissionDocumentController::class, 'invoice'])

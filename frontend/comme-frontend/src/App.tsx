@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import AppRoutes from './routes';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ColorThemeProvider } from '@/components/color-theme-provider';
+import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { useSidebar } from '@/hooks/useSidebar';
 import { useIsMobile } from '@/hooks/useMediaQuery';
@@ -108,9 +109,11 @@ function App() {
     return (
         <ThemeProvider defaultTheme="dark" storageKey="comme-ui-theme">
             <ColorThemeProvider>
-                <SidebarProvider defaultCollapsed={true} storageKey="comme-sidebar-collapsed">
-                    <AppLayout />
-                </SidebarProvider>
+                <CurrencyProvider>
+                    <SidebarProvider defaultCollapsed={true} storageKey="comme-sidebar-collapsed">
+                        <AppLayout />
+                    </SidebarProvider>
+                </CurrencyProvider>
             </ColorThemeProvider>
         </ThemeProvider>
     );

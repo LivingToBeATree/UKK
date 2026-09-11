@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { getApiBaseUrl } from '@/services/api';
+import { CurrencySelector } from '@/components/ui/CurrencySelector';
 
 export const InfoFlyout: React.FC<{ collapsed: boolean }> = ({ collapsed }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -125,13 +126,16 @@ export const InfoFlyout: React.FC<{ collapsed: boolean }> = ({ collapsed }) => {
                                     COMME DIRECT
                                 </span>
                             </div>
-                            <button
-                                onClick={() => setIsOpen(false)}
-                                className="h-6 w-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
-                                aria-label="Close menu"
-                            >
-                                <X className="h-3.5 w-3.5" />
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <CurrencySelector size="sm" />
+                                <button
+                                    onClick={() => setIsOpen(false)}
+                                    className="h-6 w-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
+                                    aria-label="Close menu"
+                                >
+                                    <X className="h-3.5 w-3.5" />
+                                </button>
+                            </div>
                         </div>
 
                         {/* 3 Focused, Comprehensive Link Columns */}

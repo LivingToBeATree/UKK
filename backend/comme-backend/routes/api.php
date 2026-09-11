@@ -4,6 +4,7 @@ use App\Http\Controllers\API\V1\ArtistBadgeController;
 use App\Http\Controllers\API\V1\ArtistTipController;
 use App\Http\Controllers\API\V1\AuthController;
 use App\Http\Controllers\API\V1\EmailVerificationController;
+use App\Http\Controllers\API\V1\ExchangeRateController;
 use App\Http\Controllers\API\V1\HealthController;
 use App\Http\Controllers\API\V1\PasswordResetController;
 use App\Http\Controllers\API\V1\PaymentController;
@@ -32,6 +33,9 @@ Route::post('/artists/{username}/tip', [ArtistTipController::class, 'store']);
 
 // System health and telemetry endpoint
 Route::get('/health', [HealthController::class, 'show']);
+
+// Live / cached multi-currency exchange rates
+Route::get('/exchange-rates', [ExchangeRateController::class, 'index']);
 
 // Midtrans webhooks
 Route::post('/midtrans/webhook', [PaymentController::class, 'webhook'])

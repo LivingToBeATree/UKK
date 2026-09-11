@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { ArrowLeft, Star, ExternalLink, UserPlus, UserCheck, Code2, Heart } from 'lucide-react';
 import { EmbedBadgeModal } from '@/components/modals/EmbedBadgeModal';
 import { TipArtistModal } from '@/components/modals/TipArtistModal';
+import { CommissionQueueBoard } from '@/components/artists/CommissionQueueBoard';
 import { artistProfileApi, followApi, portfolioApi, type Portfolio } from '@/services/artistService';
 import { commissionServiceApi, commissionReviewApi, type CommissionReview } from '@/services/commissionService';
 import { useAuth } from '@/hooks/useAuth';
@@ -204,6 +205,7 @@ export const ArtistProfilePage: React.FC = () => {
                     <TabsList className="mb-6">
                         <TabsTrigger value="services">Services ({services.length})</TabsTrigger>
                         <TabsTrigger value="portfolio">Portfolio ({portfolios.length})</TabsTrigger>
+                        <TabsTrigger value="queue">Queue</TabsTrigger>
                         <TabsTrigger value="reviews">Reviews ({reviews.length})</TabsTrigger>
                     </TabsList>
 
@@ -251,6 +253,15 @@ export const ArtistProfilePage: React.FC = () => {
                                 ))
                             )}
                         </div>
+                    </TabsContent>
+
+                    <TabsContent value="queue">
+                        {profile && (
+                            <CommissionQueueBoard
+                                artistProfileId={profile.id}
+                                artistUsername={profile.user?.username}
+                            />
+                        )}
                     </TabsContent>
 
                     <TabsContent value="reviews">

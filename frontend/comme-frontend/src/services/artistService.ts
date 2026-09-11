@@ -151,3 +151,51 @@ export const followApi = {
         return res.data;
     },
 };
+
+// Artist Commission Queue & Capacity Tracker
+export interface QueueItem {
+    id: number;
+    code: string;
+    slug?: string;
+    stage: 'waitlist' | 'in_progress' | 'review' | 'revision' | 'completed';
+    stage_label: string;
+    status: string;
+    position: number | null;
+    service_name: string;
+    option_name?: string;
+    client_name: string;
+    is_current_user: boolean;
+    deadline?: string;
+    review_deadline?: string;
+    completed_at?: string;
+    created_at: string;
+}
+
+export interface ArtistQueueData {
+    artist: {
+        id: number;
+        username?: string;
+        display_name?: string;
+    };
+    stats: {
+        total_active: number;
+        capacity: number;
+        waitlist_count: number;
+        in_progress_count: number;
+        review_count: number;
+        completed_recent_count: number;
+        is_full: boolean;
+        commission_open: boolean;
+        commission_status: string;
+    };
+    queue: QueueItem[];
+    recent_completed: QueueItem[];
+}
+
+export const artistQueueApi = {
+    getQueue: async (artistProfileId: number) => {
+        const res = await api.get<ApiResponse<ArtistQueueData>>(`/artist-profiles/${artistProfileId}/queue`);
+        return res.data.data;
+    },
+};
+

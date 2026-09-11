@@ -26,6 +26,7 @@ import {
     UploadCloud,
     FileCheck,
     Receipt,
+    FolderArchive,
 } from 'lucide-react';
 import { commissionOrderApi, commissionReviewApi } from '@/services/commissionService';
 import { api, getApiBaseUrl } from '@/services/api';
@@ -1130,9 +1131,28 @@ export const CommissionDetailPage: React.FC = () => {
                                                 Delivered on {formatDateTimeSafe(commission.delivered_at, 'Recently')}
                                             </p>
                                         </div>
-                                        <Badge variant="teal" className="shrink-0 font-mono text-[10px]">
-                                            {commission.status === 'completed' ? 'Delivered & Accepted' : 'Under Review'}
-                                        </Badge>
+                                        <div className="flex items-center gap-2">
+                                            {(commission.status === 'completed' || isArtistUser) && (
+                                                <Button
+                                                    size="xs"
+                                                    variant="default"
+                                                    onClick={() => {
+                                                        downloadFile(
+                                                            `${getApiBaseUrl()}/commissions/${commission.id}/download-bundle`,
+                                                            `comme-order-${commission.id}-deliverables.zip`
+                                                        );
+                                                        toast.success('Preparing all-in-one ZIP package...');
+                                                    }}
+                                                    className="gap-1.5 font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer shadow-xs"
+                                                    title="Download all high-res deliverables, commercial license, and receipt as ZIP archive"
+                                                >
+                                                    <FolderArchive className="h-3.5 w-3.5" /> Download All (ZIP)
+                                                </Button>
+                                            )}
+                                            <Badge variant="teal" className="shrink-0 font-mono text-[10px]">
+                                                {commission.status === 'completed' ? 'Delivered & Accepted' : 'Under Review'}
+                                            </Badge>
+                                        </div>
                                     </div>
 
                                     {/* Deliverable media grid */}
@@ -1274,6 +1294,25 @@ export const CommissionDetailPage: React.FC = () => {
                                         title="Download Commercial / Personal License Certificate"
                                     >
                                         <Sparkles className="h-4 w-4 text-amber-400" /> License Agreement
+                                    </Button>
+                                )}
+
+                                {/* BOTH: One-Click Deliverable ZIP Archive */}
+                                {(commission.status === 'completed' || isArtistUser) && (
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                            downloadFile(
+                                                `${getApiBaseUrl()}/commissions/${commission.id}/download-bundle`,
+                                                `comme-order-${commission.id}-deliverables.zip`
+                                            );
+                                            toast.success('Preparing all-in-one ZIP package...');
+                                        }}
+                                        className="gap-2 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 cursor-pointer font-bold shadow-xs"
+                                        title="Download original artwork, commercial license, invoice, and manifest in a single ZIP bundle"
+                                    >
+                                        <FolderArchive className="h-4 w-4 text-emerald-400" /> Download All (ZIP)
                                     </Button>
                                 )}
 

@@ -1,15 +1,47 @@
+const FALLBACK_EXCHANGE_RATES: Record<string, number> = {
+    IDR: 1,
+    USD: 0.000063,
+    EUR: 0.000058,
+    JPY: 0.0095,
+    SGD: 0.000085,
+    GBP: 0.000049,
+};
+
 /**
- * Formats a numeric price into standard Indonesian Rupiah (IDR).
- * Example: 750000 -> "Rp 750.000"
+ * Formats a numeric price into localized currency based on user preference (defaults to IDR).
+ * Example: 750000 -> "Rp 750.000" or "$47.25" when USD is active.
  */
-export const formatPrice = (value: number | string | undefined | null): string => {
+export const formatPrice = (value: number | string | undefined | null, forcedCurrency?: string): string => {
     const num = typeof value === 'string' ? parseFloat(value) : value ?? 0;
     if (isNaN(num)) return 'Rp 0';
-    return new Intl.NumberFormat('id-ID', {
+
+    let currencyCode = forcedCurrency;
+    if (!currencyCode && typeof window !== 'undefined') {
+        try {
+            currencyCode = localStorage.getItem('comme_currency_preference') || 'IDR';
+        } catch {
+            currencyCode = 'IDR';
+        }
+    }
+
+    if (!currencyCode || currencyCode === 'IDR') {
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            maximumFractionDigits: 0,
+        }).format(num);
+    }
+
+    const rate = FALLBACK_EXCHANGE_RATES[currencyCode] ?? 1;
+    const converted = num * rate;
+    const decimals = currencyCode === 'JPY' ? 0 : 2;
+
+    return new Intl.NumberFormat('en-US', {
         style: 'currency',
-        currency: 'IDR',
-        maximumFractionDigits: 0,
-    }).format(num);
+        currency: currencyCode,
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+    }).format(converted);
 };
 
 export const formatCurrencySafe = formatPrice;

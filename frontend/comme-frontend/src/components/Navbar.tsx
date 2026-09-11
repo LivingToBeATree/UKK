@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 import { AnimatePresence, motion } from 'motion/react';
 import { openCommandPalette } from '@/components/CommandPalette';
+import { CurrencySelector } from '@/components/ui/CurrencySelector';
 
 export const Navbar: React.FC = () => {
     const { openAuthModal } = useAuthModal();
@@ -72,8 +73,9 @@ export const Navbar: React.FC = () => {
                     })}
                 </nav>
 
-                {/* Right Action Controls: Log In Only */}
+                {/* Right Action Controls: Currency Switcher & Log In */}
                 <div className="hidden md:flex items-center gap-2">
+                    <CurrencySelector />
                     <Button
                         variant="outline"
                         size="sm"
@@ -97,6 +99,7 @@ export const Navbar: React.FC = () => {
 
                 {/* Mobile Hamburger Button */}
                 <div className="flex md:hidden items-center gap-2">
+                    <CurrencySelector size="sm" showLabel={false} />
                     <Button
                         size="sm"
                         onClick={() => openAuthModal('generic')}
