@@ -8,7 +8,7 @@
     Hello {{ $user->display_name ?? $user->username }}, we received a request to reset the password for your Comme account. Click the button below to choose a new password.
 </p>
 <div style="margin: 30px 0; text-align: center;">
-    <a href="{{ $resetUrl }}" style="display: inline-block; background: #24221f; color: #fffaf1; padding: 14px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 4px; letter-spacing: 0.04em;">Reset Password</a>
+    <a href="{{ $resetUrl }}" style="display: inline-block; background: #24221f; color: #fffaf1; padding: 14px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px; letter-spacing: 0.04em; box-shadow: 0 2px 8px rgba(36, 34, 31, 0.15);">Reset Password</a>
 </div>
 <p style="margin: 0 0 16px; color: #746a5c; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; line-height: 1.6;">
     This password reset link will expire in {{ $expireMinutes }} minutes. If you did not request a password reset, no further action is required.

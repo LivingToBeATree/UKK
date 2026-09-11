@@ -102,11 +102,11 @@
                 <button
                     id="btnViewportDesktop"
                     type="button"
-                    onclick="setViewport('600px')"
-                    title="Desktop Email Width (600px)"
+                    onclick="setViewport('680px')"
+                    title="Desktop Email Width (680px)"
                     style="border: none; background: var(--brand-purple); color: #ffffff; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.15s ease;"
                 >
-                    Desktop (600px)
+                    Desktop (680px)
                 </button>
                 <button
                     id="btnViewportMobile"
@@ -185,11 +185,11 @@
         <!-- Render Viewport Area -->
         <div style="background: var(--bg-code); padding: 36px 16px; display: flex; justify-content: center; min-height: 520px; transition: all 0.3s ease;">
             <!-- HTML Render Frame -->
-            <div id="frameWrapper" style="width: 600px; max-width: 100%; transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+            <div id="frameWrapper" style="width: 680px; max-width: 100%; transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
                 <iframe
                     id="emailPreviewFrame"
                     src="{{ url('/emails/render/reset-password?format=html') }}"
-                    style="width: 100%; height: 560px; border: 1px solid var(--border-subtle); border-radius: 8px; background: #ffffff; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);"
+                    style="width: 100%; height: 580px; border: 1px solid var(--border-subtle); border-radius: 12px; background: #f5f3ef; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);"
                     title="Live Email Preview"
                 ></iframe>
             </div>
@@ -212,7 +212,7 @@
     let currentTemplate = 'reset-password';
     let currentSubject = 'Reset Your Password';
     let currentFormat = 'html';
-    let currentViewport = '600px';
+    let currentViewport = '680px';
 
     function updatePreview() {
         const frame = document.getElementById('emailPreviewFrame');
@@ -301,7 +301,7 @@
             b.style.color = 'var(--text-secondary)';
         });
 
-        if (width === '600px') {
+        if (width === '680px') {
             btnDesk.style.background = 'var(--brand-purple)';
             btnDesk.style.color = '#ffffff';
         } else if (width === '380px') {
