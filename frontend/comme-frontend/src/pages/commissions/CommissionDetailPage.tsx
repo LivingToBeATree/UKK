@@ -22,6 +22,7 @@ import {
     Loader2,
     X,
     Lock,
+    ShieldCheck,
     UploadCloud,
     FileCheck,
     Receipt,
@@ -99,7 +100,7 @@ export const CommissionDetailPage: React.FC = () => {
 
     // Lightbox modal state
     const [lightboxOpen, setLightboxOpen] = useState(false);
-    const [lightboxMedia, setLightboxMedia] = useState<{ url: string; file_name?: string; media_type?: string; mime_type?: string }[]>([]);
+    const [lightboxMedia, setLightboxMedia] = useState<{ url: string; file_name?: string; media_type?: string; mime_type?: string; is_protected?: boolean; is_locked?: boolean }[]>([]);
     const [lightboxIndex, setLightboxIndex] = useState(0);
 
     // Review state
@@ -263,7 +264,7 @@ export const CommissionDetailPage: React.FC = () => {
         }
     };
 
-    const openLightbox = (mediaItems: { url: string; file_name?: string; media_type?: string; mime_type?: string }[], index = 0) => {
+    const openLightbox = (mediaItems: { url: string; file_name?: string; media_type?: string; mime_type?: string; is_protected?: boolean; is_locked?: boolean }[], index = 0) => {
         setLightboxMedia(mediaItems);
         setLightboxIndex(index);
         setLightboxOpen(true);
@@ -328,7 +329,7 @@ export const CommissionDetailPage: React.FC = () => {
 
     // Real-Time Live Messaging & Updates via native Server-Sent Events (SSE)
     useEventStream<CommissionMessage>({
-        url: commission?.id ? `/api/commissions/${commission.id}/stream` : null,
+        url: commission?.id ? `/commissions/${commission.id}/stream` : null,
         enabled: Boolean(commission?.id),
         onMessage: (newMsg) => {
             if (newMsg && newMsg.id) {
@@ -1145,12 +1146,10 @@ export const CommissionDetailPage: React.FC = () => {
                                                         const isImage = !item.media_type || item.media_type === 'image' || item.mime_type?.startsWith('image/');
                                                         const isUnderReview = commission.status === 'waiting_for_client';
                                                         const isCompleted = commission.status === 'completed';
-                                                        const displayUrl = (isUnderReview && isBuyer && item.id)
-                                                            ? `${getApiBaseUrl()}/commissions/${commission.id}/proof/${item.id}`
-                                                            : item.url;
+                                                        const isProtected = isUnderReview && isBuyer;
                                                         return (
                                                             <div key={item.id || idx} className="group relative rounded-xl overflow-hidden border border-border bg-card">
-                                                                {isUnderReview && isBuyer && (
+                                                                {isProtected && (
                                                                     <div className="absolute top-2 left-2 z-10">
                                                                         <Badge variant="outline" className="bg-amber-500/90 text-black border-amber-400 font-mono text-[9px] px-1.5 py-0.5 shadow-md flex items-center gap-1 font-bold backdrop-blur-xs">
                                                                             <Lock className="h-2.5 w-2.5" /> Proof Preview
@@ -1159,17 +1158,37 @@ export const CommissionDetailPage: React.FC = () => {
                                                                 )}
                                                                 {isImage ? (
                                                                     <div
-                                                                        onClick={() => openLightbox(allMedia, idx)}
+                                                                        onClick={() => {
+                                                                            if (isProtected) {
+                                                                                toast.info('Full resolution preview is locked. Download the watermarked proof or accept delivery to unlock.');
+                                                                            } else {
+                                                                                openLightbox(allMedia, idx);
+                                                                            }
+                                                                        }}
                                                                         className="aspect-square cursor-pointer overflow-hidden bg-black/20 relative"
                                                                     >
                                                                         <img
-                                                                            src={displayUrl}
+                                                                            src={item.url}
                                                                             alt={item.file_name || 'Deliverable'}
-                                                                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                                            className={`h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 ${isProtected ? 'blur-lg scale-110 brightness-50' : ''}`}
                                                                         />
-                                                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                                                                            <Maximize2 className="h-5 w-5 drop-shadow" />
-                                                                        </div>
+                                                                        {isProtected ? (
+                                                                            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-2 gap-1.5">
+                                                                                <div className="h-9 w-9 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center backdrop-blur-sm">
+                                                                                    <Lock className="h-4 w-4 text-amber-400" />
+                                                                                </div>
+                                                                                <p className="text-[10px] font-semibold text-amber-200 leading-tight drop-shadow-md">
+                                                                                    Protected Preview
+                                                                                </p>
+                                                                                <p className="text-[8px] text-amber-300/80 leading-tight">
+                                                                                    Download proof below
+                                                                                </p>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                                                                                <Maximize2 className="h-5 w-5 drop-shadow" />
+                                                                            </div>
+                                                                        )}
                                                                     </div>
                                                                 ) : (
                                                                     <div className="aspect-square p-3 flex flex-col items-center justify-center text-center bg-muted/40 gap-1.5">
@@ -1749,8 +1768,13 @@ export const CommissionDetailPage: React.FC = () => {
                             ) : (
                                 messages.map((msg) => {
                                     const isMe = msg.user_id === user?.id || msg.sender_id === user?.id;
+                                    const isDeliveryMsg = Boolean(msg.is_delivery || msg.message?.startsWith('[Final Work Delivered]'));
+                                    const isUnderReview = commission?.status === 'waiting_for_client';
+                                    const isProtectedDelivery = isDeliveryMsg && isUnderReview && isBuyer;
+                                    const isArtistDelivery = isDeliveryMsg && isUnderReview && isArtistUser;
+
                                     const hasMedia = msg.media && msg.media.length > 0;
-                                    const imageMedia = hasMedia
+                                    const rawImageMedia = hasMedia
                                         ? msg.media!.filter(
                                               (m) =>
                                                   !m.media_type ||
@@ -1758,6 +1782,22 @@ export const CommissionDetailPage: React.FC = () => {
                                                   m.mime_type?.startsWith('image/')
                                           )
                                         : [];
+
+                                    // Map image media to protected proof previews if viewing unaccepted delivery as buyer
+                                    const imageMedia = rawImageMedia.map((m) => {
+                                        if (isProtectedDelivery) {
+                                            const proofUrl = m.id && commission?.id
+                                                ? `${getApiBaseUrl()}/commissions/${commission.id}/proof/${m.id}`
+                                                : m.url;
+                                            return {
+                                                ...m,
+                                                url: proofUrl,
+                                                is_protected: true,
+                                            };
+                                        }
+                                        return m;
+                                    });
+
                                     const otherMedia = hasMedia
                                         ? msg.media!.filter(
                                               (m) =>
@@ -1794,11 +1834,32 @@ export const CommissionDetailPage: React.FC = () => {
                                                                 onClick={() => openLightbox(imageMedia, idx)}
                                                                 className="group relative cursor-pointer overflow-hidden rounded-lg bg-black/20 aspect-video sm:aspect-square"
                                                             >
+                                                                {isProtectedDelivery && (
+                                                                    <div className="absolute top-2 left-2 z-10">
+                                                                        <Badge variant="outline" className="bg-amber-500/90 text-black border-amber-400 font-mono text-[9px] px-1.5 py-0.5 shadow-md flex items-center gap-1 font-bold backdrop-blur-xs">
+                                                                            <Lock className="h-2.5 w-2.5" /> Proof Preview
+                                                                        </Badge>
+                                                                    </div>
+                                                                )}
+                                                                {isArtistDelivery && (
+                                                                    <div className="absolute top-2 left-2 z-10">
+                                                                        <Badge variant="outline" className="bg-teal-500/90 text-black border-teal-400 font-mono text-[9px] px-1.5 py-0.5 shadow-md flex items-center gap-1 font-bold backdrop-blur-xs">
+                                                                            <ShieldCheck className="h-2.5 w-2.5" /> Delivered • Client sees proof
+                                                                        </Badge>
+                                                                    </div>
+                                                                )}
                                                                 <img
                                                                     src={mediaItem.url}
                                                                     alt={mediaItem.file_name || 'Attached image'}
                                                                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                                                                     loading="lazy"
+                                                                    onContextMenu={(e) => {
+                                                                        if (isProtectedDelivery) {
+                                                                            e.preventDefault();
+                                                                            toast.info('Watermarked proof preview. Full resolution unlocks after accepting delivery.');
+                                                                        }
+                                                                    }}
+                                                                    draggable={!isProtectedDelivery}
                                                                 />
                                                                 <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
                                                                     <Maximize2 className="h-5 w-5 drop-shadow" />
@@ -1829,22 +1890,36 @@ export const CommissionDetailPage: React.FC = () => {
                                                                         <p className="text-[10px] opacity-75">{formatFileSize(mediaItem.size)}</p>
                                                                     )}
                                                                 </div>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        e.preventDefault();
-                                                                        downloadFile(mediaItem.url, mediaItem.file_name || 'attachment');
-                                                                    }}
-                                                                    className={`p-1.5 rounded-lg transition-all cursor-pointer hover:scale-105 active:scale-95 ${
-                                                                        isMe
-                                                                            ? 'hover:bg-primary-foreground/20 text-primary-foreground'
-                                                                            : 'hover:bg-secondary text-foreground'
-                                                                    }`}
-                                                                    title="Download attachment"
-                                                                >
-                                                                    <Download className="h-4 w-4 shrink-0 opacity-80" />
-                                                                </button>
+                                                                {isProtectedDelivery ? (
+                                                                    <div
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            toast.info('Deliverable source files unlock after accepting delivery and releasing payment.');
+                                                                        }}
+                                                                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-300 text-[10px] font-mono cursor-pointer hover:bg-amber-500/20 transition-colors shrink-0 shadow-xs"
+                                                                        title="Locked until delivery is accepted"
+                                                                    >
+                                                                        <Lock className="h-3 w-3 text-amber-400" />
+                                                                        <span>Locked</span>
+                                                                    </div>
+                                                                ) : (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            e.preventDefault();
+                                                                            downloadFile(mediaItem.url, mediaItem.file_name || 'attachment');
+                                                                        }}
+                                                                        className={`p-1.5 rounded-lg transition-all cursor-pointer hover:scale-105 active:scale-95 ${
+                                                                            isMe
+                                                                                ? 'hover:bg-primary-foreground/20 text-primary-foreground'
+                                                                                : 'hover:bg-secondary text-foreground'
+                                                                        }`}
+                                                                        title="Download attachment"
+                                                                    >
+                                                                        <Download className="h-4 w-4 shrink-0 opacity-80" />
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         ))}
                                                     </div>

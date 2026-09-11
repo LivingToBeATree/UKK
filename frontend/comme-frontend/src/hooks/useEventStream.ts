@@ -25,9 +25,17 @@ export function useEventStream<T = unknown>({
             return;
         }
 
-        const fullUrl = url.startsWith('http')
-            ? url
-            : `${getApiBaseUrl()}${url.startsWith('/') ? '' : '/'}${url}`;
+        let fullUrl: string;
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            fullUrl = url;
+        } else {
+            const apiBase = getApiBaseUrl().replace(/\/+$/, '');
+            let cleanPath = url.startsWith('/') ? url : `/${url}`;
+            if (apiBase.endsWith('/api') && cleanPath.startsWith('/api/')) {
+                cleanPath = cleanPath.slice(4);
+            }
+            fullUrl = `${apiBase}${cleanPath}`;
+        }
 
         // EventSource with credentials
         const es = new EventSource(fullUrl, { withCredentials: true });

@@ -41,8 +41,18 @@ class LiveStreamController extends Controller
             $currentLastId = $lastId;
             $startTime = time();
 
-            // Run for up to 25 seconds per HTTP streaming connection to allow clean client reconnects
-            while (time() - $startTime < 25) {
+            // In single-worker PHP CLI built-in server, avoid starving other concurrent HTTP requests
+            $isSingleWorkerCli = php_sapi_name() === 'cli-server' && (int) getenv('PHP_CLI_SERVER_WORKERS') < 2;
+            $maxDuration = $isSingleWorkerCli ? 1 : 25;
+
+            // Instruct EventSource client to reconnect after 3 seconds if stream ends
+            echo "retry: 3000\n\n";
+            if (ob_get_level() > 0) {
+                ob_flush();
+            }
+            flush();
+
+            while (time() - $startTime < $maxDuration) {
                 if (connection_aborted()) {
                     break;
                 }
@@ -59,7 +69,7 @@ class LiveStreamController extends Controller
                         $currentLastId = $msg->id;
                         echo "id: {$msg->id}\n";
                         echo "event: message\n";
-                        echo "data: " . json_encode($msg) . "\n\n";
+                        echo "data: " . json_encode((new CommissionMessageResource($msg))->resolve()) . "\n\n";
                     }
                     if (ob_get_level() > 0) {
                         ob_flush();
@@ -67,14 +77,17 @@ class LiveStreamController extends Controller
                     flush();
                 }
 
-                // Heartbeat comment to keep the connection active through proxies
                 echo ": heartbeat\n\n";
                 if (ob_get_level() > 0) {
                     ob_flush();
                 }
                 flush();
 
-                sleep(2);
+                if ($isSingleWorkerCli) {
+                    break;
+                }
+
+                sleep(3);
             }
         }, 200, [
             'Content-Type' => 'text/event-stream',
@@ -85,7 +98,7 @@ class LiveStreamController extends Controller
     }
 
     /**
-     * Server-Sent Events (SSE) endpoint for user live notifications.
+     * Server-Sent Events (SSE) endpoint for user notifications.
      */
     public function streamNotifications(Request $request): StreamedResponse|\Illuminate\Http\JsonResponse
     {
@@ -101,7 +114,17 @@ class LiveStreamController extends Controller
             $currentLastId = $lastId;
             $startTime = time();
 
-            while (time() - $startTime < 25) {
+            // In single-worker PHP CLI built-in server, avoid starving other concurrent HTTP requests
+            $isSingleWorkerCli = php_sapi_name() === 'cli-server' && (int) getenv('PHP_CLI_SERVER_WORKERS') < 2;
+            $maxDuration = $isSingleWorkerCli ? 1 : 25;
+
+            echo "retry: 3000\n\n";
+            if (ob_get_level() > 0) {
+                ob_flush();
+            }
+            flush();
+
+            while (time() - $startTime < $maxDuration) {
                 if (connection_aborted()) {
                     break;
                 }
@@ -130,6 +153,10 @@ class LiveStreamController extends Controller
                     ob_flush();
                 }
                 flush();
+
+                if ($isSingleWorkerCli) {
+                    break;
+                }
 
                 sleep(3);
             }

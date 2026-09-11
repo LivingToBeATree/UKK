@@ -53,13 +53,18 @@ export async function downloadFile(
         const blobUrl = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = blobUrl;
-        link.setAttribute('download', finalName);
+        link.download = finalName;
         link.style.display = 'none';
         document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
 
+        // Native .click() is required to trigger the browser's download action
+        link.click();
+
+        // Delay cleanup so browser has time to initiate the download
         setTimeout(() => {
+            if (link.parentNode) {
+                document.body.removeChild(link);
+            }
             window.URL.revokeObjectURL(blobUrl);
         }, 2000);
 
@@ -68,22 +73,92 @@ export async function downloadFile(
         }
     };
 
-    // Strategy 1: Dedicated backend attachment download API with Axios (handles credentials, CORS, and disk reading)
-    try {
-        const response = await api.get('/media/download-file', {
-            params: { url, name: fileName },
-            responseType: 'blob',
-        });
+    // Strategy 0: Direct Axios call for authenticated API endpoints (proof, download-original, etc.)
+    const apiBase = getApiBaseUrl();
+    const isApiEndpoint = url.startsWith(apiBase) || url.includes('/api/');
+    if (isApiEndpoint) {
+        try {
+            let apiPath = url;
+            if (url.startsWith(apiBase)) {
+                apiPath = url.slice(apiBase.length);
+            } else if (url.includes('/api/')) {
+                apiPath = '/' + url.split('/api/').slice(1).join('/api/');
+            }
+            if (!apiPath.startsWith('/')) {
+                apiPath = '/' + apiPath;
+            }
 
-        if (response.data && response.data instanceof Blob && response.data.size > 0) {
-            // Verify it is not an HTML error response masquerading as a blob
-            if (!response.data.type?.includes('text/html')) {
-                triggerBlobSave(response.data, fileName);
-                return true;
+            const response = await api.get(apiPath, {
+                responseType: 'blob',
+            });
+
+            if (response.data && response.data instanceof Blob && response.data.size > 0) {
+                // If it's a json error masquerading as a blob
+                if (response.data.type?.includes('application/json')) {
+                    try {
+                        const text = await response.data.text();
+                        const json = JSON.parse(text);
+                        const msg = json.message || 'Download failed';
+                        if (toastId) toast.error(msg, { id: toastId });
+                        return false;
+                    } catch {
+                        // ignore parse error
+                    }
+                }
+
+                if (!response.data.type?.includes('text/html')) {
+                    // Extract filename from Content-Disposition if present
+                    const disposition = response.headers?.['content-disposition'];
+                    let resolvedName = fileName;
+                    if (disposition && disposition.includes('filename=')) {
+                        const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                        if (match && match[1]) {
+                            resolvedName = match[1].replace(/['"]/g, '').trim();
+                        }
+                    }
+
+                    triggerBlobSave(response.data, resolvedName);
+                    return true;
+                }
+            }
+        } catch (apiDirectErr: any) {
+            console.warn('Direct API download failed:', apiDirectErr);
+            if (apiDirectErr?.response?.data instanceof Blob) {
+                try {
+                    const text = await apiDirectErr.response.data.text();
+                    const json = JSON.parse(text);
+                    if (json.message) {
+                        if (toastId) toast.error(json.message, { id: toastId });
+                        return false;
+                    }
+                } catch {
+                    // ignore
+                }
+            }
+            if (apiDirectErr?.response?.status === 403 || apiDirectErr?.response?.status === 404) {
+                if (toastId) toast.error('File not available for download.', { id: toastId });
+                return false;
             }
         }
-    } catch (apiErr) {
-        console.warn('Backend download-file API endpoint error, trying direct fetch:', apiErr);
+    }
+
+    // Strategy 1: Dedicated backend attachment download API with Axios
+    if (!isApiEndpoint) {
+        try {
+            const response = await api.get('/media/download-file', {
+                params: { url, name: fileName },
+                responseType: 'blob',
+            });
+
+            if (response.data && response.data instanceof Blob && response.data.size > 0) {
+                if (!response.data.type?.includes('text/html') && !response.data.type?.includes('application/json')) {
+                    triggerBlobSave(response.data, fileName);
+                    return true;
+                }
+            }
+        } catch (apiErr) {
+            console.warn('Backend download-file API endpoint error, trying direct fetch:', apiErr);
+        }
     }
 
     // Strategy 2: Direct fetch to URL with CORS
@@ -96,38 +171,42 @@ export async function downloadFile(
 
         if (response.ok) {
             const blob = await response.blob();
-            if (blob.size > 0 && !blob.type?.includes('text/html')) {
+            if (blob.size > 0 && !blob.type?.includes('text/html') && !blob.type?.includes('application/json')) {
                 triggerBlobSave(blob, fileName);
                 return true;
             }
         }
     } catch (fetchErr) {
-        console.warn('Direct fetch failed, trying hidden iframe fallback:', fetchErr);
+        console.warn('Direct fetch failed:', fetchErr);
     }
 
-    // Strategy 3: Hidden iframe / forced attachment link
-    try {
-        const rawBaseUrl = getApiBaseUrl();
-        const downloadEndpoint = `${rawBaseUrl.replace(/\/+$/, '')}/media/download-file?url=${encodeURIComponent(url)}&name=${encodeURIComponent(fileName)}`;
+    // Strategy 3: Direct link click fallback for static media URLs
+    if (!isApiEndpoint) {
+        try {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            document.body.appendChild(link);
+            link.click();
+            setTimeout(() => {
+                if (link.parentNode) {
+                    document.body.removeChild(link);
+                }
+            }, 2000);
 
-        const hiddenIframe = document.createElement('iframe');
-        hiddenIframe.style.display = 'none';
-        hiddenIframe.src = downloadEndpoint;
-        document.body.appendChild(hiddenIframe);
-
-        setTimeout(() => {
-            document.body.removeChild(hiddenIframe);
-        }, 5000);
-
-        if (toastId) {
-            toast.success(`Downloaded ${fileName}`, { id: toastId });
+            if (toastId) {
+                toast.success(`Downloading ${fileName}`, { id: toastId });
+            }
+            return true;
+        } catch (linkErr) {
+            console.error('Link fallback failed:', linkErr);
         }
-        return true;
-    } catch (finalErr) {
-        console.error('All download strategies failed:', finalErr);
-        if (toastId) {
-            toast.error(`Failed to download ${fileName}`, { id: toastId });
-        }
-        return false;
     }
+
+    if (toastId) {
+        toast.error(`Failed to download ${fileName}`, { id: toastId });
+    }
+    return false;
 }

@@ -164,6 +164,8 @@ export interface CommissionMessage {
   recipient_id?: number;
   user_id?: number;
   message: string;
+  message_type?: string;
+  is_delivery?: boolean;
   created_at: string;
   user?: User;
   media?: MediaItem[];

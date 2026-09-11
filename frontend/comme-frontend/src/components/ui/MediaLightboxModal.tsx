@@ -1,16 +1,26 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, ChevronLeft, ChevronRight, Video, ExternalLink, Download } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Video, ExternalLink, Download, Lock } from 'lucide-react';
+import { toast } from 'sonner';
 import { CustomVideoPlayer } from '@/components/ui/CustomVideoPlayer';
 import { downloadFile } from '@/lib/download';
 import type { MediaItem } from '@/types/post';
 
+export interface MediaLightboxItem {
+    url: string;
+    file_name?: string;
+    media_type?: string;
+    mime_type?: string;
+    is_protected?: boolean;
+    is_locked?: boolean;
+}
+
 export interface MediaLightboxModalProps {
     isOpen: boolean;
     onClose: () => void;
-    mediaList?: (MediaItem | { url: string; file_name?: string; media_type?: string; mime_type?: string })[];
-    media?: (MediaItem | { url: string; file_name?: string; media_type?: string; mime_type?: string })[];
+    mediaList?: (MediaItem | MediaLightboxItem)[];
+    media?: (MediaItem | MediaLightboxItem)[];
     initialIndex?: number;
 }
 
@@ -99,7 +109,11 @@ export const MediaLightboxModal: React.FC<MediaLightboxModalProps> = ({
                 {/* ── Top Header Controls ── */}
                 <div className="w-full flex items-center justify-between z-20 pointer-events-auto">
                     <div className="flex items-center gap-3">
-                        {isVideo ? (
+                        {(currentMedia as MediaLightboxItem).is_protected ? (
+                            <span className="bg-amber-500/95 text-black text-xs font-bold px-2.5 py-1 rounded-full shadow flex items-center gap-1.5 backdrop-blur-md font-mono">
+                                <Lock className="h-3.5 w-3.5" /> PROOF PREVIEW • WATERMARKED
+                            </span>
+                        ) : isVideo ? (
                             <span className="bg-primary text-primary-foreground text-xs font-bold px-2.5 py-1 rounded-full shadow flex items-center gap-1.5 backdrop-blur-md">
                                 <Video className="h-3.5 w-3.5" /> VIDEO
                             </span>
@@ -127,24 +141,32 @@ export const MediaLightboxModal: React.FC<MediaLightboxModalProps> = ({
                             onClick={(e) => {
                                 e.stopPropagation();
                                 e.preventDefault();
-                                downloadFile(currentMedia.url, currentMedia.file_name || 'media');
+                                const isProt = Boolean((currentMedia as MediaLightboxItem).is_protected);
+                                if (isProt) {
+                                    toast.info('Downloading watermarked proof preview. Pristine full-resolution asset unlocks once delivery is accepted.');
+                                    downloadFile(currentMedia.url, `proof_${currentMedia.file_name || 'preview'}`);
+                                } else {
+                                    downloadFile(currentMedia.url, currentMedia.file_name || 'media');
+                                }
                             }}
                             className="h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95"
-                            title="Download original file"
+                            title={(currentMedia as MediaLightboxItem).is_protected ? "Download watermarked proof" : "Download original file"}
                         >
                             <Download className="h-4 w-4" />
                         </button>
 
-                        {/* Open original in new tab */}
-                        <a
-                            href={currentMedia.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95"
-                            title="Open original media in new tab"
-                        >
-                            <ExternalLink className="h-4 w-4" />
-                        </a>
+                        {/* Open original in new tab (hidden if protected) */}
+                        {!(currentMedia as MediaLightboxItem).is_protected && (
+                            <a
+                                href={currentMedia.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95"
+                                title="Open original media in new tab"
+                            >
+                                <ExternalLink className="h-4 w-4" />
+                            </a>
+                        )}
 
                         {/* Close button */}
                         <button
@@ -194,6 +216,13 @@ export const MediaLightboxModal: React.FC<MediaLightboxModalProps> = ({
                                 alt={currentMedia.file_name || 'Media preview'}
                                 className="max-w-full max-h-[78vh] object-contain rounded-xl shadow-2xl cursor-zoom-out"
                                 onClick={onClose}
+                                onContextMenu={(e) => {
+                                    if ((currentMedia as MediaLightboxItem).is_protected) {
+                                        e.preventDefault();
+                                        toast.info('Asset protected by artist copyright.');
+                                    }
+                                }}
+                                draggable={!(currentMedia as MediaLightboxItem).is_protected}
                             />
                         )}
                     </div>
