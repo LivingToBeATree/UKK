@@ -47,6 +47,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from '@/components/ui/sonner';
 import { useNavigate } from 'react-router-dom';
+import { useColorTheme } from '@/hooks/useColorTheme';
 
 // Design System & Advanced Components
 import { ModeToggle } from '@/components/mode-toggle';
@@ -130,6 +131,7 @@ Ready to finalize details! Feel free to ask any questions below. :sparkles: :roc
 
 export const PlaygroundPage: React.FC = () => {
     const navigate = useNavigate();
+    const { setColorTheme } = useColorTheme();
     const [progressVal, setProgressVal] = useState(65);
     const [rememberMe, setRememberMe] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
@@ -299,9 +301,9 @@ export const PlaygroundPage: React.FC = () => {
                 </Card>
             </motion.section>
 
-            {/* Form & Date / Color Controls */}
+            {/* Form & Date Controls */}
             <motion.section variants={itemVariants} className="space-y-4">
-                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">3. Form & Advanced Input Controls</h2>
+                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">3. Form & Date Controls</h2>
                 <Card>
                     <CardContent className="p-6 space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -314,6 +316,8 @@ export const PlaygroundPage: React.FC = () => {
                                 <Label htmlFor="demo-service">Commission Category</Label>
                                 <Select
                                     id="demo-service"
+                                    containerClassName="w-full"
+                                    className="w-full"
                                     options={[
                                         { label: 'Character Illustration (Full Body)', value: 'full_body' },
                                         { label: 'Portrait / Bust', value: 'portrait' },
@@ -338,23 +342,9 @@ export const PlaygroundPage: React.FC = () => {
                                 </p>
                             </div>
 
-                            {/* CustomColorPicker Swatch & Widget Showcase */}
                             <div className="space-y-2">
-                                <Label className="flex items-center gap-1.5">
-                                    <Palette className="h-3.5 w-3.5 text-primary" /> Custom Color Canvas (CustomColorPicker)
-                                </Label>
-                                <div className="flex items-center gap-3">
-                                    <div
-                                        className="h-10 w-12 rounded-lg border border-border shrink-0 shadow-inner"
-                                        style={{ backgroundColor: customColor }}
-                                    />
-                                    <Input
-                                        value={customColor}
-                                        onChange={(e) => setCustomColor(e.target.value)}
-                                        className="font-mono uppercase text-xs"
-                                        placeholder="#HEX"
-                                    />
-                                </div>
+                                <Label htmlFor="demo-budget">Estimated Budget (IDR)</Label>
+                                <Input id="demo-budget" type="text" defaultValue="Rp 1,500,000" placeholder="e.g. Rp 500,000" />
                             </div>
 
                             <div className="space-y-2 md:col-span-2">
@@ -373,30 +363,39 @@ export const PlaygroundPage: React.FC = () => {
                                 </Label>
                             </div>
                         </div>
+                    </CardContent>
+                </Card>
+            </motion.section>
 
-                        {/* Interactive In-line CustomColorPicker popout preview */}
-                        <div className="pt-4 border-t border-border">
-                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-3">
-                                Full HSV Interactive Spectrum Widget
-                            </span>
-                            <div className="max-w-md p-4 rounded-xl border border-border bg-card/60">
-                                <CustomColorPicker
-                                    value={customColor}
-                                    onChange={(hex) => setCustomColor(hex)}
-                                    onApply={(hex) => {
-                                        setCustomColor(hex);
-                                        toast.success(`Color Applied: ${hex}`);
-                                    }}
-                                />
-                            </div>
-                        </div>
+            {/* Interactive Color Studio */}
+            <motion.section variants={itemVariants} className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-bold border-l-4 border-primary pl-3">4. Interactive Color Studio</h2>
+                    <Badge variant="outline" className="gap-1.5 font-mono text-xs">
+                        <Palette className="h-3.5 w-3.5 text-primary" /> Live HSV Canvas & Swatches
+                    </Badge>
+                </div>
+                <Card>
+                    <CardContent className="p-6 space-y-4">
+                        <p className="text-xs text-muted-foreground">
+                            Full-featured 2D saturation/value canvas, 1D hue slider bar, RGB channels, and one-click palette inspiration. Applying a color updates your active brand theme across the entire application in real time.
+                        </p>
+                        <CustomColorPicker
+                            value={customColor}
+                            onChange={(hex) => setCustomColor(hex)}
+                            onApply={(hex) => {
+                                setCustomColor(hex);
+                                setColorTheme('custom');
+                                toast.success(`Custom Brand Accent Applied: ${hex.toUpperCase()}`);
+                            }}
+                        />
                     </CardContent>
                 </Card>
             </motion.section>
 
             {/* Rich Media & Markdown Content */}
             <motion.section variants={itemVariants} className="space-y-4">
-                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">4. Rich Media & Markdown Content</h2>
+                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">5. Rich Media & Markdown Content</h2>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Markdown Renderer Card */}
                     <Card>
@@ -438,7 +437,7 @@ export const PlaygroundPage: React.FC = () => {
 
             {/* Interactive Feature Modals & Dialogs */}
             <motion.section variants={itemVariants} className="space-y-4">
-                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">5. Interactive Modals & Feature Dialogs</h2>
+                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">6. Interactive Modals & Feature Dialogs</h2>
                 <Card>
                     <CardContent className="p-6 space-y-6">
                         <div className="flex flex-wrap gap-3">
@@ -633,7 +632,7 @@ export const PlaygroundPage: React.FC = () => {
 
             {/* Avatars & Progress */}
             <motion.section variants={itemVariants} className="space-y-4">
-                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">6. Avatars & Progress</h2>
+                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">7. Avatars & Progress</h2>
                 <Card>
                     <CardContent className="p-6 space-y-6">
                         <div className="flex items-center gap-4">
@@ -664,7 +663,7 @@ export const PlaygroundPage: React.FC = () => {
 
             {/* Tabs & Scroll Area */}
             <motion.section variants={itemVariants} className="space-y-4">
-                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">7. Tabs (Gliding Indicator) & ScrollArea</h2>
+                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">8. Tabs (Gliding Indicator) & ScrollArea</h2>
                 <Card>
                     <CardContent className="p-6">
                         <Tabs defaultValue="overview">
@@ -711,7 +710,7 @@ export const PlaygroundPage: React.FC = () => {
 
             {/* Moderation Table & Pagination */}
             <motion.section variants={itemVariants} className="space-y-4">
-                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">8. Table & Pagination</h2>
+                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">9. Table & Pagination</h2>
                 <Card>
                     <CardContent className="p-6 space-y-4">
                         <Table>
@@ -772,7 +771,7 @@ export const PlaygroundPage: React.FC = () => {
 
             {/* Empty & Moderated States (UnavailableContentState) & Skeleton Shimmers */}
             <motion.section variants={itemVariants} className="space-y-4">
-                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">9. States & Feedback (UnavailableContentState & Skeletons)</h2>
+                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">10. States & Feedback (UnavailableContentState & Skeletons)</h2>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* UnavailableContentState Showcase */}
                     <Card>
@@ -833,7 +832,7 @@ export const PlaygroundPage: React.FC = () => {
 
             {/* Notification Cards */}
             <motion.section variants={itemVariants} className="space-y-4">
-                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">10. Notification Cards (Comme Model)</h2>
+                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">11. Notification Cards (Comme Model)</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <NotificationCard
                         notification={{
@@ -871,7 +870,7 @@ export const PlaygroundPage: React.FC = () => {
 
             {/* Collapsible Studio Sidebar Component */}
             <motion.section variants={itemVariants} className="space-y-4">
-                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">11. Collapsible Studio Sidebar</h2>
+                <h2 className="text-xl font-bold border-l-4 border-primary pl-3">12. Collapsible Studio Sidebar</h2>
                 <Card className="overflow-hidden border border-border">
                     <SidebarProvider defaultCollapsed={false}>
                         <div className="flex h-105 w-full bg-background/50">

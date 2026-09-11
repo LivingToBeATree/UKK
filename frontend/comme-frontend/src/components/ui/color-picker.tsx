@@ -280,11 +280,11 @@ export const CustomColorPicker: React.FC<CustomColorPickerProps> = ({
                         >
                             <Pipette className="h-6 w-6 text-white drop-shadow-md" />
                         </div>
-                        <div className="overflow-hidden min-w-0">
-                            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
+                        <div className="min-w-0 flex-1">
+                            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block truncate">
                                 Active Custom Tone
                             </span>
-                            <p className="text-xl font-black font-mono tracking-wider text-foreground">
+                            <p className="text-lg sm:text-xl font-black font-mono tracking-wide text-foreground">
                                 {currentHex}
                             </p>
                         </div>
