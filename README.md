@@ -14,7 +14,7 @@
   <img src="https://img.shields.io/badge/Midtrans-Snap%20%26%20Iris-02F5A8?style=for-the-badge&logo=cashapp&logoColor=black" alt="Midtrans Payments">
   <img src="https://img.shields.io/badge/API%20Endpoints-127%20Routes-7928CA?style=for-the-badge&logo=fastapi&logoColor=white" alt="API Endpoints">
   <img src="https://img.shields.io/badge/Observability-Pulse%20%26%20Log%20Viewer-00C3FF?style=for-the-badge&logo=datadog&logoColor=white" alt="Observability">
-  <img src="https://img.shields.io/badge/Backend%20Tests-113%20Passed%20(460%20Assertions)-02F5A8?style=for-the-badge&logo=githubactions&logoColor=black" alt="Tests Passed">
+  <img src="https://img.shields.io/badge/Backend%20Tests-125%20Passed%20(539%20Assertions)-02F5A8?style=for-the-badge&logo=githubactions&logoColor=black" alt="Tests Passed">
 </p>
 
 ---
@@ -36,7 +36,7 @@ UKK/
 │   ├── database/                # Migrations & comprehensive seeders
 │   ├── resources/views/         # Interactive API docs portal (Blade + Vanilla CSS)
 │   ├── routes/                  # Modular route files (127 endpoints across 19 modules)
-│   ├── tests/Feature/           # PHPUnit test suite (105 tests, 443 assertions)
+│   ├── tests/Feature/           # PHPUnit test suite (125 tests, 539 assertions)
 │   └── README.md                # Backend architecture & API documentation
 │
 ├── frontend/comme-frontend/     # React 19 + TypeScript Client SPA
@@ -129,6 +129,7 @@ graph TD
   - **Live Documentation**: Categorized endpoint groups covering all 127 routes with cURL snippets and schemas.
   - **API Explorer (`/explore`)**: In-browser request sandbox with token persistence and latency measurement.
   - **Error Reference (`/errors`)**: RFC-7807 compliant error catalog for all HTTP status codes.
+  - **Transactional Email Inspector (`/emails`)**: Live in-browser previewer for transactional emails (Password Reset, Registration OTP, Security Alerts) with HTML/plaintext toggles and desktop/mobile viewport switching.
   - **Theme System**: Dark, Light, and System OS themes with day/night SVG icons.
 
 ### 9. Real-Time Observability, Smart Caching & Tiered Rate Limiting
@@ -228,7 +229,7 @@ npm run dev
 ## Testing & Quality Assurance
 
 ### Backend Automated Test Suite
-The backend is verified by **105 automated test methods** containing **443 assertions** with 100% passing status:
+The backend is verified by **125 automated test methods** containing **539 assertions** with 100% passing status:
 
 ```bash
 cd backend/comme-backend
@@ -238,10 +239,14 @@ php artisan test
 Key test suites include:
 - `CommissionCancellationRefundTest`: Mutual cancellation, direct cancellation, Midtrans automated escrow refund triggers, and refund receipts.
 - `ArtistProfileSettingsTest`: Master commission status switching, bio separation, social links validation, and authorization guards.
+- `ArtistApplicationFlowTest`: Portfolio applications, staff review queue, atomic role promotion, and in-app notifications.
 - `CommissionLifecyclePayoutTest`: Full order lifecycle, Midtrans Snap webhook simulation, Iris payouts, reconciliation, and retry logic.
 - `CommissionReceiptFlowTest`: Cryptographic receipt hashing, access security, and settlement calculations.
+- `AuthNotificationsTest`: Password reset links, OTP dispatch, new device detection, and transactional mailers.
 - `SlugRoutingTest`: Slug generation and route resolution for services, portfolios, and posts.
 - `TwoFactorAuthTest`: TOTP setup, code verification, login challenge, and recovery codes.
+- `ObservabilityAndRateLimitingTest`: Request ID correlation tracing, cache invalidation, and role-tiered rate limiters.
+- `QueueAndFilesystemTest`: Asynchronous background media jobs, public vs private disk isolation, and orphaned file pruning.
 
 ### Frontend Production Build
 Verify TypeScript type-checking and asset bundling:
@@ -261,6 +266,7 @@ For in-depth guides and API specifications, refer to the individual component do
 - **[Interactive API Documentation Portal](http://localhost:8000)** (when backend is running)
 - **[Laravel Pulse APM Dashboard](http://localhost:8000/pulse)** (Real-time performance & cache telemetry)
 - **[Interactive Log Viewer](http://localhost:8000/log-viewer)** (Diagnostic live logs & search)
+- **[Transactional Email Previews & Inspector](http://localhost:8000/emails)**
 - **[Interactive API Sandbox](http://localhost:8000/explore)**
 - **[HTTP Error Envelope Catalog](http://localhost:8000/errors)**
 

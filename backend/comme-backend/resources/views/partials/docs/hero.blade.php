@@ -14,7 +14,7 @@
     </p>
 
     <!-- Base URLs & Quick Specs -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
         <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 18px;">
             <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">Live Production URL</div>
             <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--brand-teal); word-break: break-all;">
@@ -42,6 +42,17 @@
                 <span>/log-viewer</span> <span style="font-size: 11px; opacity: 0.7;">↗</span>
             </a>
             <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Live stream, search by level, and stack traces.</div>
+        </div>
+
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 18px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Transactional Mailer</div>
+                <span class="auth-badge" style="font-size: 10px; padding: 1px 6px; background: rgba(168, 2, 245, 0.14); color: var(--brand-purple); border-color: rgba(168, 2, 245, 0.3);">Emails</span>
+            </div>
+            <a href="{{ url('/emails') }}" style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--brand-purple); text-decoration: none; display: flex; align-items: center; gap: 6px;">
+                <span>/emails</span> <span style="font-size: 11px; opacity: 0.7;">✉</span>
+            </a>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Live HTML & plaintext email inspector with viewport toggles.</div>
         </div>
     </div>
 </section>

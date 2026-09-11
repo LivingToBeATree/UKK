@@ -21,7 +21,7 @@
         </div>
         <div class="endpoint-body">
             <p style="font-size: 14px; color: var(--text-secondary);">
-                Submits initial registration details. Instead of creating the user immediately, sends a 6-digit OTP code to the email.
+                Submits initial registration details. Instead of creating the user immediately, dispatches a 6-digit OTP verification code via transactional email (previewable at <a href="/emails" style="color: var(--brand-purple); font-weight: 600; text-decoration: underline;">/emails</a>).
             </p>
             <table class="param-table">
                 <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
@@ -163,7 +163,7 @@
             </div>
         </div>
         <div class="endpoint-body">
-            <p style="font-size: 14px; color: var(--text-secondary);">Sends a password reset link to the provided email address. Rate-limited to 6 requests per minute.</p>
+            <p style="font-size: 14px; color: var(--text-secondary);">Sends a password reset link to the provided email address (previewable at <a href="/emails" style="color: var(--brand-purple); font-weight: 600; text-decoration: underline;">/emails</a>). Rate-limited to 6 requests per minute.</p>
             <table class="param-table">
                 <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
                 <tbody>

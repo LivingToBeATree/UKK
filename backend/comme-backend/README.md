@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/PostgreSQL-16+-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL">
   <img src="https://img.shields.io/badge/Sanctum-Auth-A802F5?style=for-the-badge&logo=auth0&logoColor=white" alt="Sanctum Auth">
   <img src="https://img.shields.io/badge/Midtrans-Snap%20%26%20Iris-02F5A8?style=for-the-badge&logo=cashapp&logoColor=black" alt="Midtrans Payments">
-  <img src="https://img.shields.io/badge/Tests-118%20Passed%20(487%20Assertions)-02F5A8?style=for-the-badge&logo=githubactions&logoColor=black" alt="Tests Passed">
+  <img src="https://img.shields.io/badge/Tests-125%20Passed%20(539%20Assertions)-02F5A8?style=for-the-badge&logo=githubactions&logoColor=black" alt="Tests Passed">
 </p>
 
 ---
@@ -34,7 +34,7 @@
 
 ### 2. Artist Vetting & Application Queue
 - **Portfolio Submissions**: Regular users can submit applications with external portfolio links (ArtStation, Behance, Carrd) and social profiles.
-- **Staff Review Queue**: Admin queue with atomic approval (auto-promotes user and creates `artist_profiles`) or structured rejection with explanatory feedback.
+- **Staff Review Queue**: Admin queue with atomic approval (auto-promotes user and creates `artist_profiles`) or structured rejection with explanatory feedback; status updates delivered in real-time via in-app bell notifications.
 
 ### 3. Artist Studio & Profile Settings
 - **Master Availability Status**: Real-time commission availability indicator (`open`, `busy`, `closed`) that cascades across public profiles and marketplace service listings.
@@ -99,6 +99,7 @@
 - Built-in portal at `/` featuring instant endpoint search, collapsible domain groups, and cURL generation.
 - **Interactive Sandbox (`/explore`)**: In-page live request console with Bearer token persistence and latency measurement.
 - **Error Reference Catalog (`/errors`)**: Complete catalog of standard RFC-7807 HTTP error envelopes (400, 401, 403, 404, 409, 422, 429, 500).
+- **Transactional Email Inspector (`/emails`)**: In-browser live preview for transactional mailers (Registration OTP, Password Reset, Password Changed, New Device Login) with HTML and Plaintext fallback toggle, desktop/mobile viewports, and metadata header inspection.
 - **Theme Switcher**: Dark mode, Light mode, and OS System theme with automatic SVG icon adaptation.
 
 ### 14. Real-Time Observability, Smart Caching & Tiered Rate Limiting
@@ -140,8 +141,8 @@
 | **Authentication** | Laravel Sanctum (SPA Cookies & Bearer Tokens) + 2FA TOTP |
 | **Payment Gateway** | Midtrans Snap (Escrow Deposits) & Midtrans Iris (Creator Payouts) |
 | **Data Encryption** | AES-256 (Creator Bank Account Numbers at rest) |
-| **Mailing** | Laravel Notifications with custom branded HTML templates |
-| **Testing** | PHPUnit (118 automated test methods with 487 assertions) |
+| **Mailing** | Laravel Notifications with custom branded HTML templates & in-browser live inspector (`/emails`) |
+| **Testing** | PHPUnit (125 automated test methods with 539 assertions) |
 | **Deployment** | Docker / Google Cloud Run + Cloud SQL + VPC Connector |
 
 ---
@@ -403,7 +404,7 @@ Authorization: Bearer <personal_access_token>
 
 ## Testing & Quality Assurance
 
-The backend includes a comprehensive automated test suite of **105 tests with 443 assertions** (100% passing) covering authentication, state machines, escrow payments, automated refunds, and security policies:
+The backend includes a comprehensive automated test suite of **125 automated test methods with 539 assertions** (100% passing) covering authentication, state machines, escrow payments, automated refunds, and security policies:
 
 ```bash
 # Run all automated tests
@@ -416,10 +417,14 @@ php artisan test --coverage
 ### Test Coverage Highlights
 - **`CommissionCancellationRefundTest`**: Validates mutual cancellation agreement, direct cancellation of pending orders, automated Midtrans escrow refund triggers, refund status mutation, and receipt generation.
 - **`ArtistProfileSettingsTest`**: Validates master commission availability toggles (`open`, `busy`, `closed`), bio differentiation, social links formatting, and authorization guards.
+- **`ArtistApplicationFlowTest`**: Portfolio application submissions, staff review queue, atomic role promotion, and in-app notifications.
 - **`CommissionLifecyclePayoutTest`**: End-to-end commission flow with escrow payment, Iris automated payouts, reconciliation, idempotent retries, and AES-256 bank encryption at rest.
 - **`SlugRoutingTest`**: Validates unique SEO slug generation and dual slug/ID route resolution across services, portfolios, and posts.
 - **`CommissionReceiptFlowTest`**: Validates cryptographic receipt hash generation (`REC-COM-{id}-{hash}`), financial breakdown calculations, and order access isolation.
 - **`RegistrationFlowTest`**: Validates OTP dispatch, code confirmation, rate limiting, and expired registration pruning.
+- **`AuthNotificationsTest`**: Password reset token dispatch, email OTP delivery, password change security alerts, and new device detection notifications.
+- **`ObservabilityAndRateLimitingTest`**: Request correlation ID (`X-Request-ID`), smart cache epoch invalidation, and role-tiered rate limiters.
+- **`QueueAndFilesystemTest`**: Asynchronous media processing jobs (`ProcessMediaJob`), public vs private disk isolation, and orphaned media cleanup.
 - **`MediaUploadTest`**: Multipart upload validation, mime type checking, and MediaPolicy authorization guards.
 - **`TwoFactorAuthTest`**: TOTP setup, code verification, login challenge, and emergency recovery code redemption.
 
@@ -452,7 +457,9 @@ comme-backend/
 │   │   ├── layouts/app.blade.php
 │   │   ├── partials/docs/     # Modular documentation domain components
 │   │   ├── explore.blade.php  # Interactive API sandbox
-│   │   └── errors.blade.php   # Standard error catalog
+│   │   ├── errors.blade.php   # Standard error catalog
+│   │   ├── emails-preview.blade.php # Transactional email live inspector
+│   │   └── emails/            # Branded HTML/plaintext email templates
 ├── routes/
 │   ├── api.php                # API routes & middleware groups
 │   ├── web.php                # Docs, Explore, and Error routes

@@ -76,7 +76,7 @@
         </div>
         <div class="endpoint-body">
             <p style="font-size: 14px; color: var(--text-secondary);">
-                Approves application. Promotes user role to <code>artist</code>, creates artist profile, and dispatches approval email.
+                Approves application. Promotes user role to <code>artist</code>, creates artist profile, and dispatches a real-time in-app bell notification.
             </p>
         </div>
     </div>
@@ -91,11 +91,11 @@
             <span class="auth-badge staff">Staff Only</span>
         </div>
         <div class="endpoint-body">
-            <p style="font-size: 14px; color: var(--text-secondary);">Rejects application with structured reason. Allows the user to reapply later.</p>
+            <p style="font-size: 14px; color: var(--text-secondary);">Rejects application with structured reason. Dispatches an in-app notification and allows the user to reapply later.</p>
             <table class="param-table">
                 <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
                 <tbody>
-                    <tr><td><span class="param-name">reason</span> <span class="param-required">req</span></td><td><span class="param-type">string</span></td><td>Rejection explanation sent to applicant via email.</td></tr>
+                    <tr><td><span class="param-name">reason</span> <span class="param-required">req</span></td><td><span class="param-type">string</span></td><td>Rejection explanation sent to applicant via in-app notification.</td></tr>
                 </tbody>
             </table>
         </div>
