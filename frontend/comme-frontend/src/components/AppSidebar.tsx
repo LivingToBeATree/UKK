@@ -151,7 +151,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 
             {/* Sidebar Nav Content */}
             <SidebarContent className="flex-1">
-                {/* 1. Studio Group */}
+                {/* Studio Group */}
                 <SidebarGroup>
                     <SidebarGroupLabel>Studio</SidebarGroupLabel>
                     <SidebarMenu>
@@ -169,7 +169,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                     </SidebarMenu>
                 </SidebarGroup>
 
-                {/* 2. Communication Group */}
+                {/* Communication Group */}
                 <SidebarGroup>
                     <SidebarGroupLabel>Communication</SidebarGroupLabel>
                     <SidebarMenu>
@@ -187,7 +187,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                     </SidebarMenu>
                 </SidebarGroup>
 
-                {/* 3. Financials & Management */}
+                {/* Financials & Management */}
                 <SidebarGroup>
                     <SidebarGroupLabel>Management</SidebarGroupLabel>
                     <SidebarMenu>

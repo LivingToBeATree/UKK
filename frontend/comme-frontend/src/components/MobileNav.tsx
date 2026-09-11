@@ -145,7 +145,7 @@ export const MobileBottomNav: React.FC = () => {
 
     return (
         <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-card/95 backdrop-blur-2xl border-t border-border/80 px-2 py-1.5 flex items-center justify-around shadow-2xl safe-area-bottom select-none">
-            {/* 1. Explore */}
+            {/* Explore */}
             <Link
                 to="/explore"
                 className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
@@ -156,7 +156,7 @@ export const MobileBottomNav: React.FC = () => {
                 <span className="text-[10px] mt-0.5">Explore</span>
             </Link>
 
-            {/* 2. Store */}
+            {/* Store */}
             <Link
                 to="/store"
                 className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
@@ -167,7 +167,7 @@ export const MobileBottomNav: React.FC = () => {
                 <span className="text-[10px] mt-0.5">Store</span>
             </Link>
 
-            {/* 3. Center Create Button (Glowing & Highlighted) */}
+            {/* Center Create Button (Glowing & Highlighted) */}
             <Link
                 to="/posts/create"
                 onClick={(e) => {
@@ -189,7 +189,7 @@ export const MobileBottomNav: React.FC = () => {
                 <span className="text-[10px] font-bold text-foreground mt-0.5">Create</span>
             </Link>
 
-            {/* 4. Orders */}
+            {/* Orders */}
             <Link
                 to="/commissions"
                 onClick={(e) => {
@@ -206,7 +206,7 @@ export const MobileBottomNav: React.FC = () => {
                 <span className="text-[10px] mt-0.5">Orders</span>
             </Link>
 
-            {/* 5. Profile / Studio */}
+            {/* Profile / Studio */}
             <Link
                 to={isAuthenticated ? "/profile" : "/login"}
                 className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${

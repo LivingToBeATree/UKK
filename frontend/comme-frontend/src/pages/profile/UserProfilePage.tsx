@@ -894,7 +894,7 @@ export const UserProfilePage: React.FC = () => {
                     </TabsTrigger>
                 </TabsList>
 
-                {/* 1. Services Tab (If Artist) */}
+                {/* Services Tab (If Artist) */}
                 {artistProfile && (
                     <TabsContent value="services" className="space-y-4">
                         {services.length === 0 ? (
@@ -957,7 +957,7 @@ export const UserProfilePage: React.FC = () => {
                     </TabsContent>
                 )}
 
-                {/* 2. Portfolio Tab (If Artist) */}
+                {/* Portfolio Tab (If Artist) */}
                 {artistProfile && (
                     <TabsContent value="portfolio" className="space-y-4">
                         {portfolios.length === 0 ? (
@@ -1021,7 +1021,7 @@ export const UserProfilePage: React.FC = () => {
                     </TabsContent>
                 )}
 
-                {/* 3. Reviews Tab (If Artist) */}
+                {/* Reviews Tab (If Artist) */}
                 {artistProfile && (
                     <TabsContent value="reviews" className="space-y-4">
                         {reviews.length === 0 ? (
@@ -1096,7 +1096,7 @@ export const UserProfilePage: React.FC = () => {
                     </TabsContent>
                 )}
 
-                {/* 4. Posts Tab */}
+                {/* Posts Tab */}
                 <TabsContent value="posts" className="space-y-4">
                     {userPosts.length === 0 ? (
                         <Card className="p-12 text-center rounded-3xl border-dashed border-border/80 space-y-2">
@@ -1142,7 +1142,7 @@ export const UserProfilePage: React.FC = () => {
                     )}
                 </TabsContent>
 
-                {/* 5. Likes Tab (If Own Profile) */}
+                {/* Likes Tab (If Own Profile) */}
                 {isOwnProfile && (
                     <TabsContent value="likes" className="space-y-4">
                         {likedPosts.length === 0 ? (
@@ -1194,7 +1194,7 @@ export const UserProfilePage: React.FC = () => {
                     </TabsContent>
                 )}
 
-                {/* 6. Bookmarks Tab (If Own Profile) */}
+                {/* Bookmarks Tab (If Own Profile) */}
                 {isOwnProfile && (
                     <TabsContent value="bookmarks" className="space-y-4">
                         {bookmarkedPosts.length === 0 ? (
@@ -1246,7 +1246,7 @@ export const UserProfilePage: React.FC = () => {
                     </TabsContent>
                 )}
 
-                {/* 7. About Tab */}
+                {/* About Tab */}
                 <TabsContent value="about" className="space-y-4">
                     <Card className="p-6 sm:p-8 rounded-3xl border border-border/80 bg-card space-y-5">
                         <div className="space-y-2">

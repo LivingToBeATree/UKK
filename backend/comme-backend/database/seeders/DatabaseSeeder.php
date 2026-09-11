@@ -37,7 +37,7 @@ class DatabaseSeeder extends Seeder
     {
         $password = Hash::make('password');
 
-        // 1. Admin Account
+        // Admin Account
         $admin = User::firstOrCreate(
             ['email' => 'admin@comme.test'],
             [
@@ -49,7 +49,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 2. Moderator Account
+        // Moderator Account
         $moderator = User::firstOrCreate(
             ['email' => 'moderator@comme.test'],
             [
@@ -61,7 +61,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 3. Verified Artist Account
+        // Verified Artist Account
         $artistUser = User::firstOrCreate(
             ['email' => 'artist@comme.test'],
             [
@@ -124,7 +124,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 4. Client Account
+        // Client Account
         $clientUser = User::firstOrCreate(
             ['email' => 'client@comme.test'],
             [

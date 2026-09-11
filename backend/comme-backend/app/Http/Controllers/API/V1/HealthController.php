@@ -17,7 +17,7 @@ class HealthController extends Controller
      */
     public function show(Request $request): JsonResponse
     {
-        // 1. Measure database latency
+        // Measure database latency
         $dbStart = microtime(true);
         $dbConnected = false;
         $dbLatencyMs = 0;
@@ -30,7 +30,7 @@ class HealthController extends Controller
             $dbConnected = false;
         }
 
-        // 2. Measure cache status
+        // Measure cache status
         $cacheStart = microtime(true);
         $cacheWorking = false;
         $cacheLatencyMs = 0;
@@ -46,7 +46,7 @@ class HealthController extends Controller
             $cacheWorking = false;
         }
 
-        // 3. Storage disk metrics
+        // Storage disk metrics
         $disk = config('filesystems.default', 'public');
         $storagePath = storage_path('app');
         $freeBytes = @disk_free_space($storagePath);
@@ -55,7 +55,7 @@ class HealthController extends Controller
         $freeSpaceMb = $freeBytes !== false ? round($freeBytes / 1024 / 1024, 1) : null;
         $totalSpaceMb = $totalBytes !== false ? round($totalBytes / 1024 / 1024, 1) : null;
 
-        // 4. Queue metrics
+        // Queue metrics
         $queueDriver = config('queue.default', 'database');
         $pendingJobsCount = 0;
         $failedJobsCount = 0;

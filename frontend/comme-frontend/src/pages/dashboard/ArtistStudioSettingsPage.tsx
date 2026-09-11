@@ -115,7 +115,7 @@ export const ArtistStudioSettingsPage: React.FC = () => {
                 </div>
             ) : (
                 <form onSubmit={handleSave} className="space-y-6">
-                    {/* 1. Commission Availability Status */}
+                    {/* Commission Availability Status */}
                     <Card className="rounded-3xl border-border/80 bg-card overflow-hidden">
                     <CardContent className="p-6 space-y-4">
                         <div className="flex items-center gap-2.5">
@@ -174,7 +174,7 @@ export const ArtistStudioSettingsPage: React.FC = () => {
                     </CardContent>
                 </Card>
 
-                {/* 2. Studio Bio & Description */}
+                {/* Studio Bio & Description */}
                 <Card className="rounded-3xl border-border/80 bg-card overflow-hidden">
                     <CardContent className="p-6 space-y-4">
                         <div className="flex items-center gap-2.5">
@@ -201,7 +201,7 @@ export const ArtistStudioSettingsPage: React.FC = () => {
                     </CardContent>
                 </Card>
 
-                {/* 3. External Links & Portfolio */}
+                {/* External Links & Portfolio */}
                 <Card className="rounded-3xl border-border/80 bg-card overflow-hidden">
                     <CardContent className="p-6 space-y-4">
                         <div className="flex items-center gap-2.5">

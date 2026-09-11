@@ -229,7 +229,7 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
 
                     {/* Method Details Pane */}
                     <div className="md:col-span-8 p-5 flex flex-col justify-between">
-                        {/* 1. QRIS Screen */}
+                        {/* QRIS Screen */}
                         {activeMethod === 'qris' && (
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
@@ -288,7 +288,7 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
                             </div>
                         )}
 
-                        {/* 2. Virtual Account Screen */}
+                        {/* Virtual Account Screen */}
                         {activeMethod === 'va' && (
                             <div className="space-y-4">
                                 <div>
@@ -343,7 +343,7 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
                             </div>
                         )}
 
-                        {/* 3. Credit / Debit Card Screen */}
+                        {/* Credit / Debit Card Screen */}
                         {activeMethod === 'card' && (
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">

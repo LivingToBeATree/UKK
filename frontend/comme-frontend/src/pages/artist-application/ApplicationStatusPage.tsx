@@ -320,7 +320,7 @@ export const ApplicationStatusPage: React.FC = () => {
                         </CardHeader>
 
                         <CardContent className="p-6 sm:p-8 space-y-6 text-sm">
-                            {/* 1. Status Notice Card */}
+                            {/* Status Notice Card */}
                             <div className={`p-4 sm:p-5 rounded-2xl border ${config.border} ${config.bg} space-y-2 shadow-inner`}>
                                 <div className="flex items-center gap-2 text-foreground font-bold text-sm">
                                     <ShieldCheck className={`h-4 w-4 ${config.color}`} />
@@ -339,7 +339,7 @@ export const ApplicationStatusPage: React.FC = () => {
                                 )}
                             </div>
 
-                            {/* 2. Artist Bio & Creative Specialties */}
+                            {/* Artist Bio & Creative Specialties */}
                             {displayBio && (
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between">
@@ -370,7 +370,7 @@ export const ApplicationStatusPage: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* 3. Uploaded Artwork Samples Showcase */}
+                            {/* Uploaded Artwork Samples Showcase */}
                             {sampleArtworks.length > 0 && (
                                 <div className="space-y-3 pt-2">
                                     <div className="flex items-center justify-between">
@@ -416,7 +416,7 @@ export const ApplicationStatusPage: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* 4. Submitted External Portfolios */}
+                            {/* Submitted External Portfolios */}
                             {portfolioList.length > 0 && (
                                 <div className="space-y-3 pt-2">
                                     <span className="text-xs font-bold text-muted-foreground uppercase font-mono tracking-wider">
@@ -460,7 +460,7 @@ export const ApplicationStatusPage: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* 5. Website & Social Accounts */}
+                            {/* Website & Social Accounts */}
                             {(application.website || (application.social_links && application.social_links.length > 0)) && (
                                 <div className="space-y-3 pt-4 border-t border-border/50">
                                     <span className="text-xs font-bold text-muted-foreground uppercase font-mono tracking-wider">

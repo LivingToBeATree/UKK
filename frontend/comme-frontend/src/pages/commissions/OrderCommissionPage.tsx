@@ -252,7 +252,7 @@ export const OrderCommissionPage: React.FC = () => {
                 <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                     {/* ── Left Column: Preferences & Form Details (7 or 8 cols) ── */}
                     <div className="lg:col-span-7 xl:col-span-8 space-y-6">
-                        {/* 1. Deadline Preference Card */}
+                        {/* Deadline Preference Card */}
                         <Card className="rounded-3xl border-border/80 bg-card/60 shadow-xs">
                             <CardContent className="p-6 space-y-4">
                                 <div className="flex items-center justify-between">
@@ -366,7 +366,7 @@ export const OrderCommissionPage: React.FC = () => {
                             </CardContent>
                         </Card>
 
-                        {/* 2. Commission Request & Visual References Card */}
+                        {/* Commission Request & Visual References Card */}
                         <Card className="rounded-3xl border-border/80 bg-card/60 shadow-xs overflow-hidden">
                             <CardContent className="p-6 space-y-5">
                                 <div className="space-y-2">

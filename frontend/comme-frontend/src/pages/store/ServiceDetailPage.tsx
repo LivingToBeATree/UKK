@@ -93,12 +93,12 @@ export const ServiceDetailPage: React.FC = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Left Column: Media Showcase & Info Skeleton */}
                     <div className="lg:col-span-2 space-y-6">
-                        {/* 1. Media Showcase */}
+                        {/* Media Showcase */}
                         <div className="rounded-3xl overflow-hidden aspect-16/10 border border-border/60">
                             <Skeleton className="w-full h-full rounded-none" />
                         </div>
 
-                        {/* 2. Service Header & Artist */}
+                        {/* Service Header & Artist */}
                         <div className="space-y-3">
                             <Skeleton className="h-8 w-3/4 rounded-xl" />
                             <div className="flex items-center gap-3">
@@ -112,7 +112,7 @@ export const ServiceDetailPage: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* 3. Package Options */}
+                        {/* Package Options */}
                         <div className="space-y-3 pt-2">
                             <Skeleton className="h-5 w-44 rounded-lg" />
                             <div className="space-y-3">
@@ -232,7 +232,7 @@ export const ServiceDetailPage: React.FC = () => {
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* ── Left Column: Service Details & Showcase ── */}
                 <div className="lg:col-span-2 space-y-6">
-                    {/* 1. Reference / Showcase Media Gallery */}
+                    {/* Reference / Showcase Media Gallery */}
                     <div className="space-y-3">
                         <div className="rounded-3xl overflow-hidden bg-black/60 border border-border/80 aspect-16/10 flex items-center justify-center relative shadow-sm">
                             {activeMedia ? (
@@ -278,7 +278,7 @@ export const ServiceDetailPage: React.FC = () => {
                         )}
                     </div>
 
-                    {/* 2. Service Header & Artist */}
+                    {/* Service Header & Artist */}
                     <div className="space-y-2">
                         <div className="flex items-center gap-3 flex-wrap">
                             <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
@@ -366,7 +366,7 @@ export const ServiceDetailPage: React.FC = () => {
                         )}
                     </div>
 
-                    {/* 3. Packages & Options Selector */}
+                    {/* Packages & Options Selector */}
                     {service.options && service.options.length > 0 && (
                         <div className="space-y-3 pt-2">
                             <h2 className="font-bold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
@@ -427,7 +427,7 @@ export const ServiceDetailPage: React.FC = () => {
                         </div>
                     )}
 
-                    {/* 4. Package Add-ons & Extras */}
+                    {/* Package Add-ons & Extras */}
                     {availableAddons.length > 0 && (
                         <div className="space-y-3 pt-2">
                             <h2 className="font-bold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
@@ -475,7 +475,7 @@ export const ServiceDetailPage: React.FC = () => {
                         </div>
                     )}
 
-                    {/* 5. Detailed Scope & Terms Description */}
+                    {/* Detailed Scope & Terms Description */}
                     <Card className="rounded-3xl border-border/80 bg-card/60 shadow-xs overflow-hidden">
                         <CardContent className="p-6 space-y-3">
                             <h2 className="font-bold text-sm uppercase tracking-wider text-foreground">
@@ -487,7 +487,7 @@ export const ServiceDetailPage: React.FC = () => {
                         </CardContent>
                     </Card>
 
-                    {/* 6. Reviews */}
+                    {/* Reviews */}
                     <Card className="rounded-3xl border-border/80 bg-card/60 shadow-xs overflow-hidden">
                         <CardContent className="p-6 space-y-4">
                             <h2 className="font-bold text-sm uppercase tracking-wider text-foreground flex items-center gap-2">

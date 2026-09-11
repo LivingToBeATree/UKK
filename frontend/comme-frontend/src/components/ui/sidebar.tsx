@@ -91,7 +91,7 @@ export function Sidebar({ className, children, ...props }: SidebarProps) {
                 {children}
             </motion.aside>
 
-            {/* 2. Mobile Slide-Over Drawer (< md) */}
+            {/* Mobile Slide-Over Drawer (< md) */}
             <AnimatePresence>
                 {mobileOpen && (
                     <>

@@ -25,7 +25,7 @@ class PrivateMediaController extends Controller
             return ApiResponseHelper::errorResponse('Unauthenticated.', Response::HTTP_UNAUTHORIZED);
         }
 
-        // 1. Authorization check
+        // Authorization check
         $isAuthorized = false;
 
         // Staff / Admin can access all media

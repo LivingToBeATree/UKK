@@ -1331,7 +1331,7 @@ export const PostDetailPage: React.FC = () => {
                             ) : null
                         )}
 
-                        {/* 1. Author Header */}
+                        {/* Author Header */}
                         <div className="flex items-center justify-between gap-4 pb-4 border-b border-border/60">
                             <div className="flex items-center gap-3.5">
                                 <Link to={`/users/${post.user?.username || ''}`} className="cursor-pointer">
@@ -1490,14 +1490,14 @@ export const PostDetailPage: React.FC = () => {
                             </div>
                         )}
 
-                        {/* 2. Post Text Content */}
+                        {/* Post Text Content */}
                         {post.content && (
                             <div className="pt-1">
                                 <MarkdownContent content={post.content} />
                             </div>
                         )}
 
-                        {/* 3. Additional Process Media & Timelapses (Formatted Exactly Like Post Medias) */}
+                        {/* Additional Process Media & Timelapses (Formatted Exactly Like Post Medias) */}
                         {additionalMedias.length > 0 && (
                             <div className="pt-2 rounded-2xl overflow-hidden space-y-2">
                                 {isArtwork && (

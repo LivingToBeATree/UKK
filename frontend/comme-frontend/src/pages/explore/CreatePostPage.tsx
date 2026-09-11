@@ -1168,7 +1168,7 @@ export const CreatePostPage: React.FC = () => {
 
                         {/* ── Right Metadata & Attachment Sidebar (Col 5/12) ── */}
                         <div className="lg:col-span-5 space-y-6">
-                            {/* 1. Artwork / Portfolio Attachment Card */}
+                            {/* Artwork / Portfolio Attachment Card */}
                             <Card className="shadow-sm border-border/80">
                                 <CardHeader className="p-5 pb-3">
                                     <div className="flex items-center justify-between">
@@ -1249,7 +1249,7 @@ export const CreatePostPage: React.FC = () => {
                                 </CardContent>
                             </Card>
 
-                            {/* 2. Visibility & Audience */}
+                            {/* Visibility & Audience */}
                             <Card className="shadow-sm border-border/80">
                                 <CardHeader className="p-5 pb-3">
                                     <CardTitle className="text-base font-bold flex items-center gap-2">
@@ -1307,7 +1307,7 @@ export const CreatePostPage: React.FC = () => {
                                 </CardContent>
                             </Card>
 
-                            {/* 3. Discussion Moderation */}
+                            {/* Discussion Moderation */}
                             <Card className="shadow-sm border-border/80">
                                 <CardContent className="p-5 flex items-center justify-between gap-4">
                                     <div className="space-y-0.5">
@@ -1331,7 +1331,7 @@ export const CreatePostPage: React.FC = () => {
                                 </CardContent>
                             </Card>
 
-                            {/* 4. Action Buttons */}
+                            {/* Action Buttons */}
                             <div className="space-y-3 pt-2">
                                 <Button
                                     type="submit"

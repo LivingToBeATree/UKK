@@ -191,7 +191,7 @@ export const SidebarRail: React.FC = () => {
         >
             {/* ── TOP GROUP: Logo & Primary Navigation Links ── */}
             <div className="flex flex-col items-center gap-1.5 w-full">
-                {/* 1. Official Comme Logo Header (Clicking row toggles expand/collapse) */}
+                {/* Official Comme Logo Header (Clicking row toggles expand/collapse) */}
                 <div className="w-full relative">
                     <button
                         onClick={toggleSidebar}
@@ -312,7 +312,7 @@ export const SidebarRail: React.FC = () => {
                     </AnimatePresence>
                 </div>
 
-                {/* 1. Explore */}
+                {/* Explore */}
                 <NavItem
                     icon={Compass}
                     label="Explore"
@@ -321,7 +321,7 @@ export const SidebarRail: React.FC = () => {
                     collapsed={collapsed}
                 />
 
-                {/* 2. Commission Store */}
+                {/* Commission Store */}
                 <NavItem
                     icon={FolderKanban}
                     label="Commission Store"
@@ -330,7 +330,7 @@ export const SidebarRail: React.FC = () => {
                     collapsed={collapsed}
                 />
 
-                {/* 3. Artists Directory */}
+                {/* Artists Directory */}
                 <NavItem
                     icon={Layers}
                     label="Artists Directory"
@@ -341,7 +341,7 @@ export const SidebarRail: React.FC = () => {
 
                 <SidebarDivider />
 
-                {/* 4. Studio / Admin / Moderator / Creator Hub */}
+                {/* Studio / Admin / Moderator / Creator Hub */}
                 {user?.role === 'admin' ? (
                     <NavItem
                         icon={Shield}
@@ -369,7 +369,7 @@ export const SidebarRail: React.FC = () => {
                     />
                 )}
 
-                {/* 5. My Orders */}
+                {/* My Orders */}
                 <NavItem
                     icon={ShoppingBag}
                     label="My Orders"
@@ -379,7 +379,7 @@ export const SidebarRail: React.FC = () => {
                     onClick={guardNav('commission')}
                 />
 
-                {/* 6. Notifications */}
+                {/* Notifications */}
                 <NavItem
                     icon={Bell}
                     label="Notifications"
@@ -390,7 +390,7 @@ export const SidebarRail: React.FC = () => {
                     onClick={guardNav('generic')}
                 />
 
-                {/* 7. Support & Tickets (Only for regular users & artists; staff have tickets in their workbench) */}
+                {/* Support & Tickets (Only for regular users & artists; staff have tickets in their workbench) */}
                 {user?.role !== 'admin' && user?.role !== 'moderator' && (
                     <NavItem
                         icon={LifeBuoy}
@@ -405,7 +405,7 @@ export const SidebarRail: React.FC = () => {
 
             {/* ── BOTTOM GROUP: Settings & User Profile ── */}
             <div className="flex flex-col items-center gap-1.5 w-full pt-2 border-t border-border/60">
-                {/* 1. Settings */}
+                {/* Settings */}
                 <NavItem
                     icon={Settings}
                     label="Settings & Appearance"
@@ -415,10 +415,10 @@ export const SidebarRail: React.FC = () => {
                     onClick={guardNav('generic')}
                 />
 
-                {/* 2. Platform Information & Company Menu (Replaces static footer) */}
+                {/* Platform Information & Company Menu (Replaces static footer) */}
                 <InfoFlyout collapsed={collapsed} />
 
-                {/* 3. User Profile / Sign In */}
+                {/* User Profile / Sign In */}
                 {isAuthenticated && user ? (
                     <div className="w-full relative block">
                         <DropdownMenu>

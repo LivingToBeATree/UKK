@@ -27,7 +27,7 @@ class MediaProcessingService
 
             $fullDiskPath = Storage::disk($disk)->path($media->file_path);
 
-            // 1. Process Video (MP4 faststart)
+            // Process Video (MP4 faststart)
             if ($media->isVideo() && strtolower(pathinfo($media->file_path, PATHINFO_EXTENSION)) === 'mp4') {
                 $scriptPath = base_path('storage/mp4-faststart.cjs');
                 if (file_exists($scriptPath) && file_exists($fullDiskPath)) {
@@ -38,7 +38,7 @@ class MediaProcessingService
                 }
             }
 
-            // 2. Process Image (Thumbnail generation)
+            // Process Image (Thumbnail generation)
             if ($media->isImage() && empty($media->thumbnail_path)) {
                 $thumbPath = $this->generateThumbnail($media);
                 if ($thumbPath) {

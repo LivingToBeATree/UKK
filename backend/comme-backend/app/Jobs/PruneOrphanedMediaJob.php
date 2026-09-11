@@ -43,26 +43,26 @@ class PruneOrphanedMediaJob implements ShouldQueue
         // Build a cache of all referenced file paths across related tables
         $usedPaths = collect();
 
-        // 1. Post medias
+        // Post medias
         $usedPaths = $usedPaths->merge(DB::table('post_medias')->pluck('file_path'));
 
-        // 2. Portfolio medias
+        // Portfolio medias
         $usedPaths = $usedPaths->merge(DB::table('portfolio_medias')->pluck('file_path'));
 
-        // 3. Commission medias
+        // Commission medias
         $usedPaths = $usedPaths->merge(DB::table('commission_medias')->pluck('file_path'));
 
-        // 4. Commission message medias
+        // Commission message medias
         $usedPaths = $usedPaths->merge(DB::table('commission_message_medias')->pluck('file_path'));
 
-        // 5. Commission service medias
+        // Commission service medias
         $usedPaths = $usedPaths->merge(DB::table('commission_service_medias')->pluck('file_path'));
 
-        // 6. User avatars and banners
+        // User avatars and banners
         $usedPaths = $usedPaths->merge(DB::table('users')->whereNotNull('avatar')->pluck('avatar'));
         $usedPaths = $usedPaths->merge(DB::table('users')->whereNotNull('banner')->pluck('banner'));
 
-        // 7. Artist profile banners
+        // Artist profile banners
         $usedPaths = $usedPaths->merge(DB::table('artist_profiles')->whereNotNull('banner')->pluck('banner'));
 
         $usedPathsLookup = $usedPaths->filter()->flip();

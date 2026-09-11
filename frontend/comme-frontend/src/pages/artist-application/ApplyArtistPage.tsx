@@ -458,7 +458,7 @@ export const ApplyArtistPage: React.FC = () => {
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* 1. Artist Bio & Creative Specialties Card */}
+                        {/* Artist Bio & Creative Specialties Card */}
                         <Card className="border border-border/80 bg-card/80 backdrop-blur-md shadow-xs overflow-hidden">
                             <CardHeader className="pb-4 border-b border-border/50">
                                 <div className="flex items-center justify-between">
@@ -530,7 +530,7 @@ export const ApplyArtistPage: React.FC = () => {
                             </CardContent>
                         </Card>
 
-                        {/* 2. Portfolio Showcase & Manual Artwork Uploads Card */}
+                        {/* Portfolio Showcase & Manual Artwork Uploads Card */}
                         <Card className="border border-border/80 bg-card/80 backdrop-blur-md shadow-xs overflow-hidden">
                             <CardHeader className="pb-4 border-b border-border/50">
                                 <div className="flex items-center gap-2.5">
@@ -743,7 +743,7 @@ export const ApplyArtistPage: React.FC = () => {
                             </CardContent>
                         </Card>
 
-                        {/* 3. Social Media & Creator Accounts */}
+                        {/* Social Media & Creator Accounts */}
                         <Card className="border border-border/80 bg-card/80 backdrop-blur-md shadow-xs overflow-hidden">
                             <CardHeader className="pb-4 border-b border-border/50">
                                 <div className="flex items-center gap-2.5">
@@ -802,7 +802,7 @@ export const ApplyArtistPage: React.FC = () => {
                             </CardContent>
                         </Card>
 
-                        {/* 4. Creator Agreement & Submission */}
+                        {/* Creator Agreement & Submission */}
                         <Card className="border border-primary/30 bg-primary/5 backdrop-blur-md shadow-lg overflow-hidden">
                             <CardContent className="p-5 space-y-4">
                                 <label className="flex items-start gap-3 cursor-pointer select-none">

@@ -215,7 +215,7 @@ export const CommandPalette: React.FC = () => {
         setOpen(false);
     };
 
-    // 1. Build Recent Items & prioritize the Last Navigated Destination
+    // Build Recent Items & prioritize the Last Navigated Destination
     const rawRecents = useMemo(() => {
         // recentsVersion forces re-render whenever localStorage updates
         void recentsVersion;
@@ -256,7 +256,7 @@ export const CommandPalette: React.FC = () => {
         };
     });
 
-    // 2. Base Navigation and Actions Commands
+    // Base Navigation and Actions Commands
     const baseCommands: CommandItem[] = [
         // Navigation
         {

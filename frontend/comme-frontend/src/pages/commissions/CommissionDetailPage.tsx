@@ -789,7 +789,7 @@ export const CommissionDetailPage: React.FC = () => {
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 {/* ── Left Column: Order Summary & Review (7 cols) ── */}
                 <div className={`lg:col-span-7 xl:col-span-7 space-y-6 ${mobileTab === 'details' ? 'block' : 'hidden lg:block'}`}>
-                    {/* 1. Order Summary Card */}
+                    {/* Order Summary Card */}
                     <Card className="overflow-hidden border border-border bg-card/80 backdrop-blur-md shadow-xs">
                         <div className="h-2 bg-gradient-to-r from-primary via-emerald-400 to-amber-400" />
                         <CardContent className="p-6 space-y-6">
@@ -1598,7 +1598,7 @@ export const CommissionDetailPage: React.FC = () => {
                         </CardContent>
                     </Card>
 
-                    {/* 2. Review Section (Existing Review or Submission Form) */}
+                    {/* Review Section (Existing Review or Submission Form) */}
                     {commission.review && (
                         <Card className="border border-border bg-card/80 backdrop-blur-md shadow-xs">
                             <CardContent className="p-6 space-y-4">
