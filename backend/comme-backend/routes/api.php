@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\API\V1\ArtistBadgeController;
+use App\Http\Controllers\API\V1\ArtistTipController;
 use App\Http\Controllers\API\V1\AuthController;
 use App\Http\Controllers\API\V1\EmailVerificationController;
+use App\Http\Controllers\API\V1\HealthController;
 use App\Http\Controllers\API\V1\PasswordResetController;
 use App\Http\Controllers\API\V1\PaymentController;
 use App\Http\Controllers\API\V1\TwoFactorAuthController;
@@ -21,14 +24,14 @@ Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']
 Route::get('/users/{username}', [UserController::class, 'show']);
 
 // Public artist embeddable badge
-Route::get('/artists/{username}/badge.svg', [\App\Http\Controllers\API\V1\ArtistBadgeController::class, 'show']);
+Route::get('/artists/{username}/badge.svg', [ArtistBadgeController::class, 'show']);
 
 // Artist micro-donations / Tip Jar
-Route::get('/artists/{username}/tips', [\App\Http\Controllers\API\V1\ArtistTipController::class, 'index']);
-Route::post('/artists/{username}/tip', [\App\Http\Controllers\API\V1\ArtistTipController::class, 'store']);
+Route::get('/artists/{username}/tips', [ArtistTipController::class, 'index']);
+Route::post('/artists/{username}/tip', [ArtistTipController::class, 'store']);
 
 // System health and telemetry endpoint
-Route::get('/health', [\App\Http\Controllers\API\V1\HealthController::class, 'show']);
+Route::get('/health', [HealthController::class, 'show']);
 
 // Midtrans webhooks
 Route::post('/midtrans/webhook', [PaymentController::class, 'webhook'])

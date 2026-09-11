@@ -1,12 +1,13 @@
 <?php
 
+use App\Http\Controllers\API\V1\LiveStreamController;
 use App\Http\Controllers\API\V1\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('notifications', [NotificationController::class, 'index']);
     Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
-    Route::get('notifications/stream', [\App\Http\Controllers\API\V1\LiveStreamController::class, 'streamNotifications'])
+    Route::get('notifications/stream', [LiveStreamController::class, 'streamNotifications'])
         ->name('notifications.stream');
     Route::patch('notifications/read-all', [NotificationController::class, 'markAllAsRead']);
     Route::patch('notifications/{notification}/read', [NotificationController::class, 'markAsRead']);

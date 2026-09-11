@@ -36,7 +36,7 @@ class PostComment extends Model
         return $this->belongsTo(User::class);
     }
 
-    // self relantionships for nested comments
+    // Self-relationships for nested comments
     public function parent(): BelongsTo
     {
         return $this->belongsTo(PostComment::class, 'parent_comment_id');

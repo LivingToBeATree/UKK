@@ -1,8 +1,7 @@
 import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import type { UserRole } from '@/types';
-import { isArtist, isStaff } from '@/types';
+import { isArtist, isStaff, type UserRole } from '@/types';
 
 export interface ProtectedRouteProps {
     allowedRoles?: UserRole[];

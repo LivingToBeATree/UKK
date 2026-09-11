@@ -307,12 +307,4 @@ class ReportController extends Controller
             'moderation_action' => $moderationAction,
         ], 'Moderation action executed and logged successfully.');
     }
-
-    /**
-     * Remove the specified resource from storage. (now are comment)
-     */
-    // public function destroy(Report $report)
-    // {
-    //     //
-    // }
 }

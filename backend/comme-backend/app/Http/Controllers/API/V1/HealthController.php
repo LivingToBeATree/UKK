@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class HealthController extends Controller
 {
@@ -25,7 +26,7 @@ class HealthController extends Controller
             DB::select('SELECT 1');
             $dbConnected = true;
             $dbLatencyMs = round((microtime(true) - $dbStart) * 1000, 2);
-        } catch (\Throwable) {
+        } catch (Throwable) {
             $dbConnected = false;
         }
 
@@ -41,7 +42,7 @@ class HealthController extends Controller
             Cache::forget($testKey);
             $cacheWorking = ($val === 'ok');
             $cacheLatencyMs = round((microtime(true) - $cacheStart) * 1000, 2);
-        } catch (\Throwable) {
+        } catch (Throwable) {
             $cacheWorking = false;
         }
 
@@ -66,7 +67,7 @@ class HealthController extends Controller
             if (DB::getSchemaBuilder()->hasTable('failed_jobs')) {
                 $failedJobsCount = DB::table('failed_jobs')->count();
             }
-        } catch (\Throwable) {}
+        } catch (Throwable) {}
 
         $isHealthy = $dbConnected && $cacheWorking;
 

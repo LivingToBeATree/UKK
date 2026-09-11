@@ -610,12 +610,10 @@ export const ServiceDetailPage: React.FC = () => {
                                 return null;
                             })()}
 
-                            {!Boolean(
-                                user &&
+                            {!(user &&
                                 ((service.artist_profile?.user_id && user.id && service.artist_profile.user_id === user.id) ||
                                  (service.artist_profile?.user?.id && user.id && service.artist_profile.user.id === user.id) ||
-                                 (user.artist_profile?.id && service.artist_profile_id && user.artist_profile.id === service.artist_profile_id))
-                            ) && (
+                                 (user.artist_profile?.id && service.artist_profile_id && user.artist_profile.id === service.artist_profile_id))) && (
                                 <div className="space-y-3">
                                     {service.artist_profile?.commission_status === 'closed' && (
                                         <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-medium space-y-1">

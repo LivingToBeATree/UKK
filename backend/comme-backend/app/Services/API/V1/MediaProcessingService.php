@@ -6,6 +6,7 @@ use App\Enum\MediaType;
 use App\Models\Media;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class MediaProcessingService
 {
@@ -47,7 +48,7 @@ class MediaProcessingService
             }
 
             return true;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Log::error('Media processing error for media #' . $media->id . ': ' . $e->getMessage(), [
                 'media_id' => $media->id,
                 'file_path' => $media->file_path,

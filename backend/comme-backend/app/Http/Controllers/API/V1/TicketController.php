@@ -106,10 +106,5 @@ class TicketController extends Controller
         );
     }
 
-    // No destroy() — TicketPolicy::delete() is always false; moderation
-    // history is preserved permanently. (Made them comment)
-    // public function destroy(Ticket $ticket)
-    // {
-    //     //
-    // }
+    // Note: No destroy() action — TicketPolicy::delete() is always false; moderation history is preserved permanently.
 }
