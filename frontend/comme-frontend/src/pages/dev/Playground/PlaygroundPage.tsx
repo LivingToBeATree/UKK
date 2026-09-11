@@ -604,6 +604,7 @@ export const PlaygroundPage: React.FC = () => {
                     isOpen={isPaymentModalOpen}
                     onClose={() => setIsPaymentModalOpen(false)}
                     commission={dummyCommission}
+                    isMock={true}
                     onPaymentSuccess={() => {
                         toast.success('Simulated Payment Captured into Escrow!');
                         setIsPaymentModalOpen(false);
