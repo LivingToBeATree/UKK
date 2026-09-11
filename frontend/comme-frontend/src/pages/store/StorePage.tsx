@@ -13,6 +13,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/sonner';
 import { formatPrice } from '@/utils/format';
+import { CurrencySelector } from '@/components/ui/CurrencySelector';
 import type { CommissionService, PaginationMeta } from '@/types';
 
 const DEFAULT_SERVICE_TAGS = [
@@ -134,6 +135,9 @@ export const StorePage: React.FC = () => {
                     <p className="text-sm text-muted-foreground mt-1">
                         Browse verified artist commission services, packages, custom illustrations, and live slots.
                     </p>
+                </div>
+                <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
+                    <CurrencySelector />
                 </div>
             </div>
 

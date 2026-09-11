@@ -25,6 +25,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/sonner';
 import { openCommandPalette } from '@/components/CommandPalette';
+import { CurrencySelector } from '@/components/ui/CurrencySelector';
 
 export const MobileHeader: React.FC<{ onOpenDrawer: () => void }> = ({ onOpenDrawer }) => {
     const { user, isAuthenticated } = useAuth();
@@ -82,8 +83,9 @@ export const MobileHeader: React.FC<{ onOpenDrawer: () => void }> = ({ onOpenDra
                 </Link>
             </div>
 
-            {/* Right: Search, Notifications & Avatar / Sign In */}
+            {/* Right: Currency, Search, Notifications & Avatar / Sign In */}
             <div className="flex items-center gap-1.5">
+                <CurrencySelector size="sm" showLabel={false} />
                 <button
                     type="button"
                     onClick={openCommandPalette}

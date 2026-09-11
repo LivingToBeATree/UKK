@@ -21,6 +21,7 @@ import { useSidebar } from '@/hooks/useSidebar';
 import { notificationService } from '@/services/notificationService';
 import { Avatar } from './ui/avatar';
 import { InfoFlyout } from './InfoFlyout';
+import { CurrencySelector } from './ui/CurrencySelector';
 import { openCommandPalette } from './CommandPalette';
 import {
     DropdownMenu,
@@ -405,6 +406,11 @@ export const SidebarRail: React.FC = () => {
 
             {/* ── BOTTOM GROUP: Settings & User Profile ── */}
             <div className="flex flex-col items-center gap-1.5 w-full pt-2 border-t border-border/60">
+                {/* Currency Switcher */}
+                <div className="w-full relative">
+                    <CurrencySelector mode="sidebar" collapsed={collapsed} />
+                </div>
+
                 {/* Settings */}
                 <NavItem
                     icon={Settings}
