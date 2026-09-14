@@ -34,7 +34,7 @@ class CommissionDocumentController extends Controller
             );
         }
 
-        $commission->load(['user', 'artistProfile.user', 'service', 'commissionService', 'addonsSelections', 'payment', 'payout']);
+        $commission->load(['user', 'artistProfile.user', 'service', 'commissionService', 'commissionOption', 'addonsSelections', 'payment', 'payout']);
 
         $hasCommercial = $commission->addonsSelections->contains(function ($addon) {
             return str_contains(strtolower($addon->title ?? ''), 'commercial');

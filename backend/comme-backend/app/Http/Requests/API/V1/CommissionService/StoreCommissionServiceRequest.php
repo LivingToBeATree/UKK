@@ -33,10 +33,15 @@ class StoreCommissionServiceRequest extends FormRequest
             'options.*.title' => ['required_with:options', 'string', 'max:255'],
             'options.*.description' => ['nullable', 'string'],
             'options.*.base_price' => ['required_with:options', 'numeric', 'min:0'],
+            'options.*.base_currency' => ['sometimes', 'nullable', 'string', 'max:10'],
+            'options.*.pricing_mode' => ['sometimes', 'nullable', 'string', 'max:30'],
+            'options.*.regional_prices' => ['sometimes', 'nullable'],
             'options.*.addons' => ['sometimes', 'nullable', 'array'],
             'options.*.addons.*.title' => ['required_with:options.*.addons', 'string', 'max:255'],
             'options.*.addons.*.description' => ['nullable', 'string'],
             'options.*.addons.*.additional_price' => ['required_with:options.*.addons', 'numeric', 'min:0'],
+            'options.*.addons.*.base_currency' => ['sometimes', 'nullable', 'string', 'max:10'],
+            'options.*.addons.*.regional_prices' => ['sometimes', 'nullable'],
             'tags' => ['sometimes', 'nullable'],
         ];
     }

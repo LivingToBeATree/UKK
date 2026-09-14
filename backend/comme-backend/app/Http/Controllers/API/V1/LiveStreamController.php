@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Http\Helpers\ApiResponseHelper;
+use App\Http\Resources\API\V1\CommissionMessageResource;
 use App\Models\Commission;
 use App\Models\Notification;
 use Illuminate\Http\Request;
@@ -41,18 +42,18 @@ class LiveStreamController extends Controller
             $currentLastId = $lastId;
             $startTime = time();
 
-            // In single-worker PHP CLI built-in server, avoid starving other concurrent HTTP requests
-            $isSingleWorkerCli = php_sapi_name() === 'cli-server' && (int) getenv('PHP_CLI_SERVER_WORKERS') < 2;
-            $maxDuration = $isSingleWorkerCli ? 1 : 25;
+            // Prevent PHP-FPM / CLI worker pool exhaustion: default to immediate burst return
+            // Native EventSource automatically reconnects after the retry delay below.
+            $maxDuration = (int) config('services.sse.max_duration', 0);
 
-            // Instruct EventSource client to reconnect after 3 seconds if stream ends
-            echo "retry: 3000\n\n";
+            // Instruct EventSource client to reconnect after 2.5 seconds upon stream close
+            echo "retry: 2500\n\n";
             if (ob_get_level() > 0) {
                 ob_flush();
             }
             flush();
 
-            while (time() - $startTime < $maxDuration) {
+            do {
                 if (connection_aborted()) {
                     break;
                 }
@@ -83,12 +84,12 @@ class LiveStreamController extends Controller
                 }
                 flush();
 
-                if ($isSingleWorkerCli) {
+                if ($maxDuration <= 0) {
                     break;
                 }
 
                 sleep(3);
-            }
+            } while (time() - $startTime < $maxDuration);
         }, 200, [
             'Content-Type' => 'text/event-stream',
             'Cache-Control' => 'no-cache, no-transform',
@@ -114,17 +115,17 @@ class LiveStreamController extends Controller
             $currentLastId = $lastId;
             $startTime = time();
 
-            // In single-worker PHP CLI built-in server, avoid starving other concurrent HTTP requests
-            $isSingleWorkerCli = php_sapi_name() === 'cli-server' && (int) getenv('PHP_CLI_SERVER_WORKERS') < 2;
-            $maxDuration = $isSingleWorkerCli ? 1 : 25;
+            // Prevent PHP-FPM / CLI worker pool exhaustion: default to immediate burst return
+            $maxDuration = (int) config('services.sse.max_duration', 0);
 
-            echo "retry: 3000\n\n";
+            // Instruct EventSource client to reconnect after 2.5 seconds upon stream close
+            echo "retry: 2500\n\n";
             if (ob_get_level() > 0) {
                 ob_flush();
             }
             flush();
 
-            while (time() - $startTime < $maxDuration) {
+            do {
                 if (connection_aborted()) {
                     break;
                 }
@@ -154,12 +155,12 @@ class LiveStreamController extends Controller
                 }
                 flush();
 
-                if ($isSingleWorkerCli) {
+                if ($maxDuration <= 0) {
                     break;
                 }
 
                 sleep(3);
-            }
+            } while (time() - $startTime < $maxDuration);
         }, 200, [
             'Content-Type' => 'text/event-stream',
             'Cache-Control' => 'no-cache, no-transform',

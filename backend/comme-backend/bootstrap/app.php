@@ -28,7 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->trustProxies(
-            at: '*',
+            at: array_merge(['127.0.0.1', '::1'], \App\Services\API\V1\GeoIpService::CLOUDFLARE_IPV4_CIDRS),
             headers: Request::HEADER_X_FORWARDED_FOR
                 | Request::HEADER_X_FORWARDED_HOST
                 | Request::HEADER_X_FORWARDED_PORT

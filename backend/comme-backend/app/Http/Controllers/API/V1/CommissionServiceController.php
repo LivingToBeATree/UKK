@@ -199,19 +199,38 @@ class CommissionServiceController extends Controller
         // Process Service Packages/Options & Add-ons
         if (! empty($optionsData) && is_array($optionsData)) {
             foreach ($optionsData as $opt) {
+                $regPrices = $opt['regional_prices'] ?? null;
+                if (is_string($regPrices)) {
+                    $regPrices = json_decode($regPrices, true);
+                }
+
+                $pricingMode = $opt['pricing_mode'] ?? 'ppp';
+
                 $option = $commissionService->options()->create([
                     'title' => $opt['title'] ?? 'Standard Package',
                     'description' => $opt['description'] ?? null,
                     'base_price' => $opt['base_price'] ?? 0,
+                    'base_currency' => $opt['base_currency'] ?? 'IDR',
+                    'pricing_mode' => $pricingMode,
+                    'regional_prices' => ! empty($regPrices) && is_array($regPrices) ? $regPrices : null,
                 ]);
 
                 if (! empty($opt['addons']) && is_array($opt['addons'])) {
                     foreach ($opt['addons'] as $addon) {
                         if (! empty($addon['title'])) {
+                            $addonRegPrices = $addon['regional_prices'] ?? null;
+                            if (is_string($addonRegPrices)) {
+                                $decoded = json_decode($addonRegPrices, true);
+                                if (json_last_error() === JSON_ERROR_NONE) {
+                                    $addonRegPrices = $decoded;
+                                }
+                            }
                             $option->addons()->create([
                                 'title' => $addon['title'],
                                 'description' => $addon['description'] ?? null,
                                 'additional_price' => $addon['additional_price'] ?? 0,
+                                'base_currency' => $addon['base_currency'] ?? ($opt['base_currency'] ?? 'IDR'),
+                                'regional_prices' => ! empty($addonRegPrices) && is_array($addonRegPrices) ? $addonRegPrices : null,
                             ]);
                         }
                     }
@@ -304,19 +323,38 @@ class CommissionServiceController extends Controller
         if ($optionsData !== null && is_array($optionsData)) {
             $commissionService->options()->delete();
             foreach ($optionsData as $opt) {
+                $regPrices = $opt['regional_prices'] ?? null;
+                if (is_string($regPrices)) {
+                    $regPrices = json_decode($regPrices, true);
+                }
+
+                $pricingMode = $opt['pricing_mode'] ?? 'ppp';
+
                 $option = $commissionService->options()->create([
                     'title' => $opt['title'] ?? 'Standard Package',
                     'description' => $opt['description'] ?? null,
                     'base_price' => $opt['base_price'] ?? 0,
+                    'base_currency' => $opt['base_currency'] ?? 'IDR',
+                    'pricing_mode' => $pricingMode,
+                    'regional_prices' => ! empty($regPrices) && is_array($regPrices) ? $regPrices : null,
                 ]);
 
                 if (! empty($opt['addons']) && is_array($opt['addons'])) {
                     foreach ($opt['addons'] as $addon) {
                         if (! empty($addon['title'])) {
+                            $addonRegPrices = $addon['regional_prices'] ?? null;
+                            if (is_string($addonRegPrices)) {
+                                $decoded = json_decode($addonRegPrices, true);
+                                if (json_last_error() === JSON_ERROR_NONE) {
+                                    $addonRegPrices = $decoded;
+                                }
+                            }
                             $option->addons()->create([
                                 'title' => $addon['title'],
                                 'description' => $addon['description'] ?? null,
                                 'additional_price' => $addon['additional_price'] ?? 0,
+                                'base_currency' => $addon['base_currency'] ?? ($opt['base_currency'] ?? 'IDR'),
+                                'regional_prices' => ! empty($addonRegPrices) && is_array($addonRegPrices) ? $addonRegPrices : null,
                             ]);
                         }
                     }

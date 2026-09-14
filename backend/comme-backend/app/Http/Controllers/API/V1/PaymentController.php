@@ -7,11 +7,13 @@ use App\Enum\NotificationType;
 use App\Enum\PaymentStatus;
 use App\Http\Helpers\ApiResponseHelper;
 use App\Http\Resources\API\V1\PaymentResource;
+use App\Models\ArtistTip;
 use App\Models\Commission;
 use App\Models\CommissionPayment;
 use App\Models\Notification;
 use App\Services\API\V1\MidtransService;
 use App\Services\API\V1\MidtransPayoutService;
+use App\Services\API\V1\AntiArbitrageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -215,6 +217,52 @@ class PaymentController extends Controller
             return ApiResponseHelper::errorResponse('Invalid signature.', Response::HTTP_FORBIDDEN);
         }
 
+        $orderId = (string) ($payload['order_id'] ?? '');
+
+        // Handle creator micro-donations / tips (order_id format: TIP-{tip_id}-{timestamp})
+        if (str_starts_with($orderId, 'TIP-')) {
+            $parts = explode('-', $orderId);
+            $tipId = isset($parts[1]) && is_numeric($parts[1]) ? (int) $parts[1] : null;
+            $tip = $tipId ? ArtistTip::with('artistProfile.user')->find($tipId) : null;
+
+            if (! $tip) {
+                return ApiResponseHelper::errorResponse('Artist tip not found.', Response::HTTP_NOT_FOUND);
+            }
+
+            $txStatus = $payload['transaction_status'] ?? '';
+            $fraudStatus = $payload['fraud_status'] ?? null;
+
+            if (in_array($txStatus, ['settlement', 'capture'], true) && ($fraudStatus === 'accept' || empty($fraudStatus))) {
+                $tip->update([
+                    'status' => 'settled',
+                    'settled_at' => now(),
+                    'transaction_id' => $payload['transaction_id'] ?? $tip->transaction_id,
+                    'payment_type' => $payload['payment_type'] ?? $tip->payment_type,
+                ]);
+
+                if ($tip->artistProfile?->user_id) {
+                    Notification::create([
+                        'user_id' => $tip->artistProfile->user_id,
+                        'type' => NotificationType::PAYMENT_RECEIVED,
+                        'title' => 'Tip received',
+                        'message' => 'You received a tip of ' . number_format($tip->amount) . ' IDR from ' . ($tip->supporter_name ?: 'a supporter') . '!',
+                        'link' => '/artist/' . ($tip->artistProfile->user?->username ?? ''),
+                    ]);
+                }
+            } elseif (in_array($txStatus, ['deny', 'cancel', 'expire'], true)) {
+                $tip->update([
+                    'status' => 'failed',
+                    'transaction_id' => $payload['transaction_id'] ?? $tip->transaction_id,
+                    'payment_type' => $payload['payment_type'] ?? $tip->payment_type,
+                ]);
+            }
+
+            return ApiResponseHelper::successResponse([
+                'tip_id' => $tip->id,
+                'status' => $tip->status,
+            ], 'Artist tip webhook processed successfully.');
+        }
+
         $payment = CommissionPayment::where('order_id', $payload['order_id'] ?? null)->first();
 
         if (! $payment) {
@@ -268,6 +316,9 @@ class PaymentController extends Controller
                 ]);
             }
         });
+
+        // Anti-Arbitrage Payment Integrity: Detect foreign card / non-domestic bank on IDR regional orders
+        AntiArbitrageService::checkPaymentOriginMismatch($payment, $payload);
 
         return ApiResponseHelper::successResponse(message: 'Notification processed.');
     }

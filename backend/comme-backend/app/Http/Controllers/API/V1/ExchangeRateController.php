@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
+use App\Services\API\V1\GeoIpService;
+
 class ExchangeRateController extends Controller
 {
     /**
@@ -76,6 +78,19 @@ class ExchangeRateController extends Controller
             ];
         });
 
-        return ApiResponseHelper::successResponse($cachedData, 'Exchange rates retrieved successfully.');
+        $responseData = $cachedData;
+        $responseData['user_location'] = GeoIpService::getClientLocation($request);
+
+        return ApiResponseHelper::successResponse($responseData, 'Exchange rates retrieved successfully.');
+    }
+
+    /**
+     * Get verified client geographic location and billing currency.
+     */
+    public function location(Request $request): JsonResponse
+    {
+        $location = GeoIpService::getClientLocation($request);
+
+        return ApiResponseHelper::successResponse($location, 'Client location retrieved successfully.');
     }
 }

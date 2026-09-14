@@ -55,9 +55,10 @@ class WatermarkService
             }
         }
 
-        // Fallback: Copy original as companion preview
-        @copy($fullPath, $previewFullPath);
-        return $previewRelativePath;
+        // Fail-closed security: Never expose or copy pristine original if watermarking fails
+        \Illuminate\Support\Facades\Log::error("Watermark generation failed for Commission #{$commission->id}, Media #{$media->id}. Failing closed to prevent unwatermarked asset leakage.");
+
+        return null;
     }
 
     /**

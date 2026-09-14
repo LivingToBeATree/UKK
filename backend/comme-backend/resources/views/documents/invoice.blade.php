@@ -209,6 +209,13 @@
                 </div>
             </div>
 
+            @php
+                $addonsTotal = $commission->addonsSelections ? $commission->addonsSelections->sum('price') : 0;
+                $computedBasePrice = ($commission->total_price !== null && (float) $commission->total_price > 0)
+                    ? max(0, (float) $commission->total_price - $addonsTotal)
+                    : (float) ($commission->commissionOption?->base_price ?: 0);
+            @endphp
+
             <table class="items-table">
                 <thead>
                     <tr>
@@ -222,7 +229,7 @@
                             <strong>{{ $commission->title ?: ($commission->service->name ?? $commission->service->title ?? 'Custom Artwork Commission') }}</strong>
                             <div class="item-desc">Commission Order #{{ $commission->id }} • Licensed for {{ !empty($hasCommercialRights) ? 'Commercial Use' : 'Personal Use' }}</div>
                         </td>
-                        <td class="amount">Rp {{ number_format($commission->base_price ?: ($commission->total_price ?: 0), 0, ',', '.') }}</td>
+                        <td class="amount">Rp {{ number_format($computedBasePrice, 0, ',', '.') }}</td>
                     </tr>
                     @foreach($commission->addonsSelections as $addon)
                     <tr>
@@ -240,7 +247,7 @@
                 <div class="summary-box">
                     <div class="summary-row">
                         <span>Base Price</span>
-                        <span>Rp {{ number_format($commission->base_price ?: ($commission->total_price ?: 0), 0, ',', '.') }}</span>
+                        <span>Rp {{ number_format($computedBasePrice, 0, ',', '.') }}</span>
                     </div>
                     @if($commission->addonsSelections->isNotEmpty())
                     <div class="summary-row">

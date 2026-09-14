@@ -12,5 +12,6 @@ enum ReportReason: string
     case SCAM = 'scam';
     case APPEAL = 'appeal';
     case INQUIRY = 'inquiry';
+    case ARBITRAGE = 'arbitrage';
     case OTHER = 'other';
 }

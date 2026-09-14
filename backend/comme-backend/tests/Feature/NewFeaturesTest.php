@@ -105,6 +105,59 @@ class NewFeaturesTest extends TestCase
         $listResponse->assertStatus(200);
     }
 
+    public function test_regional_currency_tips_can_be_created(): void
+    {
+        $artistUser = User::factory()->create(['username' => 'globalartist']);
+        ArtistProfile::create([
+            'user_id' => $artistUser->id,
+            'bio' => 'Global artist for regional tips',
+            'commission_open' => true,
+        ]);
+
+        $supporter = User::factory()->create();
+
+        // USD Tip: $5 tip should convert to IDR and store original_amount & currency
+        $usdResponse = $this->actingAs($supporter, 'sanctum')->postJson('/api/artists/globalartist/tip', [
+            'amount' => 5,
+            'currency' => 'USD',
+            'message' => 'Coffee on me from New York!',
+            'supporter_name' => 'Bob',
+        ]);
+
+        $usdResponse->assertStatus(201)
+            ->assertJsonPath('data.currency', 'USD')
+            ->assertJsonPath('data.original_amount', '5.00')
+            ->assertJsonPath('data.supporter_name', 'Bob');
+
+        // USD 5 * 15873 = 79365 IDR
+        $this->assertDatabaseHas('artist_tips', [
+            'currency' => 'USD',
+            'original_amount' => 5.00,
+            'amount' => 79365,
+            'supporter_name' => 'Bob',
+            'status' => 'pending',
+        ]);
+
+        // JPY Tip: ¥500
+        $jpyResponse = $this->actingAs($supporter, 'sanctum')->postJson('/api/artists/globalartist/tip', [
+            'amount' => 500,
+            'currency' => 'JPY',
+            'message' => 'Greetings from Tokyo!',
+            'supporter_name' => 'Kenji',
+        ]);
+
+        $jpyResponse->assertStatus(201)
+            ->assertJsonPath('data.currency', 'JPY')
+            ->assertJsonPath('data.original_amount', '500.00');
+
+        $this->assertDatabaseHas('artist_tips', [
+            'currency' => 'JPY',
+            'original_amount' => 500.00,
+            'amount' => 52500, // 500 * 105 = 52500
+            'supporter_name' => 'Kenji',
+        ]);
+    }
+
     public function test_commission_invoice_and_license_documents(): void
     {
         $buyer = User::factory()->create();
@@ -170,9 +223,9 @@ class NewFeaturesTest extends TestCase
             'status' => CommissionStatus::WAITING_FOR_CLIENT,
         ]);
 
-        // Store a fake deliverable media
+        // Store a fake deliverable media with valid image binary
         $filePath = 'commissions/' . $commission->id . '/test_art.png';
-        Storage::disk('public')->put($filePath, 'fake image binary content');
+        Storage::disk('public')->put($filePath, \Illuminate\Http\UploadedFile::fake()->image('test_art.png', 100, 100)->getContent());
 
         $media = Media::create([
             'mediable_type' => Commission::class,

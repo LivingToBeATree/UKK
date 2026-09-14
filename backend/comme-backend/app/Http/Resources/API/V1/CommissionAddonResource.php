@@ -14,6 +14,8 @@ class CommissionAddonResource extends JsonResource
             'title' => $this->title,
             'description' => $this->description,
             'additional_price' => (float) $this->additional_price,
+            'base_currency' => $this->base_currency ?? 'IDR',
+            'regional_prices' => $this->regional_prices,
         ];
     }
 }

@@ -34,8 +34,9 @@ Route::post('/artists/{username}/tip', [ArtistTipController::class, 'store']);
 // System health and telemetry endpoint
 Route::get('/health', [HealthController::class, 'show']);
 
-// Live / cached multi-currency exchange rates
+// Live / cached multi-currency exchange rates and geolocation
 Route::get('/exchange-rates', [ExchangeRateController::class, 'index']);
+Route::get('/geo/location', [ExchangeRateController::class, 'location']);
 
 // Midtrans webhooks
 Route::post('/midtrans/webhook', [PaymentController::class, 'webhook'])

@@ -14,6 +14,9 @@ class CommissionOptionResource extends JsonResource
             'title' => $this->title,
             'description' => $this->description,
             'base_price' => (float) $this->base_price,
+            'base_currency' => $this->base_currency ?? 'IDR',
+            'pricing_mode' => $this->pricing_mode ?? 'ppp',
+            'regional_prices' => $this->regional_prices,
 
             // One level deeper — only appears if the controller eager-loaded
             // 'options.addons', same whenLoaded rule applies at every level.

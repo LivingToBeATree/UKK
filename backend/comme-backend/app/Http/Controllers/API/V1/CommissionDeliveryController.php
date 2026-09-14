@@ -22,11 +22,46 @@ class CommissionDeliveryController extends Controller
      */
     private function resolveCommissionMedia(Commission $commission, mixed $media): ?Media
     {
-        if ($media instanceof Media) {
-            return $media;
+        if ($media instanceof CommissionMessageMedia) {
+            $msg = $media->commissionMessage;
+            return ($msg && $msg->commission_id === $commission->id) ? $media : null;
         }
 
-        $mediaId = is_numeric($media) ? (int) $media : $media;
+        if ($media instanceof CommissionMedia) {
+            return ($media->commission_id === $commission->id) ? $media : null;
+        }
+
+        if ($media instanceof Media) {
+            $msgMedia = CommissionMessageMedia::where('id', $media->id)
+                ->whereHas('commissionMessage', function ($q) use ($commission) {
+                    $q->where('commission_id', $commission->id);
+                })
+                ->first();
+
+            if ($msgMedia) {
+                return $msgMedia;
+            }
+
+            $commMedia = CommissionMedia::where('id', $media->id)
+                ->where('commission_id', $commission->id)
+                ->first();
+
+            if ($commMedia) {
+                return $commMedia;
+            }
+
+            $prefix = 'commissions/' . $commission->id . '/';
+            if (str_starts_with((string) $media->file_path, $prefix)) {
+                return $media;
+            }
+
+            return null;
+        }
+
+        $mediaId = is_numeric($media) ? (int) $media : null;
+        if (! $mediaId) {
+            return null;
+        }
 
         // Deliverables and commission message media (most common for deliverables)
         $messageMedia = CommissionMessageMedia::where('id', $mediaId)
@@ -48,14 +83,15 @@ class CommissionDeliveryController extends Controller
             return $commMedia;
         }
 
-        // Fallback: Check CommissionMessageMedia by ID directly
-        $directMsgMedia = CommissionMessageMedia::find($mediaId);
-        if ($directMsgMedia) {
-            return $directMsgMedia;
+        // Base Media scoped strictly to this commission's dedicated directory path
+        $prefix = 'commissions/' . $commission->id . '/';
+        $baseMedia = Media::where('id', $mediaId)->first();
+        if ($baseMedia && str_starts_with((string) $baseMedia->file_path, $prefix)) {
+            return $baseMedia;
         }
 
-        // Fallback: Base media table
-        return Media::find($mediaId);
+        // Strictly scoped to the specified commission — no cross-commission fallbacks
+        return null;
     }
 
     /**
@@ -116,7 +152,11 @@ class CommissionDeliveryController extends Controller
                     $mediaModel->saveQuietly();
                 }
             } else {
-                $targetPath = $mediaModel->file_path;
+                // Fail-closed security: Never expose pristine original deliverable if proof generation fails
+                return ApiResponseHelper::errorResponse(
+                    'Watermarked proof preview could not be generated. Please contact support.',
+                    Response::HTTP_INTERNAL_SERVER_ERROR
+                );
             }
         }
 
@@ -129,10 +169,7 @@ class CommissionDeliveryController extends Controller
         $baseName = pathinfo($mediaModel->file_name ?: basename($targetPath), PATHINFO_FILENAME);
         $downloadName = 'proof_' . $baseName . '.' . $ext;
 
-        return response()->download($fullPath, $downloadName, [
-            'Access-Control-Allow-Origin' => '*',
-            'Access-Control-Expose-Headers' => 'Content-Disposition',
-        ]);
+        return response()->download($fullPath, $downloadName, $this->getDownloadCorsHeaders($request));
     }
 
     /**
@@ -184,10 +221,11 @@ class CommissionDeliveryController extends Controller
 
         $fullPath = Storage::disk($disk)->path($mediaModel->file_path);
 
-        return response()->download($fullPath, $mediaModel->file_name ?: basename($mediaModel->file_path), [
-            'Access-Control-Allow-Origin' => '*',
-            'Access-Control-Expose-Headers' => 'Content-Disposition',
-        ]);
+        return response()->download(
+            $fullPath,
+            $mediaModel->file_name ?: basename($mediaModel->file_path),
+            $this->getDownloadCorsHeaders($request)
+        );
     }
 
     /**
@@ -230,11 +268,7 @@ class CommissionDeliveryController extends Controller
 
         // Deliverable messages media
         $deliverableMessages = $commission->messages()
-            ->where(function ($q) {
-                $q->where('is_delivery', true)
-                  ->orWhere('message_type', 'delivery')
-                  ->orWhere('message', 'like', '[Final Work Delivered]%');
-            })
+            ->where('message', 'like', '[Final Work Delivered]%')
             ->with('media')
             ->get();
 
@@ -379,10 +413,10 @@ EOT;
 
         $downloadFilename = "comme-order-{$commission->id}-deliverables.zip";
 
-        return response()->download($tempZipPath, $downloadFilename, [
-            'Content-Type' => 'application/zip',
-            'Access-Control-Allow-Origin' => '*',
-            'Access-Control-Expose-Headers' => 'Content-Disposition',
-        ])->deleteFileAfterSend(true);
+        return response()->download(
+            $tempZipPath,
+            $downloadFilename,
+            $this->getDownloadCorsHeaders($request, ['Content-Type' => 'application/zip'])
+        )->deleteFileAfterSend(true);
     }
 }

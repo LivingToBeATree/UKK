@@ -84,9 +84,6 @@ class PrivateMediaController extends Controller
             ? 'thumb_' . ($media->file_name ?: basename($targetPath))
             : ($media->file_name ?: basename($targetPath));
 
-        return response()->download($fullPath, $downloadName, [
-            'Access-Control-Allow-Origin' => '*',
-            'Access-Control-Expose-Headers' => 'Content-Disposition',
-        ]);
+        return response()->download($fullPath, $downloadName, $this->getDownloadCorsHeaders($request));
     }
 }

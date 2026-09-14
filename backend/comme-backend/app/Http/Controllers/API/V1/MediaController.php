@@ -82,7 +82,7 @@ class MediaController extends Controller
     /**
      * Download the specified media file directly as an attachment.
      */
-    public function download(Media $media)
+    public function download(Request $request, Media $media)
     {
         if (!$media->file_path || !Storage::disk('public')->exists($media->file_path)) {
             return ApiResponseHelper::errorResponse('File not found in storage.', Response::HTTP_NOT_FOUND);
@@ -91,61 +91,7 @@ class MediaController extends Controller
         $fullPath = Storage::disk('public')->path($media->file_path);
         $downloadName = $media->file_name ?: basename($media->file_path);
 
-        return response()->download($fullPath, $downloadName, [
-            'Access-Control-Allow-Origin' => '*',
-            'Access-Control-Expose-Headers' => 'Content-Disposition',
-        ]);
-    }
-
-    /**
-     * Download any file from public storage by path or URL query parameter.
-     */
-    public function downloadByPath(Request $request)
-    {
-        $raw = $request->query('path') ?? $request->query('url') ?? '';
-        $raw = urldecode($raw);
-
-        // Extract path component if a full URL was provided
-        if (str_starts_with($raw, 'http://') || str_starts_with($raw, 'https://')) {
-            $parsed = parse_url($raw, PHP_URL_PATH) ?? '';
-            $raw = $parsed;
-        }
-
-        if (str_contains($raw, '/storage/')) {
-            $raw = explode('/storage/', $raw)[1];
-        }
-
-        $cleanPath = ltrim(explode('?', $raw)[0], '/');
-
-        // Search common storage locations
-        $candidates = [
-            storage_path('app/public/' . $cleanPath),
-            storage_path('app/' . $cleanPath),
-            public_path('storage/' . $cleanPath),
-            public_path($cleanPath),
-        ];
-
-        $fullPath = null;
-        foreach ($candidates as $candidate) {
-            if (file_exists($candidate) && is_file($candidate)) {
-                $fullPath = $candidate;
-                break;
-            }
-        }
-
-        if (!$fullPath) {
-            return ApiResponseHelper::errorResponse('File not found in storage: ' . $cleanPath, Response::HTTP_NOT_FOUND);
-        }
-
-        $filename = $request->query('name') ?: basename($fullPath);
-        $filename = preg_replace('/[^\w\.\-\s\(\)\[\]]/', '_', $filename);
-
-        return response()->download($fullPath, $filename, [
-            'Access-Control-Allow-Origin' => '*',
-            'Access-Control-Allow-Methods' => 'GET, HEAD, OPTIONS',
-            'Access-Control-Allow-Headers' => '*',
-            'Access-Control-Expose-Headers' => 'Content-Disposition, Content-Length',
-        ]);
+        return response()->download($fullPath, $downloadName, $this->getDownloadCorsHeaders($request));
     }
 
     /**

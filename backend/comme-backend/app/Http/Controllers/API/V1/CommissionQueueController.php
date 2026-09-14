@@ -26,7 +26,7 @@ class CommissionQueueController extends Controller
                 CommissionStatus::WAITING_FOR_CLIENT,
                 CommissionStatus::REVISION,
             ])
-            ->with(['user:id,username,display_name', 'commissionService:id,name,slug', 'commissionOption:id,name'])
+            ->with(['user:id,username,display_name', 'commissionService:id,name,slug', 'commissionOption:id,title'])
             ->orderBy('created_at', 'asc')
             ->get();
 
@@ -84,7 +84,7 @@ class CommissionQueueController extends Controller
                 'status' => $c->status->value,
                 'position' => $isActive ? $position : null,
                 'service_name' => $c->commissionService?->name ?? 'Custom Commission',
-                'option_name' => $c->commissionOption?->name,
+                'option_name' => $c->commissionOption?->title,
                 'client_name' => $clientDisplayName,
                 'is_current_user' => (bool) $isOwner,
                 'deadline' => $c->deadline?->toDateString(),

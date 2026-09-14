@@ -13,12 +13,15 @@ class CommissionAddon extends Model
         'title',
         'description',
         'additional_price',
+        'base_currency',
+        'regional_prices',
     ];
 
     protected function casts(): array
     {
         return [
             'additional_price' => 'decimal:2',
+            'regional_prices' => 'array',
         ];
     }
 

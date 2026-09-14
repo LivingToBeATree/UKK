@@ -12,6 +12,7 @@ use App\Models\CommissionReview;
 use App\Models\Portfolio;
 use App\Models\CommissionService;
 use App\Models\User;
+use App\Models\Commission;
 use App\Enum\ReportReason;
 
 class StoreReportRequest extends FormRequest
@@ -22,7 +23,8 @@ class StoreReportRequest extends FormRequest
         'commission_review' => CommissionReview::class,
         'portfolio' => Portfolio::class,
         'commission_service' => CommissionService::class,
-        'user' => User::class
+        'user' => User::class,
+        'commission' => Commission::class,
     ];
 
     public function authorize(): bool

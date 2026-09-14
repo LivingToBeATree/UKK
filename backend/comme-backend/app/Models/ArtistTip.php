@@ -15,6 +15,8 @@ class ArtistTip extends Model
         'supporter_name',
         'supporter_email',
         'amount',
+        'currency',
+        'original_amount',
         'message',
         'status',
         'snap_token',
@@ -27,6 +29,7 @@ class ArtistTip extends Model
     {
         return [
             'amount' => 'integer',
+            'original_amount' => 'decimal:2',
             'artist_profile_id' => 'integer',
             'user_id' => 'integer',
             'settled_at' => 'datetime',

@@ -20,8 +20,8 @@ class DevController extends Controller
      */
     protected function checkEnvironment(): void
     {
-        if (! app()->environment('local', 'testing') && ! config('app.debug')) {
-            abort(Response::HTTP_FORBIDDEN, 'Dev tools are only available in local/debug mode.');
+        if (! app()->environment('local', 'testing')) {
+            abort(Response::HTTP_FORBIDDEN, 'Dev tools are only available in local/testing environments.');
         }
     }
 

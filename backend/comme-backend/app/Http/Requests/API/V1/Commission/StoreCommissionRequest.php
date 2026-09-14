@@ -17,6 +17,17 @@ class StoreCommissionRequest extends FormRequest
         return $this->user()->can('create', Commission::class);
     }
 
+    protected function prepareForValidation(): void
+    {
+        $serviceInput = $this->input('commission_service_id');
+        if ($serviceInput && ! is_numeric($serviceInput)) {
+            $service = CommissionService::where('slug', $serviceInput)->first();
+            if ($service) {
+                $this->merge(['commission_service_id' => $service->id]);
+            }
+        }
+    }
+
     public function rules(): array
     {
         return [
@@ -56,10 +67,17 @@ class StoreCommissionRequest extends FormRequest
                         return;
                     }
 
-                    $option = CommissionOption::find($value);
+                    $option = CommissionOption::with('commissionService')->find($value);
 
-                    if ($option && (string) $option->commission_service_id !== (string) $this->commission_service_id) {
-                        $fail('The selected option does not belong to the selected service.');
+                    if ($option) {
+                        $serviceInput = $this->commission_service_id;
+                        $matches = is_numeric($serviceInput)
+                            ? (int) $option->commission_service_id === (int) $serviceInput
+                            : $option->commissionService?->slug === $serviceInput;
+
+                        if (! $matches) {
+                            $fail('The selected option does not belong to the selected service.');
+                        }
                     }
                 }
             ],
@@ -71,6 +89,7 @@ class StoreCommissionRequest extends FormRequest
             'attachments.*' => ['file', 'max:51200', 'mimes:jpg,jpeg,png,webp,gif,pdf,zip,psd,ai,svg,mp4,mov,avi'],
             'media' => ['nullable', 'array', 'max:10'],
             'media.*' => ['file', 'max:51200', 'mimes:jpg,jpeg,png,webp,gif,pdf,zip,psd,ai,svg,mp4,mov,avi'],
+            'currency' => ['sometimes', 'nullable', 'string', 'max:10'],
             'reference_images' => ['nullable', 'array', 'max:10'],
             'reference_images.*' => ['file', 'max:51200', 'mimes:jpg,jpeg,png,webp,gif,pdf,zip,psd,ai,svg,mp4,mov,avi'],
             // Deliberately no 'total_price', 'status', 'user_id', or

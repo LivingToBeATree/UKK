@@ -13,12 +13,16 @@ class CommissionOption extends Model
         'title',
         'description',
         'base_price',
+        'base_currency',
+        'pricing_mode',
+        'regional_prices',
     ];
 
     protected function casts(): array
     {
         return [
             'base_price' => 'decimal:2',
+            'regional_prices' => 'array',
         ];
     }
 
