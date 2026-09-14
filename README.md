@@ -12,18 +12,26 @@
   <img src="https://img.shields.io/badge/TypeScript-5.7+-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
   <img src="https://img.shields.io/badge/PostgreSQL-16+-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL">
   <img src="https://img.shields.io/badge/Midtrans-Snap%20%26%20Iris-02F5A8?style=for-the-badge&logo=cashapp&logoColor=black" alt="Midtrans Payments">
-  <img src="https://img.shields.io/badge/API%20Endpoints-127%20Routes-7928CA?style=for-the-badge&logo=fastapi&logoColor=white" alt="API Endpoints">
+  <img src="https://img.shields.io/badge/Watermarking-PHP%20GD%20Engine-A802F5?style=for-the-badge&logo=adobephotoshop&logoColor=white" alt="Watermarking">
+  <img src="https://img.shields.io/badge/PPP-Anti--Arbitrage%20Engine-00C3FF?style=for-the-badge&logo=shield&logoColor=white" alt="Anti-Arbitrage">
   <img src="https://img.shields.io/badge/Observability-Pulse%20%26%20Log%20Viewer-00C3FF?style=for-the-badge&logo=datadog&logoColor=white" alt="Observability">
-  <img src="https://img.shields.io/badge/Backend%20Tests-125%20Passed%20(539%20Assertions)-02F5A8?style=for-the-badge&logo=githubactions&logoColor=black" alt="Tests Passed">
 </p>
 
 ---
 
 ## Overview
 
-**Comme** is an end-to-end digital creator marketplace and art commission platform that bridges illustrators and buyers with bank-grade escrow security, transparent order lifecycles, and automated financial disbursements.
+**Comme** is an enterprise-grade digital creator marketplace and art commission platform that connects digital artists, illustrators, and commissioners with bank-grade escrow security, transparent order lifecycles, and automated financial settlements.
 
-Built with a **Laravel 12 REST API** backend and a **React 19 / TypeScript** single-page frontend, Comme provides a seamless experience for browsing artwork, purchasing custom art commissions, tracking revisions, negotiating deadlines, managing studio availability, and processing instant refunds and payouts via the **Midtrans Snap** and **Midtrans Iris** payment gateways.
+Built with a **Laravel 12 REST API** backend and a **React 19 / TypeScript** single-page frontend, Comme provides a seamless experience for:
+- Browsing creator services and requesting bespoke art commissions.
+- Real-time studio capacity tracking via a **Live Studio Commission Queue Board**.
+- Localized purchasing with **Purchasing Power Parity (PPP)** and **Anti-Arbitrage fraud protection**.
+- Automated **Diagonal Watermark Protection** safeguarding artist WIP deliverables against theft.
+- Bank-grade escrow deposits via **Midtrans Snap** and automated creator disbursements via **Midtrans Iris**.
+- Instant automated escrow refunds upon mutual order cancellation.
+- An **Interactive Color Studio** for custom brand accents alongside clean neutral slate surfaces.
+- In-browser API documentation, live testing sandbox, email inspectors, and real-time APM telemetry.
 
 ---
 
@@ -34,117 +42,113 @@ UKK/
 ├── backend/comme-backend/       # Laravel 12 REST API & Developer Portal
 │   ├── app/                     # Domain models, controllers, services, policies
 │   ├── database/                # Migrations & comprehensive seeders
-│   ├── resources/views/         # Interactive API docs portal (Blade + Vanilla CSS)
-│   ├── routes/                  # Modular route files (127 endpoints across 19 modules)
-│   ├── tests/Feature/           # PHPUnit test suite (125 tests, 539 assertions)
-│   └── README.md                # Backend architecture & API documentation
+│   ├── resources/views/         # Interactive API docs portal & email templates
+│   ├── routes/                  # Modular route files (130+ endpoints across domain modules)
+│   ├── tests/Feature/           # Automated PHPUnit integration test suite
+│   └── README.md                # Backend architecture & API reference
 │
 ├── frontend/comme-frontend/     # React 19 + TypeScript Client SPA
-│   ├── src/                     # Components, pages, contexts, services
-│   ├── public/                  # Assets, icons, brand artwork
-│   ├── tailwind.config.js       # Glassmorphism dark-mode design system
+│   ├── src/                     # Components, pages, contexts, services, utilities
+│   ├── public/                  # Assets, icons, static artwork
+│   ├── tailwind.config.js       # Curated design token system
 │   └── README.md                # Frontend architecture & UI documentation
+│
+├── Docs/                        # Platform documentation & assets
+│   ├── ARCHITECTURE.md          # In-depth architectural & security specification
+│   ├── README.md                # Documentation index
+│   ├── Icons/                   # Multi-resolution brand icons
+│   └── Images/                  # Brand SVGs and wordmarks
 │
 └── README.md                    # Root project documentation (this file)
 ```
 
 ```mermaid
 graph TD
-    Client["React 19 Client SPA<br/>(TailwindCSS, TypeScript, Lucide)"]
+    Client["React 19 Client SPA<br/>(TailwindCSS, TypeScript, Framer Motion)"]
     API["Laravel 12 REST API<br/>(Sanctum Bearer, RFC-7807, CORS Allowlist)"]
     DB[("PostgreSQL 16+<br/>Database")]
-    Storage["Google Cloud Storage / Disk<br/>(/storage/{path} Provider)"]
+    Storage["Dual-Disk Storage Provider<br/>(Public vs Private Deliverables)"]
     MidtransSnap["Midtrans Snap<br/>(Escrow Checkout)"]
     MidtransIris["Midtrans Iris<br/>(Creator Bank Payouts)"]
-    Scheduler["Artisan Scheduler<br/>(Background Auto-Release & Reconciliation)"]
+    Scheduler["Artisan Scheduler<br/>(Auto-Release & Reconciliation)"]
 
     Client -->|REST API / Bearer Token| API
     Client -->|Direct Asset Streaming| Storage
     Client -->|Snap Popup Checkout| MidtransSnap
     API -->|Eloquent ORM| DB
-    API -->|Stream / Upload Assets| Storage
+    API -->|Protected / Watermarked Delivery| Storage
     API -->|Create Snap Token| MidtransSnap
     MidtransSnap -->|Payment Webhook (SHA-512)| API
     API -->|Disburse Escrow| MidtransIris
     MidtransIris -->|Payout Status Callback| API
-    Scheduler -->|Cron Payout Routines| API
+    Scheduler -->|Background Cron Jobs| API
 ```
 
 ---
 
 ## Key Platform Features
 
-### 1. Commission Lifecycle & Escrow Protection
+### 1. Live Studio Commission Queue Board
+- **Skeb & VGen-Inspired Real-Time Workflow**: Embedded directly on public artist profiles to visualize active studio workload and capacity.
+- **Dynamic Capacity Gauge**: Displays current filled slots (e.g. `2/5 Filled` or `Queue Full`) with status progress indicators.
+- **Client Anonymity & Privacy**: Displays masked order codes (`COM-#5`) and delivery stages (`Accepted`, `In Production`, `Under Review`, `Completed`).
+- **Client Active Spotlight**: Highlights the authenticated buyer's exact slot position (e.g., `Your Commission is Slot #1!`) with direct navigation into their order workspace.
+
+### 2. Purchasing Power Parity (PPP) & Anti-Arbitrage Engine
+- **Multi-Currency Converter**: Real-time switching across IDR, USD, JPY, EUR, GBP, SGD, AUD, and CAD with live exchange rate caching.
+- **GeoIP Localization (`GeoIpService`)**: Detects country codes via edge IP headers (`CF-Connecting-IP`, `X-Forwarded-For`) to automatically present regional pricing.
+- **Anti-Arbitrage Security (`AntiArbitrageService`)**: Validates transaction currency, payment methods, and user geographic tier to prevent regional discount exploitation via VPNs.
+
+### 3. Automated Diagonal Watermark Protection (`WatermarkService`)
+- **GD-Powered Tiling Engine**: Generates 35-degree diagonal watermarks featuring artist handle, commission code, and platform signature across preview images.
+- **Theft & Scraping Prevention**: Client review deliverables and unconfirmed WIP milestones are strictly served with semi-transparent watermarking.
+- **Gated Original Assets**: Clean, high-resolution original artwork and compressed ZIP archives are unlocked exclusively upon final client approval.
+
+### 4. Commission Order Lifecycle & Escrow Protection
 - **Order State Machine**: Enforces valid state transitions: `pending` &rarr; `accepted` &rarr; `in_progress` &rarr; `review` &rarr; `completed` (or `cancelled`/`declined`).
 - **Escrow Vaulting**: Buyer deposits are safely held in escrow via Midtrans Snap until artwork delivery is approved.
 - **Deadline Negotiation Protocol**: Formal proposal-and-acceptance protocol (`/propose-deadline`, `/accept-deadline`, `/decline-deadline`) allowing creators to request completion date adjustments with buyer agreement.
-- **Revision Tracking**: Structured client revision cycles tracked against service limits.
-- **Delivery MIME Enforcement**: Strict server-side MIME type inspection for delivered artwork (`image/*`, `application/pdf`, `application/zip`, `application/x-rar-compressed`, `video/*`).
-- **Automated Payouts**: Completed orders automatically trigger creator bank disbursements via Midtrans Iris.
+- **Structured Revisions**: Client revision cycles tracked against service limits.
+- **Automated Payouts**: Completed orders trigger creator bank disbursements via Midtrans Iris.
 
-### 2. Mutual Cancellation & Automated Escrow Refunds
+### 5. Mutual Cancellation & Automated Escrow Refunds
 - **Mutual Agreement Protocol**: Active commissions can be cancelled through a structured proposal-and-acceptance flow with mandatory reasons.
 - **Automated Direct Refund**: When a paid commission is cancelled, funds held in escrow are **immediately refunded to the buyer** through the Midtrans direct refund API (with local ledger fallback).
 - **Audit Logging**: Structured events and notifications record the cancellation reason and refund transaction ID.
 
-### 3. Official Digital Purchase Receipts
+### 6. Official Digital Purchase Receipts
 - **Cryptographic Identifier**: Unique identifier formatted as `REC-COM-{commission_id}-{hash}` (e.g. `REC-COM-14-8F3E2B1A`).
 - **Complete Financial Breakdown**: Itemizes gross order total, 5% platform fee, net artist earnings, payment channel, and settlement timestamps.
 - **Print & PDF Format**: Responsive modal with a printer-optimized media layout for generating formal purchase records.
 - **Refund Invalidation**: Displays transparent refund notices if the transaction was cancelled.
 
-### 4. Artist Studio Dashboard & Master Availability
+### 7. Artist Studio Dashboard & Master Availability
 - **Master Availability Status**: Artists can toggle their status across the entire marketplace:
-  - <span style="color: #10B981; font-weight: bold;">● Open for Commissions</span>: Glowing emerald badge indicating active availability.
-  - <span style="color: #F59E0B; font-weight: bold;">● Busy / Waitlist Only</span>: Amber badge accepting waitlist orders.
-  - <span style="color: #EF4444; font-weight: bold;">● Commissions Closed</span>: Rose badge pausing new incoming requests.
+  - <span style="color: #10B981; font-weight: bold;">● Open for Commissions</span>: Active availability.
+  - <span style="color: #F59E0B; font-weight: bold;">● Busy / Waitlist Only</span>: Accepting waitlist orders.
+  - <span style="color: #EF4444; font-weight: bold;">● Commissions Closed</span>: Pausing incoming requests.
 - **Studio Profile Settings**: Dedicated studio bio and terms, external portfolio website, and verified social links (Twitter/X, ArtStation, Instagram).
-- **Bank Payout Configuration**: Artist bank accounts are encrypted with AES-256 at rest, displayed masked (`••••••••1234`), and can be safely managed or deleted.
+- **Bank Payout Configuration**: Artist bank accounts are encrypted with AES-256 at rest, displayed masked (`••••••••1234`), and can be safely managed.
 
-### 5. SEO-Friendly Slug Routing
-- Clean, SEO-optimized permalinks for marketplace resources:
-  - `/services/{slug}` &mdash; Commission services
-  - `/portfolios/{slug}` &mdash; Creator portfolio items
-  - `/posts/{slug}` &mdash; Community artwork feed posts
-  - `/commissions/{buyer_username}-{slug}-{nano_id}` &mdash; User-prefixed commission order permalinks
-- Dual-lookup support transparently resolving both human-readable slugs and legacy numeric IDs.
+### 8. Direct Creator Tipping Subsystem
+- Public artist profile tipping modal supporting custom and quick-pick tip amounts.
+- Automatic multi-currency conversion to IDR with direct Midtrans Snap escrow checkout.
 
-### 6. Social Community & Feed
-- **Artwork Feed**: Multi-image/video post creation with tag categorization and paginated exploration.
-- **Engagement**: Like and bookmark posts and comments with dedicated `GET /api/me/bookmarks` and `GET /api/me/likes` queries.
-- **Threaded Comments**: Post comments with parent-reply threading, in-place author editing (`PUT /api/comments/{comment}`), and author/post-owner deletion (`DELETE /api/comments/{comment}`).
-- **User Following**: Follow favourite creators to populate personalized community streams.
+### 9. Content Reporting & Moderation Lifecycle
+- Universal content reporting across artwork posts, comments, commission services, and user profiles.
+- Standardized violation categories (`spam`, `harassment`, `nsfw`, `copyright`, `fraud`, `other`).
+- Dedicated staff moderation queue supporting action execution (`remove_content`, `warn_user`, `suspend_account`, `dismiss`).
 
-### 7. Security, Storage & Architecture Hardening
-- **Cross-Origin Bearer Auth**: Sanctum Bearer token authorization decoupled from stateful session cookies, supporting independent cross-domain deployments.
-- **Explicit CORS Allowlist**: Strict origin matching via `CORS_ALLOWED_ORIGINS` environment variable (no open wildcards in production).
-- **Session & Device Management**: Active token listing (`GET /api/auth/sessions`) and multi-session revocation (`DELETE /api/auth/sessions/{id}`).
-- **Account Deletion**: Complete user data lifecycle with secure password confirmation (`DELETE /api/auth/account`).
+### 10. Brand Identity & Interactive Color Studio
+- Clean neutral slate grey surfaces (`--secondary`, `--muted`, `--accent`, `--border`) preventing clashing color mixtures.
+- Interactive Color Studio in **Settings > Appearance** featuring a 2D HSV canvas, hue slider, RGB channels, custom hex inputs, and contrast text calculations.
+
+### 11. Security, Observability & Rate Limiting
+- **Cross-Origin Bearer Auth**: Sanctum Bearer token authorization decoupled from stateful session cookies.
 - **Two-Factor Authentication (2FA)**: TOTP authentication with QR code setup and encrypted recovery codes.
-- **Storage Streaming Provider**: Direct `/storage/{path}` file provider with CORS streaming headers, GCS persistent volume compatibility, and forced attachment download queries (`?download=1&name=...`).
-- **Dependency Pinning & Sandboxing**: Midtrans PHP SDK pinned to `^2.6.4`; test payment simulation endpoint guarded from production execution.
-
-### 8. Interactive Developer Documentation Portal
-- Hosted directly on the backend root (`/`):
-  - **Live Documentation**: Categorized endpoint groups covering all 127 routes with cURL snippets and schemas.
-  - **API Explorer (`/explore`)**: In-browser request sandbox with token persistence and latency measurement.
-  - **Error Reference (`/errors`)**: RFC-7807 compliant error catalog for all HTTP status codes.
-  - **Transactional Email Inspector (`/emails`)**: Live in-browser previewer for transactional emails (Password Reset, Registration OTP, Security Alerts) with HTML/plaintext toggles and desktop/mobile viewport switching.
-  - **Theme System**: Dark, Light, and System OS themes with day/night SVG icons.
-
-### 9. Real-Time Observability, Smart Caching & Tiered Rate Limiting
-- **Laravel Pulse APM (`/pulse`)**: Real-time application performance monitoring tracking slow database queries (>500ms), slow HTTP requests (>1,000ms), cache hit/miss ratio, and server usage.
-- **Interactive Log Viewer (`/log-viewer`)**: In-browser diagnostic logging dashboard with live streaming, search by log level, formatted stack traces, and log file downloads.
-- **PostgreSQL-Backed Smart Caching (`CacheService`)**: Fast caching for public artwork feeds, commission service listings, and artist profiles with epoch-based invalidation that guarantees atomic cache purging upon model lifecycle events via `CacheInvalidationObserver`.
-- **Role-Tiered Rate Limiting**: Dynamic request throttling based on authenticated roles:
-  - **Admin**: 300 req/min
-  - **Moderator**: 240 req/min
-  - **Verified Artist**: 180 req/min (high-frequency studio workflows)
-  - **Authenticated Buyer**: 120 req/min
-  - **Guest / Public**: 60 req/min
-  - Dedicated limiters: Search (30 req/min), Media Uploads (20 req/min), Payment Checkout (10 req/min).
-- **Request Correlation Tracing (`AssignRequestId`)**: Unique `X-Request-ID` UUID automatically assigned to every request, injected into structured logging context (`Log::withContext(...)`), and returned in response headers for end-to-end debugging.
-- **Slow Query Detection**: Automatic database listener (`DB::whenQueryingForLongerThan(500)`) logging warnings for queries exceeding 500ms.
+- **Laravel Pulse APM (`/pulse`)**: Real-time performance monitoring tracking slow queries (>500ms) and request latency.
+- **Interactive Log Viewer (`/log-viewer`)**: In-browser diagnostic logging dashboard with live streaming and stack traces.
+- **Role-Tiered Rate Limiting**: Request throttling tiered by user role (Admin: 300, Moderator: 240, Artist: 180, Buyer: 120, Guest: 60 req/min).
 
 ---
 
@@ -165,7 +169,7 @@ The backend implements automated background cron tasks configured in `routes/con
 ## Quickstart Guide
 
 ### Prerequisites
-- **PHP** >= 8.2 with `pdo_pgsql`, `mbstring`, `openssl`, `bcmath`, `curl`, `fileinfo`
+- **PHP** >= 8.2 with `pdo_pgsql`, `gd`, `mbstring`, `openssl`, `bcmath`, `curl`, `fileinfo`
 - **Composer** >= 2.x
 - **PostgreSQL** >= 16.x
 - **Node.js** >= 18.x
@@ -229,7 +233,7 @@ npm run dev
 ## Testing & Quality Assurance
 
 ### Backend Automated Test Suite
-The backend is verified by **125 automated test methods** containing **539 assertions** with 100% passing status:
+The backend includes a comprehensive automated test suite covering security, anti-arbitrage, watermarking, payment lifecycles, and escrow state machines:
 
 ```bash
 cd backend/comme-backend
@@ -237,16 +241,15 @@ php artisan test
 ```
 
 Key test suites include:
-- `CommissionCancellationRefundTest`: Mutual cancellation, direct cancellation, Midtrans automated escrow refund triggers, and refund receipts.
-- `ArtistProfileSettingsTest`: Master commission status switching, bio separation, social links validation, and authorization guards.
-- `ArtistApplicationFlowTest`: Portfolio applications, staff review queue, atomic role promotion, and in-app notifications.
-- `CommissionLifecyclePayoutTest`: Full order lifecycle, Midtrans Snap webhook simulation, Iris payouts, reconciliation, and retry logic.
+- `AntiArbitrageSecurityTest`: Regional currency enforcement and VPN/geo-spoofing prevention.
+- `SecurityVulnerabilityFixesTest`: Path traversal guards, MIME verification, and private storage isolation.
+- `CommissionCancellationRefundTest`: Mutual cancellation agreement and automated Midtrans escrow refunds.
+- `ArtistProfileSettingsTest`: Master commission status switching, bio separation, and social links validation.
+- `CommissionLifecyclePayoutTest`: Full order lifecycle, Midtrans Snap webhook simulation, Iris payouts, and reconciliation.
 - `CommissionReceiptFlowTest`: Cryptographic receipt hashing, access security, and settlement calculations.
-- `AuthNotificationsTest`: Password reset links, OTP dispatch, new device detection, and transactional mailers.
 - `SlugRoutingTest`: Slug generation and route resolution for services, portfolios, and posts.
 - `TwoFactorAuthTest`: TOTP setup, code verification, login challenge, and recovery codes.
 - `ObservabilityAndRateLimitingTest`: Request ID correlation tracing, cache invalidation, and role-tiered rate limiters.
-- `QueueAndFilesystemTest`: Asynchronous background media jobs, public vs private disk isolation, and orphaned file pruning.
 
 ### Frontend Production Build
 Verify TypeScript type-checking and asset bundling:
@@ -258,10 +261,12 @@ npm run build
 
 ---
 
-## Detailed Documentation Links
+## Documentation Links
 
-For in-depth guides and API specifications, refer to the individual component documentation:
-- **[Backend README & API Reference](backend/comme-backend/README.md)**
+For in-depth guides and API specifications:
+- **[Documentation Index & Overview](Docs/README.md)**
+- **[System Architecture & Security Specification](Docs/ARCHITECTURE.md)**
+- **[Backend Architecture & API Reference](backend/comme-backend/README.md)**
 - **[Frontend Architecture & Component Guide](frontend/comme-frontend/README.md)**
 - **[Interactive API Documentation Portal](http://localhost:8000)** (when backend is running)
 - **[Laravel Pulse APM Dashboard](http://localhost:8000/pulse)** (Real-time performance & cache telemetry)
