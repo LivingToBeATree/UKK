@@ -42,9 +42,9 @@ graph TD
         MidtransIris["Midtrans Iris Engine<br/>(Creator Bank Disbursements)"]
     end
 
-    UI -->|HTTPS / Bearer Token| Router
-    UI -->|Embedded Popup Checkout| SnapModal
-    SnapModal -->|Escrow Payment| MidtransSnap
+    UI -->|"HTTPS / Bearer Token"| Router
+    UI -->|"Embedded Popup Checkout"| SnapModal
+    SnapModal -->|"Escrow Payment"| MidtransSnap
 
     Router --> Sanctum
     Router --> StateMachine
@@ -57,9 +57,9 @@ graph TD
     Watermarker --> PrivateDisk
     QueueService --> DB
 
-    StateMachine -->|Create Snap Token| MidtransSnap
-    MidtransSnap -->|Webhook SHA-512| Router
-    StateMachine -->|Release Escrow Funds| MidtransIris
+    StateMachine -->|"Create Snap Token"| MidtransSnap
+    MidtransSnap -->|"Webhook SHA-512"| Router
+    StateMachine -->|"Release Escrow Funds"| MidtransIris
 ```
 
 ---
@@ -73,22 +73,22 @@ stateDiagram-v2
     [*] --> Pending: Client Places Order
     Pending --> Accepted: Artist Accepts
     Pending --> Declined: Artist Rejects
-    Pending --> Cancelled: Cancelled / Expired
+    Pending --> Cancelled: Cancelled or Expired
 
-    Accepted --> InProgress: Escrow Deposit Settled (Midtrans Snap)
-    InProgress --> InProgress: Deadline Extension Proposed & Accepted
-    InProgress --> Review: Artist Submits Deliverables (Watermarked)
+    Accepted --> InProgress: Escrow Deposit Settled
+    InProgress --> InProgress: Deadline Extension Accepted
+    InProgress --> Review: Deliverables Submitted
 
-    Review --> InProgress: Client Requests Revision (Within Quota)
+    Review --> InProgress: Client Requests Revision
     Review --> Completed: Client Approves Delivery
-    Review --> Completed: 7-Day Auto-Release Timeout (Artisan Schedulers)
+    Review --> Completed: 7-Day Auto-Release Timeout
 
-    InProgress --> Cancelled: Mutual Cancellation Accepted (Instant Escrow Refund)
-    Review --> Cancelled: Mutual Cancellation Accepted (Instant Escrow Refund)
+    InProgress --> Cancelled: Mutual Cancellation Accepted
+    Review --> Cancelled: Mutual Cancellation Accepted
 
-    Completed --> [*]: Bank Disbursement Released (Midtrans Iris)
+    Completed --> [*]: Bank Disbursement Released
     Declined --> [*]: Order Closed
-    Cancelled --> [*]: Funds Fully Refunded to Buyer
+    Cancelled --> [*]: Funds Refunded to Buyer
 ```
 
 ### Financial Flow & Escrow Protection

@@ -72,16 +72,16 @@ graph TD
     MidtransIris["Midtrans Iris<br/>(Creator Bank Payouts)"]
     Scheduler["Artisan Scheduler<br/>(Auto-Release & Reconciliation)"]
 
-    Client -->|REST API / Bearer Token| API
-    Client -->|Direct Asset Streaming| Storage
-    Client -->|Snap Popup Checkout| MidtransSnap
-    API -->|Eloquent ORM| DB
-    API -->|Protected / Watermarked Delivery| Storage
-    API -->|Create Snap Token| MidtransSnap
-    MidtransSnap -->|Payment Webhook (SHA-512)| API
-    API -->|Disburse Escrow| MidtransIris
-    MidtransIris -->|Payout Status Callback| API
-    Scheduler -->|Background Cron Jobs| API
+    Client -->|"REST API / Bearer Token"| API
+    Client -->|"Direct Asset Streaming"| Storage
+    Client -->|"Snap Popup Checkout"| MidtransSnap
+    API -->|"Eloquent ORM"| DB
+    API -->|"Protected / Watermarked Delivery"| Storage
+    API -->|"Create Snap Token"| MidtransSnap
+    MidtransSnap -->|"Payment Webhook SHA-512"| API
+    API -->|"Disburse Escrow"| MidtransIris
+    MidtransIris -->|"Payout Status Callback"| API
+    Scheduler -->|"Background Cron Jobs"| API
 ```
 
 ---
