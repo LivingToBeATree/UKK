@@ -26,30 +26,16 @@ Welcome to the **Comme** technical documentation directory. This directory conta
 
 ## Core System Highlights
 
-```
-                       ┌──────────────────────────────┐
-                       │  React 19 SPA (Client)       │
-                       │  - Live Commission Queue     │
-                       │  - PPP Currency Switcher     │
-                       │  - Interactive Color Studio  │
-                       │  - Midtrans Snap.js Checkout │
-                       └──────────────┬───────────────┘
-                                      │ REST API / Bearer Token
-                                      ▼
-                       ┌──────────────────────────────┐
-                       │  Laravel 12 REST API Engine  │
-                       │  - Commission State Machine  │
-                       │  - Anti-Arbitrage Service    │
-                       │  - Watermark Service (GD)    │
-                       │  - Sanctum + 2FA TOTP        │
-                       └──────┬───────────────┬───────┘
-          PostgreSQL 16+ ORM │               │ Midtrans Webhooks & APIs
-                              ▼               ▼
-                       ┌──────────────┐┌──────────────────────────────┐
-                       │  Database &  ││  Payment Gateways            │
-                       │  Queued Jobs ││  - Snap (Buyer Escrow)       │
-                       │  (Workers)   ││  - Iris (Creator Bank Payout)│
-                       └──────────────┘└──────────────────────────────┘
+```mermaid
+graph TD
+    Client["React 19 SPA Client<br/>• Live Commission Queue<br/>• PPP Currency Switcher<br/>• Interactive Color Studio<br/>• Midtrans Snap.js Checkout"]
+    API["Laravel 12 REST API Engine<br/>• Commission State Machine<br/>• Anti-Arbitrage Service<br/>• Watermark Service GD<br/>• Sanctum & 2FA TOTP"]
+    DB[("PostgreSQL 16+<br/>Database & Queued Jobs")]
+    Gateways["Midtrans Payment Systems<br/>• Snap Escrow Deposits<br/>• Iris Creator Bank Payouts"]
+
+    Client -->|"REST API / Bearer Token"| API
+    API -->|"PostgreSQL 16+ ORM"| DB
+    API -->|"Webhooks & Disburse APIs"| Gateways
 ```
 
 For detailed architectural specifications, please refer to **[ARCHITECTURE.md](ARCHITECTURE.md)**.
