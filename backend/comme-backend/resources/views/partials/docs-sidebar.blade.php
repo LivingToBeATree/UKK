@@ -119,7 +119,7 @@
                     <span class="nav-group-title">Artist & Studio</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span class="nav-group-count">7</span>
+                    <span class="nav-group-count">9</span>
                     <span class="nav-group-chevron">▶</span>
                 </div>
             </div>
@@ -131,6 +131,8 @@
                 <a href="{{ url('/') }}#post-api-artist-applications-reject" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-artist-applications-reject"><span class="method-pill method-post">POST</span> .../{id}/reject</a>
                 <a href="{{ url('/') }}#get-api-artist-profiles-id" class="nav-link link-get nav-page-link" data-page="/" data-hash="get-api-artist-profiles-id"><span class="method-pill method-get">GET</span> /artist-profiles/{id}</a>
                 <a href="{{ url('/') }}#put-api-artist-profiles-id" class="nav-link link-put nav-page-link" data-page="/" data-hash="put-api-artist-profiles-id"><span class="method-pill method-put">PUT</span> /artist-profiles/{id}</a>
+                <a href="{{ url('/') }}#get-api-artist-profiles-queue" class="nav-link link-get nav-page-link" data-page="/" data-hash="get-api-artist-profiles-queue"><span class="method-pill method-get">GET</span> .../{id}/queue</a>
+                <a href="{{ url('/') }}#get-api-artists-badge" class="nav-link link-get nav-page-link" data-page="/" data-hash="get-api-artists-badge"><span class="method-pill method-get">GET</span> .../badge.svg</a>
             </div>
         </div>
 
@@ -251,7 +253,7 @@
                     <span class="nav-group-title">Payments & Escrow</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span class="nav-group-count">8</span>
+                    <span class="nav-group-count">12</span>
                     <span class="nav-group-chevron">▶</span>
                 </div>
             </div>
@@ -259,6 +261,10 @@
                 <a href="{{ url('/') }}#post-api-commissions-payment" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-commissions-payment"><span class="method-pill method-post">POST</span> /{id}/payment</a>
                 <a href="{{ url('/') }}#post-api-commissions-payment-check-status" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-commissions-payment-check-status"><span class="method-pill method-post">POST</span> .../check-status</a>
                 <a href="{{ url('/') }}#post-api-commissions-payment-simulate" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-commissions-payment-simulate"><span class="method-pill method-post">POST</span> .../simulate</a>
+                <a href="{{ url('/') }}#post-api-artists-tip" class="nav-link link-post nav-page-link" data-page="/" data-hash="post-api-artists-tip"><span class="method-pill method-post">POST</span> .../tip</a>
+                <a href="{{ url('/') }}#get-api-artists-tips" class="nav-link link-get nav-page-link" data-page="/" data-hash="get-api-artists-tips"><span class="method-pill method-get">GET</span> .../tips</a>
+                <a href="{{ url('/') }}#get-api-exchange-rates" class="nav-link link-get nav-page-link" data-page="/" data-hash="get-api-exchange-rates"><span class="method-pill method-get">GET</span> /exchange-rates</a>
+                <a href="{{ url('/') }}#get-api-geo-location" class="nav-link link-get nav-page-link" data-page="/" data-hash="get-api-geo-location"><span class="method-pill method-get">GET</span> /geo/location</a>
                 <a href="{{ url('/') }}#get-api-me-payout-account" class="nav-link link-get nav-page-link" data-page="/" data-hash="get-api-me-payout-account"><span class="method-pill method-get">GET</span> /me/payout-account</a>
                 <a href="{{ url('/') }}#put-api-me-payout-account" class="nav-link link-put nav-page-link" data-page="/" data-hash="put-api-me-payout-account"><span class="method-pill method-put">PUT</span> /me/payout-account</a>
                 <a href="{{ url('/') }}#delete-api-me-payout-account" class="nav-link link-delete nav-page-link" data-page="/" data-hash="delete-api-me-payout-account"><span class="method-pill method-delete">DEL</span> /me/payout-account</a>
@@ -277,7 +283,7 @@
                     <span class="nav-group-title">Media & Storage</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span class="nav-group-count">4</span>
+                    <span class="nav-group-count">5</span>
                     <span class="nav-group-chevron">▶</span>
                 </div>
             </div>
@@ -286,6 +292,7 @@
                 <a href="{{ url('/') }}#get-api-media-id" class="nav-link link-get nav-page-link" data-page="/" data-hash="get-api-media-id"><span class="method-pill method-get">GET</span> /media/{id}</a>
                 <a href="{{ url('/') }}#delete-api-media-id" class="nav-link link-delete nav-page-link" data-page="/" data-hash="delete-api-media-id"><span class="method-pill method-delete">DEL</span> /media/{id}</a>
                 <a href="{{ url('/') }}#get-storage-path" class="nav-link link-get nav-page-link" data-page="/" data-hash="get-storage-path"><span class="method-pill method-get">GET</span> /storage/{path}</a>
+                <a href="{{ url('/') }}#get-api-media-private-download" class="nav-link link-get nav-page-link" data-page="/" data-hash="get-api-media-private-download"><span class="method-pill method-get">GET</span> .../private/{id}</a>
             </div>
         </div>
 

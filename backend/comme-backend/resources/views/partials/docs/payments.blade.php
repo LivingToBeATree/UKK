@@ -131,6 +131,157 @@
         </div>
     </div>
 
+    <!-- POST /artists/{username}/tip -->
+    <div class="endpoint-card" id="post-api-artists-tip">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-post">POST</span>
+                <span>/artists/{username}/tip</span>
+            </div>
+            <span class="auth-badge">Public / Optional Auth</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">
+                Initializes a direct creator micro-donation / tip via Midtrans Snap. Supports regional currencies (<code>USD</code>, <code>EUR</code>, <code>JPY</code>, <code>SGD</code>, <code>GBP</code>, <code>IDR</code>) with currency-aware minimum validation and server-side rate conversion to IDR for gateway settlement.
+            </p>
+            <table class="param-table">
+                <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="param-name">amount</span> <span class="param-required">req</span></td><td><span class="param-type">numeric</span></td><td>Tip amount (min 10,000 IDR, 100 JPY, or 1.00 USD/EUR/GBP/SGD).</td></tr>
+                    <tr><td><span class="param-name">currency</span> <span class="param-optional">opt</span></td><td><span class="param-type">string</span></td><td>Billing currency code: <code>IDR</code>, <code>USD</code>, <code>EUR</code>, <code>JPY</code>, <code>SGD</code>, <code>GBP</code> (defaults to <code>IDR</code>).</td></tr>
+                    <tr><td><span class="param-name">message</span> <span class="param-optional">opt</span></td><td><span class="param-type">string</span></td><td>Support note or message of encouragement (max 500 characters).</td></tr>
+                    <tr><td><span class="param-name">supporter_name</span> <span class="param-optional">opt</span></td><td><span class="param-type">string</span></td><td>Display name of donor (defaults to authenticated username or "Generous Supporter").</td></tr>
+                    <tr><td><span class="param-name">supporter_email</span> <span class="param-optional">opt</span></td><td><span class="param-type">string</span></td><td>Donor email for Midtrans transaction receipt.</td></tr>
+                </tbody>
+            </table>
+            <div class="code-container">
+                <div class="code-header"><span>Response (201 Created)</span></div>
+                <div class="code-block">{
+  "status": "success",
+  "message": "Tip payment initialized successfully.",
+  "data": {
+    "tip_id": 8,
+    "amount": 79365,
+    "currency": "USD",
+    "original_amount": 5.0,
+    "supporter_name": "CyberFan99",
+    "snap_token": "midtrans-snap-token-xyz-12345",
+    "artist": {
+      "username": "reya_art",
+      "display_name": "Reya Vance"
+    }
+  }
+}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GET /artists/{username}/tips -->
+    <div class="endpoint-card" id="get-api-artists-tips">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-get">GET</span>
+                <span>/artists/{username}/tips</span>
+            </div>
+            <span class="auth-badge">Public</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">
+                Returns paginated list of public, settled tip messages and supporter contributions for the specified artist.
+            </p>
+            <table class="param-table">
+                <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="param-name">username</span> <span class="param-required">req</span></td><td><span class="param-type">string</span></td><td>Unique username handle of the artist.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- GET /api/exchange-rates -->
+    <div class="endpoint-card" id="get-api-exchange-rates">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-get">GET</span>
+                <span>/api/exchange-rates</span>
+            </div>
+            <span class="auth-badge">Public (Cached 6h)</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">
+                Retrieves live multi-currency exchange rates and purchasing power parity (PPP) conversion tables with <code>IDR</code> as the marketplace base. Includes formatted currency symbols, localized names, and client geographic location detection.
+            </p>
+            <div class="code-container">
+                <div class="code-header"><span>Response (200 OK)</span></div>
+                <div class="code-block">{
+  "status": "success",
+  "message": "Exchange rates retrieved successfully.",
+  "data": {
+    "base": "IDR",
+    "rates": {
+      "IDR": 1.0,
+      "USD": 0.000063,
+      "EUR": 0.000058,
+      "JPY": 0.0095,
+      "SGD": 0.000085,
+      "GBP": 0.000049
+    },
+    "rates_to_idr": {
+      "IDR": 1,
+      "USD": 15873,
+      "EUR": 17241,
+      "JPY": 105.26,
+      "SGD": 11764,
+      "GBP": 20408
+    },
+    "symbols": {
+      "IDR": "Rp",
+      "USD": "$",
+      "EUR": "€",
+      "JPY": "¥",
+      "SGD": "S$",
+      "GBP": "£"
+    },
+    "updated_at": "2026-09-14T02:00:00.000000Z",
+    "user_location": {
+      "ip": "103.24.12.8",
+      "country_code": "ID",
+      "currency": "IDR"
+    }
+  }
+}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GET /api/geo/location -->
+    <div class="endpoint-card" id="get-api-geo-location">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-get">GET</span>
+                <span>/api/geo/location</span>
+            </div>
+            <span class="auth-badge">Public</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">
+                Resolves the visitor's geographic country code and default billing currency using reverse proxy headers (Cloudflare, Google Cloud, Fly.io) with local GeoIP fallback.
+            </p>
+            <div class="code-container">
+                <div class="code-header"><span>Response (200 OK)</span></div>
+                <div class="code-block">{
+  "status": "success",
+  "message": "Client location retrieved successfully.",
+  "data": {
+    "ip": "203.0.113.195",
+    "country_code": "US",
+    "currency": "USD"
+  }
+}</div>
+            </div>
+        </div>
+    </div>
+
     <!-- Escrow Refund & Scheduled Automation Guide -->
     <div style="margin-top: 32px; padding: 24px; background: rgba(2, 245, 168, 0.04); border: 1px solid rgba(2, 245, 168, 0.2); border-radius: 12px;">
         <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">

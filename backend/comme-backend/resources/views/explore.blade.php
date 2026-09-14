@@ -61,6 +61,8 @@
             $endpoints = [
                 ['method' => 'GET', 'path' => 'api/posts', 'label' => 'Feed Posts', 'desc' => 'Browse paginated artwork posts from artists.'],
                 ['method' => 'GET', 'path' => 'api/commission-services', 'label' => 'Commission Services', 'desc' => 'View available commission listings & prices.'],
+                ['method' => 'GET', 'path' => 'api/exchange-rates', 'label' => 'Exchange Rates', 'desc' => 'Live multi-currency conversion rates, symbols & location.'],
+                ['method' => 'GET', 'path' => 'api/geo/location', 'label' => 'GeoIP Location', 'desc' => 'Verified client IP country code and billing currency.'],
                 ['method' => 'GET', 'path' => 'api/me', 'label' => 'Current User (/me)', 'desc' => 'Get profile & artist status of logged in user.'],
                 ['method' => 'GET', 'path' => 'api/notifications/unread-count', 'label' => 'Unread Notifications', 'desc' => 'Count of unread alerts for current user.'],
             ];

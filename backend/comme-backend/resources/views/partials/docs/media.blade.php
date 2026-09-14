@@ -88,4 +88,54 @@ sort_order: 0 (optional integer)</div>
             <p style="font-size: 14px; color: var(--text-secondary);">Direct storage asset streaming and download provider with automatic CORS headers (<code>Access-Control-Allow-Origin: *</code>). Resolves files across public storage disks and mounts. Supports forced attachment downloads via <code>?download=1&name=custom_name.ext</code> query parameter.</p>
         </div>
     </div>
+
+    <!-- GET /api/media/private/{media}/download -->
+    <div class="endpoint-card" id="get-api-media-private-download">
+        <div class="endpoint-header">
+            <div class="endpoint-path">
+                <span class="method-pill method-get">GET</span>
+                <span>/api/media/private/{media}/download</span>
+            </div>
+            <span class="auth-badge">Order Participants / Owner / Staff</span>
+        </div>
+        <div class="endpoint-body">
+            <p style="font-size: 14px; color: var(--text-secondary);">
+                Securely serves private, access-controlled media assets stored on non-public disks. Strictly enforces cryptographic authorization checks: file owner, assigned commission buyer or artist, and platform moderation staff.
+            </p>
+            <table class="param-table">
+                <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="param-name">media</span> <span class="param-required">req</span></td><td><span class="param-type">integer</span></td><td>Media record ID.</td></tr>
+                    <tr><td><span class="param-name">type</span> <span class="param-optional">opt</span></td><td><span class="param-type">string</span></td><td>Pass <code>thumb</code> to download or view thumbnail instead of original file.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Dual Deliverable & Anti-Art Theft Architecture Guide -->
+    <div style="margin-top: 32px; padding: 24px; background: rgba(0, 195, 255, 0.04); border: 1px solid rgba(0, 195, 255, 0.2); border-radius: 12px;">
+        <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+            <img src="{{ asset('icons/SVGs/Shield/shield-white.svg') }}" class="icon-themed" style="width: 18px; height: 18px;" alt="" />
+            Dual Deliverable & Anti-Art Theft Security Pipeline
+        </h3>
+        <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px;">
+            To eliminate buyer-side art theft and chargeback fraud, Comme implements an automated two-tier deliverable isolation pipeline:
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 16px;">
+            <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 16px;">
+                <div style="font-size: 13px; font-weight: 700; color: var(--brand-gold); margin-bottom: 6px;">1. Review State: Automated Watermarked Previews</div>
+                <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 0;">
+                    When artists deliver work (<code>POST /api/commissions/{id}/deliver</code>), an unwatermarked master is placed in private disk storage. A background job uses PHP GD to stamp an aggressive diagonal repeating watermark pattern (<code>COMME PREVIEW • UNPAID • ORDER #[ID]</code>). The client inspects deliverables via <code>GET /api/commissions/{id}/proof/{media}</code> with zero risk of unpaid asset extraction.
+                </p>
+            </div>
+
+            <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 16px;">
+                <div style="font-size: 13px; font-weight: 700; color: var(--brand-teal); margin-bottom: 6px;">2. Completed State: Gated Full-Resolution Masters</div>
+                <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 0;">
+                    Pristine, full-resolution deliverable downloads (<code>GET /api/commissions/{id}/download-original/{media}</code>) remain cryptographically locked behind the commission completion gate. Once the buyer clicks <strong>Approve Delivery</strong> (<code>POST .../confirm</code>), funds in escrow disburse to the creator and the original unwatermarked downloads unlock permanently.
+                </p>
+            </div>
+        </div>
+    </div>
 </section>
