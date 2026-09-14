@@ -396,6 +396,7 @@ export const OrderCommissionPage: React.FC = () => {
 
                                     <Textarea
                                         id="description"
+                                        name="description"
                                         placeholder="Describe your character concept, preferred poses, color palette, background atmosphere, or paste reference images directly (Ctrl+V)..."
                                         value={description}
                                         onChange={(e) => setDescription(e.target.value)}
@@ -419,6 +420,9 @@ export const OrderCommissionPage: React.FC = () => {
 
                                     {/* Hidden input */}
                                     <input
+                                        id="commission_reference_files"
+                                        name="reference_files"
+                                        aria-label="Upload visual reference files"
                                         type="file"
                                         ref={fileInputRef}
                                         onChange={(e) => {

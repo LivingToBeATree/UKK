@@ -273,7 +273,7 @@ export const TipArtistModal: React.FC<TipArtistModalProps> = ({
                     {/* Custom Amount Input */}
                     <div>
                         <div className="flex items-center justify-between mb-1.5">
-                            <label className="text-xs font-semibold text-muted-foreground">
+                            <label htmlFor="tipCustomAmount" className="text-xs font-semibold text-muted-foreground">
                                 Custom Amount ({CURRENCY_CONFIGS[tipCurrency]?.symbol || tipCurrency})
                             </label>
                             <button
@@ -294,6 +294,8 @@ export const TipArtistModal: React.FC<TipArtistModalProps> = ({
                                 {CURRENCY_CONFIGS[tipCurrency]?.symbol}
                             </span>
                             <Input
+                                id="tipCustomAmount"
+                                name="customAmount"
                                 type="number"
                                 min={limits.min}
                                 step={limits.step}
@@ -323,8 +325,11 @@ export const TipArtistModal: React.FC<TipArtistModalProps> = ({
 
                     {/* Supporter Name */}
                     <div>
-                        <label className="text-xs font-semibold text-muted-foreground block mb-1.5">Your Name (Optional)</label>
+                        <label htmlFor="tipSupporterName" className="text-xs font-semibold text-muted-foreground block mb-1.5">Your Name (Optional)</label>
                         <Input
+                            id="tipSupporterName"
+                            name="supporterName"
+                            autoComplete="name"
                             placeholder="Anonymous Supporter"
                             value={supporterName}
                             onChange={(e) => setSupporterName(e.target.value)}
@@ -335,8 +340,10 @@ export const TipArtistModal: React.FC<TipArtistModalProps> = ({
 
                     {/* Cheer Message */}
                     <div>
-                        <label className="text-xs font-semibold text-muted-foreground block mb-1.5">Cheer Message</label>
+                        <label htmlFor="tipCheerMessage" className="text-xs font-semibold text-muted-foreground block mb-1.5">Cheer Message</label>
                         <Textarea
+                            id="tipCheerMessage"
+                            name="cheerMessage"
                             placeholder="Love your illustrations! Keep up the amazing art..."
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}

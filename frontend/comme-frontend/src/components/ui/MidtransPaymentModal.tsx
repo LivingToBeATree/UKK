@@ -433,8 +433,11 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
 
                                 <div className="space-y-3 p-4 rounded-2xl bg-muted/20 border border-border text-xs">
                                     <div className="space-y-1">
-                                        <Label className="text-[11px]">Card Number</Label>
+                                        <Label htmlFor="midtransCardNumber" className="text-[11px]">Card Number</Label>
                                         <Input
+                                            id="midtransCardNumber"
+                                            name="cardNumber"
+                                            autoComplete="cc-number"
                                             value={cardNumber}
                                             onChange={(e) => setCardNumber(e.target.value)}
                                             className="font-mono text-xs h-9 bg-card"
@@ -444,8 +447,11 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
 
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="space-y-1">
-                                            <Label className="text-[11px]">Expiry Date</Label>
+                                            <Label htmlFor="midtransCardExpiry" className="text-[11px]">Expiry Date</Label>
                                             <Input
+                                                id="midtransCardExpiry"
+                                                name="cardExpiry"
+                                                autoComplete="cc-exp"
                                                 value={cardExpiry}
                                                 onChange={(e) => setCardExpiry(e.target.value)}
                                                 className="font-mono text-xs h-9 bg-card"
@@ -453,8 +459,11 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
                                             />
                                         </div>
                                         <div className="space-y-1">
-                                            <Label className="text-[11px]">CVV / CVC</Label>
+                                            <Label htmlFor="midtransCardCvv" className="text-[11px]">CVV / CVC</Label>
                                             <Input
+                                                id="midtransCardCvv"
+                                                name="cardCvv"
+                                                autoComplete="cc-csc"
                                                 value={cardCvv}
                                                 onChange={(e) => setCardCvv(e.target.value)}
                                                 className="font-mono text-xs h-9 bg-card"
@@ -464,8 +473,11 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
                                     </div>
 
                                     <div className="space-y-1">
-                                        <Label className="text-[11px]">Cardholder Name</Label>
+                                        <Label htmlFor="midtransCardHolderName" className="text-[11px]">Cardholder Name</Label>
                                         <Input
+                                            id="midtransCardHolderName"
+                                            name="cardholderName"
+                                            autoComplete="cc-name"
                                             value={cardName}
                                             onChange={(e) => setCardName(e.target.value)}
                                             className="text-xs h-9 bg-card"
