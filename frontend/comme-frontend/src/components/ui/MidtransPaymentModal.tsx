@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import { commissionOrderApi } from '@/services/commissionService';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import type { CommissionOrder } from '@/types';
 
 interface MidtransPaymentModalProps {
@@ -48,7 +49,10 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
     isMock = false,
     onPaymentSuccess,
 }) => {
-    const [activeMethod, setActiveMethod] = useState<PaymentMethod>('qris');
+    const { currency } = useCurrency();
+    const isInternational = currency !== 'IDR';
+
+    const [activeMethod, setActiveMethod] = useState<PaymentMethod>(isInternational ? 'card' : 'qris');
     const [selectedBank, setSelectedBank] = useState<BankChoice>('bca');
     const [copied, setCopied] = useState(false);
     const [processing, setProcessing] = useState(false);
@@ -94,7 +98,7 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
         }
 
         try {
-            const payment = await commissionOrderApi.initiatePayment(commission.id);
+            const payment = await commissionOrderApi.initiatePayment(commission.id, { currency });
             if (
                 payment.snap_token &&
                 typeof (window as unknown as { snap?: { pay: (token: string, cb: unknown) => void } }).snap?.pay === 'function'
@@ -139,7 +143,9 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
         if (isMock) {
             setTimeout(() => {
                 setProcessing(false);
-                toast.success('Payment captured into Escrow! Commission is now in progress.');
+                toast.info('Sandbox Showcase Mode', {
+                    description: 'Simulating successful escrow capture in development playground...',
+                });
                 onPaymentSuccess({ ...commission, status: 'in_progress' });
                 onClose();
             }, 600);
@@ -148,18 +154,22 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
 
         try {
             const updated = await commissionOrderApi.simulatePayment(commission.id);
-            toast.success('Payment captured into Escrow! Commission is now in progress.');
+            toast.success('Escrow Payment Confirmed!', {
+                description: 'Payment captured securely. The artist has been notified to begin production.',
+            });
             onPaymentSuccess(updated);
             onClose();
         } catch (err: unknown) {
             const status = (err as { response?: { status?: number } })?.response?.status;
             if (status === 404) {
-                toast.success('Payment captured into Escrow! Commission is now in progress.');
+                toast.info('Sandbox Demo Mode: Mock commission order', {
+                    description: 'Escrow payment simulated successfully!',
+                });
                 onPaymentSuccess({ ...commission, status: 'in_progress' });
                 onClose();
                 return;
             }
-            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Payment simulation failed';
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Payment failed';
             toast.error(msg);
         } finally {
             setProcessing(false);
@@ -207,6 +217,31 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
 
                         <button
                             type="button"
+                            onClick={() => setActiveMethod('card')}
+                            className={`w-full flex items-center gap-3 p-3 rounded-xl text-left text-xs font-semibold transition-all cursor-pointer ${
+                                activeMethod === 'card'
+                                    ? 'bg-primary/15 text-primary border border-primary/30 shadow-xs'
+                                    : 'text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent'
+                            }`}
+                        >
+                            <div className={`p-2 rounded-lg ${activeMethod === 'card' ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                                <CreditCard className="h-4 w-4" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <div className="flex items-center justify-between">
+                                    <p className="font-bold">Credit / Debit Card</p>
+                                    {isInternational && (
+                                        <span className="text-[9px] font-mono font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
+                                            Global
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="text-[10px] opacity-75 font-normal">Visa, Mastercard, JCB, Amex</p>
+                            </div>
+                        </button>
+
+                        <button
+                            type="button"
                             onClick={() => setActiveMethod('qris')}
                             className={`w-full flex items-center gap-3 p-3 rounded-xl text-left text-xs font-semibold transition-all cursor-pointer ${
                                 activeMethod === 'qris'
@@ -218,8 +253,15 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
                                 <QrCode className="h-4 w-4" />
                             </div>
                             <div className="min-w-0 flex-1">
-                                <p className="font-bold">QRIS / GoPay</p>
-                                <p className="text-[10px] opacity-75 font-normal">Instant QR Scan</p>
+                                <div className="flex items-center justify-between">
+                                    <p className="font-bold">QRIS / GoPay</p>
+                                    {isInternational && (
+                                        <span className="text-[9px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                                            IDR only
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="text-[10px] opacity-75 font-normal">Instant QR Scan (Indonesia)</p>
                             </div>
                         </button>
 
@@ -236,26 +278,15 @@ export const MidtransPaymentModal: React.FC<MidtransPaymentModalProps> = ({
                                 <Building2 className="h-4 w-4" />
                             </div>
                             <div className="min-w-0 flex-1">
-                                <p className="font-bold">Virtual Account</p>
+                                <div className="flex items-center justify-between">
+                                    <p className="font-bold">Virtual Account</p>
+                                    {isInternational && (
+                                        <span className="text-[9px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                                            IDR only
+                                        </span>
+                                    )}
+                                </div>
                                 <p className="text-[10px] opacity-75 font-normal">BCA, Mandiri, BNI, BRI</p>
-                            </div>
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => setActiveMethod('card')}
-                            className={`w-full flex items-center gap-3 p-3 rounded-xl text-left text-xs font-semibold transition-all cursor-pointer ${
-                                activeMethod === 'card'
-                                    ? 'bg-primary/15 text-primary border border-primary/30 shadow-xs'
-                                    : 'text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent'
-                            }`}
-                        >
-                            <div className={`p-2 rounded-lg ${activeMethod === 'card' ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}`}>
-                                <CreditCard className="h-4 w-4" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                                <p className="font-bold">Credit / Debit Card</p>
-                                <p className="text-[10px] opacity-75 font-normal">Visa, Mastercard, JCB</p>
                             </div>
                         </button>
 

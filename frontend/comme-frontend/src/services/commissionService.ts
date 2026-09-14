@@ -156,8 +156,8 @@ export const commissionOrderApi = {
     },
 
     // Payment initiation with Midtrans Snap
-    initiatePayment: async (commissionId: number | string) => {
-        const res = await api.post<ApiResponse<CommissionPayment>>(`/commissions/${commissionId}/payment`);
+    initiatePayment: async (commissionId: number | string, params?: { currency?: string; refresh?: boolean }) => {
+        const res = await api.post<ApiResponse<CommissionPayment>>(`/commissions/${commissionId}/payment`, params);
         return res.data.data;
     },
 
