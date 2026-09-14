@@ -14,6 +14,7 @@ use App\Models\Notification;
 use App\Services\API\V1\MidtransService;
 use App\Services\API\V1\MidtransPayoutService;
 use App\Services\API\V1\AntiArbitrageService;
+use App\Services\API\V1\GeoIpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -28,16 +29,26 @@ use App\Models\CommissionPayout;
 class PaymentController extends Controller
 {
     /**
-     * No Form Request here: amount and order_id are derived from the
-     * commission, never from client input.
+     * Initiate or retrieve an existing Midtrans Snap checkout session for escrow payment.
+     * Automatically applies intelligent payment channel routing: foreign orders are routed
+     * directly to international credit card checkout, while domestic IDR orders retain
+     * Indonesian Virtual Accounts, QRIS, and e-wallets.
      */
-    public function initiate(Commission $commission, MidtransService $midtransService): JsonResponse
+    public function initiate(Request $request, Commission $commission, MidtransService $midtransService): JsonResponse
     {
         Gate::authorize('initiatePayment', $commission);
 
-        $payment = DB::transaction(function () use ($commission, $midtransService): CommissionPayment {
+        $clientLocation = GeoIpService::getClientLocation($request);
+        $billingCurrency = strtoupper(trim((string) (
+            $request->get('currency')
+            ?: ($commission->commissionOption?->base_currency && $commission->commissionOption->base_currency !== 'IDR'
+                ? $commission->commissionOption->base_currency
+                : ($clientLocation['billing_currency'] ?? 'IDR'))
+        )));
+
+        $payment = DB::transaction(function () use ($request, $commission, $midtransService, $billingCurrency): CommissionPayment {
             $lockedCommission = Commission::query()
-                ->with(['user', 'commissionService'])
+                ->with(['user', 'commissionService', 'commissionOption'])
                 ->whereKey($commission->id)
                 ->lockForUpdate()
                 ->firstOrFail();
@@ -59,13 +70,13 @@ class PaymentController extends Controller
                 ]);
             }
 
-            if (! $payment->snap_token || str_starts_with($payment->snap_token, 'mock_snap_token_')) {
+            if ($request->boolean('refresh') || ! $payment->snap_token || str_starts_with($payment->snap_token, 'mock_snap_token_')) {
                 $freshOrderId = 'CMS-'.$lockedCommission->id.'-'.now()->timestamp.'-'.Str::random(8);
                 $payment->update([
                     'order_id' => $freshOrderId,
                 ]);
                 $payment->update([
-                    'snap_token' => $midtransService->createSnapTransaction($payment, $lockedCommission),
+                    'snap_token' => $midtransService->createSnapTransaction($payment, $lockedCommission, $billingCurrency),
                 ]);
             }
 

@@ -24,30 +24,96 @@ class MidtransService
     }
 
     /**
+     * Determine the list of enabled payment channels for Midtrans Snap.
+     * International orders (non-IDR currencies like USD, EUR, GBP, JPY, SGD)
+     * are strictly routed to ['credit_card'] (Visa, Mastercard, JCB, Amex)
+     * so foreign clients land directly on a clean international card checkout
+     * without confusing domestic Indonesian Virtual Accounts, QRIS, or e-wallets.
+     */
+    public function getEnabledPayments(?string $billingCurrency): ?array
+    {
+        $currency = strtoupper(trim((string) $billingCurrency));
+
+        if (! empty($currency) && $currency !== 'IDR') {
+            return ['credit_card'];
+        }
+
+        return null;
+    }
+
+    /**
+     * Build standard payload for Midtrans Snap commission order transaction.
+     */
+    public function buildSnapPayload(
+        CommissionPayment $payment,
+        Commission $commission,
+        ?string $billingCurrency = null
+    ): array {
+        $payload = [
+            'transaction_details' => [
+                'order_id' => $payment->order_id,
+                'gross_amount' => (int) $payment->gross_amount,
+            ],
+            'customer_details' => [
+                'first_name' => $commission->user->display_name ?? $commission->user->username ?? 'Customer',
+                'email' => $commission->user->email,
+            ],
+            'item_details' => [[
+                'id' => (string) $commission->id,
+                'price' => (int) $payment->gross_amount,
+                'quantity' => 1,
+                'name' => mb_substr($commission->commissionService->name ?? 'Commission Service', 0, 50),
+            ]],
+        ];
+
+        if ($enabledPayments = $this->getEnabledPayments($billingCurrency)) {
+            $payload['enabled_payments'] = $enabledPayments;
+        }
+
+        return $payload;
+    }
+
+    /**
+     * Build standard payload for Midtrans Snap creator micro-donation / tip transaction.
+     */
+    public function buildTipSnapPayload(ArtistTip $tip): array
+    {
+        $payload = [
+            'transaction_details' => [
+                'order_id' => "TIP-{$tip->id}-" . time(),
+                'gross_amount' => (int) $tip->amount,
+            ],
+            'customer_details' => [
+                'first_name' => $tip->supporter_name ?: 'Supporter',
+                'email' => $tip->supporter_email ?: 'supporter@comme.art',
+            ],
+            'item_details' => [[
+                'id' => "tip-{$tip->id}",
+                'price' => (int) $tip->amount,
+                'quantity' => 1,
+                'name' => 'Tip for ' . mb_substr($tip->artistProfile->user->username ?? 'Artist', 0, 30),
+            ]],
+        ];
+
+        if ($enabledPayments = $this->getEnabledPayments($tip->currency)) {
+            $payload['enabled_payments'] = $enabledPayments;
+        }
+
+        return $payload;
+    }
+
+    /**
      * Asks Midtrans for a Snap token — the frontend uses this token to
      * open the Snap popup (via their snap.js script), which handles the
-     * actual card/e-wallet/VA UI entirely on Midtrans's side. We never
-     * see or touch raw card numbers ourselves.
+     * actual card/e-wallet/VA UI entirely on Midtrans's side.
      */
-    public function createSnapTransaction(CommissionPayment $payment, Commission $commission): string
-    {
+    public function createSnapTransaction(
+        CommissionPayment $payment,
+        Commission $commission,
+        ?string $billingCurrency = null
+    ): string {
         try {
-            return Snap::getSnapToken([
-                'transaction_details' => [
-                    'order_id' => $payment->order_id,
-                    'gross_amount' => (int) $payment->gross_amount,
-                ],
-                'customer_details' => [
-                    'first_name' => $commission->user->display_name ?? $commission->user->username ?? 'Customer',
-                    'email' => $commission->user->email,
-                ],
-                'item_details' => [[
-                    'id' => (string) $commission->id,
-                    'price' => (int) $payment->gross_amount,
-                    'quantity' => 1,
-                    'name' => mb_substr($commission->commissionService->name ?? 'Commission Service', 0, 50),
-                ]],
-            ]);
+            return Snap::getSnapToken($this->buildSnapPayload($payment, $commission, $billingCurrency));
         } catch (Exception $e) {
             Log::warning('Midtrans Snap Exception: ' . $e->getMessage());
 
@@ -65,22 +131,7 @@ class MidtransService
     public function createTipSnapTransaction(ArtistTip $tip): string
     {
         try {
-            return Snap::getSnapToken([
-                'transaction_details' => [
-                    'order_id' => "TIP-{$tip->id}-" . time(),
-                    'gross_amount' => (int) $tip->amount,
-                ],
-                'customer_details' => [
-                    'first_name' => $tip->supporter_name ?: 'Supporter',
-                    'email' => $tip->supporter_email ?: 'supporter@comme.art',
-                ],
-                'item_details' => [[
-                    'id' => "tip-{$tip->id}",
-                    'price' => (int) $tip->amount,
-                    'quantity' => 1,
-                    'name' => 'Tip for ' . mb_substr($tip->artistProfile->user->username ?? 'Artist', 0, 30),
-                ]],
-            ]);
+            return Snap::getSnapToken($this->buildTipSnapPayload($tip));
         } catch (Exception $e) {
             Log::warning('Midtrans Tip Snap Exception: ' . $e->getMessage());
 
