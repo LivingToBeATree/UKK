@@ -46,6 +46,8 @@
 ### 4. Commission Order Lifecycle & Escrow
 - **Customizable Service Ordering**: Interactive purchase wizard supporting base options, optional add-ons, client brief details, and reference attachments.
 - **Midtrans Snap Embedded Checkout**: Instant popup modal supporting Virtual Accounts (BCA, BNI, BRI, Mandiri, Permata), GoPay, QRIS, and Credit Cards.
+- **Intelligent Channel Routing & Region Badging**: Dynamically detects the client's billing currency (`useCurrency()`). Automatically defaults to Credit/Debit Card for non-IDR currencies, displays visual "Global" vs "IDR only" availability badges on payment tabs, and sends currency context to the backend for streamlined gateway routing.
+- **WCAG 2.1 & Autofill Compliant Form Controls**: Full keyboard accessibility, linked `<Label htmlFor="...">` elements, and standardized browser autofill attributes (`cc-number`, `cc-exp`, `cc-csc`, `cc-name`).
 - **Order State Machine Visualizer**: Real-time progress bar tracking order states (`pending` &rarr; `accepted` &rarr; `in_progress` &rarr; `review` &rarr; `completed` or `cancelled`).
 - **Deadline Negotiation**: Formal proposal-and-acceptance interface where creators can request delivery date extensions with justified notes, and buyers can accept or decline with one click.
 - **Artwork Delivery & Confirmation**: High-resolution delivery previews, single-click asset/ZIP download utility (`download.ts`), and client approval triggering automated escrow payout.

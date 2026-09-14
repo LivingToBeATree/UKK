@@ -107,6 +107,8 @@ graph TD
 ### 4. Commission Order Lifecycle & Escrow Protection
 - **Order State Machine**: Enforces valid state transitions: `pending` &rarr; `accepted` &rarr; `in_progress` &rarr; `review` &rarr; `completed` (or `cancelled`/`declined`).
 - **Escrow Vaulting**: Buyer deposits are safely held in escrow via Midtrans Snap until artwork delivery is approved.
+- **Intelligent Payment Channel Routing**: Dynamically adapts payment channels based on client billing currency and regional GeoIP. Foreign currencies (`USD`, `EUR`, `JPY`, `SGD`, `GBP`, `AUD`, `CAD`) are streamlined directly to global Credit/Debit Cards, while domestic Indonesian orders (`IDR`) activate the full local suite (QRIS, GoPay, ShopeePay, and Bank VAs).
+- **WCAG 2.1 Accessible & Autofill Compliant**: Form controls across checkout, tipping, and global search feature semantic `<Label htmlFor="...">` connections and standard browser autofill tags (`cc-number`, `cc-exp`, `cc-csc`, `cc-name`).
 - **Deadline Negotiation Protocol**: Formal proposal-and-acceptance protocol (`/propose-deadline`, `/accept-deadline`, `/decline-deadline`) allowing creators to request completion date adjustments with buyer agreement.
 - **Structured Revisions**: Client revision cycles tracked against service limits.
 - **Automated Payouts**: Completed orders trigger creator bank disbursements via Midtrans Iris.

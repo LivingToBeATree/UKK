@@ -77,6 +77,7 @@
 
 ### 8. Midtrans Snap & Iris Escrow Disbursements
 - **Midtrans Snap Checkout**: Secure token generation for buyer escrow deposits via `/api/commissions/{id}/payment`.
+- **Intelligent Channel Routing (`MidtransService`)**: Evaluates the order's billing currency. Non-IDR international checkouts (e.g. `USD`, `EUR`, `JPY`, `SGD`, `GBP`) dynamically restrict `enabled_payments` to `['credit_card']` for a streamlined, frictionless global experience. Domestic `IDR` checkouts activate the full Indonesian payment rail (QRIS, GoPay, ShopeePay, and Virtual Accounts).
 - **Live Settlement Verification**: Immediate payment status checks (`/payment/check-status`) to verify transactions in real time.
 - **Environment Route Guards**: Test payment simulation (`/payment/simulate`) strictly isolated to local and testing environments.
 - **Webhook Signature Verification**: SHA-512 hash verification for all Midtrans Snap callbacks (`settlement`, `pending`, `deny`, `expire`, `cancel`).

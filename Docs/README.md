@@ -11,9 +11,11 @@ Welcome to the **Comme** technical documentation directory. This directory conta
 | **[Architecture & Security Guide](ARCHITECTURE.md)** | In-depth breakdown of the system architecture, escrow state machine, Anti-Arbitrage PPP engine, Watermarking pipeline, and multi-disk file system. |
 | **[Backend Technical Guide](../backend/comme-backend/README.md)** | Laravel 12 REST API setup, endpoint reference catalog, Artisan background schedulers, and PHPUnit test suite. |
 | **[Frontend Technical Guide](../frontend/comme-frontend/README.md)** | React 19 Client SPA setup, design token system, live Studio Queue Board, Color Studio, and component organization. |
+| **[Interactive API Documentation Portal](http://localhost:8000)** | Full-stack interactive documentation portal with endpoint schemas, response envelopes, and code samples (available when backend server is running). |
 | **[Interactive API Explorer](http://localhost:8000/explore)** | In-browser API testing console with token persistence and latency measurement (available when backend server is running). |
 | **[Interactive Log Viewer](http://localhost:8000/log-viewer)** | In-browser real-time log inspector with stack trace visualization (available when backend server is running). |
 | **[Transactional Email Inspector](http://localhost:8000/emails)** | Live preview for transactional mailers with viewport switching and plaintext validation (available when backend server is running). |
+| **[RFC-7807 Error Catalog](http://localhost:8000/errors)** | Standardized machine-readable error responses and validation failure dictionary (available when backend server is running). |
 
 ---
 
@@ -28,10 +30,10 @@ Welcome to the **Comme** technical documentation directory. This directory conta
 
 ```mermaid
 graph TD
-    Client["React 19 SPA Client<br/>• Live Commission Queue<br/>• PPP Currency Switcher<br/>• Interactive Color Studio<br/>• Midtrans Snap.js Checkout"]
+    Client["React 19 SPA Client<br/>• Live Commission Queue<br/>• PPP Currency Switcher<br/>• Interactive Color Studio<br/>• Intelligent Payment Channel Routing<br/>• WCAG 2.1 Accessible Controls"]
     API["Laravel 12 REST API Engine<br/>• Commission State Machine<br/>• Anti-Arbitrage Service<br/>• Watermark Service GD<br/>• Sanctum & 2FA TOTP"]
     DB[("PostgreSQL 16+<br/>Database & Queued Jobs")]
-    Gateways["Midtrans Payment Systems<br/>• Snap Escrow Deposits<br/>• Iris Creator Bank Payouts"]
+    Gateways["Midtrans Payment Systems<br/>• Snap Escrow Deposits (Global Card vs Domestic IDR)<br/>• Iris Creator Bank Payouts"]
 
     Client -->|"REST API / Bearer Token"| API
     API -->|"PostgreSQL 16+ ORM"| DB

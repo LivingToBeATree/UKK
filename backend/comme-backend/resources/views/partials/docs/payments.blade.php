@@ -15,14 +15,24 @@
             <span class="auth-badge">Commission Buyer</span>
         </div>
         <div class="endpoint-body">
-            <p style="font-size: 14px; color: var(--text-secondary);">Generates Midtrans Snap token or initializes transaction for instant escrow payment checkout.</p>
+            <p style="font-size: 14px; color: var(--text-secondary);">
+                Generates a Midtrans Snap transaction token for buyer escrow deposits. Features <strong>Intelligent Channel Routing</strong>: international orders (non-IDR currencies like USD, EUR, JPY) automatically restrict <code>enabled_payments</code> to <code>['credit_card']</code> for a seamless global checkout, while domestic Indonesian orders activate the full domestic suite (QRIS, GoPay, ShopeePay, Bank VAs, and Cards).
+            </p>
+            <table class="param-table">
+                <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="param-name">currency</span> <span class="param-optional">opt</span></td><td><span class="param-type">string</span></td><td>Billing currency code (e.g. <code>USD</code>, <code>EUR</code>, <code>JPY</code>, <code>IDR</code>). Non-IDR automatically restricts Snap channels to global credit/debit cards.</td></tr>
+                    <tr><td><span class="param-name">refresh</span> <span class="param-optional">opt</span></td><td><span class="param-type">boolean</span></td><td>If <code>true</code>, forces token regeneration if the billing currency changed or the token expired.</td></tr>
+                </tbody>
+            </table>
             <div class="code-container">
                 <div class="code-header"><span>Response (200 OK)</span></div>
                 <div class="code-block">{
   "status": "success",
   "data": {
     "token": "midtrans-snap-token-xyz-12345",
-    "redirect_url": "https://app.sandbox.midtrans.com/snap/v2/vtweb/..."
+    "redirect_url": "https://app.sandbox.midtrans.com/snap/v2/vtweb/...",
+    "enabled_payments": ["credit_card"]
   }
 }</div>
             </div>
