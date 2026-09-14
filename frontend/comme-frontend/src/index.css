@@ -13,8 +13,8 @@
   --secondary-foreground: #18181b;
   --muted: #f4f4f5;
   --muted-foreground: #71717a;
-  --accent: #02f5a8;
-  --accent-foreground: #023826;
+  --accent: #f4f4f5;
+  --accent-foreground: #18181b;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
   --border: #e4e4e7;
@@ -36,76 +36,13 @@
   --secondary-foreground: #f4f4f5;
   --muted: #18181b;
   --muted-foreground: #a1a1aa;
-  --accent: #02f5a8;
-  --accent-foreground: #023826;
+  --accent: #27272a;
+  --accent-foreground: #f4f4f5;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
   --border: #27272a;
   --input: #27272a;
   --ring: #a802f5;
-}
-
-/* Brand color themes */
-[data-color-theme="purple"] {
-  --primary: #a802f5;
-  --primary-foreground: #ffffff;
-  --ring: #a802f5;
-}
-
-[data-color-theme="teal"] {
-  --primary: #02f5a8;
-  --primary-foreground: #032b1f;
-  --ring: #02f5a8;
-}
-
-[data-color-theme="amber"] {
-  --primary: #f59e0b;
-  --primary-foreground: #1f1300;
-  --ring: #f59e0b;
-}
-
-[data-color-theme="blue"] {
-  --primary: #2563eb;
-  --primary-foreground: #ffffff;
-  --ring: #2563eb;
-}
-
-[data-color-theme="crimson"] {
-  --primary: #e11d48;
-  --primary-foreground: #ffffff;
-  --ring: #e11d48;
-}
-
-[data-color-theme="lilac"] {
-  --primary: #b899ff;
-  --primary-foreground: #1e1035;
-  --ring: #b899ff;
-}
-
-[data-color-theme="pink"] {
-  --primary: #f43f5e;
-  --primary-foreground: #ffffff;
-  --ring: #f43f5e;
-}
-
-[data-color-theme="prism"] {
-  --primary: #a802f5;
-  --primary-foreground: #ffffff;
-  --ring: #02f5a8;
-}
-
-[data-color-theme="prism"] button.bg-primary,
-[data-color-theme="prism"] .bg-primary {
-  background: linear-gradient(135deg, #a802f5 0%, #0284f5 50%, #02f5a8 100%) !important;
-  background-size: 200% 200% !important;
-  animation: prismGradient 6s ease infinite !important;
-  color: #ffffff !important;
-}
-
-@keyframes prismGradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
 }
 
 @theme {
@@ -132,7 +69,7 @@
 }
 
 html {
-  font-size: 17px;
+  font-size: 18px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   scroll-behavior: smooth;
@@ -140,9 +77,15 @@ html {
   scrollbar-gutter: stable;
 }
 
+@media (min-width: 1024px) {
+  html {
+    font-size: 18.5px;
+  }
+}
+
 @media (min-width: 1536px) {
   html {
-    font-size: 17.5px;
+    font-size: 19.5px;
   }
 }
 
@@ -172,4 +115,14 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(140, 140, 160, 0.45);
+}
+
+/* Hide native ugly browser number input spin arrows */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
 }

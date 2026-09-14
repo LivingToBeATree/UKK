@@ -20,7 +20,7 @@ import {
     RefreshCw,
     Shield,
     Pipette,
-    Sparkles,
+    RotateCcw,
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { userService } from '@/services/userService';
@@ -28,7 +28,8 @@ import { payoutAccountApi } from '@/services/commissionService';
 import { twoFactorService } from '@/services/twoFactorService';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
-import { useColorTheme, type ColorTheme } from '@/hooks/useColorTheme';
+import { useColorTheme } from '@/hooks/useColorTheme';
+import { CustomColorPicker } from '@/components/ui/color-picker';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -38,7 +39,6 @@ import { Avatar } from '@/components/ui/avatar';
 import { toast } from '@/components/ui/sonner';
 import { TwoFactorSetupModal } from '@/components/auth/TwoFactorSetupModal';
 import { TwoFactorRecoveryModal } from '@/components/auth/TwoFactorRecoveryModal';
-import { CustomColorPicker } from '@/components/ui/color-picker';
 import type { ArtistPayoutAccount } from '@/types';
 
 interface ActiveSession {
@@ -73,14 +73,14 @@ function parseUserAgent(ua: string | null): { browser: string; os: string; isMob
 export const SettingsPage: React.FC = () => {
     const { user, refreshUser, logout } = useAuth();
     const { theme, setTheme } = useTheme();
-    const { colorTheme, setColorTheme, customColor, setCustomColor } = useColorTheme();
-    const [tempHex, setTempHex] = useState(customColor || '#A802F5');
+    const { customColor, setCustomColor } = useColorTheme();
+    const [tempColor, setTempColor] = useState(customColor || '#A802F5');
     const [activeTab, setActiveTab] = useState<'account' | 'security' | 'appearance' | 'payouts' | 'notifications' | 'privacy'>('account');
     const [savingAccount, setSavingAccount] = useState(false);
 
     useEffect(() => {
         if (customColor) {
-            setTempHex(customColor);
+            setTempColor(customColor);
         }
     }, [customColor]);
 
@@ -752,85 +752,42 @@ export const SettingsPage: React.FC = () => {
                                 </CardContent>
                             </Card>
 
-                            {/* Preset Brand Colors */}
-                            <Card className="shadow-sm">
-                                <CardHeader className="p-6 sm:p-8 pb-4">
-                                    <CardTitle className="text-lg lg:text-xl font-bold flex items-center gap-2.5">
-                                        <Palette className="h-5 w-5 text-primary" /> Curated Brand Accent Palettes
-                                    </CardTitle>
-                                    <CardDescription className="text-sm">
-                                        Select from distinct, non-overlapping accent palettes crafted for high contrast across buttons, active borders, and badges.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="p-6 sm:p-8 pt-2">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                        {[
-                                            { id: 'purple', label: 'Royal Violet', hex: '#A802F5', bg: 'bg-[#A802F5]', desc: 'Original signature highlight' },
-                                            { id: 'teal', label: 'Neon Teal', hex: '#02F5A8', bg: 'bg-[#02F5A8]', desc: 'Cyberpunk mint & cyan' },
-                                            { id: 'amber', label: 'Solar Amber', hex: '#F59E0B', bg: 'bg-[#F59E0B]', desc: 'Warm sunset amber energy' },
-                                            { id: 'blue', label: 'Electric Cobalt', hex: '#2563EB', bg: 'bg-[#2563EB]', desc: 'Deep vivid ultramarine blue' },
-                                            { id: 'crimson', label: 'Crimson Ruby', hex: '#E11D48', bg: 'bg-[#E11D48]', desc: 'Bold radiant ruby scarlet' },
-                                            { id: 'lilac', label: 'Dreamy Lilac', hex: '#B899FF', bg: 'bg-[#B899FF]', desc: 'Soft pastel neon lavender' },
-                                            { id: 'pink', label: 'Cyber Pink', hex: '#F43F5E', bg: 'bg-[#F43F5E]', desc: 'High-energy hyper pink' },
-                                            { id: 'prism', label: 'Prism Chroma', hex: '#A802F5', bg: 'bg-gradient-to-tr from-[#a802f5] via-[#0284f5] to-[#02f5a8]', desc: 'Dynamic animated chroma glow', isSpecial: true },
-                                        ].map((c) => {
-                                            const isActive = colorTheme === c.id;
-                                            return (
-                                                <button
-                                                    key={c.id}
-                                                    type="button"
-                                                    onClick={() => setColorTheme(c.id as ColorTheme)}
-                                                    className={`flex flex-col items-start p-5 rounded-2xl border text-left transition-all cursor-pointer ${
-                                                        isActive
-                                                            ? 'border-primary bg-primary/10 text-foreground ring-2 ring-primary/40 shadow-xs'
-                                                            : 'border-border hover:bg-secondary/60 text-muted-foreground'
-                                                    }`}
-                                                >
-                                                    <div className="flex items-center justify-between w-full mb-3">
-                                                        <span className={`h-7 w-7 rounded-full ${c.bg} shadow-md ring-2 ring-border/80`} />
-                                                        <div className="flex items-center gap-1.5">
-                                                            {c.isSpecial && <Sparkles className="h-4 w-4 text-amber-400 animate-pulse" />}
-                                                            {isActive && <Check className="h-4 w-4 text-primary" />}
-                                                        </div>
-                                                    </div>
-                                                    <span className="text-sm font-bold text-foreground">{c.label}</span>
-                                                    <span className="text-xs text-muted-foreground mt-0.5">{c.desc}</span>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* Custom Color Wheel Studio */}
-                            <Card className={`shadow-sm transition-all ${colorTheme === 'custom' ? 'border-primary ring-2 ring-primary/30 bg-primary/5' : ''}`}>
+                            {/* Interactive Color Studio */}
+                            <Card className="shadow-sm border-border/80">
                                 <CardHeader className="p-6 sm:p-8 pb-4">
                                     <div className="flex items-center justify-between">
                                         <CardTitle className="text-lg lg:text-xl font-bold flex items-center gap-2.5">
-                                            <Pipette className="h-5 w-5 text-primary" /> Interactive Custom Color Studio
+                                            <Pipette className="h-5 w-5 text-primary" /> Brand Accent & Color Studio
                                         </CardTitle>
-                                        {colorTheme === 'custom' && (
-                                            <span className="text-xs font-bold text-primary bg-primary/15 border border-primary/30 px-3 py-1 rounded-full">
-                                                ACTIVE CUSTOM THEME
-                                            </span>
+                                        {customColor.toUpperCase() !== '#A802F5' && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => {
+                                                    setCustomColor('#A802F5');
+                                                    setTempColor('#A802F5');
+                                                    toast.success('Reset to signature Royal Violet (#A802F5)');
+                                                }}
+                                                className="h-8 px-3 text-xs gap-1.5 cursor-pointer"
+                                            >
+                                                <RotateCcw className="h-3.5 w-3.5" /> Reset to Default
+                                            </Button>
                                         )}
                                     </div>
                                     <CardDescription className="text-sm">
-                                        Drag on the 2D gradient saturation canvas and hue spectrum to craft bespoke tones, or fine-tune exact RGB and HEX channels.
+                                        Customize your primary brand accent color across buttons, active borders, and focus rings using the interactive color wheel, hex code, or RGB channels.
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="p-6 sm:p-8 pt-2">
                                     <CustomColorPicker
-                                        value={customColor || tempHex}
+                                        value={tempColor}
                                         onChange={(hex) => {
-                                            setTempHex(hex);
+                                            setTempColor(hex);
                                             setCustomColor(hex);
-                                            setColorTheme('custom');
                                         }}
                                         onApply={(hex) => {
                                             setCustomColor(hex);
-                                            setColorTheme('custom');
-                                            toast.success(`Custom accent color ${hex.toUpperCase()} applied!`);
+                                            toast.success(`Brand accent color set to ${hex.toUpperCase()}`);
                                         }}
                                     />
                                 </CardContent>
