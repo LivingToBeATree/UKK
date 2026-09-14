@@ -498,6 +498,9 @@ export const CommandPalette: React.FC = () => {
                             <Search className="h-5 w-5 text-muted-foreground shrink-0" />
                             <input
                                 ref={inputRef}
+                                id="commandPaletteSearch"
+                                name="commandPaletteSearch"
+                                aria-label="Global search and navigation"
                                 value={query}
                                 onChange={(e) => {
                                     setQuery(e.target.value);
