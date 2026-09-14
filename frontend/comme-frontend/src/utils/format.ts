@@ -18,7 +18,7 @@ export const formatPrice = (value: number | string | undefined | null, forcedCur
     let currencyCode = forcedCurrency;
     if (!currencyCode && typeof window !== 'undefined') {
         try {
-            currencyCode = localStorage.getItem('comme_currency_preference') || 'IDR';
+            currencyCode = (window as any).__COMME_CURRENCY__ || 'IDR';
         } catch {
             currencyCode = 'IDR';
         }
@@ -32,7 +32,8 @@ export const formatPrice = (value: number | string | undefined | null, forcedCur
         }).format(num);
     }
 
-    const rate = FALLBACK_EXCHANGE_RATES[currencyCode] ?? 1;
+    const liveRates = typeof window !== 'undefined' ? (window as any).__COMME_EXCHANGE_RATES__ : null;
+    const rate = (liveRates && liveRates[currencyCode]) ?? (FALLBACK_EXCHANGE_RATES[currencyCode] ?? 1);
     const converted = num * rate;
     const decimals = currencyCode === 'JPY' ? 0 : 2;
 

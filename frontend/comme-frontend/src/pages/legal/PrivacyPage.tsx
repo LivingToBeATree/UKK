@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Lock, ArrowUpRight, ShieldCheck, Database, FileCheck } from 'lucide-react';
+import { Check, Lock, ArrowUpRight, ShieldCheck, Database, FileCheck, Globe } from 'lucide-react';
 import { LegalLayout } from '@/layouts/LegalLayout';
 
 export const PrivacyPage: React.FC = () => {
@@ -58,7 +58,7 @@ export const PrivacyPage: React.FC = () => {
                                 1. Information We Collect
                             </h2>
                             <p>
-                                When creating an account or placing a commission, we collect your verified email, display name, username, and communication logs exchanged inside commission workspaces.
+                                When creating an account or placing a commission, we collect your verified email, display name, username, communication logs exchanged inside commission workspaces, and technical connection telemetry including your IP address and derived country-level geolocation data.
                             </p>
                         </section>
 
@@ -68,7 +68,7 @@ export const PrivacyPage: React.FC = () => {
                                 2. Legal Basis for Processing
                             </h2>
                             <p>
-                                Data processing occurs under contractual necessity to facilitate transactions, maintain verified creator profiles, deliver notifications, and fulfill statutory tax reporting requirements.
+                                Data processing occurs under contractual necessity and legitimate interest to facilitate escrow transactions, verify geographic qualification for Purchasing Power Parity (PPP) regional pricing, prevent cross-border pricing arbitrage, maintain verified creator profiles, and fulfill statutory tax and anti-fraud reporting requirements.
                             </p>
                         </section>
 
@@ -84,6 +84,16 @@ export const PrivacyPage: React.FC = () => {
                                 <li><strong>Midtrans (PT Midtrans):</strong> Licensed payment gateway for processing Snap checkout and Iris artist disbursements.</li>
                                 <li><strong>Cloud Storage:</strong> Encrypted object storage for portfolio images and commission deliverables.</li>
                             </ul>
+                        </section>
+
+                        <section className="space-y-2.5">
+                            <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+                                <Globe className="h-4 w-4 text-emerald-400" />
+                                4. IP Geolocation &amp; Regional Pricing Verification
+                            </h2>
+                            <p>
+                                Client IP addresses are evaluated to determine country-level geographic residence for binding billing currency calculation and PPP discount eligibility. This telemetry is evaluated ephemerally and cached without recording precise GPS, street addresses, or individual residential coordinates.
+                            </p>
                         </section>
                     </div>
                 </div>

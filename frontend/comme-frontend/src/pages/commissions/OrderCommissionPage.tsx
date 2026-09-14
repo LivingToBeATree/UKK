@@ -17,7 +17,9 @@ import {
     AlertCircle,
     Calendar,
     Clock,
+    Lock,
 } from 'lucide-react';
+import { FlagIcon } from '@/components/ui/FlagIcon';
 import { commissionOrderApi } from '@/services/commissionService';
 import { useAuth } from '@/hooks/useAuth';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -28,7 +30,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { DatePicker } from '@/components/ui/date-picker';
 import { toast } from '@/components/ui/sonner';
-import { formatPrice } from '@/utils/format';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { getOptionPriceBreakdown, getAddonPriceBreakdown, formatRegionalCurrency } from '@/utils/pppPricing';
 import { MediaLightboxModal } from '@/components/ui/MediaLightboxModal';
 import { cn } from '@/lib/utils';
 import type { CommissionService, CommissionOption, CommissionAddon } from '@/types';
@@ -44,6 +47,7 @@ export const OrderCommissionPage: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const { currency, convertPrice, detectedRegion, billingCurrency } = useCurrency();
     const {
         service,
         selectedOption,
@@ -128,8 +132,14 @@ export const OrderCommissionPage: React.FC = () => {
         );
     }
 
-    const basePrice = Number(selectedOption.base_price ?? selectedOption.price ?? 0);
-    const addonsTotal = selectedAddons.reduce((acc, ad) => acc + Number(ad.additional_price || 0), 0);
+    const optionBreakdown = selectedOption
+        ? getOptionPriceBreakdown(selectedOption, currency, convertPrice)
+        : null;
+    const basePrice = optionBreakdown?.effectivePrice ?? Number(selectedOption.base_price ?? selectedOption.price ?? 0);
+    const addonsTotal = selectedAddons.reduce((acc, ad) => {
+        const adBreakdown = getAddonPriceBreakdown(ad, selectedOption, currency, convertPrice);
+        return acc + adBreakdown.effectivePrice;
+    }, 0);
     const finalTotal = grandTotal !== undefined ? grandTotal : basePrice + addonsTotal;
 
     const handleFilesSelect = (files: FileList | File[]) => {
@@ -201,6 +211,7 @@ export const OrderCommissionPage: React.FC = () => {
             if (selectedOption.id) {
                 formData.append('commission_option_id', String(selectedOption.id));
             }
+            formData.append('currency', billingCurrency);
             selectedAddonIds.forEach((id) => {
                 formData.append('addon_ids[]', String(id));
             });
@@ -505,13 +516,27 @@ export const OrderCommissionPage: React.FC = () => {
                             <CardContent className="p-6 space-y-5">
                                 <div className="pb-3 border-b border-border/60">
                                     <h2 className="font-bold text-base text-foreground truncate">{service.name}</h2>
-                                    <div className="flex items-center gap-2 mt-1">
+                                    <div className="flex items-center justify-between gap-2 mt-1">
                                         <Badge variant="secondary" className="font-bold text-[10px] bg-primary/15 text-primary border border-primary/30 gap-1">
                                             <Layers className="h-3 w-3" /> {selectedOption.title}
                                         </Badge>
-                                        <span className="font-mono text-xs text-muted-foreground">
-                                            {formatPrice(basePrice)}
-                                        </span>
+                                        <div className="text-right">
+                                            {optionBreakdown?.hasRegionalDiscount && (
+                                                <span className="font-mono text-[10px] text-muted-foreground line-through mr-1.5">
+                                                    {optionBreakdown.formattedRawPrice}
+                                                </span>
+                                            )}
+                                            <span className="font-mono font-bold text-xs text-foreground">
+                                                {optionBreakdown ? optionBreakdown.formattedPrice : formatRegionalCurrency(basePrice, currency)}
+                                            </span>
+                                            {optionBreakdown?.hasRegionalPrice && (
+                                                <div className="mt-0.5">
+                                                    <span className={`inline-block text-[8px] font-bold px-1 py-0.2 rounded border ${optionBreakdown.badgeColor}`}>
+                                                        {optionBreakdown.badgeText}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 
@@ -522,20 +547,57 @@ export const OrderCommissionPage: React.FC = () => {
                                             <Tag className="h-3.5 w-3.5 text-primary" /> Selected Add-ons ({selectedAddons.length})
                                         </p>
                                         <div className="space-y-1.5">
-                                            {selectedAddons.map((ad) => (
-                                                <div
-                                                    key={ad.id || ad.title}
-                                                    className="flex items-center justify-between text-xs text-muted-foreground"
-                                                >
-                                                    <span className="truncate pr-2">+ {ad.title}</span>
-                                                    <span className="font-mono font-semibold text-foreground shrink-0">
-                                                        +{formatPrice(ad.additional_price)}
-                                                    </span>
-                                                </div>
-                                            ))}
+                                            {selectedAddons.map((ad) => {
+                                                const adBd = getAddonPriceBreakdown(ad, selectedOption, currency, convertPrice);
+                                                return (
+                                                    <div
+                                                        key={ad.id || ad.title}
+                                                        className="flex items-center justify-between text-xs text-muted-foreground"
+                                                    >
+                                                        <span className="truncate pr-2">+ {ad.title}</span>
+                                                        <div className="flex items-center gap-1.5 shrink-0">
+                                                            {adBd.hasRegionalDiscount && (
+                                                                <span className="font-mono text-[10px] text-muted-foreground line-through">
+                                                                    +{adBd.formattedRawPrice}
+                                                                </span>
+                                                            )}
+                                                            <span className="font-mono font-semibold text-foreground">
+                                                                +{adBd.formattedPrice}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 )}
+
+                                {/* Verified Billing Region Lock Banner */}
+                                <div className="p-2.5 rounded-2xl bg-secondary/50 border border-border/70 space-y-1">
+                                    <div className="flex items-center justify-between text-[10px]">
+                                        <span className="font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                                            <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" /> Verified Billing Region
+                                        </span>
+                                        <span className="font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 text-[9px]">
+                                            IP Locked
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-xs pt-0.5">
+                                        <div className="flex items-center gap-1.5">
+                                            <FlagIcon code={billingCurrency} className="w-4 h-3 shrink-0 shadow-2xs" />
+                                            <span className="font-semibold text-foreground">
+                                                {detectedRegion?.country_name || 'Indonesia'}
+                                            </span>
+                                        </div>
+                                        <span className="font-mono font-bold text-primary">
+                                            {billingCurrency} Tier
+                                        </span>
+                                    </div>
+                                    <p className="text-[10px] text-muted-foreground leading-tight pt-0.5 flex items-center gap-1">
+                                        <Lock className="h-3 w-3 text-muted-foreground shrink-0" />
+                                        <span>Regional pricing is strictly locked to your verified network location.</span>
+                                    </p>
+                                </div>
 
                                 {/* Target Delivery Summary */}
                                 <div className="space-y-1.5 py-1 text-xs">
@@ -560,9 +622,16 @@ export const OrderCommissionPage: React.FC = () => {
                                         <span className="text-xs font-bold text-foreground">Total Expected Payment</span>
                                         <p className="text-[10px] text-muted-foreground">Held securely in Escrow</p>
                                     </div>
-                                    <span className="text-2xl font-black font-mono text-emerald-400">
-                                        {formatPrice(finalTotal)}
-                                    </span>
+                                    <div className="text-right">
+                                        <span className="text-2xl font-black font-mono text-emerald-400">
+                                            {formatRegionalCurrency(finalTotal, currency)}
+                                        </span>
+                                        {optionBreakdown?.hasRegionalDiscount && (
+                                            <p className="text-[10px] text-emerald-400 font-medium">
+                                                Includes regional discount
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <Button

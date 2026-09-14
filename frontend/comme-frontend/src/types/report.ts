@@ -8,11 +8,12 @@ export type ReportReason =
   | 'copyright'
   | 'impersonation'
   | 'scam'
+  | 'arbitrage'
   | 'other';
 
 export type ReportStatus = 'pending' | 'investigating' | 'resolved' | 'dismissed';
 
-export type ReportableType = 'post' | 'post_comment' | 'commission_review' | 'portfolio' | 'commission_service' | 'user';
+export type ReportableType = 'post' | 'post_comment' | 'commission_review' | 'portfolio' | 'commission_service' | 'user' | 'commission';
 
 export interface Report {
   id: number;

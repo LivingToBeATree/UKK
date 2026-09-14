@@ -1,5 +1,4 @@
-import React from 'react';
-import { Check, ArrowUpRight, Scale, FileText, AlertTriangle } from 'lucide-react';
+import { Check, ArrowUpRight, Scale, FileText, AlertTriangle, Globe } from 'lucide-react';
 import { LegalLayout } from '@/layouts/LegalLayout';
 
 export const TermsPage: React.FC = () => {
@@ -79,6 +78,22 @@ export const TermsPage: React.FC = () => {
                             </h2>
                             <p>
                                 These Terms are governed by and construed in accordance with the laws of the Republic of Indonesia. Any legal disputes shall be resolved through Indonesian courts.
+                            </p>
+                        </section>
+
+                        <section className="space-y-2.5">
+                            <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+                                <Globe className="h-4 w-4 text-emerald-400" />
+                                4. Regional Pricing (PPP) &amp; Anti-Arbitrage Policy
+                            </h2>
+                            <p>
+                                Comme provides creators with Purchasing Power Parity (PPP) tools to make digital art commissions accessible to clients worldwide according to local purchasing power. Eligibility for regional pricing tiers and promotional discounts is strictly determined by the client&apos;s verified geographic location at checkout based on network IP geolocation.
+                            </p>
+                            <p>
+                                <strong>Anti-Arbitrage Prohibition &amp; Multi-Layer Detection:</strong> The use of Virtual Private Networks (VPNs), datacenter hosting IPs, residential proxy tunnels, forged HTTP proxy headers, false billing credentials, or foreign payment instruments to misrepresent geographic location in order to exploit lower regional pricing tiers (&quot;Regional Price Arbitrage&quot;) is strictly prohibited.
+                            </p>
+                            <p>
+                                <strong>Enforcement &amp; Legal Penalties:</strong> Comme employs automated network exit node analysis, datacenter ASN filtering, and payment instrument Bank Identification Number (BIN) reconciliation. Any order initiated via VPN/datacenter nodes will automatically revert to international benchmark (USD) pricing. In accordance with Indonesian Cyber Law (UU ITE No. 19/2016), any transaction identified as fraudulent regional arbitrage will be canceled immediately without refund, and associated user accounts will be permanently suspended.
                             </p>
                         </section>
                     </div>

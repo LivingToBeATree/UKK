@@ -131,19 +131,19 @@ export const CommissionQueueBoard: React.FC<CommissionQueueBoardProps> = ({
                 <motion.div
                     initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-primary/15 to-emerald-500/15 border border-amber-500/30 shadow-md backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+                    className="p-4 rounded-2xl bg-secondary/50 border border-border/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
                 >
                     <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
-                            <Sparkles className="h-5 w-5 animate-pulse" />
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+                            <Sparkles className="h-5 w-5" />
                         </div>
                         <div>
-                            <p className="text-xs font-bold text-foreground flex items-center gap-2">
+                            <div className="text-xs font-bold text-foreground flex items-center gap-2">
                                 <span>Your Commission is Slot #{userActiveItem.position || 1}!</span>
-                                <Badge variant="outline" className="text-[10px] bg-amber-500/20 text-amber-300 border-amber-500/40 font-mono">
+                                <Badge variant="outline" className="text-[10px] bg-secondary text-foreground border-border/60 font-mono">
                                     {userActiveItem.stage_label}
                                 </Badge>
-                            </p>
+                            </div>
                             <p className="text-[11px] text-muted-foreground mt-0.5">
                                 Order <span className="font-mono text-foreground font-semibold">{userActiveItem.code}</span> ({userActiveItem.service_name})
                                 {userActiveItem.deadline && ` • Due ${formatDateSafe(userActiveItem.deadline)}`}
@@ -164,7 +164,7 @@ export const CommissionQueueBoard: React.FC<CommissionQueueBoardProps> = ({
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <div className="space-y-1">
                             <h2 className="font-bold text-base text-foreground flex items-center gap-2">
-                                <Kanban className="h-4 w-4 text-primary" /> Live Studio Commission Queue
+                                <Kanban className="h-4 w-4 text-foreground" /> Live Studio Commission Queue
                             </h2>
                             <p className="text-xs text-muted-foreground">
                                 Real-time workflow tracker inspired by Skeb and VGen. Client names are protected for privacy.
@@ -176,8 +176,8 @@ export const CommissionQueueBoard: React.FC<CommissionQueueBoardProps> = ({
                                     <ShieldAlert className="h-3.5 w-3.5" /> Queue Full ({stats.total_active}/{stats.capacity})
                                 </Badge>
                             ) : (
-                                <Badge variant="default" className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs font-bold gap-1.5 py-1">
-                                    <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                                <Badge variant="outline" className="bg-primary/10 text-primary border border-primary/30 text-xs font-bold gap-1.5 py-1">
+                                    <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
                                     Accepting Slots ({stats.total_active}/{stats.capacity} Filled)
                                 </Badge>
                             )}
@@ -195,8 +195,8 @@ export const CommissionQueueBoard: React.FC<CommissionQueueBoardProps> = ({
                                 style={{ width: `${capacityPercent}%` }}
                                 className={`h-full transition-all duration-500 rounded-full ${
                                     capacityPercent > 80
-                                        ? 'bg-gradient-to-r from-amber-500 to-rose-500'
-                                        : 'bg-gradient-to-r from-primary to-emerald-400'
+                                        ? 'bg-rose-500'
+                                        : 'bg-primary'
                                 }`}
                             />
                         </div>

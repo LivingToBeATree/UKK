@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 interface DropdownContextValue {
     open: boolean;
     setOpen: (open: boolean) => void;
+    containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 const DropdownContext = React.createContext<DropdownContextValue | undefined>(undefined);
@@ -59,7 +60,7 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
     }, [open, setOpen]);
 
     return (
-        <DropdownContext.Provider value={{ open, setOpen }}>
+        <DropdownContext.Provider value={{ open, setOpen, containerRef }}>
             <div ref={containerRef} className={cn('relative inline-block text-left', className)}>
                 {children}
             </div>
@@ -111,10 +112,12 @@ export const DropdownMenuTrigger = React.forwardRef<HTMLElement, DropdownMenuTri
 );
 DropdownMenuTrigger.displayName = 'DropdownMenuTrigger';
 
+type DropdownSide = 'top' | 'bottom' | 'left' | 'right';
+
 export interface DropdownMenuContentProps extends Omit<HTMLMotionProps<'div'>, 'children'> {
     children?: React.ReactNode;
     align?: 'start' | 'end' | 'center';
-    side?: 'top' | 'bottom' | 'left' | 'right';
+    side?: DropdownSide;
 }
 
 export const DropdownMenuContent = React.forwardRef<
@@ -142,10 +145,31 @@ export const DropdownMenuContent = React.forwardRef<
         'right-center': 'left-full top-1/2 -translate-y-1/2 ml-2 origin-left',
     };
 
-    const posKey = `${side}-${align}`;
+    const [computedSide, setComputedSide] = React.useState<DropdownSide>(side);
+
+    React.useLayoutEffect(() => {
+        if (!context.open) {
+            setComputedSide(side);
+            return;
+        }
+        if (context.containerRef?.current) {
+            const rect = context.containerRef.current.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const spaceAbove = rect.top;
+            if (side === 'bottom' && spaceBelow < 260 && spaceAbove > spaceBelow) {
+                setComputedSide('top');
+            } else if (side === 'top' && spaceAbove < 260 && spaceBelow > spaceAbove) {
+                setComputedSide('bottom');
+            } else {
+                setComputedSide(side);
+            }
+        }
+    }, [context.open, side, context.containerRef]);
+
+    const posKey = `${computedSide}-${align}`;
     const chosenPos = positionClasses[posKey] || positionClasses['bottom-end'];
 
-    const motionVariants = {
+    const motionVariants: Record<DropdownSide, { initial: any; animate: any; exit: any }> = {
         bottom: {
             initial: { opacity: 0, scale: 0.95, y: -6 },
             animate: { opacity: 1, scale: 1, y: 0 },
@@ -168,7 +192,7 @@ export const DropdownMenuContent = React.forwardRef<
         },
     };
 
-    const variant = motionVariants[side] || motionVariants.bottom;
+    const variant = motionVariants[computedSide] || motionVariants.bottom;
 
     return (
         <AnimatePresence>

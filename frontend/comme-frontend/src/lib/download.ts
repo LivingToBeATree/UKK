@@ -142,26 +142,7 @@ export async function downloadFile(
         }
     }
 
-    // Strategy 1: Dedicated backend attachment download API with Axios
-    if (!isApiEndpoint) {
-        try {
-            const response = await api.get('/media/download-file', {
-                params: { url, name: fileName },
-                responseType: 'blob',
-            });
-
-            if (response.data && response.data instanceof Blob && response.data.size > 0) {
-                if (!response.data.type?.includes('text/html') && !response.data.type?.includes('application/json')) {
-                    triggerBlobSave(response.data, fileName);
-                    return true;
-                }
-            }
-        } catch (apiErr) {
-            console.warn('Backend download-file API endpoint error, trying direct fetch:', apiErr);
-        }
-    }
-
-    // Strategy 2: Direct fetch to URL with CORS
+    // Strategy 1: Direct fetch to URL with CORS
     try {
         const directUrl = url.includes('?') ? `${url}&download=1&name=${encodeURIComponent(fileName)}` : `${url}?download=1&name=${encodeURIComponent(fileName)}`;
         const response = await fetch(directUrl, {
@@ -180,7 +161,7 @@ export async function downloadFile(
         console.warn('Direct fetch failed:', fetchErr);
     }
 
-    // Strategy 3: Direct link click fallback for static media URLs
+    // Strategy 2: Direct link click fallback for static media URLs
     if (!isApiEndpoint) {
         try {
             const link = document.createElement('a');

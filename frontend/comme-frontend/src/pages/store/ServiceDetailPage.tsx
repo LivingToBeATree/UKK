@@ -27,13 +27,16 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar } from '@/components/ui/avatar';
 import { toast } from '@/components/ui/sonner';
-import { formatPrice } from '@/utils/format';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { getOptionPriceBreakdown, getAddonPriceBreakdown, formatRegionalCurrency } from '@/utils/pppPricing';
+import { FlagIcon } from '@/components/ui/FlagIcon';
 import type { CommissionService, CommissionOption, CommissionAddon } from '@/types';
 
 export const ServiceDetailPage: React.FC = () => {
     const { serviceId } = useParams<{ serviceId: string }>();
     const { user } = useAuth();
     const { requireAuth } = useAuthModal();
+    const { currency, convertPrice, detectedRegion, billingCurrency } = useCurrency();
     const navigate = useNavigate();
 
     const [service, setService] = useState<CommissionService | null>(null);
@@ -177,10 +180,16 @@ export const ServiceDetailPage: React.FC = () => {
         );
     }
 
-    const basePrice = selectedOption ? Number(selectedOption.base_price ?? selectedOption.price ?? 0) : 0;
+    const selectedOptionBreakdown = selectedOption
+        ? getOptionPriceBreakdown(selectedOption, currency, convertPrice)
+        : null;
+    const basePrice = selectedOptionBreakdown?.effectivePrice ?? (Number(selectedOption?.base_price ?? selectedOption?.price ?? 0));
     const availableAddons: CommissionAddon[] = selectedOption?.addons || [];
     const selectedAddons = availableAddons.filter((ad) => ad.id && selectedAddonIds.includes(ad.id));
-    const addonsTotal = selectedAddons.reduce((acc, ad) => acc + Number(ad.additional_price || 0), 0);
+    const addonsTotal = selectedAddons.reduce((acc, ad) => {
+        const adBreakdown = getAddonPriceBreakdown(ad, selectedOption, currency, convertPrice);
+        return acc + adBreakdown.effectivePrice;
+    }, 0);
     const grandTotal = basePrice + addonsTotal;
 
     const mediaList = service.media || [];
@@ -409,9 +418,26 @@ export const ServiceDetailPage: React.FC = () => {
                                                     )}
                                                 </div>
                                                 <div className="text-right shrink-0">
-                                                    <p className="font-mono font-bold text-emerald-400 text-sm sm:text-base">
-                                                        {formatPrice(option.base_price ?? option.price ?? 0)}
-                                                    </p>
+                                                    {(() => {
+                                                        const breakdown = getOptionPriceBreakdown(option, currency, convertPrice);
+                                                        return (
+                                                            <div className="space-y-0.5">
+                                                                {breakdown.hasRegionalDiscount && (
+                                                                    <p className="font-mono text-[11px] text-muted-foreground line-through">
+                                                                        {breakdown.formattedRawPrice}
+                                                                    </p>
+                                                                )}
+                                                                <p className="font-mono font-bold text-emerald-400 text-sm sm:text-base">
+                                                                    {breakdown.formattedPrice}
+                                                                </p>
+                                                                {breakdown.hasRegionalPrice && (
+                                                                    <span className={`inline-block text-[9px] font-semibold px-1.5 py-0.5 rounded border ${breakdown.badgeColor}`}>
+                                                                        {breakdown.badgeText}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })()}
                                                     {option.duration_days && (
                                                         <p className="text-[11px] text-muted-foreground flex items-center justify-end gap-1 mt-0.5">
                                                             <Clock className="h-3 w-3" />
@@ -465,9 +491,23 @@ export const ServiceDetailPage: React.FC = () => {
                                                     )}
                                                 </div>
                                             </div>
-                                            <span className="font-mono font-bold text-xs text-emerald-400 shrink-0">
-                                                +{formatPrice(addon.additional_price)}
-                                            </span>
+                                            <div className="text-right shrink-0">
+                                                {(() => {
+                                                    const adBd = getAddonPriceBreakdown(addon, selectedOption, currency, convertPrice);
+                                                    return (
+                                                        <div className="space-y-0.5">
+                                                            {adBd.hasRegionalDiscount && (
+                                                                <span className="font-mono text-[10px] text-muted-foreground line-through mr-1 block">
+                                                                    +{adBd.formattedRawPrice}
+                                                                </span>
+                                                            )}
+                                                            <span className="font-mono font-bold text-xs text-emerald-400">
+                                                                +{adBd.formattedPrice}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })()}
+                                            </div>
                                         </div>
                                     );
                                 })}
@@ -541,14 +581,28 @@ export const ServiceDetailPage: React.FC = () => {
 
                             {selectedOption ? (
                                 <div className="space-y-3.5">
-                                    <div>
-                                        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                                            Selected Package
-                                        </p>
-                                        <p className="text-sm font-bold text-foreground mt-0.5">{selectedOption.title}</p>
-                                        <p className="font-mono font-semibold text-xs text-foreground/80 mt-0.5">
-                                            {formatPrice(basePrice)}
-                                        </p>
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div>
+                                            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                                                Selected Package
+                                            </p>
+                                            <p className="text-sm font-bold text-foreground mt-0.5">{selectedOption.title}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            {selectedOptionBreakdown?.hasRegionalDiscount && (
+                                                <p className="font-mono text-[11px] text-muted-foreground line-through">
+                                                    {selectedOptionBreakdown.formattedRawPrice}
+                                                </p>
+                                            )}
+                                            <p className="font-mono font-bold text-xs text-foreground mt-0.5">
+                                                {selectedOptionBreakdown?.formattedPrice}
+                                            </p>
+                                            {selectedOptionBreakdown?.hasRegionalPrice && (
+                                                <span className={`inline-block text-[8px] font-bold px-1.5 py-0.5 rounded border mt-0.5 ${selectedOptionBreakdown.badgeColor}`}>
+                                                    {selectedOptionBreakdown.badgeText}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
 
                                     {/* Selected Add-ons itemization */}
@@ -557,19 +611,55 @@ export const ServiceDetailPage: React.FC = () => {
                                             <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                                                 Selected Add-ons ({selectedAddons.length})
                                             </p>
-                                            {selectedAddons.map((ad) => (
-                                                <div
-                                                    key={ad.id || ad.title}
-                                                    className="flex items-center justify-between text-xs text-muted-foreground"
-                                                >
-                                                    <span className="truncate pr-2">+ {ad.title}</span>
-                                                    <span className="font-mono font-semibold text-foreground shrink-0">
-                                                        +{formatPrice(ad.additional_price)}
-                                                    </span>
-                                                </div>
-                                            ))}
+                                            {selectedAddons.map((ad) => {
+                                                const adBd = getAddonPriceBreakdown(ad, selectedOption, currency, convertPrice);
+                                                return (
+                                                    <div
+                                                        key={ad.id || ad.title}
+                                                        className="flex items-center justify-between text-xs text-muted-foreground"
+                                                    >
+                                                        <span className="truncate pr-2">+ {ad.title}</span>
+                                                        <div className="flex items-center gap-1.5 shrink-0">
+                                                            {adBd.hasRegionalDiscount && (
+                                                                <span className="font-mono text-[10px] text-muted-foreground line-through">
+                                                                    +{adBd.formattedRawPrice}
+                                                                </span>
+                                                            )}
+                                                            <span className="font-mono font-semibold text-foreground">
+                                                                +{adBd.formattedPrice}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     )}
+
+                                    {/* Verified Billing Region Lock Banner */}
+                                    <div className="p-2.5 rounded-2xl bg-secondary/50 border border-border/70 space-y-1 my-2">
+                                        <div className="flex items-center justify-between text-[10px]">
+                                            <span className="font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                                                <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" /> Verified Billing Region
+                                            </span>
+                                            <span className="font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 text-[9px]">
+                                                IP Locked
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-xs pt-0.5">
+                                            <div className="flex items-center gap-1.5">
+                                                <FlagIcon code={billingCurrency} className="w-4 h-3 shrink-0 shadow-2xs" />
+                                                <span className="font-semibold text-foreground">
+                                                    {detectedRegion?.country_name || 'Indonesia'}
+                                                </span>
+                                            </div>
+                                            <span className="font-mono font-bold text-primary">
+                                                {billingCurrency} Tier
+                                            </span>
+                                        </div>
+                                        <p className="text-[10px] text-muted-foreground leading-tight pt-0.5">
+                                            Checkout pricing is locked to your network location to prevent regional price arbitrage.
+                                        </p>
+                                    </div>
 
                                     {/* Total Calculation */}
                                     <div className="pt-3 border-t border-border/60 flex items-baseline justify-between">
@@ -577,9 +667,16 @@ export const ServiceDetailPage: React.FC = () => {
                                             <p className="text-xs font-bold text-foreground">Total Price</p>
                                             <p className="text-[10px] text-muted-foreground">Escrow protected</p>
                                         </div>
-                                        <p className="text-2xl font-black font-mono text-emerald-400">
-                                            {formatPrice(grandTotal)}
-                                        </p>
+                                        <div className="text-right">
+                                            <p className="text-2xl font-black font-mono text-emerald-400">
+                                                {formatRegionalCurrency(grandTotal, currency)}
+                                            </p>
+                                            {selectedOptionBreakdown?.hasRegionalDiscount && (
+                                                <p className="text-[10px] text-emerald-400 font-medium">
+                                                    Includes regional discount
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             ) : (

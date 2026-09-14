@@ -46,11 +46,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from '@/components/ui/sonner';
 import { useNavigate } from 'react-router-dom';
-import { useColorTheme } from '@/hooks/useColorTheme';
 
 // Design System & Advanced Components
 import { ModeToggle } from '@/components/mode-toggle';
-import { ColorThemeToggle } from '@/components/color-theme-toggle';
 import { DatePicker } from '@/components/ui/date-picker';
 import { CustomColorPicker } from '@/components/ui/color-picker';
 import { CustomVideoPlayer } from '@/components/ui/CustomVideoPlayer';
@@ -130,7 +128,6 @@ Ready to finalize details! Feel free to ask any questions below. :sparkles: :roc
 
 export const PlaygroundPage: React.FC = () => {
     const navigate = useNavigate();
-    const { setColorTheme } = useColorTheme();
     const [rememberMe, setRememberMe] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [sidebarTab, setSidebarTab] = useState('overview');
@@ -214,7 +211,6 @@ export const PlaygroundPage: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2.5 shrink-0">
                     <ModeToggle />
-                    <ColorThemeToggle />
                     <Button variant="outline" size="sm" onClick={() => navigate('/dev')} className="gap-2 text-xs font-semibold">
                         <Terminal className="h-4 w-4 text-primary" /> Developer Console
                     </Button>
@@ -383,8 +379,7 @@ export const PlaygroundPage: React.FC = () => {
                             onChange={(hex) => setCustomColor(hex)}
                             onApply={(hex) => {
                                 setCustomColor(hex);
-                                setColorTheme('custom');
-                                toast.success(`Custom Brand Accent Applied: ${hex.toUpperCase()}`);
+                                toast.info(`Color Picked: ${hex.toUpperCase()}`);
                             }}
                         />
                     </CardContent>

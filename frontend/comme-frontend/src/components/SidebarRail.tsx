@@ -186,7 +186,7 @@ export const SidebarRail: React.FC = () => {
     return (
         <motion.aside
             initial={false}
-            animate={{ width: collapsed ? 68 : 260 }}
+            animate={{ width: collapsed ? 74 : 272 }}
             transition={{ type: 'spring', damping: 28, stiffness: 320 }}
             className="fixed left-0 top-0 bottom-0 z-50 bg-card/95 backdrop-blur-xl border-r border-border/70 flex flex-col justify-between py-3 px-2.5 select-none overflow-visible"
         >

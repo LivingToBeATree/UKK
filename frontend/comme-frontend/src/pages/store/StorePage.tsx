@@ -12,8 +12,9 @@ import { Select } from '@/components/ui/select';
 import { Avatar } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/sonner';
-import { formatPrice } from '@/utils/format';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { CurrencySelector } from '@/components/ui/CurrencySelector';
+import { getOptionPriceBreakdown } from '@/utils/pppPricing';
 import type { CommissionService, PaginationMeta } from '@/types';
 
 const DEFAULT_SERVICE_TAGS = [
@@ -32,6 +33,7 @@ const DEFAULT_SERVICE_TAGS = [
 ];
 
 export const StorePage: React.FC = () => {
+    const { currency, convertPrice } = useCurrency();
     const [searchParams, setSearchParams] = useSearchParams();
     const initialTag = searchParams.get('tag') || '';
     const initialSearch = searchParams.get('search') || '';
@@ -334,8 +336,11 @@ export const StorePage: React.FC = () => {
                     <AnimatePresence>
                         {services.map((service) => {
                             const artistUser = service.artist_profile?.user || (service as any).artistProfile?.user;
-                            const minPrice = service.options && service.options.length > 0
-                                ? Math.min(...service.options.map((o) => Number(o.base_price ?? o.price ?? 0)))
+                            const minBreakdown = service.options && service.options.length > 0
+                                ? service.options.reduce((min, opt) => {
+                                    const bd = getOptionPriceBreakdown(opt, currency, convertPrice);
+                                    return !min || bd.effectivePrice < min.effectivePrice ? bd : min;
+                                }, null as ReturnType<typeof getOptionPriceBreakdown> | null)
                                 : null;
 
                             return (
@@ -430,10 +435,22 @@ export const StorePage: React.FC = () => {
                                             {/* Price Footer */}
                                             <div className="p-4 pt-0 border-t border-border/40 mt-auto flex items-center justify-between">
                                                 <span className="text-[11px] text-muted-foreground font-medium">Starting from</span>
-                                                {minPrice !== null ? (
-                                                    <span className="text-sm font-extrabold text-primary">
-                                                        {formatPrice(minPrice)}
-                                                    </span>
+                                                {minBreakdown ? (
+                                                    <div className="flex items-center gap-1.5">
+                                                        {minBreakdown.hasRegionalDiscount && (
+                                                            <span className="text-[11px] text-muted-foreground line-through font-mono">
+                                                                {minBreakdown.formattedRawPrice}
+                                                            </span>
+                                                        )}
+                                                        <span className="text-sm font-extrabold text-primary font-mono">
+                                                            {minBreakdown.formattedPrice}
+                                                        </span>
+                                                        {minBreakdown.hasRegionalDiscount && (
+                                                            <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1 py-0.5 rounded border border-emerald-500/20">
+                                                                {minBreakdown.discountPercent}%
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 ) : (
                                                     <span className="text-xs font-semibold text-muted-foreground">Custom Quote</span>
                                                 )}

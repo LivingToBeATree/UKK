@@ -24,7 +24,9 @@ import {
     Flag,
     ShieldAlert,
     Code2,
+    Kanban,
 } from 'lucide-react';
+import { CommissionQueueBoard } from '@/components/artists/CommissionQueueBoard';
 import { ReportModal } from '@/components/modals/ReportModal';
 import { TipArtistModal } from '@/components/modals/TipArtistModal';
 import { EmbedBadgeModal } from '@/components/modals/EmbedBadgeModal';
@@ -409,7 +411,7 @@ export const UserProfilePage: React.FC = () => {
     const avatarUrl = user.avatar || user.avatar_url;
 
     const urlTab = searchParams.get('tab');
-    const validTabs = ['services', 'portfolio', 'reviews', 'posts', 'likes', 'bookmarks', 'about'];
+    const validTabs = ['services', 'portfolio', 'queue', 'reviews', 'posts', 'likes', 'bookmarks', 'about'];
     const defaultTab = (urlTab && validTabs.includes(urlTab))
         ? urlTab
         : (artistProfile
@@ -868,6 +870,9 @@ export const UserProfilePage: React.FC = () => {
                             <TabsTrigger value="portfolio" className="gap-1.5 rounded-xl text-xs font-semibold">
                                 <Palette className="h-3.5 w-3.5" /> Portfolio ({portfolios.length})
                             </TabsTrigger>
+                            <TabsTrigger value="queue" className="gap-1.5 rounded-xl text-xs font-semibold">
+                                <Kanban className="h-3.5 w-3.5" /> Queue
+                            </TabsTrigger>
                             <TabsTrigger value="reviews" className="gap-1.5 rounded-xl text-xs font-semibold">
                                 <Star className="h-3.5 w-3.5" /> Reviews ({reviews.length})
                             </TabsTrigger>
@@ -881,10 +886,10 @@ export const UserProfilePage: React.FC = () => {
                     {isOwnProfile && (
                         <>
                             <TabsTrigger value="likes" className="gap-1.5 rounded-xl text-xs font-semibold">
-                                <Heart className="h-3.5 w-3.5 text-primary" /> Likes ({likedPosts.length})
+                                <Heart className="h-3.5 w-3.5" /> Likes ({likedPosts.length})
                             </TabsTrigger>
                             <TabsTrigger value="bookmarks" className="gap-1.5 rounded-xl text-xs font-semibold">
-                                <Bookmark className="h-3.5 w-3.5 text-primary" /> Bookmarks ({bookmarkedPosts.length})
+                                <Bookmark className="h-3.5 w-3.5" /> Bookmarks ({bookmarkedPosts.length})
                             </TabsTrigger>
                         </>
                     )}
@@ -1093,6 +1098,16 @@ export const UserProfilePage: React.FC = () => {
                                 ))}
                             </div>
                         )}
+                    </TabsContent>
+                )}
+
+                {/* Live Commission Queue Tab (If Artist) */}
+                {artistProfile && (
+                    <TabsContent value="queue" className="space-y-4">
+                        <CommissionQueueBoard
+                            artistProfileId={artistProfile.id}
+                            artistUsername={user.username}
+                        />
                     </TabsContent>
                 )}
 

@@ -1,14 +1,7 @@
-import React from 'react';
-import { useCurrency, type SupportedCurrency } from '@/contexts/CurrencyContext';
-import {
-    DropdownMenu,
-    DropdownMenuTrigger,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { Check, Globe, ChevronDown } from 'lucide-react';
+import React, { useState } from 'react';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { FlagIcon } from '@/components/ui/FlagIcon';
+import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 
 interface CurrencySelectorProps {
@@ -20,125 +13,110 @@ interface CurrencySelectorProps {
     collapsed?: boolean;
 }
 
+/**
+ * CurrencySelector: A static, automatic region & currency indicator.
+ * Currency and country are strictly detected from the client's verified IP location.
+ * Uses motion and AnimatePresence to smoothly animate alongside SidebarRail collapse/expand.
+ */
 export const CurrencySelector: React.FC<CurrencySelectorProps> = ({
-    variant = 'outline',
-    size = 'sm',
     showLabel = true,
     className,
     mode = 'default',
     collapsed = false,
 }) => {
-    const { currency, setCurrency, config, availableCurrencies, ratesToIdr } = useCurrency();
+    const { currency, config, detectedRegion, billingCurrency } = useCurrency();
+    const [showTooltip, setShowTooltip] = useState(false);
 
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                {mode === 'sidebar' ? (
-                    <button
-                        type="button"
-                        className={cn(
-                            'w-full h-11 flex items-center rounded-xl transition-colors duration-150 cursor-pointer focus:outline-none overflow-hidden text-muted-foreground hover:text-foreground hover:bg-secondary/60',
-                            collapsed ? 'justify-center px-0' : 'justify-between px-2.5',
-                            className
-                        )}
-                        title={`Display Currency: ${config.name} (${config.code}) — Click to change`}
-                        aria-label={`Change Currency (Current: ${config.code})`}
-                    >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                            <span className="text-base shrink-0 leading-none">{config.flag}</span>
-                            {!collapsed && (
-                                <div className="flex flex-col text-left min-w-0">
-                                    <span className="text-xs font-semibold truncate text-foreground">
-                                        {config.code} ({config.symbol})
-                                    </span>
-                                    <span className="text-[10px] text-muted-foreground truncate leading-none">
-                                        {config.name}
-                                    </span>
-                                </div>
-                            )}
-                        </div>
+    // Active display currency strictly follows detected location
+    const activeCurrency = detectedRegion?.billing_currency || billingCurrency || currency || 'IDR';
+    const countryName = detectedRegion?.country_name || 'Indonesia';
+
+    // Sidebar navigation mode
+    if (mode === 'sidebar') {
+        return (
+            <div className="w-full relative">
+                <div
+                    onMouseEnter={() => setShowTooltip(true)}
+                    onMouseLeave={() => setShowTooltip(false)}
+                    className={cn(
+                        'w-full h-11 flex items-center rounded-xl pl-2 pr-2.5 gap-3 transition-colors duration-150 select-none overflow-hidden text-muted-foreground hover:text-foreground hover:bg-secondary/60',
+                        className
+                    )}
+                    aria-label={`Region: ${countryName} • Currency: ${activeCurrency}`}
+                >
+                    {/* Flag Icon Container: aligned with NavItem icon box */}
+                    <div className="w-6 h-6 flex items-center justify-center shrink-0 relative">
+                        <FlagIcon
+                            code={activeCurrency}
+                            className="w-5 h-3.5 shrink-0 shadow-2xs rounded-xs"
+                        />
+                    </div>
+
+                    {/* Animated Label + IP Badge */}
+                    <AnimatePresence initial={false}>
                         {!collapsed && (
-                            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                        )}
-                    </button>
-                ) : (
-                    <Button
-                        variant={variant}
-                        size={size}
-                        className={cn(
-                            'h-8 px-2.5 rounded-xl text-xs font-semibold gap-1.5 cursor-pointer transition-colors border-border/70 hover:border-primary/50',
-                            className
-                        )}
-                        title={`Current display currency: ${config.name} (${config.code})`}
-                    >
-                        <span className="text-sm leading-none">{config.flag}</span>
-                        <span className="font-mono font-bold text-[11px]">{config.code}</span>
-                        {showLabel && (
-                            <span className="text-[10px] text-muted-foreground hidden lg:inline font-mono">
-                                {config.symbol}
-                            </span>
-                        )}
-                    </Button>
-                )}
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent
-                align={mode === 'sidebar' ? (collapsed ? 'start' : 'center') : 'end'}
-                side={mode === 'sidebar' ? 'right' : 'bottom'}
-                className="w-56 rounded-2xl p-1.5 shadow-xl border-border/80 z-50"
-            >
-                <div className="px-2 py-1.5 text-[11px] font-bold text-muted-foreground flex items-center justify-between">
-                    <span className="flex items-center gap-1.5">
-                        <Globe className="h-3.5 w-3.5 text-primary" /> Display Currency
-                    </span>
-                    <span className="text-[9px] font-mono uppercase bg-primary/10 text-primary px-1.5 py-0.5 rounded">
-                        Real-time
-                    </span>
-                </div>
-                <DropdownMenuSeparator />
-
-                {availableCurrencies.map((c) => {
-                    const isSelected = c.code === currency;
-                    const idrRate = ratesToIdr[c.code as SupportedCurrency];
-                    return (
-                        <DropdownMenuItem
-                            key={c.code}
-                            onClick={() => setCurrency(c.code)}
-                            className={cn(
-                                'flex items-center justify-between rounded-xl px-2 py-1.5 text-xs cursor-pointer transition-colors',
-                                isSelected ? 'bg-primary/10 font-bold text-primary' : 'hover:bg-muted'
-                            )}
-                        >
-                            <div className="flex items-center gap-2 min-w-0">
-                                <span className="text-base">{c.flag}</span>
+                            <motion.div
+                                initial={{ opacity: 0, x: -6 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -6 }}
+                                transition={{ duration: 0.15 }}
+                                className="flex items-center justify-between flex-1 min-w-0 pr-1 overflow-hidden"
+                            >
                                 <div className="flex flex-col text-left min-w-0">
-                                    <span className="leading-tight truncate">
-                                        <span className="font-mono font-bold mr-1">{c.code}</span>
-                                        <span className="text-muted-foreground text-[11px]">({c.symbol})</span>
+                                    <span className="text-xs font-semibold truncate text-foreground flex items-center gap-1">
+                                        <span className="font-mono font-bold">{activeCurrency}</span>
+                                        <span className="text-muted-foreground font-normal">({config.symbol})</span>
                                     </span>
                                     <span className="text-[10px] text-muted-foreground truncate leading-none mt-0.5">
-                                        {c.name}
+                                        {countryName}
                                     </span>
                                 </div>
-                            </div>
-
-                            <div className="flex items-center gap-1.5 shrink-0 pl-2">
-                                {c.code !== 'IDR' && idrRate && (
-                                    <span className="text-[9px] font-mono text-muted-foreground">
-                                        ≈{idrRate.toLocaleString()}
-                                    </span>
-                                )}
-                                {isSelected && <Check className="h-4 w-4 text-primary" />}
-                            </div>
-                        </DropdownMenuItem>
-                    );
-                })}
-
-                <DropdownMenuSeparator />
-                <div className="px-2 py-1 text-[9px] text-muted-foreground leading-tight">
-                    Prices convert automatically. Final checkout and escrow are securely settled in IDR.
+                                <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 shrink-0">
+                                    IP
+                                </span>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
-            </DropdownMenuContent>
-        </DropdownMenu>
+
+                {/* Animated Collapsed Floating Tooltip Pill */}
+                <AnimatePresence>
+                    {collapsed && showTooltip && (
+                        <motion.div
+                            initial={{ opacity: 0, x: -8, scale: 0.94 }}
+                            animate={{ opacity: 1, x: 0, scale: 1 }}
+                            exit={{ opacity: 0, x: -6, scale: 0.94 }}
+                            transition={{ type: 'spring', damping: 22, stiffness: 420 }}
+                            className="absolute left-[calc(100%+14px)] top-1/2 -translate-y-1/2 z-50 px-3 py-1.5 text-xs font-semibold text-white bg-zinc-900 border border-zinc-700/80 rounded-lg shadow-2xl whitespace-nowrap pointer-events-none select-none flex items-center gap-1.5"
+                        >
+                            <span>{countryName} ({activeCurrency})</span>
+                            <span className="px-1 py-0.2 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400">
+                                IP
+                            </span>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+        );
+    }
+
+    // Default mode: compact pill/badge (Headers, Store, Mobile)
+    return (
+        <div
+            className={cn(
+                'h-8 px-2.5 rounded-xl text-xs font-semibold gap-1.5 flex items-center select-none bg-secondary/35 border border-border/60 text-muted-foreground',
+                className
+            )}
+            title={`Region: ${countryName} (${activeCurrency}) [IP Verified]`}
+            aria-label={`Region: ${countryName} (${activeCurrency})`}
+        >
+            <FlagIcon code={activeCurrency} className="w-4 h-3 shrink-0 shadow-2xs rounded-xs" />
+            <span className="font-mono font-bold text-[11px] text-foreground">{activeCurrency}</span>
+            {showLabel && (
+                <span className="text-[10px] text-muted-foreground hidden lg:inline font-mono">
+                    ({config.symbol})
+                </span>
+            )}
+        </div>
     );
 };

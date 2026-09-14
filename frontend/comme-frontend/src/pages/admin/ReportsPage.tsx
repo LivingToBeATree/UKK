@@ -247,6 +247,8 @@ export const ReportsPage: React.FC = () => {
                 return <UserX className="h-3.5 w-3.5 text-primary" />;
             case 'scam':
                 return <DollarSign className="h-3.5 w-3.5 text-emerald-400" />;
+            case 'arbitrage':
+                return <ShieldAlert className="h-3.5 w-3.5 text-amber-400" />;
             default:
                 return <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />;
         }
@@ -781,11 +783,29 @@ export const ReportsPage: React.FC = () => {
                                             )}
                                         </div>
 
-                                        {selectedReport.description ? (
+                                        {/* Anti-Arbitrage Forensic Alert Box */}
+                                        {(selectedReport.reason === 'arbitrage' || selectedReport.description?.includes('Anti-Arbitrage')) && (
+                                            <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-xs space-y-2 mt-2">
+                                                <div className="flex items-center gap-2 text-amber-400 font-bold">
+                                                    <ShieldAlert className="h-4 w-4 shrink-0" />
+                                                    <span>Anti-Arbitrage Monitor Alert (Terms Section 4)</span>
+                                                </div>
+                                                <div className="text-foreground/90 leading-relaxed text-xs whitespace-pre-line font-mono bg-black/40 p-2.5 rounded-xl border border-amber-500/20">
+                                                    {selectedReport.description}
+                                                </div>
+                                                <div className="pt-1.5 border-t border-amber-500/20 text-[11px] text-amber-300/80 flex items-center justify-between">
+                                                    <span>Enforcement: Immediate cancellation without refund &amp; account suspension</span>
+                                                    <span className="font-mono text-[10px]">ID: Law 19/2016 ITE</span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {selectedReport.description && !selectedReport.description?.includes('Anti-Arbitrage') && (
                                             <p className="text-xs text-muted-foreground leading-relaxed italic line-clamp-2 bg-secondary/20 p-2 rounded-xl border border-border/40">
                                                 "{selectedReport.description}"
                                             </p>
-                                        ) : (
+                                        )}
+                                        {!selectedReport.description && (
                                             <p className="text-[11px] text-muted-foreground italic">No extra notes provided</p>
                                         )}
                                     </div>

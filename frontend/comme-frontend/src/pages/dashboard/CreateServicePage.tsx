@@ -17,6 +17,9 @@ import {
     Tag,
     Lock,
     EyeOff,
+    Globe,
+    Zap,
+    Sliders,
 } from 'lucide-react';
 import { commissionServiceApi } from '@/services/commissionService';
 import { Button } from '@/components/ui/button';
@@ -26,12 +29,20 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/components/ui/sonner';
+import { FlagIcon } from '@/components/ui/FlagIcon';
+import { CustomNumberInput } from '@/components/ui/CustomNumberInput';
+import { BaseCurrencySelect } from '@/components/ui/BaseCurrencySelect';
+import { useCurrency, type SupportedCurrency, CURRENCY_CONFIGS } from '@/contexts/CurrencyContext';
+import { generatePppMatrix, calculatePppRegionalPrice } from '@/utils/pppPricing';
+import { cn } from '@/lib/utils';
 
 interface AddonItem {
     id?: number;
     title: string;
     description: string;
     additional_price: number;
+    base_currency?: SupportedCurrency;
+    regional_prices?: Record<string, number>;
 }
 
 interface OptionPackageItem {
@@ -39,8 +50,20 @@ interface OptionPackageItem {
     title: string;
     description: string;
     base_price: number;
+    base_currency?: SupportedCurrency;
+    pricing_mode?: 'ppp' | 'auto_fx' | 'custom';
+    regional_prices?: Record<string, number>;
     addons: AddonItem[];
 }
+
+const ALL_CURRENCIES: { code: SupportedCurrency; symbol: string; name: string }[] = [
+    { code: 'IDR', symbol: 'Rp', name: 'IDR' },
+    { code: 'USD', symbol: '$', name: 'USD' },
+    { code: 'EUR', symbol: '€', name: 'EUR' },
+    { code: 'JPY', symbol: '¥', name: 'JPY' },
+    { code: 'SGD', symbol: 'S$', name: 'SGD' },
+    { code: 'GBP', symbol: '£', name: 'GBP' },
+];
 
 interface MediaPreviewItem {
     file?: File;
@@ -55,6 +78,7 @@ export const CreateServicePage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const isEditMode = Boolean(id);
     const navigate = useNavigate();
+    const { convertBetween, ratesToIdr } = useCurrency();
 
     // Form state
     const [name, setName] = useState('');
@@ -69,11 +93,15 @@ export const CreateServicePage: React.FC = () => {
             title: 'Standard Package',
             description: 'Full color finished illustration with simple background and 2 revisions.',
             base_price: 500000,
+            base_currency: 'IDR',
+            pricing_mode: 'ppp',
+            regional_prices: {},
             addons: [
                 {
                     title: 'Commercial Rights License',
                     description: 'Full commercial rights for merchandise and advertising.',
                     additional_price: 300000,
+                    base_currency: 'IDR',
                 },
             ],
         },
@@ -105,18 +133,45 @@ export const CreateServicePage: React.FC = () => {
 
                 if (svc.options && svc.options.length > 0) {
                     setOptions(
-                        svc.options.map((opt) => ({
-                            id: opt.id,
-                            title: opt.title,
-                            description: opt.description || '',
-                            base_price: Number(opt.base_price ?? opt.price ?? 0),
-                            addons: (opt.addons || []).map((ad) => ({
-                                id: ad.id,
-                                title: ad.title,
-                                description: ad.description || '',
-                                additional_price: Number(ad.additional_price || 0),
-                            })),
-                        }))
+                        svc.options.map((opt) => {
+                            const baseCur = (opt.base_currency as SupportedCurrency) || 'IDR';
+                            const displayPrice =
+                                baseCur !== 'IDR' && opt.regional_prices && opt.regional_prices[baseCur] !== undefined
+                                    ? Number(opt.regional_prices[baseCur])
+                                    : Number(opt.base_price ?? opt.price ?? 0);
+
+                            return {
+                                id: opt.id,
+                                title: opt.title,
+                                description: opt.description || '',
+                                base_price: displayPrice,
+                                base_currency: baseCur,
+                                pricing_mode:
+                                    (opt.pricing_mode as 'ppp' | 'auto_fx' | 'custom') ||
+                                    (opt.regional_prices &&
+                                    Object.keys(opt.regional_prices).length > (baseCur !== 'IDR' ? 1 : 0)
+                                        ? 'custom'
+                                        : 'ppp'),
+                                regional_prices: (opt.regional_prices as Record<string, number>) || {},
+                                addons: (opt.addons || []).map((ad) => {
+                                    const rawAddon = Number(ad.additional_price || 0);
+                                    const displayAddonPrice =
+                                        baseCur !== 'IDR' && ad.regional_prices && ad.regional_prices[baseCur] !== undefined
+                                            ? Number(ad.regional_prices[baseCur])
+                                            : (baseCur !== 'IDR'
+                                                ? Number(convertBetween(rawAddon, 'IDR', baseCur).toFixed(2))
+                                                : rawAddon);
+                                    return {
+                                        id: ad.id,
+                                        title: ad.title,
+                                        description: ad.description || '',
+                                        additional_price: displayAddonPrice,
+                                        base_currency: (ad.base_currency as SupportedCurrency) || baseCur,
+                                        regional_prices: (ad.regional_prices as Record<string, number>) || {},
+                                    };
+                                }),
+                            };
+                        })
                     );
                 }
 
@@ -195,14 +250,64 @@ export const CreateServicePage: React.FC = () => {
         setServiceTags((prev) => prev.filter((t) => t !== tagToRemove));
     };
 
+    const handleChangeBaseCurrency = (pkgIdx: number, newCurrency: SupportedCurrency) => {
+        setOptions((prev) =>
+            prev.map((opt, i) => {
+                if (i !== pkgIdx) return opt;
+                const oldCurrency = opt.base_currency || 'IDR';
+                if (oldCurrency === newCurrency) return opt;
+
+                // Convert base price
+                let convertedNew = convertBetween(opt.base_price, oldCurrency, newCurrency);
+                if (newCurrency === 'IDR') {
+                    convertedNew = Math.round(convertedNew / 10000) * 10000;
+                } else if (newCurrency === 'JPY') {
+                    convertedNew = Math.round(convertedNew / 100) * 100;
+                } else {
+                    convertedNew = Math.round(convertedNew * 100) / 100;
+                }
+
+                // Also convert all addons in this package to the new currency
+                const updatedAddons = opt.addons.map((addon) => {
+                    const oldAddonCur = addon.base_currency || oldCurrency;
+                    let convertedAddon = convertBetween(addon.additional_price, oldAddonCur, newCurrency);
+                    if (newCurrency === 'IDR') {
+                        convertedAddon = Math.round(convertedAddon / 10000) * 10000;
+                    } else if (newCurrency === 'JPY') {
+                        convertedAddon = Math.round(convertedAddon / 100) * 100;
+                    } else {
+                        convertedAddon = Math.round(convertedAddon * 100) / 100;
+                    }
+                    return {
+                        ...addon,
+                        base_currency: newCurrency,
+                        additional_price: convertedAddon > 0 ? convertedAddon : addon.additional_price,
+                    };
+                });
+
+                return {
+                    ...opt,
+                    base_currency: newCurrency,
+                    base_price: convertedNew > 0 ? convertedNew : opt.base_price,
+                    addons: updatedAddons,
+                };
+            })
+        );
+    };
+
     // Option Package Handlers
     const handleAddPackage = () => {
+        const inheritCurrency = options[options.length - 1]?.base_currency || 'IDR';
+        const defaultBase = inheritCurrency === 'IDR' ? 750000 : (inheritCurrency === 'JPY' ? 7500 : 50);
         setOptions((prev) => [
             ...prev,
             {
                 title: `Package #${prev.length + 1}`,
                 description: 'Includes full resolution artwork with source files.',
-                base_price: 750000,
+                base_price: defaultBase,
+                base_currency: inheritCurrency,
+                pricing_mode: 'ppp',
+                regional_prices: {},
                 addons: [],
             },
         ]);
@@ -224,6 +329,9 @@ export const CreateServicePage: React.FC = () => {
 
     // Addon Handlers
     const handleAddAddon = (pkgIndex: number) => {
+        const pkgCur = options[pkgIndex]?.base_currency || 'IDR';
+        const defaultPrice = pkgCur === 'IDR' ? 150000 : (pkgCur === 'JPY' ? 1500 : 10);
+
         setOptions((prev) =>
             prev.map((opt, i) => {
                 if (i !== pkgIndex) return opt;
@@ -234,7 +342,8 @@ export const CreateServicePage: React.FC = () => {
                         {
                             title: 'New Add-on Option',
                             description: 'Optional additional feature for this package.',
-                            additional_price: 150000,
+                            additional_price: defaultPrice,
+                            base_currency: pkgCur,
                         },
                     ],
                 };
@@ -268,6 +377,40 @@ export const CreateServicePage: React.FC = () => {
                     addons: opt.addons.map((addon, aIdx) =>
                         aIdx === addonIndex ? { ...addon, [field]: value } : addon
                     ),
+                };
+            })
+        );
+    };
+
+    const handleUpdateAddonCurrency = (
+        pkgIndex: number,
+        addonIndex: number,
+        newCurrency: SupportedCurrency
+    ) => {
+        setOptions((prev) =>
+            prev.map((opt, i) => {
+                if (i !== pkgIndex) return opt;
+                return {
+                    ...opt,
+                    addons: opt.addons.map((addon, aIdx) => {
+                        if (aIdx !== addonIndex) return addon;
+                        const oldCur = addon.base_currency || opt.base_currency || 'IDR';
+                        if (oldCur === newCurrency) return addon;
+
+                        let converted = convertBetween(addon.additional_price, oldCur, newCurrency);
+                        if (newCurrency === 'IDR') {
+                            converted = Math.round(converted / 10000) * 10000;
+                        } else if (newCurrency === 'JPY') {
+                            converted = Math.round(converted / 100) * 100;
+                        } else {
+                            converted = Math.round(converted * 100) / 100;
+                        }
+                        return {
+                            ...addon,
+                            base_currency: newCurrency,
+                            additional_price: converted > 0 ? converted : addon.additional_price,
+                        };
+                    }),
                 };
             })
         );
@@ -332,7 +475,40 @@ export const CreateServicePage: React.FC = () => {
                 if (opt.description.trim()) {
                     formData.append(`options[${optIdx}][description]`, opt.description.trim());
                 }
-                formData.append(`options[${optIdx}][base_price]`, String(opt.base_price));
+
+                const baseCur = opt.base_currency || 'IDR';
+                const rawPrice = Number(opt.base_price) || 0;
+                const idrPrice =
+                    baseCur === 'IDR'
+                        ? rawPrice
+                        : (ratesToIdr[baseCur] ? Math.round(rawPrice * ratesToIdr[baseCur]) : rawPrice);
+
+                const optMode = opt.pricing_mode || 'ppp';
+                formData.append(`options[${optIdx}][base_price]`, String(idrPrice));
+                formData.append(`options[${optIdx}][base_currency]`, baseCur);
+                formData.append(`options[${optIdx}][pricing_mode]`, optMode);
+
+                let regionalMap: Record<string, number> = {};
+                if (optMode === 'custom') {
+                    regionalMap = { ...(opt.regional_prices || {}) };
+                } else if (optMode === 'ppp') {
+                    // Pre-generate PPP regional matrix for persistent caching
+                    ALL_CURRENCIES.forEach((c) => {
+                        if (c.code !== baseCur) {
+                            regionalMap[c.code] = calculatePppRegionalPrice(rawPrice, baseCur, c.code);
+                        }
+                    });
+                }
+
+                if (baseCur !== 'IDR') {
+                    regionalMap[baseCur] = rawPrice;
+                }
+
+                if (Object.keys(regionalMap).length > 0) {
+                    formData.append(`options[${optIdx}][regional_prices]`, JSON.stringify(regionalMap));
+                } else {
+                    formData.append(`options[${optIdx}][regional_prices]`, '');
+                }
 
                 opt.addons.forEach((addon, addIdx) => {
                     if (addon.title.trim()) {
@@ -343,10 +519,43 @@ export const CreateServicePage: React.FC = () => {
                                 addon.description.trim()
                             );
                         }
+                        const addonCur = addon.base_currency || baseCur;
+                        const rawAddonPrice = Number(addon.additional_price) || 0;
+                        const idrAddonPrice =
+                            addonCur === 'IDR'
+                                ? rawAddonPrice
+                                : Math.round(convertBetween(rawAddonPrice, addonCur, 'IDR'));
+
                         formData.append(
                             `options[${optIdx}][addons][${addIdx}][additional_price]`,
-                            String(addon.additional_price)
+                            String(idrAddonPrice)
                         );
+                        formData.append(
+                            `options[${optIdx}][addons][${addIdx}][base_currency]`,
+                            addonCur
+                        );
+
+                        // If option uses PPP, pre-generate PPP regional rates for this addon as well
+                        if (optMode === 'ppp') {
+                            const addonRegionalMap: Record<string, number> = {};
+                            ALL_CURRENCIES.forEach((c) => {
+                                if (c.code !== addonCur) {
+                                    addonRegionalMap[c.code] = calculatePppRegionalPrice(rawAddonPrice, addonCur, c.code);
+                                }
+                            });
+                            if (addonCur !== 'IDR') {
+                                addonRegionalMap[addonCur] = rawAddonPrice;
+                            }
+                            formData.append(
+                                `options[${optIdx}][addons][${addIdx}][regional_prices]`,
+                                JSON.stringify(addonRegionalMap)
+                            );
+                        } else if (optMode === 'custom' && addon.regional_prices && Object.keys(addon.regional_prices).length > 0) {
+                            formData.append(
+                                `options[${optIdx}][addons][${addIdx}][regional_prices]`,
+                                JSON.stringify(addon.regional_prices)
+                            );
+                        }
                     }
                 });
             });
@@ -680,7 +889,7 @@ export const CreateServicePage: React.FC = () => {
                 </Card>
 
                 {/* ── 3. Service Packages & Add-ons ── */}
-                <Card className="border-border/80 bg-card/60 backdrop-blur-xs shadow-xs rounded-3xl overflow-hidden">
+                <Card className="border-border/80 bg-card/60 backdrop-blur-xs shadow-xs rounded-3xl">
                     <CardContent className="p-6 space-y-6">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-border/60">
                             <div>
@@ -710,7 +919,7 @@ export const CreateServicePage: React.FC = () => {
                             {options.map((opt, pkgIdx) => (
                                 <div
                                     key={pkgIdx}
-                                    className="p-5 rounded-2xl border border-border/80 bg-secondary/20 space-y-4 relative"
+                                    className="p-5 rounded-2xl border border-border/80 bg-secondary/20 space-y-4 relative focus-within:z-20"
                                 >
                                     {/* Package Header */}
                                     <div className="flex items-center justify-between">
@@ -750,22 +959,332 @@ export const CreateServicePage: React.FC = () => {
                                         </div>
 
                                         <div className="space-y-1">
-                                            <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                                                Base Price (IDR) *
-                                            </Label>
-                                            <Input
-                                                type="number"
-                                                value={opt.base_price}
-                                                onChange={(e) =>
-                                                    handleUpdatePackage(pkgIdx, 'base_price', parseFloat(e.target.value) || 0)
-                                                }
-                                                placeholder="500000"
-                                                required
-                                                min={0}
-                                                className="h-9 text-xs rounded-xl bg-card border-border/80 font-mono font-bold text-emerald-400"
-                                            />
+                                            <div className="flex items-center justify-between">
+                                                <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                                                    Base Price ({opt.base_currency || 'IDR'}) *
+                                                </Label>
+                                                <span className="text-[10px] text-muted-foreground font-normal">Currency:</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <BaseCurrencySelect
+                                                    value={opt.base_currency || 'IDR'}
+                                                    onChange={(cur) => handleChangeBaseCurrency(pkgIdx, cur)}
+                                                />
+                                                <div className="flex-1 min-w-0">
+                                                    <CustomNumberInput
+                                                        value={opt.base_price}
+                                                        onChange={(val) => handleUpdatePackage(pkgIdx, 'base_price', val)}
+                                                        min={0}
+                                                        step={
+                                                            (opt.base_currency || 'IDR') === 'IDR'
+                                                                ? 10000
+                                                                : (opt.base_currency === 'JPY' ? 100 : 1)
+                                                        }
+                                                        placeholder={
+                                                            (opt.base_currency || 'IDR') === 'IDR'
+                                                                ? '500000'
+                                                                : (opt.base_currency === 'JPY' ? '7500' : '35.00')
+                                                        }
+                                                        prefix={
+                                                            <span className="text-xs font-mono font-bold text-muted-foreground">
+                                                                {CURRENCY_CONFIGS[opt.base_currency || 'IDR']?.symbol || 'Rp'}
+                                                            </span>
+                                                        }
+                                                        required
+                                                        inputClassName="text-emerald-400 font-bold"
+                                                    />
+                                                </div>
+                                            </div>
+                                            {(opt.base_currency || 'IDR') !== 'IDR' && (
+                                                <p className="text-[10px] font-mono text-muted-foreground flex items-center gap-1 pt-0.5">
+                                                    <span>
+                                                        ≈ Rp{' '}
+                                                        {Math.round(
+                                                            convertBetween(opt.base_price || 0, opt.base_currency || 'IDR', 'IDR')
+                                                        ).toLocaleString()}{' '}
+                                                        IDR
+                                                    </span>
+                                                    <span className="text-muted-foreground/60">(Midtrans checkout anchor)</span>
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
+
+                                    {/* ── Sub-section: Regional Pricing Strategy (PPP Model) ── */}
+                                    {(() => {
+                                        const baseCur = opt.base_currency || 'IDR';
+                                        const baseConfig = CURRENCY_CONFIGS[baseCur] || CURRENCY_CONFIGS.IDR;
+                                        const targetCurrencies = ALL_CURRENCIES.filter((c) => c.code !== baseCur);
+                                        const baseDisplayFormatted =
+                                            baseCur === 'IDR' || baseCur === 'JPY'
+                                                ? Math.round(opt.base_price || 0).toLocaleString()
+                                                : Number(opt.base_price || 0).toFixed(2);
+
+                                        const pppMatrix = generatePppMatrix(opt.base_price || 0, baseCur, convertBetween);
+                                        const activePricingMode = opt.pricing_mode || 'ppp';
+
+                                        return (
+                                            <div className="p-4 rounded-2xl border border-border/80 bg-card/60 space-y-3.5">
+                                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                                                    <div className="space-y-0.5">
+                                                        <div className="flex items-center gap-2">
+                                                            <Globe className="h-4 w-4 text-primary" />
+                                                            <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                                                                Regional Pricing &amp; Purchasing Power Parity
+                                                                <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                                                                    PPP Model
+                                                                </span>
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-[11px] text-muted-foreground">
+                                                            Protect your income while keeping your art accessible worldwide with economic purchasing power adjustments (applies to packages and add-ons).
+                                                        </p>
+                                                    </div>
+
+                                                    {/* 3-Way Mode Switcher */}
+                                                    <div className="inline-flex rounded-xl p-1 bg-secondary/80 border border-border/60 self-start sm:self-auto shrink-0 gap-0.5">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleUpdatePackage(pkgIdx, 'pricing_mode', 'ppp')}
+                                                            className={cn(
+                                                                'px-2.5 py-1 text-[11px] font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5',
+                                                                activePricingMode === 'ppp'
+                                                                    ? 'bg-primary text-primary-foreground shadow-xs font-bold'
+                                                                    : 'text-muted-foreground hover:text-foreground'
+                                                            )}
+                                                            title="Recommended: Economic purchasing power parity model across packages and add-ons"
+                                                        >
+                                                            <Globe className="h-3.5 w-3.5" />
+                                                            <span>PPP Model</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleUpdatePackage(pkgIdx, 'pricing_mode', 'auto_fx')}
+                                                            className={cn(
+                                                                'px-2.5 py-1 text-[11px] font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5',
+                                                                activePricingMode === 'auto_fx'
+                                                                    ? 'bg-primary text-primary-foreground shadow-xs font-bold'
+                                                                    : 'text-muted-foreground hover:text-foreground'
+                                                            )}
+                                                            title="Pure financial currency exchange without purchasing power adjustments"
+                                                        >
+                                                            <Zap className="h-3.5 w-3.5" />
+                                                            <span>Pure 1:1 FX</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleUpdatePackage(pkgIdx, 'pricing_mode', 'custom')}
+                                                            className={cn(
+                                                                'px-2.5 py-1 text-[11px] font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5',
+                                                                activePricingMode === 'custom'
+                                                                    ? 'bg-primary text-primary-foreground shadow-xs font-bold'
+                                                                    : 'text-muted-foreground hover:text-foreground'
+                                                            )}
+                                                            title="Manually set exact custom amounts for individual currencies"
+                                                        >
+                                                            <Sliders className="h-3.5 w-3.5" />
+                                                            <span>Custom</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                {/* Mode 1: PPP Model */}
+                                                {activePricingMode === 'ppp' && (
+                                                    <div className="space-y-2.5 pt-1">
+                                                        <div className="p-2.5 rounded-xl bg-secondary/40 border border-border/50 flex items-start gap-2.5 text-xs">
+                                                            <Globe className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                                                            <div className="space-y-0.5 leading-relaxed">
+                                                                <p className="font-bold text-foreground text-[11px]">
+                                                                    Purchasing Power Parity (PPP) Pricing Active
+                                                                </p>
+                                                                <p className="text-[10px] text-muted-foreground">
+                                                                    Comme automatically balances your package and add-on prices using Purchasing Power Parity (PPP) and standard psychological price points. Fans in emerging economies (like Indonesia) receive fair affordability adjustments, while high-income regions (US, Europe, Singapore) pay full market value.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Matrix Grid */}
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                                                            {targetCurrencies.map((cur) => {
+                                                                const item = pppMatrix[cur.code];
+                                                                if (!item) return null;
+                                                                return (
+                                                                    <div
+                                                                        key={cur.code}
+                                                                        className="p-2.5 rounded-xl bg-card border border-border/60 flex items-center justify-between gap-2 shadow-2xs hover:border-border transition-colors"
+                                                                    >
+                                                                        <div className="flex items-center gap-2 min-w-0">
+                                                                            <FlagIcon code={cur.code} className="w-4 h-3 shrink-0" />
+                                                                            <div className="min-w-0">
+                                                                                <span className="font-mono text-xs font-bold text-foreground leading-tight block">
+                                                                                    {cur.code} ({cur.symbol})
+                                                                                </span>
+                                                                                <span className="text-[9px] font-mono text-muted-foreground block truncate">
+                                                                                    Raw FX: {item.formattedRaw}
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="text-right shrink-0 space-y-0.5">
+                                                                            <p className="font-mono font-black text-xs text-foreground">
+                                                                                {item.formattedRecommended}
+                                                                            </p>
+                                                                            <span
+                                                                                className={cn(
+                                                                                    'inline-block text-[9px] font-bold px-1.5 py-0.5 rounded border leading-none',
+                                                                                    item.badgeColor
+                                                                                )}
+                                                                            >
+                                                                                {item.badgeText}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Mode 2: Pure 1:1 FX Exchange Rates */}
+                                                {activePricingMode === 'auto_fx' && (
+                                                    <div className="space-y-2 pt-1">
+                                                        <div className="text-[10px] font-semibold text-muted-foreground flex items-center justify-between">
+                                                            <span>
+                                                                Pure financial conversion at live exchange rates (Based on {baseConfig.symbol}
+                                                                {baseDisplayFormatted} {baseCur}):
+                                                            </span>
+                                                            <span className="text-[9px] font-mono text-sky-400 font-bold bg-sky-500/10 px-1.5 py-0.5 rounded border border-sky-500/20">
+                                                                1:1 FX (No PPP)
+                                                            </span>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                                                            {targetCurrencies.map((cur) => {
+                                                                const converted = convertBetween(opt.base_price || 0, baseCur, cur.code);
+                                                                const formatted =
+                                                                    cur.code === 'IDR' || cur.code === 'JPY'
+                                                                        ? Math.round(converted).toLocaleString()
+                                                                        : converted.toFixed(2);
+                                                                return (
+                                                                    <div
+                                                                        key={cur.code}
+                                                                        className="p-2 rounded-lg bg-secondary/40 border border-border/50 flex items-center gap-2"
+                                                                    >
+                                                                        <FlagIcon code={cur.code} className="w-4 h-3 shrink-0" />
+                                                                        <div className="min-w-0">
+                                                                            <p className="text-[9px] font-mono text-muted-foreground leading-none">
+                                                                                {cur.symbol}
+                                                                            </p>
+                                                                            <p className="text-xs font-mono font-bold text-foreground truncate mt-0.5">
+                                                                                {cur.symbol}{formatted}
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Mode 3: Custom Bespoke Rates */}
+                                                {activePricingMode === 'custom' && (
+                                                    <div className="space-y-2 pt-1">
+                                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                                                            <span className="text-[10px] text-muted-foreground">
+                                                                Set fixed amounts for each currency. Empty fields fallback to live auto-rates:
+                                                            </span>
+                                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="outline"
+                                                                    size="xs"
+                                                                    onClick={() => {
+                                                                        const nextPrices: Record<string, number> = {};
+                                                                        targetCurrencies.forEach((cur) => {
+                                                                            nextPrices[cur.code] = calculatePppRegionalPrice(
+                                                                                opt.base_price || 0,
+                                                                                baseCur,
+                                                                                cur.code
+                                                                            );
+                                                                        });
+                                                                        handleUpdatePackage(pkgIdx, 'regional_prices', nextPrices);
+                                                                        toast.success(
+                                                                            `Applied Purchasing Power Parity (PPP) recommendations!`
+                                                                        );
+                                                                    }}
+                                                                    className="h-6 text-[10px] font-bold text-emerald-400 hover:text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/10 gap-1"
+                                                                >
+                                                                    <Globe className="h-3 w-3" /> Apply PPP
+                                                                </Button>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="xs"
+                                                                    onClick={() => {
+                                                                        const nextPrices: Record<string, number> = {};
+                                                                        targetCurrencies.forEach((cur) => {
+                                                                            const converted = convertBetween(opt.base_price || 0, baseCur, cur.code);
+                                                                            if (cur.code === 'IDR' || cur.code === 'JPY') {
+                                                                                nextPrices[cur.code] = Math.round(converted);
+                                                                            } else {
+                                                                                nextPrices[cur.code] = Number(converted.toFixed(2));
+                                                                            }
+                                                                        });
+                                                                        handleUpdatePackage(pkgIdx, 'regional_prices', nextPrices);
+                                                                        toast.success(
+                                                                            `Applied live 1:1 exchange rates!`
+                                                                        );
+                                                                    }}
+                                                                    className="h-6 text-[10px] font-bold text-primary hover:text-primary hover:bg-primary/10 gap-1"
+                                                                >
+                                                                    <Sparkles className="h-3 w-3" /> Apply 1:1 FX
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                                                            {targetCurrencies.map((cur) => {
+                                                                const val = opt.regional_prices?.[cur.code] ?? '';
+                                                                return (
+                                                                    <div key={cur.code} className="space-y-1">
+                                                                        <Label className="text-[10px] font-bold text-muted-foreground flex items-center gap-1.5">
+                                                                            <FlagIcon code={cur.code} className="w-3.5 h-2.5 shrink-0" />
+                                                                            {cur.code} ({cur.symbol})
+                                                                        </Label>
+                                                                        <CustomNumberInput
+                                                                            min={0}
+                                                                            step={cur.code === 'IDR' ? 10000 : cur.code === 'JPY' ? 100 : 1}
+                                                                            value={val || 0}
+                                                                            onChange={(numVal) => {
+                                                                                const nextPrices = { ...(opt.regional_prices || {}) };
+                                                                                if (!numVal || numVal <= 0) {
+                                                                                    delete nextPrices[cur.code];
+                                                                                } else {
+                                                                                    nextPrices[cur.code] = numVal;
+                                                                                }
+                                                                                handleUpdatePackage(pkgIdx, 'regional_prices', nextPrices);
+                                                                            }}
+                                                                            placeholder={
+                                                                                cur.code === 'IDR'
+                                                                                    ? '500000'
+                                                                                    : cur.code === 'JPY'
+                                                                                    ? '5000'
+                                                                                    : '35.00'
+                                                                            }
+                                                                            prefix={
+                                                                                <span className="text-[10px] font-mono font-bold text-muted-foreground">
+                                                                                    {cur.symbol}
+                                                                                </span>
+                                                                            }
+                                                                            className="h-8 bg-secondary/40 border-border/60"
+                                                                            inputClassName="text-xs font-mono font-bold text-foreground"
+                                                                        />
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
 
                                     {/* Scope & Inclusions */}
                                     <div className="space-y-1">
@@ -805,65 +1324,185 @@ export const CreateServicePage: React.FC = () => {
                                                 No add-ons configured. Click "+ Add Extra" to offer options like Commercial Rights, Complex Backgrounds, or Rush Delivery.
                                             </p>
                                         ) : (
-                                            <div className="space-y-2">
-                                                {opt.addons.map((addon, aIdx) => (
-                                                    <div
-                                                        key={aIdx}
-                                                        className="p-3 rounded-xl border border-border/70 bg-card/60 grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center"
-                                                    >
-                                                        <div className="sm:col-span-5 space-y-0.5">
-                                                            <Input
-                                                                value={addon.title}
-                                                                onChange={(e) =>
-                                                                    handleUpdateAddon(pkgIdx, aIdx, 'title', e.target.value)
-                                                                }
-                                                                placeholder="Addon title (e.g. Detailed Background)"
-                                                                required
-                                                                className="h-8 text-xs rounded-lg bg-secondary/40"
-                                                            />
-                                                        </div>
+                                            <div className="space-y-3">
+                                                {opt.addons.map((addon, aIdx) => {
+                                                    const addonCur = addon.base_currency || opt.base_currency || 'IDR';
+                                                    const addonConfig = CURRENCY_CONFIGS[addonCur] || CURRENCY_CONFIGS.IDR;
+                                                    const addonTargetCurrencies = ALL_CURRENCIES.filter((c) => c.code !== addonCur);
 
-                                                        <div className="sm:col-span-4 space-y-0.5">
-                                                            <Input
-                                                                value={addon.description}
-                                                                onChange={(e) =>
-                                                                    handleUpdateAddon(pkgIdx, aIdx, 'description', e.target.value)
-                                                                }
-                                                                placeholder="Addon notes (e.g. +3 days delivery)"
-                                                                className="h-8 text-xs rounded-lg bg-secondary/40"
-                                                            />
-                                                        </div>
+                                                    return (
+                                                        <div
+                                                            key={aIdx}
+                                                            className="p-3.5 rounded-xl border border-border/70 bg-card/60 space-y-2.5 transition-all hover:border-border relative focus-within:z-30"
+                                                        >
+                                                            {/* Row 1: Title, Description, Delete */}
+                                                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
+                                                                <div className="sm:col-span-6 space-y-1">
+                                                                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                                                        Addon Title *
+                                                                    </Label>
+                                                                    <Input
+                                                                        value={addon.title}
+                                                                        onChange={(e) =>
+                                                                            handleUpdateAddon(pkgIdx, aIdx, 'title', e.target.value)
+                                                                        }
+                                                                        placeholder="e.g. Detailed Background, Commercial Rights"
+                                                                        required
+                                                                        className="h-8 text-xs rounded-lg bg-secondary/40"
+                                                                    />
+                                                                </div>
 
-                                                        <div className="sm:col-span-2 space-y-0.5">
-                                                            <Input
-                                                                type="number"
-                                                                value={addon.additional_price}
-                                                                onChange={(e) =>
-                                                                    handleUpdateAddon(
-                                                                        pkgIdx,
-                                                                        aIdx,
-                                                                        'additional_price',
-                                                                        parseFloat(e.target.value) || 0
-                                                                    )
-                                                                }
-                                                                placeholder="Price"
-                                                                min={0}
-                                                                className="h-8 text-xs rounded-lg bg-secondary/40 font-mono font-bold text-emerald-400"
-                                                            />
-                                                        </div>
+                                                                <div className="sm:col-span-5 space-y-1">
+                                                                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                                                        Notes &amp; Scope
+                                                                    </Label>
+                                                                    <Input
+                                                                        value={addon.description}
+                                                                        onChange={(e) =>
+                                                                            handleUpdateAddon(pkgIdx, aIdx, 'description', e.target.value)
+                                                                        }
+                                                                        placeholder="e.g. +3 days delivery, full merchandise rights"
+                                                                        className="h-8 text-xs rounded-lg bg-secondary/40"
+                                                                    />
+                                                                </div>
 
-                                                        <div className="sm:col-span-1 flex justify-end">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleRemoveAddon(pkgIdx, aIdx)}
-                                                                className="text-rose-400 hover:text-rose-300 p-1 cursor-pointer transition-colors"
-                                                                title="Remove add-on"
-                                                            >
-                                                                <Trash2 className="h-3.5 w-3.5" />
-                                                            </button>
+                                                                <div className="sm:col-span-1 flex justify-end items-end pt-4 sm:pt-0">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleRemoveAddon(pkgIdx, aIdx)}
+                                                                        className="text-rose-400 hover:text-rose-300 p-1.5 rounded-lg hover:bg-rose-500/10 cursor-pointer transition-colors"
+                                                                        title="Remove add-on"
+                                                                    >
+                                                                        <Trash2 className="h-4 w-4" />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Row 2: Price input with Currency selector */}
+                                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-border/40 relative z-20">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider shrink-0">
+                                                                        Extra Price:
+                                                                    </span>
+                                                                    <BaseCurrencySelect
+                                                                        value={addonCur}
+                                                                        onChange={(cur) => handleUpdateAddonCurrency(pkgIdx, aIdx, cur)}
+                                                                        side="top"
+                                                                    />
+                                                                    <div className="w-32 sm:w-36">
+                                                                        <CustomNumberInput
+                                                                            value={addon.additional_price}
+                                                                            min={0}
+                                                                            step={
+                                                                                addonCur === 'IDR'
+                                                                                    ? 10000
+                                                                                    : addonCur === 'JPY'
+                                                                                    ? 100
+                                                                                    : 1
+                                                                            }
+                                                                            onChange={(val) =>
+                                                                                handleUpdateAddon(pkgIdx, aIdx, 'additional_price', val)
+                                                                            }
+                                                                            placeholder={
+                                                                                addonCur === 'IDR'
+                                                                                    ? '150000'
+                                                                                    : addonCur === 'JPY'
+                                                                                    ? '2000'
+                                                                                    : '10.00'
+                                                                            }
+                                                                            prefix={
+                                                                                <span className="text-xs font-mono font-bold text-muted-foreground">
+                                                                                    {addonConfig.symbol}
+                                                                                </span>
+                                                                            }
+                                                                            className="h-8 bg-secondary/40 border-border/60"
+                                                                            inputClassName="text-xs font-mono font-bold text-emerald-400"
+                                                                        />
+                                                                    </div>
+                                                                </div>
+
+                                                                {addonCur !== 'IDR' && (
+                                                                    <p className="text-[10px] font-mono text-muted-foreground flex items-center gap-1">
+                                                                        <span>
+                                                                            ≈ Rp{' '}
+                                                                            {Math.round(
+                                                                                convertBetween(addon.additional_price || 0, addonCur, 'IDR')
+                                                                            ).toLocaleString()}{' '}
+                                                                            IDR
+                                                                        </span>
+                                                                        <span className="text-muted-foreground/60">(Midtrans anchor)</span>
+                                                                    </p>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Row 3: Converted PPP Regional Rates beneath Addon Price */}
+                                                            <div className="flex flex-wrap items-center gap-2 pt-1 relative z-10">
+                                                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                                                                    {opt.pricing_mode === 'ppp' ? (
+                                                                        <>
+                                                                            <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                                                            PPP Regional Rates:
+                                                                        </>
+                                                                    ) : opt.pricing_mode === 'custom' ? (
+                                                                        'Custom Regional Rates:'
+                                                                    ) : (
+                                                                        'Auto-converts (Market FX):'
+                                                                    )}
+                                                                </span>
+                                                                <div className="flex flex-wrap items-center gap-1.5">
+                                                                    {addonTargetCurrencies.map((cur) => {
+                                                                        const rawFx = convertBetween(
+                                                                            addon.additional_price || 0,
+                                                                            addonCur,
+                                                                            cur.code
+                                                                        );
+                                                                        const pppPrice = calculatePppRegionalPrice(
+                                                                            addon.additional_price || 0,
+                                                                            addonCur,
+                                                                            cur.code
+                                                                        );
+                                                                        const effectivePrice =
+                                                                            opt.pricing_mode === 'ppp'
+                                                                                ? pppPrice
+                                                                                : (addon.regional_prices?.[cur.code] ?? rawFx);
+
+                                                                        let deltaPercent = 0;
+                                                                        if (rawFx > 0 && effectivePrice > 0) {
+                                                                            deltaPercent = Math.round(((effectivePrice - rawFx) / rawFx) * 100);
+                                                                        }
+
+                                                                        const formatted =
+                                                                            cur.code === 'IDR' || cur.code === 'JPY'
+                                                                                ? Math.round(effectivePrice).toLocaleString()
+                                                                                : effectivePrice.toFixed(2);
+
+                                                                        return (
+                                                                            <span
+                                                                                key={cur.code}
+                                                                                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-secondary/70 border border-border/50 text-[10px] font-mono text-muted-foreground"
+                                                                            >
+                                                                                <FlagIcon code={cur.code} className="w-3.5 h-2.5 shrink-0" />
+                                                                                <span className="text-foreground font-bold">
+                                                                                    {cur.symbol}{formatted}
+                                                                                </span>
+                                                                                {opt.pricing_mode === 'ppp' && deltaPercent <= -10 && (
+                                                                                    <span className="text-[9px] font-bold text-emerald-400">
+                                                                                        {deltaPercent}%
+                                                                                    </span>
+                                                                                )}
+                                                                                {opt.pricing_mode === 'ppp' && deltaPercent >= 10 && (
+                                                                                    <span className="text-[9px] font-bold text-amber-400">
+                                                                                        +{deltaPercent}%
+                                                                                    </span>
+                                                                                )}
+                                                                            </span>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
                                         )}
                                     </div>

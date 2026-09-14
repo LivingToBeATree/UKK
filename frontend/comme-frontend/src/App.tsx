@@ -18,10 +18,12 @@ import { CommandPalette } from '@/components/CommandPalette';
 import { DynamicTitleUpdater } from '@/components/DynamicTitleUpdater';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from 'react-router-dom';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 function AppLayout() {
     const { isAuthenticated } = useAuth();
     const { collapsed } = useSidebar();
+    const { currency } = useCurrency();
     const isMobile = useIsMobile();
     const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
     const location = useLocation();
@@ -39,7 +41,7 @@ function AppLayout() {
         return (
             <div className="min-h-screen bg-background text-foreground font-sans transition-colors duration-200">
                 <DynamicTitleUpdater />
-                <AppRoutes />
+                <AppRoutes key={currency} />
                 <CommandPalette />
                 <Toaster />
                 <WarningNoticeModal />
@@ -53,7 +55,7 @@ function AppLayout() {
             <div className="min-h-screen bg-background text-foreground flex flex-col font-sans transition-colors duration-200 overflow-x-clip">
                 <DynamicTitleUpdater />
                 <Navbar />
-                <main className="flex-1 flex flex-col w-full">
+                <main key={currency} className="flex-1 flex flex-col w-full">
                     <AppRoutes />
                 </main>
                 <ForArtistsCta />
@@ -85,11 +87,11 @@ function AppLayout() {
             {/* Main Content Area Offset in 100% Sync with Sidebar Width on Desktop, 0 on Mobile */}
             <motion.div
                 initial={false}
-                animate={{ paddingLeft: isMobile ? 0 : (collapsed ? 68 : 260) }}
+                animate={{ paddingLeft: isMobile ? 0 : (collapsed ? 74 : 272) }}
                 transition={{ type: 'spring', damping: 28, stiffness: 320 }}
                 className="flex-1 flex flex-col min-w-0 w-full overflow-x-clip pb-16 md:pb-0"
             >
-                <main className="flex-1 flex flex-col w-full">
+                <main key={currency} className="flex-1 flex flex-col w-full">
                     <AppRoutes />
                 </main>
                 {shouldShowFooter && <PublicFooter />}

@@ -10,6 +10,8 @@ export interface CommissionAddon {
   title: string;
   description?: string | null;
   additional_price: number;
+  base_currency?: string;
+  regional_prices?: Record<string, number> | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -20,7 +22,10 @@ export interface CommissionOption {
   title: string;
   description?: string | null;
   base_price: number;
+  base_currency?: string;
+  pricing_mode?: 'ppp' | 'auto_fx' | 'custom';
   price?: number;
+  regional_prices?: Record<string, number> | null;
   duration_days?: number;
   addons?: CommissionAddon[];
   created_at?: string;
@@ -78,7 +83,7 @@ export interface CommissionReview {
   } | null;
 }
 
-export type PaymentStatusType = 'pending' | 'paid' | 'failed' | 'cancelled' | 'expired' | 'refunded';
+export type PaymentStatusType = 'pending' | 'paid' | 'failed' | 'cancelled' | 'expired' | 'refunded' | 'pending_manual_refund' | 'refund_failed';
 
 export interface CommissionPayment {
   id: number;
