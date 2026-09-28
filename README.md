@@ -63,25 +63,25 @@ UKK/
 ```
 
 ```mermaid
-graph TD
-    Client["React 19 Client SPA<br/>(TailwindCSS, TypeScript, Framer Motion)"]
-    API["Laravel 12 REST API<br/>(Sanctum Bearer, RFC-7807, CORS Allowlist)"]
-    DB[("PostgreSQL 16+<br/>Database")]
-    Storage["Dual-Disk Storage Provider<br/>(Public vs Private Deliverables)"]
-    MidtransSnap["Midtrans Snap<br/>(Escrow Checkout)"]
-    MidtransIris["Midtrans Iris<br/>(Creator Bank Payouts)"]
-    Scheduler["Artisan Scheduler<br/>(Auto-Release & Reconciliation)"]
+flowchart TD
+    Client["React 19 SPA Client"]
+    API["Laravel 12 REST API"]
+    DB[("PostgreSQL 16+ Database")]
+    Storage["Storage Provider"]
+    MidtransSnap["Midtrans Snap"]
+    MidtransIris["Midtrans Iris"]
+    Scheduler["Artisan Scheduler"]
 
     Client -->|"REST API / Bearer Token"| API
     Client -->|"Direct Asset Streaming"| Storage
     Client -->|"Snap Popup Checkout"| MidtransSnap
     API -->|"Eloquent ORM"| DB
-    API -->|"Protected / Watermarked Delivery"| Storage
+    API -->|"Protected Delivery"| Storage
     API -->|"Create Snap Token"| MidtransSnap
-    MidtransSnap -->|"Payment Webhook SHA-512"| API
+    MidtransSnap -->|"Payment Webhook"| API
     API -->|"Disburse Escrow"| MidtransIris
-    MidtransIris -->|"Payout Status Callback"| API
-    Scheduler -->|"Background Cron Jobs"| API
+    MidtransIris -->|"Payout Callback"| API
+    Scheduler -->|"Cron Jobs"| API
 ```
 
 ---

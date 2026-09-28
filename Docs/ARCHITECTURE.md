@@ -13,37 +13,28 @@ Comme is organized as an enterprise-grade full-stack monorepo consisting of:
 4. **Third-Party Gateways**: Midtrans Snap for client escrow deposits and Midtrans Iris for automated creator bank disbursements.
 
 ```mermaid
-graph TD
-    subgraph ClientLayer["Frontend Client (React 19 + TypeScript)"]
-        UI["React 19 SPA"]
-        QueueBoard["Live Studio Queue Board"]
-        ColorStudio["Interactive Color Studio"]
-        PPPSwitcher["Currency / PPP Selector"]
-        SnapModal["Midtrans Snap.js Modal"]
-    end
+flowchart TD
+    UI["React 19 SPA"]
+    QueueBoard["Live Studio Queue Board"]
+    ColorStudio["Interactive Color Studio"]
+    PPP["Currency / PPP Selector"]
+    SnapModal["Midtrans Snap.js Modal"]
 
-    subgraph APILayer["Backend REST API (Laravel 12)"]
-        Router["REST Router & RFC-7807 Exception Handler"]
-        Sanctum["Sanctum Auth + 2FA TOTP"]
-        StateMachine["Commission Order State Machine"]
-        AntiArbitrage["Anti-Arbitrage & GeoIP Service"]
-        Watermarker["Watermark Engine (PHP GD)"]
-        QueueService["Commission Queue Engine"]
-    end
+    Router["REST Router & RFC-7807 Handler"]
+    Sanctum["Sanctum Auth + 2FA TOTP"]
+    StateMachine["Commission State Machine"]
+    AntiArbitrage["Anti-Arbitrage & GeoIP Service"]
+    Watermarker["Watermark Engine (PHP GD)"]
+    QueueService["Commission Queue Engine"]
 
-    subgraph DataLayer["Persistence & Storage"]
-        DB[("PostgreSQL 16+<br/>Relational & JSONB Schemas")]
-        PublicDisk["Public Storage Disk<br/>(Avatars, Showcases, Posts)"]
-        PrivateDisk["Private Storage Disk<br/>(Deliverables, WIPs, Receipts)"]
-    end
-
-    subgraph PaymentGateways["Midtrans Payment Systems"]
-        MidtransSnap["Midtrans Snap Gateway<br/>(Virtual Accounts, QRIS, CC)"]
-        MidtransIris["Midtrans Iris Engine<br/>(Creator Bank Disbursements)"]
-    end
+    DB[("PostgreSQL Database")]
+    PublicDisk["Public Storage"]
+    PrivateDisk["Private Storage"]
+    MidtransSnap["Midtrans Snap"]
+    MidtransIris["Midtrans Iris"]
 
     UI -->|"HTTPS / Bearer Token"| Router
-    UI -->|"Embedded Popup Checkout"| SnapModal
+    UI -->|"Embedded Checkout"| SnapModal
     SnapModal -->|"Escrow Payment"| MidtransSnap
 
     Router --> Sanctum
@@ -70,25 +61,22 @@ The platform enforces a strict, idempotent state machine governing order progres
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Pending: Client Places Order
-    Pending --> Accepted: Artist Accepts
-    Pending --> Declined: Artist Rejects
-    Pending --> Cancelled: Cancelled or Expired
+    [*] --> Pending
+    Pending --> Accepted
+    Pending --> Declined
+    Pending --> Cancelled
 
-    Accepted --> InProgress: Escrow Deposit Settled
-    InProgress --> InProgress: Deadline Extension Accepted
-    InProgress --> Review: Deliverables Submitted
+    Accepted --> InProgress
+    InProgress --> Review
+    Review --> InProgress
+    Review --> Completed
 
-    Review --> InProgress: Client Requests Revision
-    Review --> Completed: Client Approves Delivery
-    Review --> Completed: 7-Day Auto-Release Timeout
+    InProgress --> Cancelled
+    Review --> Cancelled
 
-    InProgress --> Cancelled: Mutual Cancellation Accepted
-    Review --> Cancelled: Mutual Cancellation Accepted
-
-    Completed --> [*]: Bank Disbursement Released
-    Declined --> [*]: Order Closed
-    Cancelled --> [*]: Funds Refunded to Buyer
+    Completed --> [*]
+    Declined --> [*]
+    Cancelled --> [*]
 ```
 
 ### Financial Flow & Escrow Protection

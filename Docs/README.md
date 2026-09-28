@@ -29,14 +29,14 @@ Welcome to the **Comme** technical documentation directory. This directory conta
 ## Core System Highlights
 
 ```mermaid
-graph TD
-    Client["React 19 SPA Client<br/>• Live Commission Queue<br/>• PPP Currency Switcher<br/>• Interactive Color Studio<br/>• Intelligent Payment Channel Routing<br/>• WCAG 2.1 Accessible Controls"]
-    API["Laravel 12 REST API Engine<br/>• Commission State Machine<br/>• Anti-Arbitrage Service<br/>• Watermark Service GD<br/>• Sanctum & 2FA TOTP"]
-    DB[("PostgreSQL 16+<br/>Database & Queued Jobs")]
-    Gateways["Midtrans Payment Systems<br/>• Snap Escrow Deposits (Global Card vs Domestic IDR)<br/>• Iris Creator Bank Payouts"]
+flowchart TD
+    Client["React 19 SPA Client"]
+    API["Laravel 12 REST API Engine"]
+    DB[("PostgreSQL 16+ Database")]
+    Gateways["Midtrans Payment Systems"]
 
     Client -->|"REST API / Bearer Token"| API
-    API -->|"PostgreSQL 16+ ORM"| DB
+    API -->|"ORM"| DB
     API -->|"Webhooks & Disburse APIs"| Gateways
 ```
 
