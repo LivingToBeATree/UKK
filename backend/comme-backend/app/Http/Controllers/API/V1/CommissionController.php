@@ -567,6 +567,20 @@ class CommissionController extends Controller
 
     public function updateDeadline(UpdateCommissionDeadlineRequest $request, Commission $commission): JsonResponse
     {
+        $activeStatuses = [
+            CommissionStatus::ACCEPTED,
+            CommissionStatus::IN_PROGRESS,
+            CommissionStatus::WAITING_FOR_CLIENT,
+            CommissionStatus::REVISION,
+        ];
+
+        if (! in_array($commission->status, $activeStatuses, true)) {
+            return ApiResponseHelper::errorResponse(
+                "Deadlines cannot be modified for commissions in '{$commission->status->value}' status.",
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
         if (is_null($commission->deadline)) {
             return ApiResponseHelper::errorResponse(
                 'This commission has a flexible deadline. Deadline cannot be modified directly.',
@@ -584,6 +598,20 @@ class CommissionController extends Controller
 
     public function proposeDeadline(ProposeCommissionDeadlineRequest $request, Commission $commission): JsonResponse
     {
+        $activeStatuses = [
+            CommissionStatus::ACCEPTED,
+            CommissionStatus::IN_PROGRESS,
+            CommissionStatus::WAITING_FOR_CLIENT,
+            CommissionStatus::REVISION,
+        ];
+
+        if (! in_array($commission->status, $activeStatuses, true)) {
+            return ApiResponseHelper::errorResponse(
+                "Deadlines cannot be modified for commissions in '{$commission->status->value}' status.",
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
         if (is_null($commission->deadline)) {
             return ApiResponseHelper::errorResponse(
                 'This commission has a flexible deadline. Deadline extensions cannot be requested for flexible orders.',
@@ -605,6 +633,20 @@ class CommissionController extends Controller
     public function acceptDeadline(Commission $commission): JsonResponse
     {
         Gate::authorize('acceptDeadline', $commission);
+
+        $activeStatuses = [
+            CommissionStatus::ACCEPTED,
+            CommissionStatus::IN_PROGRESS,
+            CommissionStatus::WAITING_FOR_CLIENT,
+            CommissionStatus::REVISION,
+        ];
+
+        if (! in_array($commission->status, $activeStatuses, true)) {
+            return ApiResponseHelper::errorResponse(
+                "Deadlines cannot be modified for commissions in '{$commission->status->value}' status.",
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
 
         if (!$commission->proposed_deadline) {
             return ApiResponseHelper::errorResponse(
@@ -629,6 +671,20 @@ class CommissionController extends Controller
     public function declineDeadline(Commission $commission): JsonResponse
     {
         Gate::authorize('declineDeadline', $commission);
+
+        $activeStatuses = [
+            CommissionStatus::ACCEPTED,
+            CommissionStatus::IN_PROGRESS,
+            CommissionStatus::WAITING_FOR_CLIENT,
+            CommissionStatus::REVISION,
+        ];
+
+        if (! in_array($commission->status, $activeStatuses, true)) {
+            return ApiResponseHelper::errorResponse(
+                "Deadlines cannot be modified for commissions in '{$commission->status->value}' status.",
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
 
         if (!$commission->proposed_deadline) {
             return ApiResponseHelper::errorResponse(

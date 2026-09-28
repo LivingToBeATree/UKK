@@ -59,7 +59,7 @@ class CommissionCancellationService
             );
         }
 
-        // Phase 1: Atomically lock and retrieve payment IDs to cancel/refund
+        // Atomically lock, mark refund reservation if paid, and retrieve payment IDs
         $paymentData = DB::transaction(function () use ($commission) {
             $locked = Commission::whereKey($commission->id)
                 ->lockForUpdate()
@@ -75,6 +75,10 @@ class CommissionCancellationService
                 ->latest()
                 ->first();
 
+            if ($paidPayment) {
+                $paidPayment->update(['status' => PaymentStatus::REFUND_PROCESSING->value]);
+            }
+
             $locked->update(['status' => CommissionStatus::CANCELLED]);
 
             return [
@@ -82,32 +86,103 @@ class CommissionCancellationService
                 'paid_order_id' => $paidPayment?->order_id,
                 'paid_amount' => $paidPayment ? (float) $paidPayment->gross_amount : 0.0,
                 'paid_id' => $paidPayment?->id,
+                'raw_response' => $paidPayment?->raw_response ?? [],
             ];
         });
 
-        // Phase 2: External gateway calls OUTSIDE DB transaction to prevent lock holding
+        // External gateway calls OUTSIDE DB transaction
+        $verifiedCancelledOrderIds = [];
         foreach ($paymentData['pending_order_ids'] as $orderId) {
-            $this->midtransService->cancelTransaction($orderId);
+            $cancelRes = $this->midtransService->cancelTransaction($orderId);
+            $isCancelled = is_array($cancelRes) && in_array((string) ($cancelRes['status_code'] ?? ''), ['200', '201', '412', '404'], true);
+            if ($isCancelled) {
+                $verifiedCancelledOrderIds[] = $orderId;
+            } else {
+                Log::warning("Midtrans cancellation unconfirmed for Order #{$orderId}; leaving payment status as pending.");
+            }
         }
 
+        $midtransResponse = null;
+        $isRefundSuccessful = false;
         if ($paymentData['paid_order_id'] && $paymentData['paid_amount'] > 0) {
-            $this->midtransService->refundTransaction(
+            $midtransResponse = $this->midtransService->refundTransaction(
                 $paymentData['paid_order_id'],
                 $paymentData['paid_amount'],
                 'Commission cancelled'
             );
+
+            $isRefundSuccessful = is_array($midtransResponse)
+                && (! isset($midtransResponse['status_code']) || in_array((string) $midtransResponse['status_code'], ['200', '201', '202'], true));
         }
 
-        // Phase 3: Short atomic update for payment records
-        DB::transaction(function () use ($commission, $paymentData) {
-            $commission->payments()
-                ->where('status', PaymentStatus::PENDING->value)
-                ->update(['status' => PaymentStatus::CANCELLED->value]);
+        // Short atomic update for payment records with fail-closed financial integrity
+        DB::transaction(function () use ($commission, $paymentData, $verifiedCancelledOrderIds, $isRefundSuccessful, $midtransResponse) {
+            if (! empty($verifiedCancelledOrderIds)) {
+                $commission->payments()
+                    ->whereIn('order_id', $verifiedCancelledOrderIds)
+                    ->update(['status' => PaymentStatus::CANCELLED->value]);
+            }
 
             if ($paymentData['paid_id']) {
-                $commission->payments()
-                    ->whereKey($paymentData['paid_id'])
-                    ->update(['status' => PaymentStatus::REFUNDED->value]);
+                $paidPayment = $commission->payments()->whereKey($paymentData['paid_id'])->first();
+                if ($paidPayment) {
+                    if ($isRefundSuccessful) {
+                        $paidPayment->update([
+                            'status' => PaymentStatus::REFUNDED->value,
+                            'raw_response' => array_merge($paymentData['raw_response'], [
+                                'refund_result' => [
+                                    'refunded_at' => now()->toISOString(),
+                                    'amount' => $paymentData['paid_amount'],
+                                    'reason' => 'Immediate cancellation',
+                                    'gateway_response' => $midtransResponse,
+                                ],
+                            ]),
+                        ]);
+                    } else {
+                        Log::error("Midtrans refund failed during immediate cancellation of Commission #{$commission->id}, Payment #{$paidPayment->id}. Marking as PENDING_MANUAL_REFUND.");
+
+                        $paidPayment->update([
+                            'status' => PaymentStatus::PENDING_MANUAL_REFUND->value,
+                            'raw_response' => array_merge($paymentData['raw_response'], [
+                                'failed_refund_attempt' => [
+                                    'attempted_at' => now()->toISOString(),
+                                    'amount' => $paymentData['paid_amount'],
+                                    'reason' => 'Immediate cancellation',
+                                    'gateway_response' => $midtransResponse,
+                                ],
+                            ]),
+                        ]);
+
+                        $buyerUser = $commission->user;
+                        $report = Report::create([
+                            'user_id' => $buyerUser?->id ?? $commission->user_id,
+                            'reportable_type' => Commission::class,
+                            'reportable_id' => $commission->id,
+                            'reason' => ReportReason::OTHER,
+                            'description' => "Manual Escrow Refund Required (Order: {$paidPayment->order_id}): "
+                                . "Immediate cancellation for Commission #{$commission->id} was processed, but Midtrans automated direct refund failed. "
+                                . "Please disburse manual escrow refund of Rp " . number_format($paymentData['paid_amount'], 0, ',', '.') . " to client @{$buyerUser?->username} via Midtrans Iris disbursement portal.",
+                            'status' => ReportStatus::PENDING,
+                        ]);
+
+                        $ticket = $report->ticket()->create([
+                            'priority' => TicketPriority::HIGH,
+                        ]);
+
+                        $ticket->messages()->create([
+                            'user_id' => $buyerUser?->id ?? $commission->user_id,
+                            'content' => "Automated Escrow Refund Failure: Midtrans returned failure for order {$paidPayment->order_id}. "
+                                . "Payment status moved to PENDING_MANUAL_REFUND. High-priority manual disbursement via Iris required.",
+                        ]);
+
+                        StaffNotificationService::notifyStaff(
+                            'Escrow Refund Action Required',
+                            "Manual refund of Rp " . number_format($paymentData['paid_amount'], 0, ',', '.') . " required for Commission #{$commission->id}. Automated gateway refund failed.",
+                            $commission,
+                            NotificationType::SYSTEM
+                        );
+                    }
+                }
             }
         });
 
@@ -116,50 +191,75 @@ class CommissionCancellationService
 
     /**
      * Request a negotiated cancellation for an active commission.
+     * Uses pessimistic locking to prevent race conditions when both parties request simultaneously.
      */
     public function requestCancellation(Commission $commission, User $requester, string $reason): Commission
     {
-        $commission->update([
-            'cancellation_requested_by' => $requester->id,
-            'cancellation_reason' => $reason,
-            'cancellation_requested_at' => now(),
-        ]);
+        $updatedCommission = DB::transaction(function () use ($commission, $requester, $reason) {
+            $locked = Commission::whereKey($commission->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        $counterpartId = ($requester->id === $commission->user_id)
-            ? $commission->artistProfile?->user_id
-            : $commission->user_id;
+            if (! is_null($locked->cancellation_requested_by)) {
+                throw new InvalidArgumentException('A cancellation request is already pending for this commission.');
+            }
+
+            $allowedStatuses = [
+                CommissionStatus::ACCEPTED,
+                CommissionStatus::IN_PROGRESS,
+                CommissionStatus::WAITING_FOR_CLIENT,
+                CommissionStatus::REVISION,
+            ];
+
+            if (! in_array($locked->status, $allowedStatuses, true)) {
+                throw new InvalidArgumentException("Cancellation cannot be requested for a commission in '{$locked->status->value}' status.");
+            }
+
+            $locked->update([
+                'cancellation_requested_by' => $requester->id,
+                'cancellation_reason' => $reason,
+                'cancellation_requested_at' => now(),
+            ]);
+
+            return $locked;
+        });
+
+        $counterpartId = ($requester->id === $updatedCommission->user_id)
+            ? $updatedCommission->artistProfile?->user_id
+            : $updatedCommission->user_id;
 
         if ($counterpartId) {
             Notification::create([
                 'user_id' => $counterpartId,
                 'type' => NotificationType::SYSTEM,
                 'title' => 'Cancellation Requested',
-                'message' => "{$requester->display_name} has requested to cancel Commission #{$commission->id}: \"{$reason}\"",
+                'message' => "{$requester->display_name} has requested to cancel Commission #{$updatedCommission->id}: \"{$reason}\"",
                 'notifiable_type' => Commission::class,
-                'notifiable_id' => $commission->id,
+                'notifiable_id' => $updatedCommission->id,
             ]);
         }
 
         CommissionMessage::create([
-            'commission_id' => $commission->id,
+            'commission_id' => $updatedCommission->id,
             'sender_id' => $requester->id,
             'recipient_id' => $counterpartId,
             'message' => "[Cancellation Request] {$requester->display_name} requested to cancel this order.\nReason: {$reason}",
             'message_type' => MessageType::SYSTEM,
         ]);
 
-        return $commission->fresh(['commissionService', 'commissionOption', 'artistProfile', 'user', 'cancellationRequester', 'messages', 'review']);
+        return $updatedCommission->fresh(['commissionService', 'commissionOption', 'artistProfile', 'user', 'cancellationRequester', 'messages', 'review']);
     }
 
     /**
      * Accept a cancellation request with safe, decoupled refund processing.
      *
-     * External Midtrans refund API call is performed OUTSIDE the DB transaction,
-     * while DB concurrency locks serialize acceptance and prevent double refunding.
+     * In Phase 1, an explicit REFUND_PROCESSING state reservation is committed
+     * while holding a pessimistic lock, preventing any concurrent requests from
+     * triggering duplicate refund API calls.
      */
     public function acceptCancellation(Commission $commission, User $acceptor): array
     {
-        // ─── Phase 1: Atomic verification & reservation lock ───────────
+        // Atomic verification & reservation lock
         $prep = DB::transaction(function () use ($commission) {
             $locked = Commission::whereKey($commission->id)
                 ->lockForUpdate()
@@ -173,6 +273,15 @@ class CommissionCancellationService
                 return ['error' => 'This commission cancellation has already been processed.', 'code' => 409];
             }
 
+            // Check if another concurrent thread has already reserved this refund
+            $isAlreadyProcessing = $locked->payments()
+                ->where('status', PaymentStatus::REFUND_PROCESSING->value)
+                ->exists();
+
+            if ($isAlreadyProcessing) {
+                return ['error' => 'A cancellation refund is already currently being processed for this commission.', 'code' => 409];
+            }
+
             $paidPayment = $locked->payments()
                 ->where('status', PaymentStatus::PAID->value)
                 ->lockForUpdate()
@@ -183,6 +292,13 @@ class CommissionCancellationService
                 ->where('status', PaymentStatus::PENDING->value)
                 ->pluck('order_id')
                 ->toArray();
+
+            // Reserve the refund transition immediately inside this transaction lock!
+            if ($paidPayment) {
+                $paidPayment->update([
+                    'status' => PaymentStatus::REFUND_PROCESSING->value,
+                ]);
+            }
 
             return [
                 'commission_id' => $locked->id,
@@ -201,27 +317,45 @@ class CommissionCancellationService
             return $prep;
         }
 
-        // ─── Phase 2: External Gateway API calls OUTSIDE DB Transaction ───────────
+        // External Gateway API calls OUTSIDE DB Transaction
         $midtransResponse = null;
         $isRefundSuccessful = false;
+        $verifiedCancelledOrderIds = [];
 
-        if ($prep['paid_order_id'] && $prep['refund_amount'] > 0) {
-            $midtransResponse = $this->midtransService->refundTransaction(
-                $prep['paid_order_id'],
-                $prep['refund_amount'],
-                $prep['reason'] ?: 'Mutual cancellation agreement'
-            );
+        try {
+            if ($prep['paid_order_id'] && $prep['refund_amount'] > 0) {
+                $midtransResponse = $this->midtransService->refundTransaction(
+                    $prep['paid_order_id'],
+                    $prep['refund_amount'],
+                    $prep['reason'] ?: 'Mutual cancellation agreement'
+                );
 
-            $isRefundSuccessful = is_array($midtransResponse)
-                && (! isset($midtransResponse['status_code']) || in_array((string) $midtransResponse['status_code'], ['200', '201', '202']));
+                $isRefundSuccessful = is_array($midtransResponse)
+                    && (! isset($midtransResponse['status_code']) || in_array((string) $midtransResponse['status_code'], ['200', '201', '202'], true));
+            }
+
+            foreach ($prep['pending_order_ids'] as $pendingOrderId) {
+                $cancelRes = $this->midtransService->cancelTransaction($pendingOrderId);
+                $isCancelled = is_array($cancelRes) && in_array((string) ($cancelRes['status_code'] ?? ''), ['200', '201', '412', '404'], true);
+                if ($isCancelled) {
+                    $verifiedCancelledOrderIds[] = $pendingOrderId;
+                } else {
+                    Log::warning("Midtrans cancelTransaction unconfirmed for Order #{$pendingOrderId}; keeping status pending.");
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::error("Exception during gateway refund for Commission #{$commission->id}: " . $e->getMessage());
+            // Ensure payment does not remain stuck in REFUND_PROCESSING
+            if ($prep['paid_payment_id']) {
+                Commission::find($commission->id)?->payments()
+                    ->whereKey($prep['paid_payment_id'])
+                    ->update(['status' => PaymentStatus::PENDING_MANUAL_REFUND->value]);
+            }
+            throw $e;
         }
 
-        foreach ($prep['pending_order_ids'] as $pendingOrderId) {
-            $this->midtransService->cancelTransaction($pendingOrderId);
-        }
-
-        // ─── Phase 3: Atomic DB state persistence ───────────
-        $finalData = DB::transaction(function () use ($commission, $prep, $midtransResponse, $isRefundSuccessful) {
+        // Atomic DB state persistence
+        $finalData = DB::transaction(function () use ($commission, $prep, $midtransResponse, $isRefundSuccessful, $verifiedCancelledOrderIds) {
             $locked = Commission::whereKey($commission->id)
                 ->lockForUpdate()
                 ->firstOrFail();
@@ -292,10 +426,12 @@ class CommissionCancellationService
                 }
             }
 
-            // Cancel any pending payments
-            $locked->payments()
-                ->where('status', PaymentStatus::PENDING->value)
-                ->update(['status' => PaymentStatus::CANCELLED->value]);
+            // Only mark verified cancelled pending payments
+            if (! empty($verifiedCancelledOrderIds)) {
+                $locked->payments()
+                    ->whereIn('order_id', $verifiedCancelledOrderIds)
+                    ->update(['status' => PaymentStatus::CANCELLED->value]);
+            }
 
             $locked->update([
                 'status' => CommissionStatus::CANCELLED,
@@ -311,7 +447,7 @@ class CommissionCancellationService
             ];
         });
 
-        // ─── Phase 4: Notifications & Chat Notices ───────────
+        // Notifications & Chat Notices
         $formattedRefund = 'Rp ' . number_format($finalData['refund_amount'], 0, ',', '.');
         $chatNotice = $finalData['was_refunded']
             ? "[Cancellation & Escrow Refund] The cancellation request was accepted by {$acceptor->display_name}. Full escrow payment of {$formattedRefund} has been refunded to the client."
