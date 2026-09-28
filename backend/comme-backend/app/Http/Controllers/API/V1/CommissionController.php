@@ -69,14 +69,15 @@ class CommissionController extends Controller
             $query->where('status', $request->query('status'));
         }
 
-        // Search query across client notes, service title, and counterpart username
+        // Search query across commission description, service title, and counterpart username
         if ($request->filled('search')) {
             $search = trim($request->search);
-            $query->where(function ($q) use ($search) {
-                $q->where('client_notes', 'ILIKE', "%{$search}%")
-                  ->orWhereHas('commissionService', fn ($sq) => $sq->where('name', 'ILIKE', "%{$search}%"))
-                  ->orWhereHas('user', fn ($uq) => $uq->where('username', 'ILIKE', "%{$search}%")->orWhere('display_name', 'ILIKE', "%{$search}%"))
-                  ->orWhereHas('artistProfile.user', fn ($uq) => $uq->where('username', 'ILIKE', "%{$search}%")->orWhere('display_name', 'ILIKE', "%{$search}%"));
+            $like = DB::connection()->getDriverName() === 'pgsql' ? 'ILIKE' : 'like';
+            $query->where(function ($q) use ($search, $like) {
+                $q->where('description', $like, "%{$search}%")
+                  ->orWhereHas('commissionService', fn ($sq) => $sq->where('name', $like, "%{$search}%"))
+                  ->orWhereHas('user', fn ($uq) => $uq->where('username', $like, "%{$search}%")->orWhere('display_name', $like, "%{$search}%"))
+                  ->orWhereHas('artistProfile.user', fn ($uq) => $uq->where('username', $like, "%{$search}%")->orWhere('display_name', $like, "%{$search}%"));
             });
         }
 

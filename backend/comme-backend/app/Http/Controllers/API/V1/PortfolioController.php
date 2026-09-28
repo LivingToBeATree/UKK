@@ -54,24 +54,26 @@ class PortfolioController extends Controller
             }
         }
 
+        $like = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'pgsql' ? 'ILIKE' : 'like';
+
         if ($request->filled('tag')) {
             $tagInput = trim(str_replace('#', '', $request->tag));
             $tagSlug = Str::slug($tagInput);
 
-            $query->whereHas('tags', function ($q) use ($tagInput, $tagSlug) {
+            $query->whereHas('tags', function ($q) use ($tagInput, $tagSlug, $like) {
                 $q->where('slug', $tagSlug)
-                    ->orWhere('name', 'ILIKE', "%{$tagInput}%")
-                    ->orWhere('slug', 'ILIKE', "%{$tagSlug}%");
+                    ->orWhere('name', $like, "%{$tagInput}%")
+                    ->orWhere('slug', $like, "%{$tagSlug}%");
             });
         }
 
         if ($request->filled('search')) {
             $search = trim($request->search);
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'ILIKE', "%{$search}%")
-                    ->orWhere('description', 'ILIKE', "%{$search}%")
-                    ->orWhereHas('tags', function ($tq) use ($search) {
-                        $tq->where('name', 'ILIKE', "%{$search}%");
+            $query->where(function ($q) use ($search, $like) {
+                $q->where('title', $like, "%{$search}%")
+                    ->orWhere('description', $like, "%{$search}%")
+                    ->orWhereHas('tags', function ($tq) use ($search, $like) {
+                        $tq->where('name', $like, "%{$search}%");
                     });
             });
         }
