@@ -260,10 +260,7 @@ class PaymentController extends Controller
                     PaymentStatus::REFUNDED->value,
                     PaymentStatus::PENDING_MANUAL_REFUND->value,
                 ])
-                ->exists() || in_array($commission->status, [
-                    CommissionStatus::IN_PROGRESS,
-                    CommissionStatus::COMPLETED,
-                ], true);
+                ->exists();
 
             if ($alreadyPaidExists) {
                 $duplicatePaymentService->handleDuplicateSettlement(
@@ -313,10 +310,7 @@ class PaymentController extends Controller
                         PaymentStatus::REFUNDED->value,
                         PaymentStatus::PENDING_MANUAL_REFUND->value,
                     ])
-                    ->exists() || in_array($lockedCommission->status, [
-                        CommissionStatus::IN_PROGRESS,
-                        CommissionStatus::COMPLETED,
-                    ], true);
+                    ->exists();
 
                 if ($alreadyPaidExists) {
                     return [
@@ -478,6 +472,16 @@ class PaymentController extends Controller
             $payload['fraud_status'] ?? null,
         );
 
+        // Webhook Idempotency: If THIS exact payment is already PAID and gateway reports PAID,
+        // this is an idempotent replay from Midtrans. Acknowledge immediately without re-processing or refunding!
+        if ($payment->status === PaymentStatus::PAID && $newStatus === PaymentStatus::PAID) {
+            $payment->update([
+                'raw_response' => $payload,
+            ]);
+
+            return ApiResponseHelper::successResponse(message: 'Notification processed (idempotent replay).');
+        }
+
         // Pre-check for duplicate settlement before entering main transaction
         if ($newStatus === PaymentStatus::PAID) {
             $commission = $payment->commission;
@@ -490,10 +494,7 @@ class PaymentController extends Controller
                         PaymentStatus::REFUNDED->value,
                         PaymentStatus::PENDING_MANUAL_REFUND->value,
                     ])
-                    ->exists() || in_array($commission->status, [
-                        CommissionStatus::IN_PROGRESS,
-                        CommissionStatus::COMPLETED,
-                    ], true);
+                    ->exists();
 
                 if ($alreadyPaidExists) {
                     $duplicatePaymentService->handleDuplicateSettlement(
@@ -524,6 +525,11 @@ class PaymentController extends Controller
 
             $previousStatus = $payment->status;
 
+            // Idempotency under lock: If payment was already updated to PAID concurrently, return early
+            if ($previousStatus === PaymentStatus::PAID && $newStatus === PaymentStatus::PAID) {
+                return;
+            }
+
             if ($newStatus === PaymentStatus::PAID) {
                 // Financial Integrity: Check if another payment attempt for this commission has already settled into escrow
                 $alreadyPaidExists = $commission->payments()
@@ -534,10 +540,7 @@ class PaymentController extends Controller
                         PaymentStatus::REFUNDED->value,
                         PaymentStatus::PENDING_MANUAL_REFUND->value,
                     ])
-                    ->exists() || in_array($commission->status, [
-                        CommissionStatus::IN_PROGRESS,
-                        CommissionStatus::COMPLETED,
-                    ], true);
+                    ->exists();
 
                 if ($alreadyPaidExists) {
                     $isDuplicatePayment = true;
