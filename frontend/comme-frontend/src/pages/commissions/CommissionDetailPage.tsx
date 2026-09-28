@@ -872,6 +872,8 @@ export const CommissionDetailPage: React.FC = () => {
                                         commission.status === 'cancelled'
                                             ? (commission.payment?.status === 'refunded' || commission.payments?.some(p => p.status === 'refunded')
                                                 ? 'text-rose-400'
+                                                : (commission.payment?.status === 'partial_refund' || commission.payments?.some(p => p.status === 'partial_refund'))
+                                                ? 'text-amber-400'
                                                 : 'text-muted-foreground')
                                             : 'text-emerald-400'
                                     }`}>
@@ -884,11 +886,18 @@ export const CommissionDetailPage: React.FC = () => {
                                             : commission.status === 'cancelled'
                                             ? (commission.payment?.status === 'refunded' || commission.payments?.some(p => p.status === 'refunded')
                                                 ? 'Escrow Refunded'
+                                                : (commission.payment?.status === 'partial_refund' || commission.payments?.some(p => p.status === 'partial_refund'))
+                                                ? 'Partially Refunded'
                                                 : 'Cancelled (No Charge)')
                                             : 'Released / Settled'}
                                     </p>
                                     {((['in_progress', 'waiting_for_client', 'revision', 'completed'].includes(commission.status)) ||
-                                      (commission.status === 'cancelled' && (commission.payment?.status === 'refunded' || commission.payment?.status === 'paid' || commission.payments?.some(p => p.status === 'refunded' || p.status === 'paid')))) && (
+                                      (commission.status === 'cancelled' && (
+                                        commission.payment?.status === 'refunded' ||
+                                        commission.payment?.status === 'partial_refund' ||
+                                        commission.payment?.status === 'paid' ||
+                                        commission.payments?.some(p => p.status === 'refunded' || p.status === 'partial_refund' || p.status === 'paid')
+                                      ))) && (
                                         <button
                                             type="button"
                                             onClick={() => setReceiptModalOpen(true)}
@@ -1052,6 +1061,7 @@ export const CommissionDetailPage: React.FC = () => {
                             {/* Cancelled Commission Banner */}
                             {commission.status === 'cancelled' && (() => {
                                 const hasRefund = commission.payment?.status === 'refunded' || commission.payments?.some(p => p.status === 'refunded');
+                                const isPartialRefund = !hasRefund && (commission.payment?.status === 'partial_refund' || commission.payments?.some(p => p.status === 'partial_refund'));
                                 return (
                                     <div className="p-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 space-y-2 text-xs">
                                         <div className="flex items-center justify-between">
@@ -1063,6 +1073,11 @@ export const CommissionDetailPage: React.FC = () => {
                                                     Escrow Refunded
                                                 </Badge>
                                             )}
+                                            {isPartialRefund && (
+                                                <Badge variant="gold" className="font-mono text-[10px] font-bold">
+                                                    Partially Refunded
+                                                </Badge>
+                                            )}
                                         </div>
                                         <p className="text-muted-foreground">
                                             {commission.cancellation_requested_by
@@ -1071,6 +1086,11 @@ export const CommissionDetailPage: React.FC = () => {
                                             {hasRefund && (
                                                 <span className="block mt-1 text-emerald-400 font-medium">
                                                     A full refund of {formatPrice(commission.total_price)} has been credited back to the client.
+                                                </span>
+                                            )}
+                                            {isPartialRefund && (
+                                                <span className="block mt-1 text-amber-400 font-medium">
+                                                    A partial gateway refund was recorded; the remaining escrow balance is being processed by staff via manual disbursement.
                                                 </span>
                                             )}
                                         </p>
@@ -1243,7 +1263,12 @@ export const CommissionDetailPage: React.FC = () => {
                             <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-border">
                                 {/* BOTH: Show Receipt (When Paid, In-Progress, Completed, or Refunded) */}
                                 {(['in_progress', 'waiting_for_client', 'revision', 'completed'].includes(commission.status) ||
-                                  (commission.status === 'cancelled' && (commission.payment?.status === 'refunded' || commission.payment?.status === 'paid' || commission.payments?.some(p => p.status === 'refunded' || p.status === 'paid')))) && (
+                                  (commission.status === 'cancelled' && (
+                                    commission.payment?.status === 'refunded' ||
+                                    commission.payment?.status === 'partial_refund' ||
+                                    commission.payment?.status === 'paid' ||
+                                    commission.payments?.some(p => p.status === 'refunded' || p.status === 'partial_refund' || p.status === 'paid')
+                                  ))) && (
                                     <Button
                                         size="sm"
                                         variant="outline"
