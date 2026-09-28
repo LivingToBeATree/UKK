@@ -57,6 +57,11 @@ class PaymentController extends Controller
                 abort(Response::HTTP_UNPROCESSABLE_ENTITY, 'This commission is not ready for payment.');
             }
 
+            // Prevent duplicate payment: if commission is already paid and secured in escrow, abort immediately
+            if ($lockedCommission->payments()->where('status', PaymentStatus::PAID->value)->exists()) {
+                abort(Response::HTTP_UNPROCESSABLE_ENTITY, 'This commission has already been paid and secured in escrow.');
+            }
+
             $payment = $lockedCommission->payments()
                 ->where('status', PaymentStatus::PENDING->value)
                 ->latest()
@@ -148,34 +153,44 @@ class PaymentController extends Controller
     {
         Gate::authorize('view', $commission);
 
-        $payment = $commission->payments()->latest()->first();
+        // Lock payment and commission atomically to prevent race condition with concurrent webhooks
+        $result = DB::transaction(function () use ($commission, $midtransService) {
+            $lockedCommission = Commission::query()
+                ->with(['artistProfile', 'payments'])
+                ->whereKey($commission->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        if (! $payment) {
-            return ApiResponseHelper::errorResponse('No payment record found for this commission.', Response::HTTP_NOT_FOUND);
-        }
+            $payment = $lockedCommission->payments()
+                ->lockForUpdate()
+                ->latest()
+                ->first();
 
-        // If already paid, return success immediately
-        if ($payment->status === PaymentStatus::PAID->value || $commission->status === CommissionStatus::IN_PROGRESS) {
-            return ApiResponseHelper::successResponse(
-                new CommissionResource($commission->fresh(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
-                'Payment is already confirmed and secured in Escrow.'
+            if (! $payment) {
+                return ['error' => 'No payment record found for this commission.', 'status' => Response::HTTP_NOT_FOUND];
+            }
+
+            // If already confirmed and in progress, return early without re-querying
+            if ($payment->status === PaymentStatus::PAID->value || $lockedCommission->status === CommissionStatus::IN_PROGRESS) {
+                return [
+                    'commission' => $lockedCommission,
+                    'message' => 'Payment is already confirmed and secured in Escrow.',
+                ];
+            }
+
+            // Query Midtrans API directly for the live status of the order_id
+            $remoteStatus = $midtransService->getTransactionStatus($payment->order_id);
+
+            if (! $remoteStatus) {
+                return ['error' => 'Could not retrieve payment status from Midtrans or transaction is not yet initialized.', 'status' => Response::HTTP_NOT_FOUND];
+            }
+
+            $mappedStatus = $midtransService->mapStatus(
+                $remoteStatus['transaction_status'] ?? '',
+                $remoteStatus['fraud_status'] ?? null
             );
-        }
 
-        // Query Midtrans API directly for the live status of the order_id
-        $remoteStatus = $midtransService->getTransactionStatus($payment->order_id);
-
-        if (! $remoteStatus) {
-            return ApiResponseHelper::errorResponse('Could not retrieve payment status from Midtrans or transaction is not yet initialized.', Response::HTTP_NOT_FOUND);
-        }
-
-        $mappedStatus = $midtransService->mapStatus(
-            $remoteStatus['transaction_status'] ?? '',
-            $remoteStatus['fraud_status'] ?? null
-        );
-
-        if ($mappedStatus === PaymentStatus::PAID) {
-            $updatedCommission = DB::transaction(function () use ($payment, $commission, $remoteStatus) {
+            if ($mappedStatus === PaymentStatus::PAID) {
                 $payment->update([
                     'status' => PaymentStatus::PAID->value,
                     'paid_at' => now(),
@@ -184,29 +199,38 @@ class PaymentController extends Controller
                     'raw_response' => $remoteStatus,
                 ]);
 
-                $commission->update(['status' => CommissionStatus::IN_PROGRESS]);
+                if ($lockedCommission->status === CommissionStatus::ACCEPTED) {
+                    $lockedCommission->update(['status' => CommissionStatus::IN_PROGRESS]);
 
-                Notification::create([
-                    'user_id' => $commission->artistProfile->user_id,
-                    'type' => NotificationType::PAYMENT_RECEIVED,
-                    'title' => 'Payment received',
-                    'message' => 'A client has paid for their commission - you can start working on it.',
-                    'notifiable_type' => Commission::class,
-                    'notifiable_id' => $commission->id,
-                ]);
+                    Notification::create([
+                        'user_id' => $lockedCommission->artistProfile->user_id,
+                        'type' => NotificationType::PAYMENT_RECEIVED,
+                        'title' => 'Payment received',
+                        'message' => 'A client has paid for their commission - you can start working on it.',
+                        'notifiable_type' => Commission::class,
+                        'notifiable_id' => $lockedCommission->id,
+                    ]);
+                }
 
-                return $commission;
-            });
+                return [
+                    'commission' => $lockedCommission,
+                    'message' => 'Payment verified from Midtrans! Commission is now In Progress in Escrow.',
+                ];
+            }
 
-            return ApiResponseHelper::successResponse(
-                new CommissionResource($updatedCommission->fresh(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
-                'Payment verified from Midtrans! Commission is now In Progress in Escrow.'
-            );
+            return [
+                'commission' => $lockedCommission,
+                'message' => 'Midtrans payment status: ' . ($remoteStatus['transaction_status'] ?? 'pending'),
+            ];
+        });
+
+        if (isset($result['error'])) {
+            return ApiResponseHelper::errorResponse($result['error'], $result['status']);
         }
 
         return ApiResponseHelper::successResponse(
-            new CommissionResource($commission->fresh(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
-            'Midtrans payment status: ' . ($remoteStatus['transaction_status'] ?? 'pending')
+            new CommissionResource($result['commission']->fresh(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
+            $result['message']
         );
     }
 
@@ -234,44 +258,52 @@ class PaymentController extends Controller
         if (str_starts_with($orderId, 'TIP-')) {
             $parts = explode('-', $orderId);
             $tipId = isset($parts[1]) && is_numeric($parts[1]) ? (int) $parts[1] : null;
-            $tip = $tipId ? ArtistTip::with('artistProfile.user')->find($tipId) : null;
 
-            if (! $tip) {
-                return ApiResponseHelper::errorResponse('Artist tip not found.', Response::HTTP_NOT_FOUND);
-            }
+            return DB::transaction(function () use ($tipId, $payload) {
+                $tip = $tipId ? ArtistTip::with('artistProfile.user')->whereKey($tipId)->lockForUpdate()->first() : null;
 
-            $txStatus = $payload['transaction_status'] ?? '';
-            $fraudStatus = $payload['fraud_status'] ?? null;
-
-            if (in_array($txStatus, ['settlement', 'capture'], true) && ($fraudStatus === 'accept' || empty($fraudStatus))) {
-                $tip->update([
-                    'status' => 'settled',
-                    'settled_at' => now(),
-                    'transaction_id' => $payload['transaction_id'] ?? $tip->transaction_id,
-                    'payment_type' => $payload['payment_type'] ?? $tip->payment_type,
-                ]);
-
-                if ($tip->artistProfile?->user_id) {
-                    Notification::create([
-                        'user_id' => $tip->artistProfile->user_id,
-                        'type' => NotificationType::PAYMENT_RECEIVED,
-                        'title' => 'Tip received',
-                        'message' => 'You received a tip of ' . number_format($tip->amount) . ' IDR from ' . ($tip->supporter_name ?: 'a supporter') . '!',
-                        'link' => '/artist/' . ($tip->artistProfile->user?->username ?? ''),
-                    ]);
+                if (! $tip) {
+                    return ApiResponseHelper::errorResponse('Artist tip not found.', Response::HTTP_NOT_FOUND);
                 }
-            } elseif (in_array($txStatus, ['deny', 'cancel', 'expire'], true)) {
-                $tip->update([
-                    'status' => 'failed',
-                    'transaction_id' => $payload['transaction_id'] ?? $tip->transaction_id,
-                    'payment_type' => $payload['payment_type'] ?? $tip->payment_type,
-                ]);
-            }
 
-            return ApiResponseHelper::successResponse([
-                'tip_id' => $tip->id,
-                'status' => $tip->status,
-            ], 'Artist tip webhook processed successfully.');
+                $txStatus = $payload['transaction_status'] ?? '';
+                $fraudStatus = $payload['fraud_status'] ?? null;
+
+                if (in_array($txStatus, ['settlement', 'capture'], true) && ($fraudStatus === 'accept' || empty($fraudStatus))) {
+                    $wasSettled = $tip->status === 'settled';
+
+                    $tip->update([
+                        'status' => 'settled',
+                        'settled_at' => $tip->settled_at ?? now(),
+                        'transaction_id' => $payload['transaction_id'] ?? $tip->transaction_id,
+                        'payment_type' => $payload['payment_type'] ?? $tip->payment_type,
+                    ]);
+
+                    // Idempotent notification: only fire once upon transition to settled
+                    if (! $wasSettled && $tip->artistProfile?->user_id) {
+                        Notification::create([
+                            'user_id' => $tip->artistProfile->user_id,
+                            'type' => NotificationType::PAYMENT_RECEIVED,
+                            'title' => 'Tip received',
+                            'message' => 'You received a tip of ' . number_format($tip->amount) . ' IDR from ' . ($tip->supporter_name ?: 'a supporter') . '!',
+                            'link' => '/artist/' . ($tip->artistProfile->user?->username ?? ''),
+                        ]);
+                    }
+                } elseif (in_array($txStatus, ['deny', 'cancel', 'expire'], true)) {
+                    if ($tip->status !== 'settled') {
+                        $tip->update([
+                            'status' => 'failed',
+                            'transaction_id' => $payload['transaction_id'] ?? $tip->transaction_id,
+                            'payment_type' => $payload['payment_type'] ?? $tip->payment_type,
+                        ]);
+                    }
+                }
+
+                return ApiResponseHelper::successResponse([
+                    'tip_id' => $tip->id,
+                    'status' => $tip->status,
+                ], 'Artist tip webhook processed successfully.');
+            });
         }
 
         $payment = CommissionPayment::where('order_id', $payload['order_id'] ?? null)->first();
@@ -288,6 +320,11 @@ class PaymentController extends Controller
         DB::transaction(function () use ($payment, $newStatus, $payload) {
             $payment = CommissionPayment::query()
                 ->whereKey($payment->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $commission = $payment->commission()
+                ->with('artistProfile')
                 ->lockForUpdate()
                 ->firstOrFail();
 
@@ -314,17 +351,18 @@ class PaymentController extends Controller
             ]);
 
             if ($previousStatus !== PaymentStatus::PAID && $newStatus === PaymentStatus::PAID) {
-                $commission = $payment->commission()->with('artistProfile')->firstOrFail();
-                $commission->update(['status' => CommissionStatus::IN_PROGRESS]);
+                if ($commission->status === CommissionStatus::ACCEPTED) {
+                    $commission->update(['status' => CommissionStatus::IN_PROGRESS]);
 
-                Notification::create([
-                    'user_id' => $commission->artistProfile->user_id,
-                    'type' => NotificationType::PAYMENT_RECEIVED,
-                    'title' => 'Payment received',
-                    'message' => 'A client has paid for their commission - you can start working on it.',
-                    'notifiable_type' => Commission::class,
-                    'notifiable_id' => $commission->id,
-                ]);
+                    Notification::create([
+                        'user_id' => $commission->artistProfile->user_id,
+                        'type' => NotificationType::PAYMENT_RECEIVED,
+                        'title' => 'Payment received',
+                        'message' => 'A client has paid for their commission - you can start working on it.',
+                        'notifiable_type' => Commission::class,
+                        'notifiable_id' => $commission->id,
+                    ]);
+                }
             }
         });
 

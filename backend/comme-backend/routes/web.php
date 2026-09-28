@@ -137,12 +137,22 @@ Route::get('storage/{path}', function (Request $request, string $path) {
 
     $cleanPath = ltrim(explode('?', $raw)[0], '/');
 
+    // Protect commission deliverables and private uploads from direct unauthenticated public access
+    if (str_starts_with($cleanPath, 'commissions/') || str_starts_with($cleanPath, 'private/')) {
+        abort(403, 'Direct access to protected commission deliverables is forbidden. Use authorized API endpoints.');
+    }
+
+    $disk = Storage::disk('public');
+    $diskRoot = realpath($disk->path('')) ?: $disk->path('');
+
     $allowedBases = array_filter([
         realpath(storage_path('app/public')),
         realpath(public_path('storage')),
+        $diskRoot,
     ]);
 
     $candidates = [
+        $disk->path($cleanPath),
         storage_path('app/public/' . $cleanPath),
         public_path('storage/' . $cleanPath),
     ];
@@ -151,8 +161,10 @@ Route::get('storage/{path}', function (Request $request, string $path) {
     foreach ($candidates as $candidate) {
         $real = realpath($candidate);
         if ($real && is_file($real)) {
+            $normalizedReal = rtrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $real), DIRECTORY_SEPARATOR);
             foreach ($allowedBases as $base) {
-                if (str_starts_with($real, $base . DIRECTORY_SEPARATOR) || $real === $base) {
+                $normalizedBase = rtrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, (string) $base), DIRECTORY_SEPARATOR);
+                if (str_starts_with(strtolower($normalizedReal), strtolower($normalizedBase) . DIRECTORY_SEPARATOR) || strtolower($normalizedReal) === strtolower($normalizedBase)) {
                     $fullPath = $real;
                     break 2;
                 }

@@ -17,7 +17,7 @@ return [
 
     'paths' => ['api/*', 'sanctum/csrf-cookie', 'storage/*'],
 
-    'allowed_methods' => ['*'],
+    'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
 
     'allowed_origins' => array_map('trim', explode(',', env('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173'))),
 
@@ -25,9 +25,9 @@ return [
 
     'allowed_headers' => ['*'],
 
-    'exposed_headers' => [],
+    'exposed_headers' => ['Content-Disposition', 'Content-Length', 'X-Request-Id'],
 
-    'max_age' => 0,
+    'max_age' => 86400,
 
     'supports_credentials' => true,
 

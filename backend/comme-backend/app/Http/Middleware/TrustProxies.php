@@ -7,7 +7,13 @@ use Illuminate\Http\Request;
 
 class TrustProxies extends Middleware
 {
-    protected $proxies = '*';
+    /**
+     * The trusted proxies for this application.
+     * In Laravel 12, trusted proxies are configured in bootstrap/app.php.
+     *
+     * @var array<int, string>|string|null
+     */
+    protected $proxies;
 
     protected $headers =
         Request::HEADER_X_FORWARDED_FOR

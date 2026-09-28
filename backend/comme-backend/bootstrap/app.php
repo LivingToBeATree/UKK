@@ -27,8 +27,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'midtrans/iris-webhook',
         ]);
 
+        $trustedProxies = env('TRUSTED_PROXIES')
+            ? array_filter(array_map('trim', explode(',', (string) env('TRUSTED_PROXIES'))))
+            : array_merge(['127.0.0.1', '::1'], \App\Services\API\V1\GeoIpService::CLOUDFLARE_IPV4_CIDRS);
+
         $middleware->trustProxies(
-            at: array_merge(['127.0.0.1', '::1'], \App\Services\API\V1\GeoIpService::CLOUDFLARE_IPV4_CIDRS),
+            at: $trustedProxies,
             headers: Request::HEADER_X_FORWARDED_FOR
                 | Request::HEADER_X_FORWARDED_HOST
                 | Request::HEADER_X_FORWARDED_PORT

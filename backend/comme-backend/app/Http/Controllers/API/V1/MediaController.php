@@ -76,6 +76,13 @@ class MediaController extends Controller
      */
     public function show(Media $media): JsonResponse
     {
+        if ($media->isPrivate()) {
+            $user = request()->user();
+            if (! $user || (! $user->isStaff() && ! $user->isAdmin() && $user->id !== $media->user_id)) {
+                return ApiResponseHelper::errorResponse('You are not authorized to view this private media.', Response::HTTP_FORBIDDEN);
+            }
+        }
+
         return ApiResponseHelper::successResponse(new MediaResource($media));
     }
 
@@ -84,6 +91,13 @@ class MediaController extends Controller
      */
     public function download(Request $request, Media $media)
     {
+        if ($media->isPrivate() || str_starts_with((string) $media->file_path, 'commissions/') || str_starts_with((string) $media->file_path, 'private/')) {
+            return ApiResponseHelper::errorResponse(
+                'This file is protected. Please use the authorized private download endpoint.',
+                Response::HTTP_FORBIDDEN
+            );
+        }
+
         if (!$media->file_path || !Storage::disk('public')->exists($media->file_path)) {
             return ApiResponseHelper::errorResponse('File not found in storage.', Response::HTTP_NOT_FOUND);
         }

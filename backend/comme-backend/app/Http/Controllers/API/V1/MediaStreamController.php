@@ -15,17 +15,31 @@ class MediaStreamController extends Controller
      */
     public function stream(Request $request, string $path): BinaryFileResponse
     {
-        // Sanitize path against directory traversal
-        $cleanPath = ltrim(str_replace(['..', '\\'], ['', '/'], $path), '/');
+        $raw = urldecode($path);
 
-        if (! Storage::disk('public')->exists($cleanPath)) {
+        // Directory traversal defense: reject null bytes, directory climbs, and path separators
+        if (str_contains($raw, "\0") || str_contains($raw, '..') || str_contains($raw, '\\')) {
+            abort(Response::HTTP_NOT_FOUND, 'Invalid media stream path.');
+        }
+
+        $cleanPath = ltrim(explode('?', $raw)[0], '/');
+
+        // Prevent streaming of protected deliverables or private media
+        if (str_starts_with($cleanPath, 'commissions/') || str_starts_with($cleanPath, 'private/')) {
+            abort(Response::HTTP_FORBIDDEN, 'Protected media stream is restricted to authorized endpoints.');
+        }
+
+        $allowedBase = realpath(storage_path('app/public'));
+        $fullCandidate = storage_path('app/public/' . $cleanPath);
+        $real = realpath($fullCandidate);
+
+        if (! $real || ! is_file($real) || ! $allowedBase || ! str_starts_with($real, $allowedBase . DIRECTORY_SEPARATOR)) {
             abort(Response::HTTP_NOT_FOUND, 'Media file not found.');
         }
 
-        $fullPath = Storage::disk('public')->path($cleanPath);
-        $mime = Storage::disk('public')->mimeType($cleanPath) ?: 'application/octet-stream';
+        $mime = @mime_content_type($real) ?: 'application/octet-stream';
 
-        $response = new BinaryFileResponse($fullPath, 200, [
+        $response = new BinaryFileResponse($real, 200, [
             'Content-Type' => $mime,
             'Accept-Ranges' => 'bytes',
         ], false, 'inline');
