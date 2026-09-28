@@ -93,26 +93,31 @@ class CommissionCancellationService
         // External gateway calls OUTSIDE DB transaction
         $verifiedCancelledOrderIds = [];
         foreach ($paymentData['pending_order_ids'] as $orderId) {
-            $cancelRes = $this->midtransService->cancelTransaction($orderId);
-            $isCancelled = is_array($cancelRes) && in_array((string) ($cancelRes['status_code'] ?? ''), ['200', '201', '412', '404'], true);
-            if ($isCancelled) {
+            if ($this->cancelPendingMidtransOrder($orderId)) {
                 $verifiedCancelledOrderIds[] = $orderId;
-            } else {
-                Log::warning("Midtrans cancellation unconfirmed for Order #{$orderId}; leaving payment status as pending.");
             }
         }
 
         $midtransResponse = null;
         $isRefundSuccessful = false;
-        if ($paymentData['paid_order_id'] && $paymentData['paid_amount'] > 0) {
-            $midtransResponse = $this->midtransService->refundTransaction(
-                $paymentData['paid_order_id'],
-                $paymentData['paid_amount'],
-                'Commission cancelled'
-            );
+        try {
+            if ($paymentData['paid_order_id'] && $paymentData['paid_amount'] > 0) {
+                $midtransResponse = $this->midtransService->refundTransaction(
+                    $paymentData['paid_order_id'],
+                    $paymentData['paid_amount'],
+                    'Commission cancelled'
+                );
 
-            $isRefundSuccessful = is_array($midtransResponse)
-                && (! isset($midtransResponse['status_code']) || in_array((string) $midtransResponse['status_code'], ['200', '201', '202'], true));
+                $isRefundSuccessful = is_array($midtransResponse)
+                    && (! isset($midtransResponse['status_code']) || in_array((string) $midtransResponse['status_code'], ['200', '201', '202'], true));
+            }
+        } catch (\Throwable $e) {
+            Log::error("Gateway exception during immediate cancellation refund of Commission #{$commission->id}: " . $e->getMessage());
+            $midtransResponse = [
+                'exception' => $e->getMessage(),
+                'error' => 'Gateway communication error',
+            ];
+            $isRefundSuccessful = false;
         }
 
         // Short atomic update for payment records with fail-closed financial integrity
@@ -293,6 +298,9 @@ class CommissionCancellationService
                 ->pluck('order_id')
                 ->toArray();
 
+            $requesterId = $locked->cancellation_requested_by;
+            $reason = $locked->cancellation_reason;
+
             // Reserve the refund transition immediately inside this transaction lock!
             if ($paidPayment) {
                 $paidPayment->update([
@@ -300,10 +308,17 @@ class CommissionCancellationService
                 ]);
             }
 
+            // Immediately mark commission as CANCELLED and clear cancellation_requested_by
+            // to reserve cancellation at the commission level, preventing any duplicate concurrent acceptance
+            $locked->update([
+                'status' => CommissionStatus::CANCELLED,
+                'cancellation_requested_by' => null,
+            ]);
+
             return [
                 'commission_id' => $locked->id,
-                'requester_id' => $locked->cancellation_requested_by,
-                'reason' => $locked->cancellation_reason,
+                'requester_id' => $requesterId,
+                'reason' => $reason,
                 'paid_payment_id' => $paidPayment?->id,
                 'paid_order_id' => $paidPayment?->order_id,
                 'refund_amount' => $paidPayment ? (float) $paidPayment->gross_amount : 0.0,
@@ -335,23 +350,17 @@ class CommissionCancellationService
             }
 
             foreach ($prep['pending_order_ids'] as $pendingOrderId) {
-                $cancelRes = $this->midtransService->cancelTransaction($pendingOrderId);
-                $isCancelled = is_array($cancelRes) && in_array((string) ($cancelRes['status_code'] ?? ''), ['200', '201', '412', '404'], true);
-                if ($isCancelled) {
+                if ($this->cancelPendingMidtransOrder($pendingOrderId)) {
                     $verifiedCancelledOrderIds[] = $pendingOrderId;
-                } else {
-                    Log::warning("Midtrans cancelTransaction unconfirmed for Order #{$pendingOrderId}; keeping status pending.");
                 }
             }
         } catch (\Throwable $e) {
-            Log::error("Exception during gateway refund for Commission #{$commission->id}: " . $e->getMessage());
-            // Ensure payment does not remain stuck in REFUND_PROCESSING
-            if ($prep['paid_payment_id']) {
-                Commission::find($commission->id)?->payments()
-                    ->whereKey($prep['paid_payment_id'])
-                    ->update(['status' => PaymentStatus::PENDING_MANUAL_REFUND->value]);
-            }
-            throw $e;
+            Log::error("Gateway exception during acceptCancellation for Commission #{$commission->id}: " . $e->getMessage());
+            $midtransResponse = [
+                'exception' => $e->getMessage(),
+                'error' => 'Gateway communication error',
+            ];
+            $isRefundSuccessful = false;
         }
 
         // Atomic DB state persistence
@@ -455,10 +464,14 @@ class CommissionCancellationService
                 ? "[Cancellation Accepted - Manual Refund Queued] The cancellation request was accepted by {$acceptor->display_name}. Automated gateway card refund is not supported by this payment channel; an administrative support ticket has been dispatched for our staff to manually disburse your full refund ({$formattedRefund}) via Midtrans Iris."
                 : "[Cancellation Accepted] The cancellation request was accepted by {$acceptor->display_name}. This commission order has been officially cancelled.");
 
+        $recipientId = $finalData['requester_id'] ?: ($acceptor->id === $finalData['commission']->user_id
+            ? $finalData['commission']->artistProfile?->user_id
+            : $finalData['commission']->user_id);
+
         CommissionMessage::create([
             'commission_id' => $finalData['commission']->id,
             'sender_id' => $acceptor->id,
-            'recipient_id' => $finalData['requester_id'],
+            'recipient_id' => $recipientId,
             'message' => $chatNotice,
             'message_type' => MessageType::SYSTEM,
         ]);
@@ -561,5 +574,53 @@ class CommissionCancellationService
             'commission' => $commission->fresh(['commissionService', 'commissionOption', 'artistProfile', 'user', 'cancellationRequester', 'messages', 'review']),
             'message' => $isRequester ? 'Cancellation request withdrawn.' : 'Cancellation request declined.',
         ];
+    }
+
+    /**
+     * Safely cancel a pending Midtrans order with status code differentiation:
+     * - 200/201: Successfully cancelled by gateway
+     * - 412: Precondition failed (already closed or settled) -> verify status
+     * - 404: Uninitiated on Midtrans Core -> verify and cancel locally
+     */
+    protected function cancelPendingMidtransOrder(string $orderId): bool
+    {
+        try {
+            $cancelRes = $this->midtransService->cancelTransaction($orderId);
+            $statusCode = (string) ($cancelRes['status_code'] ?? '');
+
+            if (in_array($statusCode, ['200', '201'], true)) {
+                return true;
+            }
+
+            if ($statusCode === '412') {
+                $statusCheck = $this->midtransService->getTransactionStatus($orderId);
+                $remoteStatus = strtolower((string) ($statusCheck['transaction_status'] ?? ''));
+
+                if (in_array($remoteStatus, ['cancel', 'expire', 'deny'], true)) {
+                    Log::info("Order #{$orderId} returned 412 on cancel, confirmed as {$remoteStatus} on Midtrans.");
+                    return true;
+                }
+
+                if (in_array($remoteStatus, ['settlement', 'capture'], true)) {
+                    Log::critical("Order #{$orderId} returned 412 on cancel and is SETTLED on Midtrans! Flagging for manual reconciliation.");
+                    return false;
+                }
+            }
+
+            if ($statusCode === '404') {
+                $statusCheck = $this->midtransService->getTransactionStatus($orderId);
+                $statusCheckCode = (string) ($statusCheck['status_code'] ?? '');
+                if ($statusCheckCode === '404' || empty($statusCheck['transaction_status'])) {
+                    Log::info("Order #{$orderId} returned 404 (uninitiated on Midtrans Core); safe to mark cancelled locally.");
+                    return true;
+                }
+            }
+
+            Log::warning("Midtrans cancelTransaction unconfirmed for Order #{$orderId} (Status code: {$statusCode}); leaving payment status as pending.");
+            return false;
+        } catch (\Throwable $e) {
+            Log::warning("Exception during cancelPendingMidtransOrder for Order #{$orderId}: " . $e->getMessage());
+            return false;
+        }
     }
 }
