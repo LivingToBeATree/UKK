@@ -46,8 +46,9 @@ class DuplicatePaymentService
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            // Idempotency: if already processed or processing, return early
+            // Idempotency: if already processed, processing, or already established as the legitimate PAID escrow payment, return early
             if (in_array($lockedPayment->status, [
+                PaymentStatus::PAID,
                 PaymentStatus::REFUNDED,
                 PaymentStatus::PENDING_MANUAL_REFUND,
                 PaymentStatus::REFUND_PROCESSING,
@@ -59,7 +60,7 @@ class DuplicatePaymentService
                 ];
             }
 
-            // Verify another payment attempt has actually settled or commission is in progress
+            // Verify another payment attempt has actually settled into escrow
             $hasExistingPaid = $lockedCommission->payments()
                 ->where('id', '!=', $lockedPayment->id)
                 ->whereIn('status', [
@@ -68,10 +69,7 @@ class DuplicatePaymentService
                     PaymentStatus::REFUNDED->value,
                     PaymentStatus::PENDING_MANUAL_REFUND->value,
                 ])
-                ->exists() || in_array($lockedCommission->status, [
-                    CommissionStatus::IN_PROGRESS,
-                    CommissionStatus::COMPLETED,
-                ], true);
+                ->exists();
 
             if (! $hasExistingPaid) {
                 return [
