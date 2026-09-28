@@ -57,6 +57,7 @@ export const CommissionReceiptModal: React.FC<CommissionReceiptModalProps> = ({
     const isEscrowSecured = ['in_progress', 'waiting_for_client', 'revision'].includes(commission.status);
     const isCompleted = commission.status === 'completed';
     const isRefunded = commission.status === 'cancelled' && (activePayment?.status === 'refunded' || commission.payments?.some(p => p.status === 'refunded'));
+    const isPartialRefund = commission.status === 'cancelled' && !isRefunded && (activePayment?.status === 'partial_refund' || commission.payments?.some(p => p.status === 'partial_refund'));
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
@@ -93,12 +94,12 @@ export const CommissionReceiptModal: React.FC<CommissionReceiptModalProps> = ({
                 className="relative w-full max-w-2xl bg-zinc-950 border border-border/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[90vh]"
             >
                 {/* Decorative Top Accent Bar */}
-                <div className={`h-2 bg-gradient-to-r ${isRefunded ? 'from-rose-500 via-amber-400 to-rose-400' : 'from-primary via-emerald-400 to-amber-400'} shrink-0`} />
+                <div className={`h-2 bg-gradient-to-r ${isRefunded ? 'from-rose-500 via-amber-400 to-rose-400' : isPartialRefund ? 'from-amber-500 via-rose-400 to-amber-400' : 'from-primary via-emerald-400 to-amber-400'} shrink-0`} />
 
                 {/* Modal Header Actions (Screen Only) */}
                 <div className="p-4 sm:p-6 pb-0 flex items-center justify-between gap-3 shrink-0 no-print">
                     <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest font-mono">
-                        <Receipt className={`h-4 w-4 ${isRefunded ? 'text-rose-400' : 'text-emerald-400'}`} /> {isRefunded ? 'Cancelled & Refunded Receipt' : 'Official Escrow Receipt'}
+                        <Receipt className={`h-4 w-4 ${isRefunded ? 'text-rose-400' : isPartialRefund ? 'text-amber-400' : 'text-emerald-400'}`} /> {isRefunded ? 'Cancelled & Refunded Receipt' : isPartialRefund ? 'Cancelled & Partially Refunded Receipt' : 'Official Escrow Receipt'}
                     </div>
                     <div className="flex items-center gap-2">
                         <Button
@@ -126,10 +127,10 @@ export const CommissionReceiptModal: React.FC<CommissionReceiptModalProps> = ({
                         <div className="space-y-1">
                             <div className="flex items-center gap-2">
                                 <span className="font-black text-xl tracking-tight text-foreground font-mono">
-                                    COM<span className={isRefunded ? 'text-rose-400' : 'text-emerald-400'}>ME</span>
+                                    COM<span className={isRefunded ? 'text-rose-400' : isPartialRefund ? 'text-amber-400' : 'text-emerald-400'}>ME</span>
                                 </span>
-                                <Badge variant={isRefunded ? 'rose' : 'teal'} className="text-[10px] gap-1 py-0.5">
-                                    {isRefunded ? <RotateCcw className="h-3 w-3" /> : <ShieldCheck className="h-3 w-3" />} {isRefunded ? 'ESCROW REFUNDED' : 'VERIFIED ESCROW'}
+                                <Badge variant={isRefunded ? 'rose' : isPartialRefund ? 'gold' : 'teal'} className="text-[10px] gap-1 py-0.5">
+                                    {isRefunded ? <RotateCcw className="h-3 w-3" /> : isPartialRefund ? <RotateCcw className="h-3 w-3" /> : <ShieldCheck className="h-3 w-3" />} {isRefunded ? 'ESCROW REFUNDED' : isPartialRefund ? 'PARTIALLY REFUNDED' : 'VERIFIED ESCROW'}
                                 </Badge>
                             </div>
                             <p className="text-xs text-muted-foreground">
@@ -152,15 +153,19 @@ export const CommissionReceiptModal: React.FC<CommissionReceiptModalProps> = ({
 
                         <div className="text-left sm:text-right space-y-1">
                             <span className="text-[10px] text-muted-foreground block uppercase font-mono tracking-wider font-semibold">
-                                {isRefunded ? 'Escrow Deposit Refunded' : 'Total Paid & Protected'}
+                                {isRefunded ? 'Escrow Deposit Refunded' : isPartialRefund ? 'Escrow Partially Refunded' : 'Total Paid & Protected'}
                             </span>
-                            <span className={`text-2xl sm:text-3xl font-black font-mono block ${isRefunded ? 'text-rose-400' : 'text-emerald-400'}`}>
+                            <span className={`text-2xl sm:text-3xl font-black font-mono block ${isRefunded ? 'text-rose-400' : isPartialRefund ? 'text-amber-400' : 'text-emerald-400'}`}>
                                 {formatPrice(commission.total_price)}
                             </span>
                             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
                                 {isRefunded ? (
                                     <span className="text-rose-400 flex items-center gap-1 font-mono">
                                         <RotateCcw className="h-3.5 w-3.5" /> Order Cancelled &amp; Refunded
+                                    </span>
+                                ) : isPartialRefund ? (
+                                    <span className="text-amber-400 flex items-center gap-1 font-mono">
+                                        <RotateCcw className="h-3.5 w-3.5" /> Order Cancelled &amp; Partially Refunded
                                     </span>
                                 ) : isCompleted ? (
                                     <span className="text-emerald-400 flex items-center gap-1 font-mono">
@@ -327,6 +332,15 @@ export const CommissionReceiptModal: React.FC<CommissionReceiptModalProps> = ({
                                 This commission order was mutually cancelled. The full escrow deposit of <span className="text-foreground font-bold font-mono">{formatPrice(commission.total_price)}</span> has been credited back to the client. No payout was disbursed to the creator.
                             </p>
                         </div>
+                    ) : isPartialRefund ? (
+                        <div className="p-4 rounded-2xl border border-amber-500/25 bg-amber-500/5 space-y-1.5 text-xs">
+                            <p className="font-bold text-amber-400 flex items-center gap-1.5">
+                                <RotateCcw className="h-4 w-4" /> Escrow Partial Refund Recorded
+                            </p>
+                            <p className="text-muted-foreground leading-relaxed text-[11px]">
+                                This commission order was cancelled. A partial gateway refund was credited back to the client. The remaining escrow balance is being processed for manual disbursement by platform staff.
+                            </p>
+                        </div>
                     ) : (
                         <div className="p-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/5 space-y-1.5 text-xs">
                             <p className="font-bold text-emerald-400 flex items-center gap-1.5">
@@ -356,7 +370,7 @@ export const CommissionReceiptModal: React.FC<CommissionReceiptModalProps> = ({
                                             </span>
                                         </div>
                                         <Badge
-                                            variant={p.status === 'paid' ? 'teal' : p.status === 'pending' ? 'gold' : 'rose'}
+                                            variant={p.status === 'paid' ? 'teal' : (p.status === 'pending' || p.status === 'partial_refund') ? 'gold' : 'rose'}
                                             className="text-[10px] uppercase font-mono"
                                         >
                                             {p.status}
