@@ -75,6 +75,16 @@ class ArtistProfile extends Model
     // Helpers
     public function isOpen(): bool
     {
-        return $this->commission_status !== 'closed' && $this->commission_open;
+        $status = strtolower((string) ($this->commission_status ?? ''));
+
+        if ($status === 'closed') {
+            return false;
+        }
+
+        if (in_array($status, ['open', 'busy'], true)) {
+            return true;
+        }
+
+        return (bool) $this->commission_open;
     }
 }
