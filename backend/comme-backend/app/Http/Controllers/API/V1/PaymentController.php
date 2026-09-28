@@ -46,7 +46,8 @@ class PaymentController extends Controller
                 : ($clientLocation['billing_currency'] ?? 'IDR'))
         )));
 
-        $payment = DB::transaction(function () use ($request, $commission, $midtransService, $billingCurrency): CommissionPayment {
+        // ── Phase 1: Atomically prepare or retrieve the pending payment record ──
+        [$payment, $needsSnapToken] = DB::transaction(function () use ($commission, $request) {
             $lockedCommission = Commission::query()
                 ->with(['user', 'commissionService', 'commissionOption'])
                 ->whereKey($commission->id)
@@ -76,18 +77,27 @@ class PaymentController extends Controller
             }
 
             $isExpired = $payment->created_at && $payment->created_at->diffInHours(now()) >= 24;
-            if ($request->boolean('refresh') || ! $payment->snap_token || str_starts_with($payment->snap_token, 'mock_snap_token_') || $isExpired) {
+            $needsSnap = $request->boolean('refresh') || ! $payment->snap_token || str_starts_with($payment->snap_token, 'mock_snap_token_') || $isExpired;
+
+            if ($needsSnap) {
                 $freshOrderId = 'CMS-'.$lockedCommission->id.'-'.now()->timestamp.'-'.Str::random(8);
                 $payment->update([
                     'order_id' => $freshOrderId,
-                    'snap_token' => $midtransService->createSnapTransaction($payment, $lockedCommission, $billingCurrency),
                 ]);
             }
 
-            return $payment;
+            return [$payment, $needsSnap];
         });
 
-        return ApiResponseHelper::successResponse(new PaymentResource($payment), 'Payment initiated');
+        // ── Phase 2: Call Midtrans Snap API OUTSIDE the DB transaction lock ──
+        if ($needsSnapToken) {
+            $snapToken = $midtransService->createSnapTransaction($payment, $commission, $billingCurrency);
+            $payment->update([
+                'snap_token' => $snapToken,
+            ]);
+        }
+
+        return ApiResponseHelper::successResponse(new PaymentResource($payment->fresh()), 'Payment initiated');
     }
 
     /**
@@ -160,45 +170,63 @@ class PaymentController extends Controller
     {
         Gate::authorize('view', $commission);
 
-        // Lock payment and commission atomically to prevent race condition with concurrent webhooks
-        $result = DB::transaction(function () use ($commission, $midtransService) {
+        // ── Phase 1: Pre-check latest payment record ──
+        $payment = $commission->payments()->latest()->first();
+
+        if (! $payment) {
+            return ApiResponseHelper::errorResponse('No payment record found for this commission.', Response::HTTP_NOT_FOUND);
+        }
+
+        // If already confirmed and secured in escrow, return immediately without calling external API
+        if ($payment->status === PaymentStatus::PAID->value || $commission->status === CommissionStatus::IN_PROGRESS) {
+            return ApiResponseHelper::successResponse(
+                new CommissionResource($commission->load(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
+                'Payment is already confirmed and secured in Escrow.'
+            );
+        }
+
+        // ── Phase 2: Query Midtrans API OUTSIDE the DB transaction to avoid holding locks ──
+        $remoteStatus = $midtransService->getTransactionStatus($payment->order_id);
+
+        if (! $remoteStatus) {
+            return ApiResponseHelper::errorResponse(
+                'Could not retrieve payment status from Midtrans or transaction is not yet initialized.',
+                Response::HTTP_NOT_FOUND
+            );
+        }
+
+        $mappedStatus = $midtransService->mapStatus(
+            $remoteStatus['transaction_status'] ?? '',
+            $remoteStatus['fraud_status'] ?? null
+        );
+
+        // ── Phase 3: Atomically apply synchronized status with pessimistic lock ──
+        $result = DB::transaction(function () use ($commission, $payment, $remoteStatus, $mappedStatus) {
             $lockedCommission = Commission::query()
                 ->with(['artistProfile', 'payments'])
                 ->whereKey($commission->id)
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            $payment = $lockedCommission->payments()
+            $lockedPayment = $lockedCommission->payments()
+                ->whereKey($payment->id)
                 ->lockForUpdate()
-                ->latest()
                 ->first();
 
-            if (! $payment) {
+            if (! $lockedPayment) {
                 return ['error' => 'No payment record found for this commission.', 'status' => Response::HTTP_NOT_FOUND];
             }
 
             // If already confirmed and in progress, return early without re-querying
-            if ($payment->status === PaymentStatus::PAID->value || $lockedCommission->status === CommissionStatus::IN_PROGRESS) {
+            if ($lockedPayment->status === PaymentStatus::PAID->value || $lockedCommission->status === CommissionStatus::IN_PROGRESS) {
                 return [
                     'commission' => $lockedCommission,
                     'message' => 'Payment is already confirmed and secured in Escrow.',
                 ];
             }
 
-            // Query Midtrans API directly for the live status of the order_id
-            $remoteStatus = $midtransService->getTransactionStatus($payment->order_id);
-
-            if (! $remoteStatus) {
-                return ['error' => 'Could not retrieve payment status from Midtrans or transaction is not yet initialized.', 'status' => Response::HTTP_NOT_FOUND];
-            }
-
-            $mappedStatus = $midtransService->mapStatus(
-                $remoteStatus['transaction_status'] ?? '',
-                $remoteStatus['fraud_status'] ?? null
-            );
-
             if ($mappedStatus === PaymentStatus::PAID) {
-                $payment->update([
+                $lockedPayment->update([
                     'status' => PaymentStatus::PAID->value,
                     'paid_at' => now(),
                     'midtrans_transaction_id' => $remoteStatus['transaction_id'] ?? null,
@@ -226,11 +254,11 @@ class PaymentController extends Controller
             }
 
             // Sync other non-pending terminal/gateway statuses (e.g. EXPIRED, FAILED, CANCELLED)
-            if ($this->shouldApplyPaymentStatus($payment->status, $mappedStatus)) {
-                $payment->update([
+            if ($this->shouldApplyPaymentStatus($lockedPayment->status, $mappedStatus)) {
+                $lockedPayment->update([
                     'status' => $mappedStatus->value,
-                    'midtrans_transaction_id' => $remoteStatus['transaction_id'] ?? $payment->midtrans_transaction_id,
-                    'payment_type' => $remoteStatus['payment_type'] ?? $payment->payment_type,
+                    'midtrans_transaction_id' => $remoteStatus['transaction_id'] ?? $lockedPayment->midtrans_transaction_id,
+                    'payment_type' => $remoteStatus['payment_type'] ?? $lockedPayment->payment_type,
                     'raw_response' => $remoteStatus,
                 ]);
             }
