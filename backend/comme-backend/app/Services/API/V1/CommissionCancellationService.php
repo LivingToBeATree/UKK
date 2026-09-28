@@ -59,11 +59,31 @@ class CommissionCancellationService
             );
         }
 
-        // Atomically lock, mark refund reservation if paid, and retrieve payment IDs
-        $paymentData = DB::transaction(function () use ($commission) {
+        // Atomically lock, re-validate lifecycle state, mark refund reservation if paid, and reserve cancellation
+        $paymentData = DB::transaction(function () use ($commission, $actor, $allowedImmediateStatuses) {
             $locked = Commission::whereKey($commission->id)
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            if (! $actor->isStaff()) {
+                $isActiveOrder = in_array($locked->status, [
+                    CommissionStatus::IN_PROGRESS,
+                    CommissionStatus::WAITING_FOR_CLIENT,
+                    CommissionStatus::REVISION,
+                ], true);
+
+                if ($isActiveOrder) {
+                    throw new InvalidArgumentException(
+                        "Active commissions in '{$locked->status->value}' status cannot be cancelled unilaterally. Please use the negotiated cancellation flow (/request-cancellation) to reach mutual agreement."
+                    );
+                }
+
+                if (! in_array($locked->status, $allowedImmediateStatuses, true)) {
+                    throw new InvalidArgumentException(
+                        "This commission cannot be cancelled in its current state ('{$locked->status->value}')."
+                    );
+                }
+            }
 
             $pendingOrderIds = $locked->payments()
                 ->where('status', PaymentStatus::PENDING->value)
@@ -98,6 +118,7 @@ class CommissionCancellationService
             }
         }
 
+        $refundKey = 'ref-' . $paymentData['paid_order_id'];
         $midtransResponse = null;
         $isRefundSuccessful = false;
         try {
@@ -105,7 +126,8 @@ class CommissionCancellationService
                 $midtransResponse = $this->midtransService->refundTransaction(
                     $paymentData['paid_order_id'],
                     $paymentData['paid_amount'],
-                    'Commission cancelled'
+                    'Commission cancelled',
+                    $refundKey
                 );
 
                 $isRefundSuccessful = is_array($midtransResponse)
@@ -118,6 +140,25 @@ class CommissionCancellationService
                 'error' => 'Gateway communication error',
             ];
             $isRefundSuccessful = false;
+        }
+
+        // If direct refund was unconfirmed, query gateway status to check if it actually succeeded (prevent double-refund)
+        if (! $isRefundSuccessful && $paymentData['paid_order_id'] && $paymentData['paid_amount'] > 0) {
+            try {
+                $statusCheck = $this->midtransService->getTransactionStatus($paymentData['paid_order_id']);
+                if (is_array($statusCheck)) {
+                    $txStatus = strtolower((string) ($statusCheck['transaction_status'] ?? ''));
+                    $hasRefunds = ! empty($statusCheck['refunds']) || ((float) ($statusCheck['refund_amount'] ?? 0) > 0);
+
+                    if (in_array($txStatus, ['refund', 'partial_refund'], true) || $hasRefunds) {
+                        Log::info("Ambiguous refund for Order #{$paymentData['paid_order_id']} was verified as SUCCEEDED via getTransactionStatus.");
+                        $isRefundSuccessful = true;
+                        $midtransResponse = $statusCheck;
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning("Could not verify status check for Order #{$paymentData['paid_order_id']}: " . $e->getMessage());
+            }
         }
 
         // Short atomic update for payment records with fail-closed financial integrity
@@ -337,12 +378,14 @@ class CommissionCancellationService
         $isRefundSuccessful = false;
         $verifiedCancelledOrderIds = [];
 
+        $refundKey = 'ref-' . $prep['paid_order_id'];
         try {
             if ($prep['paid_order_id'] && $prep['refund_amount'] > 0) {
                 $midtransResponse = $this->midtransService->refundTransaction(
                     $prep['paid_order_id'],
                     $prep['refund_amount'],
-                    $prep['reason'] ?: 'Mutual cancellation agreement'
+                    $prep['reason'] ?: 'Mutual cancellation agreement',
+                    $refundKey
                 );
 
                 $isRefundSuccessful = is_array($midtransResponse)
@@ -361,6 +404,25 @@ class CommissionCancellationService
                 'error' => 'Gateway communication error',
             ];
             $isRefundSuccessful = false;
+        }
+
+        // If direct refund was unconfirmed, query gateway status to check if it actually succeeded (prevent double-refund)
+        if (! $isRefundSuccessful && $prep['paid_order_id'] && $prep['refund_amount'] > 0) {
+            try {
+                $statusCheck = $this->midtransService->getTransactionStatus($prep['paid_order_id']);
+                if (is_array($statusCheck)) {
+                    $txStatus = strtolower((string) ($statusCheck['transaction_status'] ?? ''));
+                    $hasRefunds = ! empty($statusCheck['refunds']) || ((float) ($statusCheck['refund_amount'] ?? 0) > 0);
+
+                    if (in_array($txStatus, ['refund', 'partial_refund'], true) || $hasRefunds) {
+                        Log::info("Ambiguous refund for Order #{$prep['paid_order_id']} was verified as SUCCEEDED via getTransactionStatus.");
+                        $isRefundSuccessful = true;
+                        $midtransResponse = $statusCheck;
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning("Could not verify status check for Order #{$prep['paid_order_id']}: " . $e->getMessage());
+            }
         }
 
         // Atomic DB state persistence

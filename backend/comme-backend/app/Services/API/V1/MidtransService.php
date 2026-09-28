@@ -224,11 +224,11 @@ class MidtransService
     /**
      * Attempts to refund a settled transaction via Midtrans API.
      */
-    public function refundTransaction(string $orderId, float $amount, string $reason): ?array
+    public function refundTransaction(string $orderId, float $amount, string $reason, ?string $refundKey = null): ?array
     {
         try {
             $params = [
-                'refund_key' => 'ref-' . time() . '-' . Str::random(6),
+                'refund_key' => $refundKey ?: ('ref-' . $orderId),
                 'amount' => (int) $amount,
                 'reason' => $reason,
             ];

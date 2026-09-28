@@ -50,7 +50,7 @@ class AdminController extends Controller
             'active_tickets_count' => $activeTicketsCount,
             'total_commissions_count' => Commission::count(),
             'completed_commissions_count' => Commission::where('status', 'completed')->count(),
-            'total_volume_idr' => (float) CommissionPayment::where('status', PaymentStatus::PAID)->sum('gross_amount'),
+            'total_volume_idr' => (float) CommissionPayment::where('status', PaymentStatus::PAID->value)->sum('gross_amount'),
             'recent_applications' => ArtistApplication::with('user:id,username,display_name,avatar')
                 ->latest()
                 ->take(5)
