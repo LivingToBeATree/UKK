@@ -18,6 +18,7 @@ use App\Services\API\V1\GeoIpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
@@ -46,58 +47,70 @@ class PaymentController extends Controller
                 : ($clientLocation['billing_currency'] ?? 'IDR'))
         )));
 
-        // ── Phase 1: Atomically prepare or retrieve the pending payment record ──
-        [$payment, $needsSnapToken] = DB::transaction(function () use ($commission, $request) {
-            $lockedCommission = Commission::query()
-                ->with(['user', 'commissionService', 'commissionOption'])
-                ->whereKey($commission->id)
-                ->lockForUpdate()
-                ->firstOrFail();
+        // Serialize checkout initiation per commission to prevent concurrent duplicate order_id/token race conditions
+        $payment = Cache::lock("commission_checkout_lock_{$commission->id}", 15)->block(10, function () use ($request, $commission, $midtransService, $billingCurrency) {
+            // ── Phase 1: Atomically prepare or retrieve the pending payment record ──
+            [$payment, $needsSnapToken, $targetOrderId] = DB::transaction(function () use ($commission, $request) {
+                $lockedCommission = Commission::query()
+                    ->with(['user', 'commissionService', 'commissionOption'])
+                    ->whereKey($commission->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
-            if ($lockedCommission->status !== CommissionStatus::ACCEPTED) {
-                abort(Response::HTTP_UNPROCESSABLE_ENTITY, 'This commission is not ready for payment.');
+                if ($lockedCommission->status !== CommissionStatus::ACCEPTED) {
+                    abort(Response::HTTP_UNPROCESSABLE_ENTITY, 'This commission is not ready for payment.');
+                }
+
+                // Prevent duplicate payment: if commission is already paid and secured in escrow, abort immediately
+                if ($lockedCommission->payments()->where('status', PaymentStatus::PAID->value)->exists()) {
+                    abort(Response::HTTP_UNPROCESSABLE_ENTITY, 'This commission has already been paid and secured in escrow.');
+                }
+
+                $payment = $lockedCommission->payments()
+                    ->where('status', PaymentStatus::PENDING->value)
+                    ->latest()
+                    ->first();
+
+                if (! $payment) {
+                    $orderId = 'CMS-'.$lockedCommission->id.'-'.now()->timestamp.'-'.Str::random(8);
+                    $payment = $lockedCommission->payments()->create([
+                        'order_id' => $orderId,
+                        'status' => PaymentStatus::PENDING->value,
+                        'gross_amount' => $lockedCommission->total_price,
+                    ]);
+                    return [$payment, true, $orderId];
+                }
+
+                $isExpired = $payment->created_at && $payment->created_at->diffInHours(now()) >= 24;
+                $needsSnap = $request->boolean('refresh') || ! $payment->snap_token || str_starts_with($payment->snap_token, 'mock_snap_token_') || $isExpired;
+
+                if ($needsSnap) {
+                    $freshOrderId = 'CMS-'.$lockedCommission->id.'-'.now()->timestamp.'-'.Str::random(8);
+                    $payment->update([
+                        'order_id' => $freshOrderId,
+                        'snap_token' => null, // clear old snap token while generating fresh one
+                    ]);
+                    return [$payment, true, $freshOrderId];
+                }
+
+                return [$payment, false, $payment->order_id];
+            });
+
+            // ── Phase 2: Call Midtrans Snap API OUTSIDE the DB transaction lock ──
+            if ($needsSnapToken) {
+                $snapToken = $midtransService->createSnapTransaction($payment, $commission, $billingCurrency);
+                // Atomic update strictly matching the target order_id to prevent any token/order_id mismatch
+                CommissionPayment::whereKey($payment->id)
+                    ->where('order_id', $targetOrderId)
+                    ->update([
+                        'snap_token' => $snapToken,
+                    ]);
             }
 
-            // Prevent duplicate payment: if commission is already paid and secured in escrow, abort immediately
-            if ($lockedCommission->payments()->where('status', PaymentStatus::PAID->value)->exists()) {
-                abort(Response::HTTP_UNPROCESSABLE_ENTITY, 'This commission has already been paid and secured in escrow.');
-            }
-
-            $payment = $lockedCommission->payments()
-                ->where('status', PaymentStatus::PENDING->value)
-                ->latest()
-                ->first();
-
-            if (! $payment) {
-                $payment = $lockedCommission->payments()->create([
-                    'order_id' => 'CMS-'.$lockedCommission->id.'-'.now()->timestamp.'-'.Str::random(8),
-                    'status' => PaymentStatus::PENDING->value,
-                    'gross_amount' => $lockedCommission->total_price,
-                ]);
-            }
-
-            $isExpired = $payment->created_at && $payment->created_at->diffInHours(now()) >= 24;
-            $needsSnap = $request->boolean('refresh') || ! $payment->snap_token || str_starts_with($payment->snap_token, 'mock_snap_token_') || $isExpired;
-
-            if ($needsSnap) {
-                $freshOrderId = 'CMS-'.$lockedCommission->id.'-'.now()->timestamp.'-'.Str::random(8);
-                $payment->update([
-                    'order_id' => $freshOrderId,
-                ]);
-            }
-
-            return [$payment, $needsSnap];
+            return $payment->fresh();
         });
 
-        // ── Phase 2: Call Midtrans Snap API OUTSIDE the DB transaction lock ──
-        if ($needsSnapToken) {
-            $snapToken = $midtransService->createSnapTransaction($payment, $commission, $billingCurrency);
-            $payment->update([
-                'snap_token' => $snapToken,
-            ]);
-        }
-
-        return ApiResponseHelper::successResponse(new PaymentResource($payment->fresh()), 'Payment initiated');
+        return ApiResponseHelper::successResponse(new PaymentResource($payment), 'Payment initiated');
     }
 
     /**
@@ -407,6 +420,37 @@ class PaymentController extends Controller
                         'notifiable_type' => Commission::class,
                         'notifiable_id' => $commission->id,
                     ]);
+                } elseif ($commission->status === CommissionStatus::CANCELLED) {
+                    // Critical financial recovery: payment arrived for an already cancelled order
+                    Log::critical("Settlement received for already CANCELLED commission #{$commission->id} (Order: {$payment->order_id}). Escalating for immediate Iris refund.");
+
+                    $buyerUser = $commission->user;
+                    $report = \App\Models\Report::create([
+                        'user_id' => $buyerUser?->id ?? $commission->user_id,
+                        'reportable_type' => Commission::class,
+                        'reportable_id' => $commission->id,
+                        'reason' => \App\Enum\ReportReason::OTHER,
+                        'description' => "Late Settlement on Cancelled Order (Order: {$payment->order_id}): "
+                            . "Customer completed payment on Midtrans after/during commission cancellation. Full escrow refund of Rp " . number_format($payment->gross_amount, 0, ',', '.') . " required.",
+                        'status' => \App\Enum\ReportStatus::PENDING,
+                    ]);
+
+                    $ticket = $report->ticket()->create([
+                        'priority' => \App\Enum\TicketPriority::HIGH,
+                    ]);
+
+                    $ticket->messages()->create([
+                        'user_id' => $buyerUser?->id ?? $commission->user_id,
+                        'content' => "⚠️ Urgent: Payment was captured on gateway for already cancelled order {$payment->order_id}. "
+                            . "High-priority manual disbursement via Iris required for client (@{$buyerUser?->username}, Amount: Rp " . number_format($payment->gross_amount, 0, ',', '.') . ").",
+                    ]);
+
+                    \App\Services\API\V1\StaffNotificationService::notifyStaff(
+                        'Late Payment on Cancelled Order',
+                        "Payment of Rp " . number_format($payment->gross_amount, 0, ',', '.') . " arrived for CANCELLED Commission #{$commission->id}. Immediate Iris refund required.",
+                        $commission,
+                        NotificationType::SYSTEM
+                    );
                 }
             }
         });
@@ -483,11 +527,24 @@ class PaymentController extends Controller
             return $newStatus === PaymentStatus::REFUNDED;
         }
 
+        if ($currentStatus === PaymentStatus::REFUND_PROCESSING) {
+            return in_array($newStatus, [
+                PaymentStatus::REFUNDED,
+                PaymentStatus::PENDING_MANUAL_REFUND,
+                PaymentStatus::REFUND_FAILED,
+            ], true);
+        }
+
         if ($currentStatus === PaymentStatus::REFUNDED) {
             return false;
         }
 
         if (in_array($currentStatus, [PaymentStatus::FAILED, PaymentStatus::EXPIRED, PaymentStatus::CANCELLED], true)) {
+            // Financial integrity: If Midtrans actually settled the transaction (customer paid!),
+            // allow transition to PAID so funds are not lost/untracked, even if local status was previously CANCELLED/EXPIRED.
+            if ($newStatus === PaymentStatus::PAID) {
+                return true;
+            }
             return false;
         }
 
