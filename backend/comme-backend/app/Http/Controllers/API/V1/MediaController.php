@@ -76,12 +76,7 @@ class MediaController extends Controller
      */
     public function show(Media $media): JsonResponse
     {
-        if ($media->isPrivate()) {
-            $user = request()->user();
-            if (! $user || (! $user->isStaff() && ! $user->isAdmin() && $user->id !== $media->user_id)) {
-                return ApiResponseHelper::errorResponse('You are not authorized to view this private media.', Response::HTTP_FORBIDDEN);
-            }
-        }
+        Gate::authorize('view', $media);
 
         return ApiResponseHelper::successResponse(new MediaResource($media));
     }
@@ -91,19 +86,31 @@ class MediaController extends Controller
      */
     public function download(Request $request, Media $media)
     {
-        if ($media->isPrivate() || str_starts_with((string) $media->file_path, 'commissions/') || str_starts_with((string) $media->file_path, 'private/')) {
+        Gate::authorize('view', $media);
+
+        $path = (string) ($media->file_path ?? '');
+
+        if ($media->isPrivate() || str_starts_with($path, 'commissions/') || str_starts_with($path, 'private/')) {
             return ApiResponseHelper::errorResponse(
                 'This file is protected. Please use the authorized private download endpoint.',
                 Response::HTTP_FORBIDDEN
             );
         }
 
-        if (!$media->file_path || !Storage::disk('public')->exists($media->file_path)) {
+        if ($path === '' || ! Storage::disk('public')->exists($path)) {
             return ApiResponseHelper::errorResponse('File not found in storage.', Response::HTTP_NOT_FOUND);
         }
 
-        $fullPath = Storage::disk('public')->path($media->file_path);
-        $downloadName = $media->file_name ?: basename($media->file_path);
+        $normalizedPath = str_replace('\\', '/', $path);
+        if (preg_match('#(^|/)\.\.(?:/|$)#', $normalizedPath) === 1 || str_starts_with($normalizedPath, '/')) {
+            return ApiResponseHelper::errorResponse(
+                'Invalid file path.',
+                Response::HTTP_FORBIDDEN
+            );
+        }
+
+        $fullPath = Storage::disk('public')->path($normalizedPath);
+        $downloadName = $media->file_name ?: basename($normalizedPath);
 
         return response()->download($fullPath, $downloadName, $this->getDownloadCorsHeaders($request));
     }

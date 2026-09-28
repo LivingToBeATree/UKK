@@ -51,6 +51,19 @@ class GeoIpService
     ];
 
     /**
+     * Official Cloudflare IPv6 CIDR blocks (https://www.cloudflare.com/ips/)
+     */
+    public const CLOUDFLARE_IPV6_CIDRS = [
+        '2400:cb00::/32',
+        '2606:4700::/32',
+        '2803:f800::/32',
+        '2405:b500::/32',
+        '2405:8100::/32',
+        '2a06:98c0::/29',
+        '2c0f:f248::/32',
+    ];
+
+    /**
      * Check whether an IPv4 address falls within a given CIDR subnet.
      */
     public static function isIpInCidr(string $ip, string $cidr): bool

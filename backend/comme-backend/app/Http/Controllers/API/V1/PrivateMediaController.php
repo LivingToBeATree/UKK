@@ -75,11 +75,37 @@ class PrivateMediaController extends Controller
         $isThumb = $request->query('type') === 'thumb';
         $targetPath = ($isThumb && $media->thumbnail_path) ? $media->thumbnail_path : $media->file_path;
 
+        if (! $targetPath || str_contains($targetPath, "\0") || str_contains($targetPath, '..') || str_contains($targetPath, '\\')) {
+            return ApiResponseHelper::errorResponse('Invalid media storage path.', Response::HTTP_NOT_FOUND);
+        }
+
+        // Cross-commission safeguard: verify requesting user is an authentic participant of the commission
+        if (str_starts_with($targetPath, 'commissions/')) {
+            $parts = explode('/', $targetPath);
+            $commissionId = $parts[1] ?? null;
+            if ($commissionId && is_numeric($commissionId)) {
+                $commission = Commission::with('artistProfile')->find((int) $commissionId);
+                if (! $commission || (! $user->isStaff() && ! $user->isAdmin() && $commission->user_id !== $user->id && $commission->artistProfile?->user_id !== $user->id)) {
+                    return ApiResponseHelper::errorResponse(
+                        'You are not authorized to access deliverables for this commission.',
+                        Response::HTTP_FORBIDDEN
+                    );
+                }
+            }
+        }
+
         if (! Storage::disk($disk)->exists($targetPath)) {
             return ApiResponseHelper::errorResponse('File not found in storage.', Response::HTTP_NOT_FOUND);
         }
 
         $fullPath = Storage::disk($disk)->path($targetPath);
+        $realPath = realpath($fullPath);
+        $diskRoot = realpath(Storage::disk($disk)->path('')) ?: Storage::disk($disk)->path('');
+
+        if (! $realPath || ! file_exists($realPath) || ! str_starts_with(strtolower($realPath), strtolower($diskRoot))) {
+            return ApiResponseHelper::errorResponse('File not found in storage.', Response::HTTP_NOT_FOUND);
+        }
+
         $downloadName = $isThumb
             ? 'thumb_' . ($media->file_name ?: basename($targetPath))
             : ($media->file_name ?: basename($targetPath));

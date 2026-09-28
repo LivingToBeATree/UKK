@@ -8,12 +8,12 @@ use Illuminate\Http\Request;
 class TrustProxies extends Middleware
 {
     /**
-     * The trusted proxies for this application.
-     * In Laravel 12, trusted proxies are configured in bootstrap/app.php.
+     * Default to a locked-down proxy list unless explicitly configured via env.
+     * A wildcard is intentionally not trusted here.
      *
      * @var array<int, string>|string|null
      */
-    protected $proxies;
+    protected $proxies = ['127.0.0.1', '::1'];
 
     protected $headers =
         Request::HEADER_X_FORWARDED_FOR
