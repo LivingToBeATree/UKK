@@ -126,8 +126,12 @@ class DuplicatePaymentService
                 $refundKey
             );
 
+            $txStatus = strtolower((string) ($midtransResponse['transaction_status'] ?? ''));
+            $isPartial = $txStatus === 'partial_refund';
+
             $isRefundSuccessful = is_array($midtransResponse)
-                && (! isset($midtransResponse['status_code']) || in_array((string) $midtransResponse['status_code'], ['200', '201', '202'], true));
+                && (! isset($midtransResponse['status_code']) || in_array((string) $midtransResponse['status_code'], ['200', '201', '202'], true))
+                && ! $isPartial;
         } catch (\Throwable $e) {
             Log::error("Gateway exception during duplicate payment refund for Order #{$orderId}: " . $e->getMessage());
             $midtransResponse = [
@@ -137,17 +141,23 @@ class DuplicatePaymentService
             $isRefundSuccessful = false;
         }
 
-        // Ambiguity check: query getTransactionStatus to verify if refund succeeded on Midtrans
+        // Ambiguity check: query getTransactionStatus to verify if full refund succeeded on Midtrans
         if (! $isRefundSuccessful) {
             try {
                 $statusCheck = $this->midtransService->getTransactionStatus($orderId);
                 if (is_array($statusCheck)) {
                     $txStatus = strtolower((string) ($statusCheck['transaction_status'] ?? ''));
-                    $hasRefunds = ! empty($statusCheck['refunds']) || ((float) ($statusCheck['refund_amount'] ?? 0) > 0);
+                    $refundAmount = (float) ($statusCheck['refund_amount'] ?? 0);
+                    $expectedAmount = (float) $amount;
 
-                    if (in_array($txStatus, ['refund', 'partial_refund'], true) || $hasRefunds) {
-                        Log::info("Ambiguous duplicate refund for Order #{$orderId} was verified as SUCCEEDED via getTransactionStatus.");
+                    $isFullRefund = $txStatus === 'refund'
+                        || ($refundAmount > 0 && abs($refundAmount - $expectedAmount) < 0.01);
+
+                    if ($isFullRefund) {
+                        Log::info("Ambiguous duplicate refund for Order #{$orderId} was verified as FULLY SUCCEEDED via getTransactionStatus.");
                         $isRefundSuccessful = true;
+                        $midtransResponse = $statusCheck;
+                    } elseif ($refundAmount > 0 || $txStatus === 'partial_refund') {
                         $midtransResponse = $statusCheck;
                     }
                 }
@@ -192,13 +202,22 @@ class DuplicatePaymentService
         // Phase 4: Operational Escalation (Isolated / Best-Effort)
         if (! $isRefundSuccessful) {
             try {
+                $confirmedRefunded = isset($midtransResponse['refund_amount']) ? (float) $midtransResponse['refund_amount'] : 0.0;
+                $remainingAmount = max(0, $amount - $confirmedRefunded);
+
+                $description = $confirmedRefunded > 0
+                    ? "Duplicate Escrow Payment Received (Order: {$orderId}): "
+                        . "Partial gateway refund of Rp " . number_format($confirmedRefunded, 0, ',', '.') . " recorded on Midtrans. "
+                        . "Remaining balance of Rp " . number_format($remainingAmount, 0, ',', '.') . " requires manual Iris disbursement."
+                    : "Duplicate Escrow Payment Received (Order: {$orderId}): "
+                        . "Customer completed payment for multiple checkout sessions for Commission #{$reservation['commission_id']}. Full manual refund of Rp " . number_format($amount, 0, ',', '.') . " required.";
+
                 $report = Report::create([
                     'user_id' => $reservation['buyer_id'],
                     'reportable_type' => Commission::class,
                     'reportable_id' => $reservation['commission_id'],
                     'reason' => ReportReason::OTHER,
-                    'description' => "Duplicate Escrow Payment Received (Order: {$orderId}): "
-                        . "Customer completed payment for multiple checkout sessions for Commission #{$reservation['commission_id']}. Full manual refund of Rp " . number_format($amount, 0, ',', '.') . " required.",
+                    'description' => $description,
                     'status' => ReportStatus::PENDING,
                 ]);
 
@@ -206,10 +225,15 @@ class DuplicatePaymentService
                     'priority' => TicketPriority::HIGH,
                 ]);
 
+                $ticketMsg = $confirmedRefunded > 0
+                    ? "High Priority: Duplicate payment of Rp " . number_format($amount, 0, ',', '.') . " was captured for order {$orderId}. "
+                        . "Partial gateway refund of Rp " . number_format($confirmedRefunded, 0, ',', '.') . " confirmed. Escalated for manual Iris disbursement of remaining Rp " . number_format($remainingAmount, 0, ',', '.') . "."
+                    : "High Priority: Duplicate payment of Rp " . number_format($amount, 0, ',', '.') . " was captured on gateway for order {$orderId}. "
+                        . "Another payment is already active in escrow. Escalated for manual Iris / gateway refund.";
+
                 $ticket->messages()->create([
                     'user_id' => $reservation['buyer_id'],
-                    'content' => "High Priority: Duplicate payment of Rp " . number_format($amount, 0, ',', '.') . " was captured on gateway for order {$orderId}. "
-                        . "Another payment is already active in escrow. Escalated for manual Iris / gateway refund.",
+                    'content' => $ticketMsg,
                 ]);
 
                 StaffNotificationService::notifyStaff(
