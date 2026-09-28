@@ -83,7 +83,7 @@ export interface CommissionReview {
   } | null;
 }
 
-export type PaymentStatusType = 'pending' | 'paid' | 'failed' | 'cancelled' | 'expired' | 'refunded' | 'pending_manual_refund' | 'refund_failed';
+export type PaymentStatusType = 'pending' | 'paid' | 'failed' | 'canceled' | 'cancelled' | 'refund_processing' | 'refunded' | 'pending_manual_refund' | 'refund_failed';
 
 export interface CommissionPayment {
   id: number;

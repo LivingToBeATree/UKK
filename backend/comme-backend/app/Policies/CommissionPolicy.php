@@ -113,7 +113,8 @@ class CommissionPolicy
     public function cancel(User $user, Commission $commission): bool
     {
         return $user->id === $commission->user_id
-            || $user->id === $commission->artistProfile->user_id;
+            || $user->id === $commission->artistProfile?->user_id
+            || $user->isStaff();
     }
 
     public function requestCancellation(User $user, Commission $commission): bool
