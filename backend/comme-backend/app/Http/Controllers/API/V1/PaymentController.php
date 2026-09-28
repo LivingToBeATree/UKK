@@ -49,7 +49,7 @@ class PaymentController extends Controller
 
         // Serialize checkout initiation per commission to prevent concurrent duplicate order_id/token race conditions
         $payment = Cache::lock("commission_checkout_lock_{$commission->id}", 15)->block(10, function () use ($request, $commission, $midtransService, $billingCurrency) {
-            // ── Phase 1: Atomically prepare or retrieve the pending payment record ──
+            // Atomically prepare or retrieve the pending payment record
             [$payment, $needsSnapToken, $targetOrderId] = DB::transaction(function () use ($commission, $request) {
                 $lockedCommission = Commission::query()
                     ->with(['user', 'commissionService', 'commissionOption'])
@@ -96,7 +96,7 @@ class PaymentController extends Controller
                 return [$payment, false, $payment->order_id];
             });
 
-            // ── Phase 2: Call Midtrans Snap API OUTSIDE the DB transaction lock ──
+            // Call Midtrans Snap API OUTSIDE the DB transaction lock
             if ($needsSnapToken) {
                 $snapToken = $midtransService->createSnapTransaction($payment, $commission, $billingCurrency);
                 // Atomic update strictly matching the target order_id to prevent any token/order_id mismatch
@@ -183,7 +183,7 @@ class PaymentController extends Controller
     {
         Gate::authorize('view', $commission);
 
-        // ── Phase 1: Pre-check latest payment record ──
+        // Pre-check latest payment record
         $payment = $commission->payments()->latest()->first();
 
         if (! $payment) {
@@ -198,7 +198,7 @@ class PaymentController extends Controller
             );
         }
 
-        // ── Phase 2: Query Midtrans API OUTSIDE the DB transaction to avoid holding locks ──
+        // Query Midtrans API OUTSIDE the DB transaction to avoid holding locks
         $remoteStatus = $midtransService->getTransactionStatus($payment->order_id);
 
         if (! $remoteStatus) {
@@ -213,7 +213,7 @@ class PaymentController extends Controller
             $remoteStatus['fraud_status'] ?? null
         );
 
-        // ── Phase 3: Atomically apply synchronized status with pessimistic lock ──
+        // Atomically apply synchronized status with pessimistic lock
         $result = DB::transaction(function () use ($commission, $payment, $remoteStatus, $mappedStatus) {
             $lockedCommission = Commission::query()
                 ->with(['artistProfile', 'payments'])
@@ -441,7 +441,7 @@ class PaymentController extends Controller
 
                     $ticket->messages()->create([
                         'user_id' => $buyerUser?->id ?? $commission->user_id,
-                        'content' => "⚠️ Urgent: Payment was captured on gateway for already cancelled order {$payment->order_id}. "
+                        'content' => "Urgent: Payment was captured on gateway for already cancelled order {$payment->order_id}. "
                             . "High-priority manual disbursement via Iris required for client (@{$buyerUser?->username}, Amount: Rp " . number_format($payment->gross_amount, 0, ',', '.') . ").",
                     ]);
 
