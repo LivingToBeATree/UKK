@@ -53,6 +53,10 @@ class StoreCommissionRequest extends FormRequest
                     if ($service->artistProfile?->user_id === $this->user()?->id || $service->artist_profile_id === $this->user()?->artistProfile?->id) {
                         $fail('You cannot order a commission from your own artist profile.');
                     }
+
+                    if (! $service->artistProfile || ! $service->artistProfile->isOpen()) {
+                        $fail('This artist is not currently accepting commissions.');
+                    }
                 },
             ],
 
