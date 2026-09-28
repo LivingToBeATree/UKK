@@ -30,6 +30,7 @@ use App\Enum\TicketPriority;
 use App\Http\Resources\API\V1\CommissionResource;
 use App\Models\CommissionPayout;
 use App\Models\Report;
+use App\Services\API\V1\DuplicatePaymentService;
 use App\Services\API\V1\StaffNotificationService;
 
 class PaymentController extends Controller
@@ -192,22 +193,43 @@ class PaymentController extends Controller
     /**
      * Check and synchronize live payment status directly with Midtrans Sandbox API.
      */
-    public function checkStatus(Commission $commission, MidtransService $midtransService): JsonResponse
-    {
+    public function checkStatus(
+        Request $request,
+        Commission $commission,
+        MidtransService $midtransService,
+        DuplicatePaymentService $duplicatePaymentService
+    ): JsonResponse {
         Gate::authorize('view', $commission);
 
-        // Pre-check latest payment record
-        $payment = $commission->payments()->latest()->first();
+        // Pre-check payment record: prioritize explicit order_id query param if provided, otherwise latest payment by id
+        $orderIdParam = $request->query('order_id') ?: $request->input('order_id');
+        $payment = $orderIdParam
+            ? $commission->payments()->where('order_id', $orderIdParam)->first()
+            : $commission->payments()->latest('id')->first();
 
         if (! $payment) {
             return ApiResponseHelper::errorResponse('No payment record found for this commission.', Response::HTTP_NOT_FOUND);
         }
 
-        // If already confirmed and secured in escrow, return immediately without calling external API
-        if ($payment->status === PaymentStatus::PAID->value || $commission->status === CommissionStatus::IN_PROGRESS) {
+        // If this payment attempt is already confirmed and secured in escrow, return immediately
+        if ($payment->status === PaymentStatus::PAID) {
             return ApiResponseHelper::successResponse(
                 new CommissionResource($commission->load(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
                 'Payment is already confirmed and secured in Escrow.'
+            );
+        }
+
+        if ($payment->status === PaymentStatus::REFUNDED) {
+            return ApiResponseHelper::successResponse(
+                new CommissionResource($commission->load(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
+                'Payment has been refunded.'
+            );
+        }
+
+        if ($payment->status === PaymentStatus::PENDING_MANUAL_REFUND) {
+            return ApiResponseHelper::successResponse(
+                new CommissionResource($commission->load(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
+                'Duplicate payment attempt detected; escrow already secured by previous payment. Duplicate queued for refund.'
             );
         }
 
@@ -228,6 +250,35 @@ class PaymentController extends Controller
             $remoteStatus['fraud_status'] ?? null
         );
 
+        // Pre-check: if payment was captured on Midtrans, check if escrow is already settled by another attempt
+        if ($mappedStatus === PaymentStatus::PAID) {
+            $alreadyPaidExists = $commission->payments()
+                ->where('id', '!=', $payment->id)
+                ->whereIn('status', [
+                    PaymentStatus::PAID->value,
+                    PaymentStatus::REFUND_PROCESSING->value,
+                    PaymentStatus::REFUNDED->value,
+                    PaymentStatus::PENDING_MANUAL_REFUND->value,
+                ])
+                ->exists() || in_array($commission->status, [
+                    CommissionStatus::IN_PROGRESS,
+                    CommissionStatus::COMPLETED,
+                ], true);
+
+            if ($alreadyPaidExists) {
+                $duplicatePaymentService->handleDuplicateSettlement(
+                    $payment,
+                    $commission,
+                    $remoteStatus
+                );
+
+                return ApiResponseHelper::successResponse(
+                    new CommissionResource($commission->fresh(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
+                    'Duplicate payment attempt detected; escrow already secured by previous payment. Duplicate refund processed.'
+                );
+            }
+        }
+
         // Atomically apply synchronized status with pessimistic lock
         $result = DB::transaction(function () use ($commission, $payment, $queriedOrderId, $remoteStatus, $mappedStatus) {
             $lockedCommission = Commission::query()
@@ -245,8 +296,8 @@ class PaymentController extends Controller
                 return ['error' => 'Payment attempt order_id mismatch or superseded; please retry.', 'status' => Response::HTTP_CONFLICT];
             }
 
-            // If already confirmed and in progress, return early without re-querying
-            if ($lockedPayment->status === PaymentStatus::PAID->value || $lockedCommission->status === CommissionStatus::IN_PROGRESS) {
+            // If already confirmed, return early without re-querying
+            if ($lockedPayment->status === PaymentStatus::PAID) {
                 return [
                     'commission' => $lockedCommission,
                     'message' => 'Payment is already confirmed and secured in Escrow.',
@@ -262,23 +313,15 @@ class PaymentController extends Controller
                         PaymentStatus::REFUNDED->value,
                         PaymentStatus::PENDING_MANUAL_REFUND->value,
                     ])
-                    ->exists();
+                    ->exists() || in_array($lockedCommission->status, [
+                        CommissionStatus::IN_PROGRESS,
+                        CommissionStatus::COMPLETED,
+                    ], true);
 
                 if ($alreadyPaidExists) {
-                    $lockedPayment->update([
-                        'status' => PaymentStatus::PENDING_MANUAL_REFUND->value,
-                        'paid_at' => now(),
-                        'midtrans_transaction_id' => $remoteStatus['transaction_id'] ?? null,
-                        'payment_type' => $remoteStatus['payment_type'] ?? null,
-                        'raw_response' => array_merge($lockedPayment->raw_response ?? [], [
-                            'duplicate_payment' => true,
-                            'remote_status' => $remoteStatus,
-                        ]),
-                    ]);
-
                     return [
-                        'commission' => $lockedCommission,
-                        'message' => 'Duplicate payment attempt detected; escrow already secured by previous payment. Duplicate queued for refund.',
+                        'is_duplicate' => true,
+                        'payment_id' => $lockedPayment->id,
                     ];
                 }
 
@@ -329,6 +372,20 @@ class PaymentController extends Controller
             return ApiResponseHelper::errorResponse($result['error'], $result['status']);
         }
 
+        if (! empty($result['is_duplicate'])) {
+            $duplicatePayment = CommissionPayment::findOrFail($result['payment_id']);
+            $duplicatePaymentService->handleDuplicateSettlement(
+                $duplicatePayment,
+                $commission,
+                $remoteStatus
+            );
+
+            return ApiResponseHelper::successResponse(
+                new CommissionResource($commission->fresh(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
+                'Duplicate payment attempt detected; escrow already secured by previous payment. Duplicate refund processed.'
+            );
+        }
+
         return ApiResponseHelper::successResponse(
             new CommissionResource($result['commission']->fresh(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
             $result['message']
@@ -339,8 +396,11 @@ class PaymentController extends Controller
      * Public Midtrans callback. Authenticity comes from the Midtrans
      * signature, not from a browser session.
      */
-    public function webhook(Request $request, MidtransService $midtransService): JsonResponse
-    {
+    public function webhook(
+        Request $request,
+        MidtransService $midtransService,
+        DuplicatePaymentService $duplicatePaymentService
+    ): JsonResponse {
         $payload = $request->all();
 
         if (! $midtransService->verifySignature($payload)) {
@@ -418,6 +478,37 @@ class PaymentController extends Controller
             $payload['fraud_status'] ?? null,
         );
 
+        // Pre-check for duplicate settlement before entering main transaction
+        if ($newStatus === PaymentStatus::PAID) {
+            $commission = $payment->commission;
+            if ($commission) {
+                $alreadyPaidExists = $commission->payments()
+                    ->where('id', '!=', $payment->id)
+                    ->whereIn('status', [
+                        PaymentStatus::PAID->value,
+                        PaymentStatus::REFUND_PROCESSING->value,
+                        PaymentStatus::REFUNDED->value,
+                        PaymentStatus::PENDING_MANUAL_REFUND->value,
+                    ])
+                    ->exists() || in_array($commission->status, [
+                        CommissionStatus::IN_PROGRESS,
+                        CommissionStatus::COMPLETED,
+                    ], true);
+
+                if ($alreadyPaidExists) {
+                    $duplicatePaymentService->handleDuplicateSettlement(
+                        $payment,
+                        $commission,
+                        $payload
+                    );
+
+                    AntiArbitrageService::checkPaymentOriginMismatch($payment, $payload);
+
+                    return ApiResponseHelper::successResponse(message: 'Notification processed.');
+                }
+            }
+        }
+
         $isDuplicatePayment = false;
 
         DB::transaction(function () use ($payment, $newStatus, $payload, &$isDuplicatePayment) {
@@ -443,51 +534,13 @@ class PaymentController extends Controller
                         PaymentStatus::REFUNDED->value,
                         PaymentStatus::PENDING_MANUAL_REFUND->value,
                     ])
-                    ->exists();
+                    ->exists() || in_array($commission->status, [
+                        CommissionStatus::IN_PROGRESS,
+                        CommissionStatus::COMPLETED,
+                    ], true);
 
                 if ($alreadyPaidExists) {
                     $isDuplicatePayment = true;
-                    Log::critical("Duplicate payment attempt settled for Commission #{$commission->id} (Order: {$payment->order_id}). Flagging for immediate refund.");
-
-                    $payment->update([
-                        'status' => PaymentStatus::PENDING_MANUAL_REFUND->value,
-                        'midtrans_transaction_id' => $payload['transaction_id'] ?? null,
-                        'payment_type' => $payload['payment_type'] ?? null,
-                        'paid_at' => now(),
-                        'raw_response' => array_merge($payment->raw_response ?? [], [
-                            'duplicate_payment_received' => true,
-                            'webhook_payload' => $payload,
-                        ]),
-                    ]);
-
-                    $buyerUser = $commission->user;
-                    $report = Report::create([
-                        'user_id' => $buyerUser?->id ?? $commission->user_id,
-                        'reportable_type' => Commission::class,
-                        'reportable_id' => $commission->id,
-                        'reason' => ReportReason::OTHER,
-                        'description' => "Duplicate Escrow Payment Received (Order: {$payment->order_id}): "
-                            . "Customer completed payment for multiple checkout sessions for Commission #{$commission->id}. Full refund of Rp " . number_format($payment->gross_amount, 0, ',', '.') . " required.",
-                        'status' => ReportStatus::PENDING,
-                    ]);
-
-                    $ticket = $report->ticket()->create([
-                        'priority' => TicketPriority::HIGH,
-                    ]);
-
-                    $ticket->messages()->create([
-                        'user_id' => $buyerUser?->id ?? $commission->user_id,
-                        'content' => "High Priority: Duplicate payment of Rp " . number_format($payment->gross_amount, 0, ',', '.') . " was captured on gateway for order {$payment->order_id}. "
-                            . "Another payment is already active in escrow. Escalated for manual Iris / gateway refund.",
-                    ]);
-
-                    StaffNotificationService::notifyStaff(
-                        'Duplicate Payment Received',
-                        "Duplicate payment of Rp " . number_format($payment->gross_amount, 0, ',', '.') . " received for Commission #{$commission->id} (Order: {$payment->order_id}). Refund required.",
-                        $commission,
-                        NotificationType::SYSTEM
-                    );
-
                     return;
                 }
             }
@@ -528,58 +581,47 @@ class PaymentController extends Controller
                     // Critical financial recovery: payment arrived for an already cancelled order
                     Log::critical("Settlement received for already CANCELLED commission #{$commission->id} (Order: {$payment->order_id}). Escalating for immediate Iris refund.");
 
-                    $buyerUser = $commission->user;
-                    $report = \App\Models\Report::create([
-                        'user_id' => $buyerUser?->id ?? $commission->user_id,
-                        'reportable_type' => Commission::class,
-                        'reportable_id' => $commission->id,
-                        'reason' => \App\Enum\ReportReason::OTHER,
-                        'description' => "Late Settlement on Cancelled Order (Order: {$payment->order_id}): "
-                            . "Customer completed payment on Midtrans after/during commission cancellation. Full escrow refund of Rp " . number_format($payment->gross_amount, 0, ',', '.') . " required.",
-                        'status' => \App\Enum\ReportStatus::PENDING,
-                    ]);
+                    try {
+                        $buyerUser = $commission->user;
+                        $report = Report::create([
+                            'user_id' => $buyerUser?->id ?? $commission->user_id,
+                            'reportable_type' => Commission::class,
+                            'reportable_id' => $commission->id,
+                            'reason' => ReportReason::OTHER,
+                            'description' => "Late Settlement on Cancelled Order (Order: {$payment->order_id}): "
+                                . "Customer completed payment on Midtrans after/during commission cancellation. Full escrow refund of Rp " . number_format($payment->gross_amount, 0, ',', '.') . " required.",
+                            'status' => ReportStatus::PENDING,
+                        ]);
 
-                    $ticket = $report->ticket()->create([
-                        'priority' => \App\Enum\TicketPriority::HIGH,
-                    ]);
+                        $ticket = $report->ticket()->create([
+                            'priority' => TicketPriority::HIGH,
+                        ]);
 
-                    $ticket->messages()->create([
-                        'user_id' => $buyerUser?->id ?? $commission->user_id,
-                        'content' => "Urgent: Payment was captured on gateway for already cancelled order {$payment->order_id}. "
-                            . "High-priority manual disbursement via Iris required for client (@{$buyerUser?->username}, Amount: Rp " . number_format($payment->gross_amount, 0, ',', '.') . ").",
-                    ]);
+                        $ticket->messages()->create([
+                            'user_id' => $buyerUser?->id ?? $commission->user_id,
+                            'content' => "Urgent: Payment was captured on gateway for already cancelled order {$payment->order_id}. "
+                                . "High-priority manual disbursement via Iris required for client (@{$buyerUser?->username}, Amount: Rp " . number_format($payment->gross_amount, 0, ',', '.') . ").",
+                        ]);
 
-                    \App\Services\API\V1\StaffNotificationService::notifyStaff(
-                        'Late Payment on Cancelled Order',
-                        "Payment of Rp " . number_format($payment->gross_amount, 0, ',', '.') . " arrived for CANCELLED Commission #{$commission->id}. Immediate Iris refund required.",
-                        $commission,
-                        NotificationType::SYSTEM
-                    );
+                        StaffNotificationService::notifyStaff(
+                            'Late Payment on Cancelled Order',
+                            "Payment of Rp " . number_format($payment->gross_amount, 0, ',', '.') . " arrived for CANCELLED Commission #{$commission->id}. Immediate Iris refund required.",
+                            $commission,
+                            NotificationType::SYSTEM
+                        );
+                    } catch (\Throwable $e) {
+                        Log::error("Failed to create operational escalation for late settlement on cancelled commission {$commission->id}: " . $e->getMessage());
+                    }
                 }
             }
         });
 
         if ($isDuplicatePayment) {
-            try {
-                $refundRes = $midtransService->refundTransaction(
-                    $payment->order_id,
-                    (float) $payment->gross_amount,
-                    'Duplicate payment attempt for commission',
-                    'ref-' . $payment->order_id
-                );
-
-                if (is_array($refundRes) && in_array((string) ($refundRes['status_code'] ?? ''), ['200', '201', '202'], true)) {
-                    $payment->update([
-                        'status' => PaymentStatus::REFUNDED->value,
-                        'raw_response' => array_merge($payment->raw_response ?? [], [
-                            'refund_result' => $refundRes,
-                        ]),
-                    ]);
-                    Log::info("Automated refund successfully executed for duplicate payment {$payment->order_id}.");
-                }
-            } catch (\Throwable $e) {
-                Log::warning("Automated refund exception for duplicate payment {$payment->order_id}: " . $e->getMessage());
-            }
+            $duplicatePaymentService->handleDuplicateSettlement(
+                $payment,
+                $payment->commission,
+                $payload
+            );
         }
 
         // Anti-Arbitrage Payment Integrity: Detect foreign card / non-domestic bank on IDR regional orders
