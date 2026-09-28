@@ -31,6 +31,7 @@ return [
         'X-Requested-With',
         'X-Request-Id',
         'X-CSRF-TOKEN',
+        'X-XSRF-TOKEN',
         'X-Forwarded-For',
     ],
 
