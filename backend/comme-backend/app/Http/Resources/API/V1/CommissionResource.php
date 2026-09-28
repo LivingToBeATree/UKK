@@ -10,6 +10,14 @@ class CommissionResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $currentUser = $request->user();
+        $canAccessPayoutDetails = $currentUser && (
+            $currentUser->id === $this->user_id
+            || $currentUser->id === $this->artistProfile?->user_id
+            || $currentUser->isStaff()
+            || $currentUser->isAdmin()
+        );
+
         return [
             'id' => $this->id,
             'slug' => $this->slug,
@@ -42,7 +50,11 @@ class CommissionResource extends JsonResource
             'addons_selections' => $this->whenLoaded('addonsSelections'),
             'payment' => new PaymentResource($this->whenLoaded('payment')),
             'payments' => PaymentResource::collection($this->whenLoaded('payments')),
-            'payout' => $this->whenLoaded('payout', function () {
+            'payout' => $this->whenLoaded('payout', function () use ($canAccessPayoutDetails) {
+                if (! $canAccessPayoutDetails) {
+                    return null;
+                }
+
                 return [
                     'id' => $this->payout->id,
                     'amount' => (float) $this->payout->amount,

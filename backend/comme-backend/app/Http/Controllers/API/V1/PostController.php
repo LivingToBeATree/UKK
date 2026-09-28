@@ -59,30 +59,32 @@ class PostController extends Controller
             }
         }
 
+        $like = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'pgsql' ? 'ILIKE' : 'like';
+
         // Tag filtering (by slug or name)
         if ($request->filled('tag')) {
             $tagInput = trim(str_replace('#', '', $request->tag));
             $tagSlug = Str::slug($tagInput);
 
-            $query->whereHas('tags', function ($q) use ($tagInput, $tagSlug) {
+            $query->whereHas('tags', function ($q) use ($tagInput, $tagSlug, $like) {
                 $q->where('slug', $tagSlug)
-                    ->orWhere('name', 'ILIKE', "%{$tagInput}%")
-                    ->orWhere('slug', 'ILIKE', "%{$tagSlug}%");
+                    ->orWhere('name', $like, "%{$tagInput}%")
+                    ->orWhere('slug', $like, "%{$tagSlug}%");
             });
         }
 
         // Full-text search across content, author, and tags
         if ($request->filled('search')) {
             $search = trim($request->search);
-            $query->where(function ($q) use ($search) {
-                $q->where('content', 'ILIKE', "%{$search}%")
-                    ->orWhereHas('user', function ($uq) use ($search) {
-                        $uq->where('username', 'ILIKE', "%{$search}%")
-                            ->orWhere('display_name', 'ILIKE', "%{$search}%");
+            $query->where(function ($q) use ($search, $like) {
+                $q->where('content', $like, "%{$search}%")
+                    ->orWhereHas('user', function ($uq) use ($search, $like) {
+                        $uq->where('username', $like, "%{$search}%")
+                            ->orWhere('display_name', $like, "%{$search}%");
                     })
-                    ->orWhereHas('tags', function ($tq) use ($search) {
-                        $tq->where('name', 'ILIKE', "%{$search}%")
-                            ->orWhere('slug', 'ILIKE', "%{$search}%");
+                    ->orWhereHas('tags', function ($tq) use ($search, $like) {
+                        $tq->where('name', $like, "%{$search}%")
+                            ->orWhere('slug', $like, "%{$search}%");
                     });
             });
         }

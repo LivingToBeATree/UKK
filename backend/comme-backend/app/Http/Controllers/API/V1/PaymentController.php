@@ -451,6 +451,10 @@ class PaymentController extends Controller
             return $newStatus === PaymentStatus::REFUNDED;
         }
 
+        if (in_array($currentStatus, [PaymentStatus::PENDING_MANUAL_REFUND, PaymentStatus::REFUND_FAILED], true)) {
+            return $newStatus === PaymentStatus::REFUNDED;
+        }
+
         if ($currentStatus === PaymentStatus::REFUNDED) {
             return false;
         }

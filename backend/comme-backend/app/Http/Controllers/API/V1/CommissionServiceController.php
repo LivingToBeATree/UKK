@@ -32,30 +32,32 @@ class CommissionServiceController extends Controller
         $query = CommissionService::with(['artistProfile.user', 'thumbnailMedia', 'media', 'options.addons', 'tags']);
 
         // Tag filtering
+        $like = DB::connection()->getDriverName() === 'pgsql' ? 'ILIKE' : 'like';
+
         if ($request->filled('tag')) {
             $tagInput = trim(str_replace('#', '', $request->tag));
             $tagSlug = Str::slug($tagInput);
 
-            $query->whereHas('tags', function ($q) use ($tagInput, $tagSlug) {
+            $query->whereHas('tags', function ($q) use ($tagInput, $tagSlug, $like) {
                 $q->where('slug', $tagSlug)
-                    ->orWhere('name', 'ILIKE', "%{$tagInput}%")
-                    ->orWhere('slug', 'ILIKE', "%{$tagSlug}%");
+                    ->orWhere('name', $like, "%{$tagInput}%")
+                    ->orWhere('slug', $like, "%{$tagSlug}%");
             });
         }
 
         // Search query across title, description, artist, and tags
         if ($request->filled('search')) {
             $search = trim($request->search);
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'ILIKE', "%{$search}%")
-                    ->orWhere('description', 'ILIKE', "%{$search}%")
-                    ->orWhereHas('artistProfile.user', function ($uq) use ($search) {
-                        $uq->where('username', 'ILIKE', "%{$search}%")
-                            ->orWhere('display_name', 'ILIKE', "%{$search}%");
+            $query->where(function ($q) use ($search, $like) {
+                $q->where('name', $like, "%{$search}%")
+                    ->orWhere('description', $like, "%{$search}%")
+                    ->orWhereHas('artistProfile.user', function ($uq) use ($search, $like) {
+                        $uq->where('username', $like, "%{$search}%")
+                            ->orWhere('display_name', $like, "%{$search}%");
                     })
-                    ->orWhereHas('tags', function ($tq) use ($search) {
-                        $tq->where('name', 'ILIKE', "%{$search}%")
-                            ->orWhere('slug', 'ILIKE', "%{$search}%");
+                    ->orWhereHas('tags', function ($tq) use ($search, $like) {
+                        $tq->where('name', $like, "%{$search}%")
+                            ->orWhere('slug', $like, "%{$search}%");
                     });
             });
         }

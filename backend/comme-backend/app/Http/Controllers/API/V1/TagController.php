@@ -20,8 +20,9 @@ class TagController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where('name', 'ILIKE', "%{$search}%")
-                ->orWhere('slug', 'ILIKE', "%{$search}%");
+            $like = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'pgsql' ? 'ILIKE' : 'like';
+            $query->where('name', $like, "%{$search}%")
+                ->orWhere('slug', $like, "%{$search}%");
         }
 
         $type = $request->get('type');

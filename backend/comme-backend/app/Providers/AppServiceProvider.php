@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use App\Models\ArtistProfile;
-use App\Models\CommissionOrder;
+use App\Models\Commission;
 use App\Models\CommissionReview;
 use App\Models\CommissionService;
 use App\Models\Portfolio;
@@ -74,7 +74,7 @@ class AppServiceProvider extends ServiceProvider
             'portfolio' => Portfolio::class,
             'commission_service' => CommissionService::class,
             'user' => User::class,
-            'commission' => CommissionOrder::class,
+            'commission' => Commission::class,
         ]);
         // Keyed by email+IP together, not just IP — a shared office/campus
         // IP shouldn't lock out everyone just because one person is

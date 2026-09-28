@@ -69,14 +69,15 @@ class CommissionController extends Controller
             $query->where('status', $request->query('status'));
         }
 
-        // Search query across client notes, service title, and counterpart username
+        // Search query across commission description, service title, and counterpart username
         if ($request->filled('search')) {
             $search = trim($request->search);
-            $query->where(function ($q) use ($search) {
-                $q->where('client_notes', 'ILIKE', "%{$search}%")
-                  ->orWhereHas('commissionService', fn ($sq) => $sq->where('name', 'ILIKE', "%{$search}%"))
-                  ->orWhereHas('user', fn ($uq) => $uq->where('username', 'ILIKE', "%{$search}%")->orWhere('display_name', 'ILIKE', "%{$search}%"))
-                  ->orWhereHas('artistProfile.user', fn ($uq) => $uq->where('username', 'ILIKE', "%{$search}%")->orWhere('display_name', 'ILIKE', "%{$search}%"));
+            $like = DB::connection()->getDriverName() === 'pgsql' ? 'ILIKE' : 'like';
+            $query->where(function ($q) use ($search, $like) {
+                $q->where('description', $like, "%{$search}%")
+                  ->orWhereHas('commissionService', fn ($sq) => $sq->where('name', $like, "%{$search}%"))
+                  ->orWhereHas('user', fn ($uq) => $uq->where('username', $like, "%{$search}%")->orWhere('display_name', $like, "%{$search}%"))
+                  ->orWhereHas('artistProfile.user', fn ($uq) => $uq->where('username', $like, "%{$search}%")->orWhere('display_name', $like, "%{$search}%"));
             });
         }
 
@@ -153,6 +154,13 @@ class CommissionController extends Controller
             );
         }
 
+        if (! $service->artistProfile || ! $service->artistProfile->isOpen()) {
+            return ApiResponseHelper::errorResponse(
+                'This artist is not currently accepting commissions.',
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
         $option = $request->commission_option_id
             ? CommissionOption::with('addons')->findOrFail($request->commission_option_id)
             : null;
@@ -223,32 +231,6 @@ class CommissionController extends Controller
 
         $totalPrice = $basePrice + $addonTotal;
 
-        $commission = Commission::create([
-            ...$request->only(['description', 'deadline']),
-            'commission_service_id' => $service->id,
-            'commission_option_id' => $option?->id,
-            'artist_profile_id' => $service->artist_profile_id,
-            'user_id' => $request->user()->id,
-            'status' => CommissionStatus::PENDING,
-            'total_price' => $totalPrice,
-        ]);
-
-        foreach ($selectedAddons as $item) {
-            $addon = $item['addon'];
-            $commission->addonsSelections()->create([
-                'commission_addon_id' => $addon->id,
-                'title' => $addon->title,
-                'price' => $item['price'],
-            ]);
-        }
-
-        // Anti-Arbitrage Enforcement: If order was attempted via VPN/Proxy from a discounted regional zone,
-        // pricing was already forced to USD; now generate audit report and notify staff.
-        if (! empty($clientLocation['arbitrage_blocked'])) {
-            AntiArbitrageService::handleVpnArbitrageAttempt($request->user(), $commission, $clientLocation);
-        }
-
-        // Handle uploaded reference files / initial message
         $files = [];
         if ($request->hasFile('attachments')) {
             $uploaded = $request->file('attachments');
@@ -261,24 +243,44 @@ class CommissionController extends Controller
             $files = is_array($uploaded) ? $uploaded : [$uploaded];
         }
 
-        // Create initial commission message with the brief and attached references
-        $initialMessage = CommissionMessage::create([
-            'commission_id' => $commission->id,
-            'sender_id' => $request->user()->id,
-            'recipient_id' => $service->artistProfile?->user_id,
-            'message' => $request->description,
-            'message_type' => MessageType::USER,
-        ]);
+        $commission = DB::transaction(function () use ($request, $service, $option, $selectedAddons, $files, $totalPrice) {
+            $commission = Commission::create([
+                ...$request->only(['description', 'deadline']),
+                'commission_service_id' => $service->id,
+                'commission_option_id' => $option?->id,
+                'artist_profile_id' => $service->artist_profile_id,
+                'user_id' => $request->user()->id,
+                'status' => CommissionStatus::PENDING,
+                'total_price' => $totalPrice,
+            ]);
 
-        if (!empty($files)) {
+            foreach ($selectedAddons as $item) {
+                $addon = $item['addon'];
+                $commission->addonsSelections()->create([
+                    'commission_addon_id' => $addon->id,
+                    'title' => $addon->title,
+                    'price' => $item['price'],
+                ]);
+            }
+
+            // Create initial commission message with the brief and attached references
+            $initialMessage = CommissionMessage::create([
+                'commission_id' => $commission->id,
+                'sender_id' => $request->user()->id,
+                'recipient_id' => $service->artistProfile?->user_id,
+                'message' => $request->description,
+                'message_type' => MessageType::USER,
+            ]);
+
             foreach ($files as $index => $file) {
-                if (!$file || !$file->isValid()) {
+                if (! $file || ! $file->isValid()) {
                     continue;
                 }
+
                 $path = $file->store('commissions/messages', 'public');
                 $mime = $file->getClientMimeType() ?: 'application/octet-stream';
-                $mediaType = str_starts_with($mime, 'image/') 
-                    ? MediaType::IMAGE 
+                $mediaType = str_starts_with($mime, 'image/')
+                    ? MediaType::IMAGE
                     : (str_starts_with($mime, 'video/') ? MediaType::VIDEO : MediaType::IMAGE);
 
                 CommissionMessageMedia::create([
@@ -291,6 +293,12 @@ class CommissionController extends Controller
                     'sort_order' => $index,
                 ]);
             }
+
+            return $commission;
+        });
+
+        if (! empty($clientLocation['arbitrage_blocked'])) {
+            AntiArbitrageService::handleVpnArbitrageAttempt($request->user(), $commission, $clientLocation);
         }
 
         return ApiResponseHelper::successResponse(
@@ -495,6 +503,21 @@ class CommissionController extends Controller
     public function cancel(Commission $commission, MidtransService $midtransService): JsonResponse
     {
         Gate::authorize('cancel', $commission);
+
+        $allowedStatuses = [
+            CommissionStatus::PENDING,
+            CommissionStatus::ACCEPTED,
+            CommissionStatus::IN_PROGRESS,
+            CommissionStatus::WAITING_FOR_CLIENT,
+            CommissionStatus::REVISION,
+        ];
+
+        if (! in_array($commission->status, $allowedStatuses, true)) {
+            return ApiResponseHelper::errorResponse(
+                'This commission cannot be cancelled in its current state.',
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
 
         // Cancel any pending payment attempts
         $pendingPayments = $commission->payments()

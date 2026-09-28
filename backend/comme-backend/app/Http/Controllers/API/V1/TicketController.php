@@ -40,12 +40,13 @@ class TicketController extends Controller
             }
             if ($request->filled('search')) {
                 $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->whereHas('report', function ($rq) use ($search) {
-                        $rq->where('description', 'ILIKE', "%{$search}%")
-                           ->orWhereHas('reporter', function ($uq) use ($search) {
-                               $uq->where('username', 'ILIKE', "%{$search}%")
-                                  ->orWhere('display_name', 'ILIKE', "%{$search}%");
+                $like = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'pgsql' ? 'ILIKE' : 'like';
+                $query->where(function ($q) use ($search, $like) {
+                    $q->whereHas('report', function ($rq) use ($search, $like) {
+                        $rq->where('description', $like, "%{$search}%")
+                           ->orWhereHas('reporter', function ($uq) use ($search, $like) {
+                               $uq->where('username', $like, "%{$search}%")
+                                  ->orWhere('display_name', $like, "%{$search}%");
                            });
                     });
                 });
