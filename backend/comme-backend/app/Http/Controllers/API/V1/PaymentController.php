@@ -75,12 +75,11 @@ class PaymentController extends Controller
                 ]);
             }
 
-            if ($request->boolean('refresh') || ! $payment->snap_token || str_starts_with($payment->snap_token, 'mock_snap_token_')) {
+            $isExpired = $payment->created_at && $payment->created_at->diffInHours(now()) >= 24;
+            if ($request->boolean('refresh') || ! $payment->snap_token || str_starts_with($payment->snap_token, 'mock_snap_token_') || $isExpired) {
                 $freshOrderId = 'CMS-'.$lockedCommission->id.'-'.now()->timestamp.'-'.Str::random(8);
                 $payment->update([
                     'order_id' => $freshOrderId,
-                ]);
-                $payment->update([
                     'snap_token' => $midtransService->createSnapTransaction($payment, $lockedCommission, $billingCurrency),
                 ]);
             }
@@ -104,6 +103,14 @@ class PaymentController extends Controller
                 ->whereKey($commission->id)
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            if ($lockedCommission->status !== CommissionStatus::ACCEPTED) {
+                abort(Response::HTTP_UNPROCESSABLE_ENTITY, 'This commission is not ready for payment.');
+            }
+
+            if ($lockedCommission->payments()->where('status', PaymentStatus::PAID->value)->exists()) {
+                abort(Response::HTTP_UNPROCESSABLE_ENTITY, 'This commission has already been paid and secured in escrow.');
+            }
 
             $payment = $lockedCommission->payments()
                 ->where('status', PaymentStatus::PENDING->value)
@@ -216,6 +223,16 @@ class PaymentController extends Controller
                     'commission' => $lockedCommission,
                     'message' => 'Payment verified from Midtrans! Commission is now In Progress in Escrow.',
                 ];
+            }
+
+            // Sync other non-pending terminal/gateway statuses (e.g. EXPIRED, FAILED, CANCELLED)
+            if ($this->shouldApplyPaymentStatus($payment->status, $mappedStatus)) {
+                $payment->update([
+                    'status' => $mappedStatus->value,
+                    'midtrans_transaction_id' => $remoteStatus['transaction_id'] ?? $payment->midtrans_transaction_id,
+                    'payment_type' => $remoteStatus['payment_type'] ?? $payment->payment_type,
+                    'raw_response' => $remoteStatus,
+                ]);
             }
 
             return [
