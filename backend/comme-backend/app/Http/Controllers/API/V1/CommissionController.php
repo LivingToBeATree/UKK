@@ -34,9 +34,11 @@ use App\Models\Ticket;
 use App\Services\API\V1\StaffNotificationService;
 use App\Http\Requests\API\V1\Commission\DeliverCommissionRequest;
 use App\Services\API\V1\CommissionCompletionService;
+use App\Services\API\V1\CommissionCancellationService;
 use App\Services\API\V1\GeoIpService;
 use App\Services\API\V1\AntiArbitrageService;
 use Exception;
+use InvalidArgumentException;
 
 class CommissionController extends Controller
 {
@@ -500,58 +502,26 @@ class CommissionController extends Controller
         );
     }
 
-    public function cancel(Commission $commission, MidtransService $midtransService): JsonResponse
+    public function cancel(Request $request, Commission $commission, CommissionCancellationService $cancellationService): JsonResponse
     {
         Gate::authorize('cancel', $commission);
 
-        $allowedStatuses = [
-            CommissionStatus::PENDING,
-            CommissionStatus::ACCEPTED,
-            CommissionStatus::IN_PROGRESS,
-            CommissionStatus::WAITING_FOR_CLIENT,
-            CommissionStatus::REVISION,
-        ];
+        try {
+            $cancelled = $cancellationService->cancelImmediately($commission, $request->user());
 
-        if (! in_array($commission->status, $allowedStatuses, true)) {
+            return ApiResponseHelper::successResponse(
+                new CommissionResource($cancelled),
+                'Commission cancelled successfully.'
+            );
+        } catch (InvalidArgumentException $e) {
             return ApiResponseHelper::errorResponse(
-                'This commission cannot be cancelled in its current state.',
+                $e->getMessage(),
                 Response::HTTP_UNPROCESSABLE_ENTITY
             );
         }
-
-        // Cancel any pending payment attempts
-        $pendingPayments = $commission->payments()
-            ->where('status', PaymentStatus::PENDING->value)
-            ->get();
-        foreach ($pendingPayments as $pending) {
-            $midtransService->cancelTransaction($pending->order_id);
-            $pending->update(['status' => PaymentStatus::CANCELLED->value]);
-        }
-
-        // Check if there was an escrow payment paid
-        $paidPayment = $commission->payments()
-            ->where('status', PaymentStatus::PAID->value)
-            ->latest()
-            ->first();
-
-        if ($paidPayment) {
-            $midtransService->refundTransaction(
-                $paidPayment->order_id,
-                (float) $paidPayment->gross_amount,
-                'Commission cancelled'
-            );
-            $paidPayment->update(['status' => PaymentStatus::REFUNDED->value]);
-        }
-
-        $commission->update(['status' => CommissionStatus::CANCELLED]);
-
-        return ApiResponseHelper::successResponse(
-            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'messages', 'review', 'payment', 'payments'])),
-            'Commission cancelled successfully.'
-        );
     }
 
-    public function requestCancellation(Request $request, Commission $commission): JsonResponse
+    public function requestCancellation(Request $request, Commission $commission, CommissionCancellationService $cancellationService): JsonResponse
     {
         Gate::authorize('requestCancellation', $commission);
 
@@ -559,280 +529,39 @@ class CommissionController extends Controller
             'reason' => 'required|string|min:5|max:1000',
         ]);
 
-        $commission->update([
-            'cancellation_requested_by' => $request->user()->id,
-            'cancellation_reason' => $validated['reason'],
-            'cancellation_requested_at' => now(),
-        ]);
-
-        $counterpartId = ($request->user()->id === $commission->user_id)
-            ? $commission->artistProfile?->user_id
-            : $commission->user_id;
-
-        if ($counterpartId) {
-            Notification::create([
-                'user_id' => $counterpartId,
-                'type' => NotificationType::SYSTEM,
-                'title' => 'Cancellation Requested',
-                'message' => "{$request->user()->display_name} has requested to cancel Commission #{$commission->id}: \"{$validated['reason']}\"",
-                'notifiable_type' => Commission::class,
-                'notifiable_id' => $commission->id,
-            ]);
-        }
-
-        // Post notice in workspace chat
-        CommissionMessage::create([
-            'commission_id' => $commission->id,
-            'sender_id' => $request->user()->id,
-            'recipient_id' => $counterpartId,
-            'message' => "[Cancellation Request] " . $request->user()->display_name . " requested to cancel this order.\nReason: " . $validated['reason'],
-            'message_type' => MessageType::SYSTEM,
-        ]);
+        $updated = $cancellationService->requestCancellation($commission, $request->user(), $validated['reason']);
 
         return ApiResponseHelper::successResponse(
-            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'cancellationRequester', 'messages', 'review'])),
+            new CommissionResource($updated),
             'Cancellation request submitted successfully.'
         );
     }
 
-    public function acceptCancellation(Commission $commission, MidtransService $midtransService): JsonResponse
+    public function acceptCancellation(Commission $commission, CommissionCancellationService $cancellationService): JsonResponse
     {
         Gate::authorize('acceptCancellation', $commission);
 
-        return DB::transaction(function () use ($commission, $midtransService) {
-            // Pessimistic lock on the commission record to serialize concurrent cancellation acceptance requests
-            $lockedCommission = Commission::whereKey($commission->id)
-                ->lockForUpdate()
-                ->first();
+        $result = $cancellationService->acceptCancellation($commission, auth()->user());
 
-            if (! $lockedCommission) {
-                return ApiResponseHelper::errorResponse('Commission not found.', Response::HTTP_NOT_FOUND);
-            }
-
-            // If already cancelled or cancellation request was already resolved, prevent duplicate cancellation & refund
-            if ($lockedCommission->status === CommissionStatus::CANCELLED || ! $lockedCommission->cancellation_requested_by) {
-                return ApiResponseHelper::errorResponse(
-                    'This commission cancellation has already been processed.',
-                    Response::HTTP_CONFLICT
-                );
-            }
-
-            $requesterId = $lockedCommission->cancellation_requested_by;
-            $acceptor = auth()->user();
-
-            // Lock and inspect paid escrow payments
-            $paidPayment = $lockedCommission->payments()
-                ->where('status', PaymentStatus::PAID->value)
-                ->lockForUpdate()
-                ->latest()
-                ->first();
-
-            $wasRefunded = false;
-            $refundAmount = 0.0;
-            if ($paidPayment) {
-                $refundAmount = (float) $paidPayment->gross_amount;
-                $midtransResponse = $midtransService->refundTransaction(
-                    $paidPayment->order_id,
-                    $refundAmount,
-                    $lockedCommission->cancellation_reason ?: 'Mutual cancellation agreement'
-                );
-
-                // Only mark as REFUNDED if gateway refund genuinely succeeded
-                $isRefundSuccessful = is_array($midtransResponse)
-                    && (! isset($midtransResponse['status_code']) || in_array((string) $midtransResponse['status_code'], ['200', '201', '202']));
-
-                if ($isRefundSuccessful) {
-                    $paidPayment->update([
-                        'status' => PaymentStatus::REFUNDED->value,
-                        'raw_response' => array_merge($paidPayment->raw_response ?? [], [
-                            'refund_result' => [
-                                'refunded_at' => now()->toISOString(),
-                                'amount' => $refundAmount,
-                                'reason' => $lockedCommission->cancellation_reason ?: 'Mutual cancellation',
-                                'gateway_response' => $midtransResponse,
-                            ],
-                        ]),
-                    ]);
-                    $wasRefunded = true;
-                } else {
-                    \Illuminate\Support\Facades\Log::error("Midtrans refund failed for Commission #{$lockedCommission->id}, Payment #{$paidPayment->id}. Marking as PENDING_MANUAL_REFUND and escalating to staff for Iris disbursement.");
-
-                    $paidPayment->update([
-                        'status' => PaymentStatus::PENDING_MANUAL_REFUND->value,
-                        'raw_response' => array_merge($paidPayment->raw_response ?? [], [
-                            'failed_refund_attempt' => [
-                                'attempted_at' => now()->toISOString(),
-                                'amount' => $refundAmount,
-                                'reason' => $lockedCommission->cancellation_reason ?: 'Mutual cancellation',
-                                'gateway_response' => $midtransResponse,
-                            ],
-                        ]),
-                    ]);
-
-                    // Automatically dispatch a High-Priority Report & Support Ticket for manual Iris disbursement
-                    $buyerUser = $lockedCommission->user;
-                    $report = Report::create([
-                        'user_id' => $buyerUser?->id ?? $lockedCommission->user_id,
-                        'reportable_type' => Commission::class,
-                        'reportable_id' => $lockedCommission->id,
-                        'reason' => ReportReason::OTHER,
-                        'description' => "Manual Escrow Refund Required (Order: {$paidPayment->order_id}): "
-                            . "Mutual cancellation for Commission #{$lockedCommission->id} was accepted, but Midtrans automated direct refund failed or is unsupported for this payment channel (e.g. Indonesian VA / QRIS / GoPay). "
-                            . "Please disburse manual escrow refund of Rp " . number_format($refundAmount, 0, ',', '.') . " to client @{$buyerUser?->username} via Midtrans Iris disbursement portal.",
-                        'status' => ReportStatus::PENDING,
-                    ]);
-
-                    $ticket = $report->ticket()->create([
-                        'priority' => TicketPriority::HIGH,
-                    ]);
-
-                    $ticket->messages()->create([
-                        'user_id' => $buyerUser?->id ?? $lockedCommission->user_id,
-                        'content' => "⚠️ Automated Escrow Refund Failure: Midtrans Snap API returned failure/null for order {$paidPayment->order_id}. "
-                            . "Payment status has been moved to PENDING_MANUAL_REFUND. High-priority manual disbursement via Midtrans Iris required for client (@{$buyerUser?->username}, Amount: Rp " . number_format($refundAmount, 0, ',', '.') . ").",
-                    ]);
-
-                    StaffNotificationService::notifyStaff(
-                        'Escrow Refund Action Required',
-                        "Manual refund of Rp " . number_format($refundAmount, 0, ',', '.') . " required for Commission #{$lockedCommission->id} (@{$buyerUser?->username}). Automated gateway refund failed.",
-                        $lockedCommission,
-                        NotificationType::SYSTEM
-                    );
-                }
-            }
-
-            // Also cancel any pending payment attempts
-            $pendingPayments = $lockedCommission->payments()
-                ->where('status', PaymentStatus::PENDING->value)
-                ->lockForUpdate()
-                ->get();
-            foreach ($pendingPayments as $pending) {
-                $midtransService->cancelTransaction($pending->order_id);
-                $pending->update(['status' => PaymentStatus::CANCELLED->value]);
-            }
-
-            $lockedCommission->update([
-                'status' => CommissionStatus::CANCELLED,
-                'cancellation_requested_by' => null,
-            ]);
-
-            $formattedRefund = 'Rp ' . number_format($refundAmount, 0, ',', '.');
-
-            // Post notice in workspace chat
-            $chatNotice = $wasRefunded
-                ? "[Cancellation & Escrow Refund] The cancellation request was accepted by {$acceptor->display_name}. Full escrow payment of {$formattedRefund} has been refunded to the client."
-                : ($paidPayment && ! $wasRefunded
-                    ? "[Cancellation Accepted - Manual Refund Queued] The cancellation request was accepted by {$acceptor->display_name}. Automated gateway card refund is not supported by this payment channel; an administrative support ticket has been dispatched for our staff to manually disburse your full refund ({$formattedRefund}) via Midtrans Iris."
-                    : "[Cancellation Accepted] The cancellation request was accepted by {$acceptor->display_name}. This commission order has been officially cancelled.");
-
-            CommissionMessage::create([
-                'commission_id' => $lockedCommission->id,
-                'sender_id' => $acceptor->id,
-                'recipient_id' => $requesterId,
-                'message' => $chatNotice,
-                'message_type' => MessageType::SYSTEM,
-            ]);
-
-            // Send notifications
-            if ($requesterId && $requesterId !== $acceptor->id) {
-                $notifMessage = $wasRefunded
-                    ? "Your cancellation request for Commission #{$lockedCommission->id} was accepted. A full escrow refund of {$formattedRefund} has been processed back to your account."
-                    : ($paidPayment && ! $wasRefunded
-                        ? "Your cancellation request for Commission #{$lockedCommission->id} was accepted. Automated refund is unavailable for this payment method; our staff has been notified to manually disburse {$formattedRefund} via Iris."
-                        : "Your cancellation request for Commission #{$lockedCommission->id} was accepted. The commission is now cancelled.");
-
-                Notification::create([
-                    'user_id' => $requesterId,
-                    'type' => NotificationType::SYSTEM,
-                    'title' => $wasRefunded ? 'Cancellation & Refund Processed' : 'Cancellation Accepted (Manual Refund Pending)',
-                    'message' => $notifMessage,
-                    'notifiable_type' => Commission::class,
-                    'notifiable_id' => $lockedCommission->id,
-                ]);
-            }
-
-            // If the acceptor was the artist and buyer was refunded, also notify buyer if not requester
-            if ($wasRefunded && $lockedCommission->user_id !== $requesterId) {
-                Notification::create([
-                    'user_id' => $lockedCommission->user_id,
-                    'type' => NotificationType::SYSTEM,
-                    'title' => 'Escrow Refund Processed',
-                    'message' => "Commission #{$lockedCommission->id} was cancelled. A full escrow refund of {$formattedRefund} has been returned to you.",
-                    'notifiable_type' => Commission::class,
-                    'notifiable_id' => $lockedCommission->id,
-                ]);
-            } elseif ($paidPayment && ! $wasRefunded && $lockedCommission->user_id !== $requesterId) {
-                Notification::create([
-                    'user_id' => $lockedCommission->user_id,
-                    'type' => NotificationType::SYSTEM,
-                    'title' => 'Cancellation Accepted (Manual Refund Pending)',
-                    'message' => "Commission #{$lockedCommission->id} was cancelled. Our staff has been alerted to manually disburse your full escrow refund of {$formattedRefund} via Iris.",
-                    'notifiable_type' => Commission::class,
-                    'notifiable_id' => $lockedCommission->id,
-                ]);
-            }
-
-            $message = $wasRefunded
-                ? 'Commission cancelled and escrow refund processed.'
-                : ($paidPayment && ! $wasRefunded
-                    ? 'Commission cancelled. Automated refund is unsupported for this payment method; staff has been alerted for manual Iris disbursement.'
-                    : 'Commission cancellation accepted.');
-
-            return ApiResponseHelper::successResponse(
-                new CommissionResource($lockedCommission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'cancellationRequester', 'messages', 'review', 'payment', 'payments'])),
-                $message
-            );
-        });
-    }
-
-    public function declineCancellation(Commission $commission): JsonResponse
-    {
-        Gate::authorize('declineCancellation', $commission);
-
-        $currentUser = auth()->user();
-        $requesterId = $commission->cancellation_requested_by;
-        $isRequester = $currentUser->id === $requesterId;
-
-        $commission->update([
-            'cancellation_requested_by' => null,
-            'cancellation_reason' => null,
-            'cancellation_requested_at' => null,
-        ]);
-
-        if (!$isRequester && $requesterId) {
-            Notification::create([
-                'user_id' => $requesterId,
-                'type' => NotificationType::SYSTEM,
-                'title' => 'Cancellation Request Declined',
-                'message' => "{$currentUser->display_name} declined your cancellation request. The commission remains active.",
-                'notifiable_type' => Commission::class,
-                'notifiable_id' => $commission->id,
-            ]);
-
-            CommissionMessage::create([
-                'commission_id' => $commission->id,
-                'sender_id' => $currentUser->id,
-                'recipient_id' => $requesterId,
-                'message' => "[Cancellation Request Declined] {$currentUser->display_name} declined the cancellation request. The order remains active.",
-                'message_type' => MessageType::SYSTEM,
-            ]);
-        } else {
-            $counterpartId = ($currentUser->id === $commission->user_id)
-                ? $commission->artistProfile?->user_id
-                : $commission->user_id;
-
-            CommissionMessage::create([
-                'commission_id' => $commission->id,
-                'sender_id' => $currentUser->id,
-                'recipient_id' => $counterpartId,
-                'message' => "[Cancellation Request Withdrawn] {$currentUser->display_name} withdrew their cancellation request.",
-                'message_type' => MessageType::SYSTEM,
-            ]);
+        if (isset($result['error'])) {
+            return ApiResponseHelper::errorResponse($result['error'], $result['code'] ?? Response::HTTP_CONFLICT);
         }
 
         return ApiResponseHelper::successResponse(
-            new CommissionResource($commission->load(['commissionService', 'commissionOption', 'artistProfile', 'user', 'cancellationRequester', 'messages', 'review'])),
-            $isRequester ? 'Cancellation request withdrawn.' : 'Cancellation request declined.'
+            new CommissionResource($result['commission']),
+            $result['message']
+        );
+    }
+
+    public function declineCancellation(Commission $commission, CommissionCancellationService $cancellationService): JsonResponse
+    {
+        Gate::authorize('declineCancellation', $commission);
+
+        $result = $cancellationService->declineCancellation($commission, auth()->user());
+
+        return ApiResponseHelper::successResponse(
+            new CommissionResource($result['commission']),
+            $result['message']
         );
     }
 
