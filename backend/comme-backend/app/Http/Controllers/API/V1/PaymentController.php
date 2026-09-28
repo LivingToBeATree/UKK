@@ -226,6 +226,13 @@ class PaymentController extends Controller
             );
         }
 
+        if ($payment->status === PaymentStatus::PARTIAL_REFUND) {
+            return ApiResponseHelper::successResponse(
+                new CommissionResource($commission->load(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
+                'Payment has been partially refunded.'
+            );
+        }
+
         if ($payment->status === PaymentStatus::PENDING_MANUAL_REFUND) {
             return ApiResponseHelper::successResponse(
                 new CommissionResource($commission->load(['user', 'artistProfile', 'commissionService', 'payments', 'review'])),
@@ -476,7 +483,10 @@ class PaymentController extends Controller
         // this is an idempotent replay from Midtrans. Acknowledge immediately without re-processing or refunding!
         if ($payment->status === PaymentStatus::PAID && $newStatus === PaymentStatus::PAID) {
             $payment->update([
-                'raw_response' => $payload,
+                'raw_response' => array_merge(
+                    $payment->raw_response ?? [],
+                    ['last_webhook_payload' => $payload]
+                ),
             ]);
 
             return ApiResponseHelper::successResponse(message: 'Notification processed (idempotent replay).');
@@ -692,16 +702,17 @@ class PaymentController extends Controller
         }
 
         if ($currentStatus === PaymentStatus::PAID) {
-            return $newStatus === PaymentStatus::REFUNDED;
+            return in_array($newStatus, [PaymentStatus::REFUNDED, PaymentStatus::PARTIAL_REFUND], true);
         }
 
         if (in_array($currentStatus, [PaymentStatus::PENDING_MANUAL_REFUND, PaymentStatus::REFUND_FAILED], true)) {
-            return $newStatus === PaymentStatus::REFUNDED;
+            return in_array($newStatus, [PaymentStatus::REFUNDED, PaymentStatus::PARTIAL_REFUND], true);
         }
 
         if ($currentStatus === PaymentStatus::REFUND_PROCESSING) {
             return in_array($newStatus, [
                 PaymentStatus::REFUNDED,
+                PaymentStatus::PARTIAL_REFUND,
                 PaymentStatus::PENDING_MANUAL_REFUND,
                 PaymentStatus::REFUND_FAILED,
             ], true);
@@ -709,6 +720,10 @@ class PaymentController extends Controller
 
         if ($currentStatus === PaymentStatus::REFUNDED) {
             return false;
+        }
+
+        if ($currentStatus === PaymentStatus::PARTIAL_REFUND) {
+            return $newStatus === PaymentStatus::REFUNDED;
         }
 
         if (in_array($currentStatus, [PaymentStatus::FAILED, PaymentStatus::EXPIRED, PaymentStatus::CANCELLED], true)) {

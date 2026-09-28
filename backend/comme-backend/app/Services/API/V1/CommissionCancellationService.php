@@ -130,8 +130,12 @@ class CommissionCancellationService
                     $refundKey
                 );
 
+                $txStatus = strtolower((string) ($midtransResponse['transaction_status'] ?? ''));
+                $isPartial = $txStatus === 'partial_refund';
+
                 $isRefundSuccessful = is_array($midtransResponse)
-                    && (! isset($midtransResponse['status_code']) || in_array((string) $midtransResponse['status_code'], ['200', '201', '202'], true));
+                    && (! isset($midtransResponse['status_code']) || in_array((string) $midtransResponse['status_code'], ['200', '201', '202'], true))
+                    && ! $isPartial;
             }
         } catch (\Throwable $e) {
             Log::error("Gateway exception during immediate cancellation refund of Commission #{$commission->id}: " . $e->getMessage());
@@ -148,11 +152,17 @@ class CommissionCancellationService
                 $statusCheck = $this->midtransService->getTransactionStatus($paymentData['paid_order_id']);
                 if (is_array($statusCheck)) {
                     $txStatus = strtolower((string) ($statusCheck['transaction_status'] ?? ''));
-                    $hasRefunds = ! empty($statusCheck['refunds']) || ((float) ($statusCheck['refund_amount'] ?? 0) > 0);
+                    $refundAmount = (float) ($statusCheck['refund_amount'] ?? 0);
+                    $expectedAmount = (float) $paymentData['paid_amount'];
 
-                    if (in_array($txStatus, ['refund', 'partial_refund'], true) || $hasRefunds) {
-                        Log::info("Ambiguous refund for Order #{$paymentData['paid_order_id']} was verified as SUCCEEDED via getTransactionStatus.");
+                    $isFullRefund = $txStatus === 'refund'
+                        || ($refundAmount > 0 && abs($refundAmount - $expectedAmount) < 0.01);
+
+                    if ($isFullRefund) {
+                        Log::info("Ambiguous refund for Order #{$paymentData['paid_order_id']} was verified as FULLY SUCCEEDED via getTransactionStatus.");
                         $isRefundSuccessful = true;
+                        $midtransResponse = $statusCheck;
+                    } elseif ($refundAmount > 0 || $txStatus === 'partial_refund') {
                         $midtransResponse = $statusCheck;
                     }
                 }
@@ -200,14 +210,23 @@ class CommissionCancellationService
                         ]);
 
                         $buyerUser = $commission->user;
+                        $confirmedRefunded = isset($midtransResponse['refund_amount']) ? (float) $midtransResponse['refund_amount'] : 0.0;
+                        $remainingAmount = max(0, $paymentData['paid_amount'] - $confirmedRefunded);
+
+                        $description = $confirmedRefunded > 0
+                            ? "Manual Escrow Refund Required (Order: {$paidPayment->order_id}): "
+                                . "Partial gateway refund of Rp " . number_format($confirmedRefunded, 0, ',', '.') . " recorded on Midtrans. "
+                                . "Remaining balance of Rp " . number_format($remainingAmount, 0, ',', '.') . " requires manual Iris disbursement to client @{$buyerUser?->username}."
+                            : "Manual Escrow Refund Required (Order: {$paidPayment->order_id}): "
+                                . "Immediate cancellation for Commission #{$commission->id} was processed, but Midtrans automated direct refund failed. "
+                                . "Please disburse manual escrow refund of Rp " . number_format($paymentData['paid_amount'], 0, ',', '.') . " to client @{$buyerUser?->username} via Midtrans Iris disbursement portal.";
+
                         $report = Report::create([
                             'user_id' => $buyerUser?->id ?? $commission->user_id,
                             'reportable_type' => Commission::class,
                             'reportable_id' => $commission->id,
                             'reason' => ReportReason::OTHER,
-                            'description' => "Manual Escrow Refund Required (Order: {$paidPayment->order_id}): "
-                                . "Immediate cancellation for Commission #{$commission->id} was processed, but Midtrans automated direct refund failed. "
-                                . "Please disburse manual escrow refund of Rp " . number_format($paymentData['paid_amount'], 0, ',', '.') . " to client @{$buyerUser?->username} via Midtrans Iris disbursement portal.",
+                            'description' => $description,
                             'status' => ReportStatus::PENDING,
                         ]);
 
@@ -215,15 +234,24 @@ class CommissionCancellationService
                             'priority' => TicketPriority::HIGH,
                         ]);
 
+                        $ticketMessage = $confirmedRefunded > 0
+                            ? "Automated Escrow Refund Partial: Midtrans recorded partial refund of Rp " . number_format($confirmedRefunded, 0, ',', '.') . " for order {$paidPayment->order_id}. "
+                                . "Payment status moved to PENDING_MANUAL_REFUND. Remaining balance of Rp " . number_format($remainingAmount, 0, ',', '.') . " requires manual disbursement via Iris."
+                            : "Automated Escrow Refund Failure: Midtrans returned failure for order {$paidPayment->order_id}. "
+                                . "Payment status moved to PENDING_MANUAL_REFUND. High-priority manual disbursement via Iris required.";
+
                         $ticket->messages()->create([
                             'user_id' => $buyerUser?->id ?? $commission->user_id,
-                            'content' => "Automated Escrow Refund Failure: Midtrans returned failure for order {$paidPayment->order_id}. "
-                                . "Payment status moved to PENDING_MANUAL_REFUND. High-priority manual disbursement via Iris required.",
+                            'content' => $ticketMessage,
                         ]);
+
+                        $staffNotificationMessage = $confirmedRefunded > 0
+                            ? "Manual refund of remaining Rp " . number_format($remainingAmount, 0, ',', '.') . " (partial Rp " . number_format($confirmedRefunded, 0, ',', '.') . " refunded by gateway) required for Commission #{$commission->id}."
+                            : "Manual refund of Rp " . number_format($paymentData['paid_amount'], 0, ',', '.') . " required for Commission #{$commission->id}. Automated gateway refund failed.";
 
                         StaffNotificationService::notifyStaff(
                             'Escrow Refund Action Required',
-                            "Manual refund of Rp " . number_format($paymentData['paid_amount'], 0, ',', '.') . " required for Commission #{$commission->id}. Automated gateway refund failed.",
+                            $staffNotificationMessage,
                             $commission,
                             NotificationType::SYSTEM
                         );
@@ -388,8 +416,12 @@ class CommissionCancellationService
                     $refundKey
                 );
 
+                $txStatus = strtolower((string) ($midtransResponse['transaction_status'] ?? ''));
+                $isPartial = $txStatus === 'partial_refund';
+
                 $isRefundSuccessful = is_array($midtransResponse)
-                    && (! isset($midtransResponse['status_code']) || in_array((string) $midtransResponse['status_code'], ['200', '201', '202'], true));
+                    && (! isset($midtransResponse['status_code']) || in_array((string) $midtransResponse['status_code'], ['200', '201', '202'], true))
+                    && ! $isPartial;
             }
 
             foreach ($prep['pending_order_ids'] as $pendingOrderId) {
@@ -412,11 +444,17 @@ class CommissionCancellationService
                 $statusCheck = $this->midtransService->getTransactionStatus($prep['paid_order_id']);
                 if (is_array($statusCheck)) {
                     $txStatus = strtolower((string) ($statusCheck['transaction_status'] ?? ''));
-                    $hasRefunds = ! empty($statusCheck['refunds']) || ((float) ($statusCheck['refund_amount'] ?? 0) > 0);
+                    $refundAmount = (float) ($statusCheck['refund_amount'] ?? 0);
+                    $expectedAmount = (float) $prep['refund_amount'];
 
-                    if (in_array($txStatus, ['refund', 'partial_refund'], true) || $hasRefunds) {
-                        Log::info("Ambiguous refund for Order #{$prep['paid_order_id']} was verified as SUCCEEDED via getTransactionStatus.");
+                    $isFullRefund = $txStatus === 'refund'
+                        || ($refundAmount > 0 && abs($refundAmount - $expectedAmount) < 0.01);
+
+                    if ($isFullRefund) {
+                        Log::info("Ambiguous refund for Order #{$prep['paid_order_id']} was verified as FULLY SUCCEEDED via getTransactionStatus.");
                         $isRefundSuccessful = true;
+                        $midtransResponse = $statusCheck;
+                    } elseif ($refundAmount > 0 || $txStatus === 'partial_refund') {
                         $midtransResponse = $statusCheck;
                     }
                 }
@@ -467,14 +505,23 @@ class CommissionCancellationService
                     ]);
 
                     $buyerUser = $locked->user;
+                    $confirmedRefunded = isset($midtransResponse['refund_amount']) ? (float) $midtransResponse['refund_amount'] : 0.0;
+                    $remainingAmount = max(0, $prep['refund_amount'] - $confirmedRefunded);
+
+                    $description = $confirmedRefunded > 0
+                        ? "Manual Escrow Refund Required (Order: {$paidPayment->order_id}): "
+                            . "Partial gateway refund of Rp " . number_format($confirmedRefunded, 0, ',', '.') . " recorded on Midtrans. "
+                            . "Remaining balance of Rp " . number_format($remainingAmount, 0, ',', '.') . " requires manual Iris disbursement to client @{$buyerUser?->username}."
+                        : "Manual Escrow Refund Required (Order: {$paidPayment->order_id}): "
+                            . "Mutual cancellation for Commission #{$locked->id} was accepted, but Midtrans automated direct refund failed or is unsupported for this payment channel (e.g. Indonesian VA / QRIS / GoPay). "
+                            . "Please disburse manual escrow refund of Rp " . number_format($prep['refund_amount'], 0, ',', '.') . " to client @{$buyerUser?->username} via Midtrans Iris disbursement portal.";
+
                     $report = Report::create([
                         'user_id' => $buyerUser?->id ?? $locked->user_id,
                         'reportable_type' => Commission::class,
                         'reportable_id' => $locked->id,
                         'reason' => ReportReason::OTHER,
-                        'description' => "Manual Escrow Refund Required (Order: {$paidPayment->order_id}): "
-                            . "Mutual cancellation for Commission #{$locked->id} was accepted, but Midtrans automated direct refund failed or is unsupported for this payment channel (e.g. Indonesian VA / QRIS / GoPay). "
-                            . "Please disburse manual escrow refund of Rp " . number_format($prep['refund_amount'], 0, ',', '.') . " to client @{$buyerUser?->username} via Midtrans Iris disbursement portal.",
+                        'description' => $description,
                         'status' => ReportStatus::PENDING,
                     ]);
 
@@ -482,15 +529,24 @@ class CommissionCancellationService
                         'priority' => TicketPriority::HIGH,
                     ]);
 
+                    $ticketMessage = $confirmedRefunded > 0
+                        ? "⚠️ Automated Escrow Refund Partial: Midtrans recorded partial refund of Rp " . number_format($confirmedRefunded, 0, ',', '.') . " for order {$paidPayment->order_id}. "
+                            . "Payment status has been moved to PENDING_MANUAL_REFUND. High-priority manual disbursement via Iris required for client (@{$buyerUser?->username}, Remaining: Rp " . number_format($remainingAmount, 0, ',', '.') . ")."
+                        : "⚠️ Automated Escrow Refund Failure: Midtrans Snap API returned failure/null for order {$paidPayment->order_id}. "
+                            . "Payment status has been moved to PENDING_MANUAL_REFUND. High-priority manual disbursement via Midtrans Iris required for client (@{$buyerUser?->username}, Amount: Rp " . number_format($prep['refund_amount'], 0, ',', '.') . ").";
+
                     $ticket->messages()->create([
                         'user_id' => $buyerUser?->id ?? $locked->user_id,
-                        'content' => "⚠️ Automated Escrow Refund Failure: Midtrans Snap API returned failure/null for order {$paidPayment->order_id}. "
-                            . "Payment status has been moved to PENDING_MANUAL_REFUND. High-priority manual disbursement via Midtrans Iris required for client (@{$buyerUser?->username}, Amount: Rp " . number_format($prep['refund_amount'], 0, ',', '.') . ").",
+                        'content' => $ticketMessage,
                     ]);
+
+                    $staffNotificationMessage = $confirmedRefunded > 0
+                        ? "Manual refund of remaining Rp " . number_format($remainingAmount, 0, ',', '.') . " (partial Rp " . number_format($confirmedRefunded, 0, ',', '.') . " refunded by gateway) required for Commission #{$locked->id} (@{$buyerUser?->username})."
+                        : "Manual refund of Rp " . number_format($prep['refund_amount'], 0, ',', '.') . " required for Commission #{$locked->id} (@{$buyerUser?->username}). Automated gateway refund failed.";
 
                     StaffNotificationService::notifyStaff(
                         'Escrow Refund Action Required',
-                        "Manual refund of Rp " . number_format($prep['refund_amount'], 0, ',', '.') . " required for Commission #{$locked->id} (@{$buyerUser?->username}). Automated gateway refund failed.",
+                        $staffNotificationMessage,
                         $locked,
                         NotificationType::SYSTEM
                     );

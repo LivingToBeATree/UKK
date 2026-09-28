@@ -216,7 +216,8 @@ class MidtransService
             $transactionStatus === 'deny' => PaymentStatus::FAILED,
             $transactionStatus === 'cancel' => PaymentStatus::CANCELLED,
             $transactionStatus === 'expire' => PaymentStatus::EXPIRED,
-            in_array($transactionStatus, ['refund', 'partial_refund'], true) => PaymentStatus::REFUNDED,
+            $transactionStatus === 'refund' => PaymentStatus::REFUNDED,
+            $transactionStatus === 'partial_refund' => PaymentStatus::PARTIAL_REFUND,
             default => PaymentStatus::FAILED,
         };
     }
